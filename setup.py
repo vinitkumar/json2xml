@@ -32,8 +32,11 @@ setup(
     author_email='vinit.kumar@changer.nl',
     url='https://github.com/vinitcool76/json2xml',
     data_files=[
-        'README.md',
-        'HISTORY.md',
+        'readme.md',
+        'history.md',
+    ],
+    packages=[
+        json2xml,
     ],
     install_requires=required,
     license='MIT',

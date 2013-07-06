@@ -1,0 +1,6 @@
+setup.py
+json2xml.egg-info/PKG-INFO
+json2xml.egg-info/SOURCES.txt
+json2xml.egg-info/dependency_links.txt
+json2xml.egg-info/requires.txt
+json2xml.egg-info/top_level.txt

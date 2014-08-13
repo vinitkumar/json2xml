@@ -1,6 +1,6 @@
 ##About
 
-This is a simple python module to conver json data to xml data.
+This is a simple python module to convert json data to xml data.
 
 
 ### How to install
@@ -81,6 +81,6 @@ Gives:
 <status>OK</status>
 ```
 
-###Bugs, features
+### Bugs, features
 
-Create an issue in the repository
+Create an issue in the repository and if you have a new feature that you want to add, please send a pull request.

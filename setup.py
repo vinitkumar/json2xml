@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '0.6'
+version = '1.0.0'
 
 setup(
     name='json2xml',
@@ -9,7 +9,7 @@ setup(
     description='To covert json data to xml data',
     author='Vinit Kumar',
     author_email='vinit.kumar@changer.nl',
-    url='http://github.com:vinitcool76/json2xml.git',
+    url='http://github.com:vinitkumar/json2xml.git',
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,

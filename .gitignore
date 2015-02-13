@@ -1,3 +1,5 @@
 *.pyc
-json2xml.egg-info\
+json2xml.egg-info
 build
+*.swp
+dist/*

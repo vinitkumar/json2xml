@@ -26,8 +26,12 @@ class Json2xml(object):
     # ---------------------------------
     @classmethod
     def fromjsonfile(cls, filename):
-        json_data = open(filename)
-        data = simplejson.load(json_data)
+        try:
+            json_data = open(filename)
+            data = simplejson.load(json_data)
+        except IOError as e:
+            print "I/O error({0}): {1}".format(e.errno, e.strerror)
+            data = []
         return cls(data)
 
     # -------------------------------

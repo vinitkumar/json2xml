@@ -55,7 +55,7 @@ class Json2xml(object):
     # ---------------------------------
     def json2xml(self):
         if self.data:
-            xmldata = dict2xml.dict2xml(data)
+            xmldata = dict2xml.dict2xml(self.data)
             xml = BeautifulStoneSoup(xmldata)
             return xml
 

@@ -15,7 +15,7 @@ pip install json2xml
 
 ```python
 from src.json2xml import Json2xml
-data = Json2xml.fromjsonfile('example.json').data
+data = Json2xml.fromjsonfile('examples/example.json').data
 data_object = Json2xml(data)
 data_object.json2xml()
 ```

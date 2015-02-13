@@ -1,5 +1,7 @@
 ##About
 
+[![Build Status](https://travis-ci.org/vinitkumar/json2xml.svg?branch=master)](https://travis-ci.org/vinitkumar/json2xml)
+
 A Simple python utility to convert JSON to xml. It support conversation
 from a json file or from an URL.
 

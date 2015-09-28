@@ -16,7 +16,7 @@ pip install json2xml
 #### From JSON File
 
 ```python
-from src.json2xml import Json2xml
+from json2xml.json2xml import Json2xml
 data = Json2xml.fromjsonfile('examples/example.json').data
 data_object = Json2xml(data)
 data_object.json2xml()
@@ -25,7 +25,7 @@ data_object.json2xml()
 #### From WEB Url
 
 ```python
-from src.json2xml import Json2xml
+from json2xml.json2xml import Json2xml
 data = data = Json2xml.fromurl('https://coderwall.com/vinitcool76.json').data
 data_object = Json2xml(data)
 data_object.json2xml()

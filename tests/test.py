@@ -1,8 +1,8 @@
-## 
+##
 # @file test.py
 # @Synopsis  Unit test for json2xml
 # @author Vinit Kumar
-# @version 
+# @version
 # @date 2015-02-13
 
 
@@ -15,9 +15,9 @@ class Json2xmlTestCase(unittest.TestCase):
         data = Json2xml.fromjsonfile('examples/example.json').data
         data_object = Json2xml(data)
         xml_output = data_object.json2xml()
-        is_xml = xml_output.XML_ENTITIES
-        self.assertEqual(is_xml, 'xml')
+        htmlkeys = xml_output.XML_FORMATTERS.keys()
+        self.assertTrue('html' in  htmlkeys)
 
-        
+
 if __name__ == '__main__':
     unittest.main()

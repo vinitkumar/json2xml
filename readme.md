@@ -3,12 +3,15 @@
 [![Build Status](https://travis-ci.org/vinitkumar/json2xml.svg?branch=master)](https://travis-ci.org/vinitkumar/json2xml)
 
 A Simple python utility to convert JSON to xml. It support conversation
-from a json file or from an URL.
+from a json file or from an URL. (Supports both Python2.7.x and 3.5.x)
 
 ### How to install
 
 ```
+# python2
 pip install json2xml
+# python3
+pip3 install json2xml
 ```
 
 ###How to use

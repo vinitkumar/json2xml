@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0.1'
+version = '1.1.0'
 
 setup(
     name='json2xml',
@@ -13,11 +13,10 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
-    install_requires=['BeautifulSoup==3.2.1',
-                      'argparse==1.2.1',
+    install_requires=['BeautifulSoup4==4.4.1',
                       'dict2xml==1.3',
-                      'gnureadline==6.3.3',
                       'simplejson==3.6.5',
                       'six==1.9.0',
-                      'wsgiref==0.1.2'],
+                      'requests==2.9.1',
+                      ],
 )

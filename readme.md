@@ -29,7 +29,7 @@ data_object.json2xml()
 
 ```python
 from json2xml.json2xml import Json2xml
-data = data = Json2xml.fromurl('https://coderwall.com/vinitcool76.json').data
+data = Json2xml.fromurl('https://coderwall.com/vinitcool76.json').data
 data_object = Json2xml(data)
 data_object.json2xml()
 ```

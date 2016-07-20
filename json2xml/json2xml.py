@@ -61,3 +61,18 @@ class Json2xml(object):
             xmldata = dict2xml.dict2xml(self.data)
             xml = BeautifulSoup(xmldata, "html.parser")
             return xml
+
+def main(argv=None):
+   if len(argv) > 1:
+      data = Json2xml.fromjsonfile(argv[1]).data
+      data_object = Json2xml(data)
+      try:
+          import lxml.etree as etree
+          xml = etree.XML(data_object)
+          print etree.tostring(xml, pretty_print = True)
+      except Exception as e:
+         print data_object.json2xml()
+
+if __name__ == "__main__":
+    main(sys.argv)
+

@@ -18,5 +18,6 @@ setup(
                       'simplejson==3.6.5',
                       'six==1.9.0',
                       'requests==2.9.1',
+                      'lxml',
                       ],
 )

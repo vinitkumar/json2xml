@@ -69,9 +69,9 @@ def main(argv=None):
       try:
           import lxml.etree as etree
           xml = etree.XML(data_object)
-          print etree.tostring(xml, pretty_print = True)
+          print(etree.tostring(xml, pretty_print = True))
       except Exception as e:
-         print data_object.json2xml()
+         print(data_object.json2xml())
 
 if __name__ == "__main__":
     main(sys.argv)

@@ -18,7 +18,9 @@ pip3 install json2xml
 
 #### From Command Line
 
+```
 python -m json2xml.cli file.json
+```
 
 #### From JSON File
 

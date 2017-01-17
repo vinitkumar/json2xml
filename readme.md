@@ -15,8 +15,10 @@ pip3 install json2xml
 
 #### Command Line
 
+```
 python -m src.cli --file="examples/example.json"
 python -m src.cli --url="https://coderwall.com/vinitcool76.json"
+```
 
 #### Inline in Code
 
@@ -41,4 +43,5 @@ data_object.json2xml() #xml output
 
 ### Bugs, features
 
-Create an ![issue](https://github.com/vinitkumar/json2xml/issues/new) in the repository and if you have a new feature that you want to add, please send a pull request.
+- If you find any bug, open a [new ticket](https://github.com/vinitkumar/json2xml/issues/new)
+- If you have an intresting Idea for contribution, open a ticket for that too and propose the idea. If we agree, you can open a pull request.

@@ -20,7 +20,7 @@ class Json2xml(object):
     #
     # @Returns  Null
     # ---------------------------------
-    def __init__(self, data):
+    def __init__(self, data: str) -> None:
         self.data = data
 
     # -------------------------------
@@ -29,7 +29,7 @@ class Json2xml(object):
     # the system
     # ---------------------------------
     @classmethod
-    def fromjsonfile(cls, filename):
+    def fromjsonfile(cls, filename: str):
         try:
             json_data = open(filename)
             data = simplejson.load(json_data)
@@ -46,7 +46,7 @@ class Json2xml(object):
     #
     # ---------------------------------
     @classmethod
-    def fromurl(cls, url):
+    def fromurl(cls, url: str):
         data = requests.get(url).json()
         return cls(data)
 
@@ -72,7 +72,6 @@ def main(argv=None):
       try:
           import lxml.etree as etree
           xml = etree.XML(data_object)
-          #print etree.tostring(xml, pretty_print = True)
       except Exception as e:
          print(data_object.json2xml())
 

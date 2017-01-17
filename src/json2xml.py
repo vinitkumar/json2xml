@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import sys
 import requests
 import simplejson
 import urllib
@@ -19,7 +20,7 @@ class Json2xml(object):
     #
     # @Returns  Null
     # ---------------------------------
-    def __init__(self, data):
+    def __init__(self, data: str) -> None:
         self.data = data
 
     # -------------------------------
@@ -28,12 +29,13 @@ class Json2xml(object):
     # the system
     # ---------------------------------
     @classmethod
-    def fromjsonfile(cls, filename):
+    def fromjsonfile(cls, filename: str):
         try:
             json_data = open(filename)
             data = simplejson.load(json_data)
+            json_data.close()
         except IOError as e:
-            print ("I/O error({0}): {1}".format(e.errno, e.strerror))
+            print("I/O error({0}): {1}".format(e.errno, e.strerror))
             data = []
         return cls(data)
 
@@ -44,10 +46,12 @@ class Json2xml(object):
     #
     # ---------------------------------
     @classmethod
-    def fromurl(cls, url):
-        data = requests.get(url).json()
-        return cls(data)
-
+    def fromurl(cls, url: str):
+        response = requests.get(url)
+        if response.status_code == 200:
+            return cls(response.json())
+        else:
+            raise Exception("Bad URl, Can't get JSON response")
     # -------------------------------
     ##
     # @Synopsis  This method actually
@@ -63,15 +67,20 @@ class Json2xml(object):
             return xml
 
 def main(argv=None):
-   if len(argv) > 1:
-      data = Json2xml.fromjsonfile(argv[1]).data
-      data_object = Json2xml(data)
-      try:
-          import lxml.etree as etree
-          xml = etree.XML(data_object)
-          print etree.tostring(xml, pretty_print = True)
-      except Exception as e:
-         print data_object.json2xml()
+    parser = argparse.ArgumentParser(description='Utility to convert json to valid xml.')
+    parser.add_argument('--url', dest='url', action='store')
+    parser.add_argument('--file', dest='file', action='store')
+    args = parser.parse_args()
+
+    if args.url:
+        url = args.url
+        data = Json2xml.fromurl(url)
+        print(Json2xml.json2xml(data))
+
+    if args.file:
+        file = args.file
+        data = Json2xml.fromjsonfile(file)
+        print(Json2xml.json2xml(data))
 
 if __name__ == "__main__":
     main(sys.argv)

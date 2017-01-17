@@ -7,7 +7,7 @@
 
 
 import unittest
-from json2xml.json2xml import Json2xml
+from src.json2xml import Json2xml
 
 class Json2xmlTestCase(unittest.TestCase):
 

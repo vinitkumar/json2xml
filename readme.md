@@ -2,44 +2,46 @@
 
 [![Build Status](https://travis-ci.org/vinitkumar/json2xml.svg?branch=master)](https://travis-ci.org/vinitkumar/json2xml)
 
-A Simple python utility to convert JSON to xml. It support conversation
-from a json file or from an URL. (Supports both Python2.7.x and 3.5.x)
+A Simple python utility to convert JSON to XML(Supports 3.5.x and 3.6.x).
+It can be used to convert a json file to xml or from an URL that returns json data.
 
 ### How to install
 
 ```
-# python2
-pip install json2xml
-# python3
 pip3 install json2xml
 ```
 
-###How to use
+### Usage
 
-#### From Command Line
+#### Command Line
 
-python -m json2xml.cli file.json
+```
+python -m src.cli --file="examples/example.json"
+python -m src.cli --url="https://coderwall.com/vinitcool76.json"
+```
 
-#### From JSON File
+#### Inline in Code
+
+- From a file
 
 ```python
-from json2xml.json2xml import Json2xml
+from src.json2xml import Json2xml
 data = Json2xml.fromjsonfile('examples/example.json').data
 data_object = Json2xml(data)
-data_object.json2xml()
+data_object.json2xml() #xml output
 ```
 
-#### From WEB Url
+- From an URL
 
 ```python
-from json2xml.json2xml import Json2xml
+from src.json2xml import Json2xml
 data = Json2xml.fromurl('https://coderwall.com/vinitcool76.json').data
 data_object = Json2xml(data)
-data_object.json2xml()
+data_object.json2xml() #xml output
 ```
 
-These are two simple ways you can use this utility.
 
 ### Bugs, features
 
-Create an issue in the repository and if you have a new feature that you want to add, please send a pull request.
+- If you find any bug, open a [new ticket](https://github.com/vinitkumar/json2xml/issues/new)
+- If you have an intresting Idea for contribution, open a ticket for that too and propose the idea. If we agree, you can open a pull request.

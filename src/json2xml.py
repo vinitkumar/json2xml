@@ -47,9 +47,11 @@ class Json2xml(object):
     # ---------------------------------
     @classmethod
     def fromurl(cls, url: str):
-        data = requests.get(url).json()
-        return cls(data)
-
+        response = requests.get(url)
+        if response.status_code == 200:
+            return cls(response.json())
+        else:
+            raise Exception("Bad URl, Can't get JSON response")
     # -------------------------------
     ##
     # @Synopsis  This method actually
@@ -65,15 +67,20 @@ class Json2xml(object):
             return xml
 
 def main(argv=None):
-   if len(argv) > 1:
-      data = Json2xml.fromjsonfile(argv[1]).data
-      if data:
-        data_object = Json2xml(data)
-      try:
-          import lxml.etree as etree
-          xml = etree.XML(data_object)
-      except Exception as e:
-         print(data_object.json2xml())
+    parser = argparse.ArgumentParser(description='Utility to convert json to valid xml.')
+    parser.add_argument('--url', dest='url', action='store')
+    parser.add_argument('--file', dest='file', action='store')
+    args = parser.parse_args()
+
+    if args.url:
+        url = args.url
+        data = Json2xml.fromurl(url)
+        print(Json2xml.json2xml(data))
+
+    if args.file:
+        file = args.file
+        data = Json2xml.fromjsonfile(file)
+        print(Json2xml.json2xml(data))
 
 if __name__ == "__main__":
     main(sys.argv)

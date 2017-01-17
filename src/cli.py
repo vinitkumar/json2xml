@@ -1,10 +1,10 @@
 import sys
 import argparse
 import lxml.etree as etree
-from json2xml.json2xml import Json2xml
+from src.json2xml import Json2xml
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Utility to convert json to valid xml.')
     parser.add_argument('--url', dest='url', action='store')
     parser.add_argument('--file', dest='file', action='store')
     args = parser.parse_args()

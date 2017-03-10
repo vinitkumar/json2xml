@@ -6,7 +6,7 @@ version = '1.2.0'
 setup(
     name='json2xml',
     version=version,
-    description='To covert json data to xml data',
+    description='To convert json data to xml data',
     author='Vinit Kumar',
     author_email='vinit.kumar@changer.nl',
     url='http://github.com:vinitkumar/json2xml.git',

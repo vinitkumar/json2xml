@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.2.2'
+version = '1.2.3'
 
 setup(
     name='json2xml',
@@ -18,5 +18,6 @@ setup(
                       'simplejson==3.6.5',
                       'six==1.10.0',
                       'lxml',
+                      'requests',
                       ],
 )

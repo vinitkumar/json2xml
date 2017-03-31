@@ -1,14 +1,13 @@
 #! /usr/bin/env python
+import argparse
 import sys
 import requests
 import simplejson
-import urllib
 import dict2xml
 from bs4 import BeautifulSoup
 
 
 class Json2xml(object):
-
     # -------------------------------
     ##
     # @Synopsis  This class could read a json file
@@ -52,6 +51,7 @@ class Json2xml(object):
             return cls(response.json())
         else:
             raise Exception("Bad URl, Can't get JSON response")
+
     # -------------------------------
     ##
     # @Synopsis  This method actually
@@ -65,6 +65,7 @@ class Json2xml(object):
             xmldata = dict2xml.dict2xml(self.data)
             xml = BeautifulSoup(xmldata, "html.parser")
             return xml
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Utility to convert json to valid xml.')
@@ -82,6 +83,6 @@ def main(argv=None):
         data = Json2xml.fromjsonfile(file)
         print(Json2xml.json2xml(data))
 
+
 if __name__ == "__main__":
     main(sys.argv)
-

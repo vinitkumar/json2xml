@@ -1,7 +1,7 @@
 import sys
 import argparse
-import lxml.etree as etree
 from src.json2xml import Json2xml
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Utility to convert json to valid xml.')
@@ -18,6 +18,7 @@ def main(argv=None):
         file = args.file
         data = Json2xml.fromjsonfile(file)
         print(Json2xml.json2xml(data))
+
 
 if __name__ == "__main__":
     main(sys.argv)

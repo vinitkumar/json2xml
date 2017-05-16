@@ -1,4 +1,4 @@
-##About
+## About
 
 [![Build Status](https://travis-ci.org/vinitkumar/json2xml.svg?branch=master)](https://travis-ci.org/vinitkumar/json2xml)
 

@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
-version = '1.2.5'
+version = '1.3.0'
 
 setup(
     name='json2xml',
     version=version,
-    description='A simple python package to convert json to xml data',
+    description='A simple python package to convert json from file, URL or string to xml data',
     author='Vinit Kumar',
     author_email='vinit1414.08@bitmesra.ac.in',
     url='https://github.com/vinitkumar/json2xml',

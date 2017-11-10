@@ -4,6 +4,7 @@ import sys
 import requests
 import simplejson
 import dict2xml
+import json
 from bs4 import BeautifulSoup
 
 
@@ -52,6 +53,18 @@ class Json2xml(object):
         else:
             raise Exception("Bad URl, Can't get JSON response")
 
+    @classmethod
+    def fromstring(cls, data: str):
+        if type(data) is not str:
+            raise("Sorry but it doesn't seem to be valid string")
+        try:
+            data = json.loads(data)
+        except Exception as e:
+            print("Sorry, failed to load json, seems the JSON is not right")
+            data = []
+        return cls(data)
+
+
     # -------------------------------
     ##
     # @Synopsis  This method actually
@@ -71,6 +84,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='Utility to convert json to valid xml.')
     parser.add_argument('--url', dest='url', action='store')
     parser.add_argument('--file', dest='file', action='store')
+    parser.add_argument('--data', dest='data', action='store')
     args = parser.parse_args()
 
     if args.url:
@@ -83,6 +97,10 @@ def main(argv=None):
         data = Json2xml.fromjsonfile(file)
         print(Json2xml.json2xml(data))
 
+    if args.data:
+        str_data = args.data
+        data = Json2xml.fromstring(str_data)
+        print(Json2xml.json2xml(data))
 
 if __name__ == "__main__":
     main(sys.argv)

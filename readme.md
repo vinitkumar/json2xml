@@ -13,16 +13,17 @@ pip3 install json2xml
 
 ### Usage
 
-#### Command Line
+### Command Line
 
 ```
 python -m src.cli --file="examples/example.json"
 python -m src.cli --url="https://coderwall.com/vinitcool76.json"
+python -m src.cli --data '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
 ```
 
-#### Inline in Code
+### Inline in Code
 
-- From a file
+#### From a file
 
 ```python
 from src.json2xml import Json2xml
@@ -31,7 +32,7 @@ data_object = Json2xml(data)
 data_object.json2xml() #xml output
 ```
 
-- From an URL
+#### From an URL
 
 ```python
 from src.json2xml import Json2xml
@@ -40,6 +41,14 @@ data_object = Json2xml(data)
 data_object.json2xml() #xml output
 ```
 
+#### From JSON string
+
+```python
+from src.json2xml import Json2xml
+data = Json2xml.fromstring('{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}').data
+data_object = Json2xml(data)
+data_object.json2xml() #xml output
+```
 
 ### Bugs, features
 

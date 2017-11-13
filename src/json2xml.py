@@ -1,11 +1,10 @@
 #! /usr/bin/env python
 import argparse
-import sys
-import requests
-import simplejson
-import dict2xml
 import json
-from bs4 import BeautifulSoup
+import sys
+
+import dict2xml
+import requests
 
 
 class Json2xml(object):
@@ -32,7 +31,7 @@ class Json2xml(object):
     def fromjsonfile(cls, filename: str):
         try:
             json_data = open(filename)
-            data = simplejson.load(json_data)
+            data = json.load(json_data)
             json_data.close()
         except IOError as e:
             print("I/O error({0}): {1}".format(e.errno, e.strerror))
@@ -46,8 +45,8 @@ class Json2xml(object):
     #
     # ---------------------------------
     @classmethod
-    def fromurl(cls, url: str):
-        response = requests.get(url)
+    def fromurl(cls, url: str, params=None):
+        response = requests.get(url, params=params)
         if response.status_code == 200:
             return cls(response.json())
         else:
@@ -75,9 +74,8 @@ class Json2xml(object):
     # ---------------------------------
     def json2xml(self):
         if self.data:
-            xmldata = dict2xml.dict2xml(self.data)
-            xml = BeautifulSoup(xmldata, "html.parser")
-            return xml
+            xmldata = dict2xml.dict2xml(self.data, wrap="all", indent="  ")
+            return xmldata
 
 
 def main(argv=None):
@@ -90,17 +88,17 @@ def main(argv=None):
     if args.url:
         url = args.url
         data = Json2xml.fromurl(url)
-        print(Json2xml.json2xml(data))
+        return Json2xml.json2xml(data)
 
     if args.file:
         file = args.file
         data = Json2xml.fromjsonfile(file)
-        print(Json2xml.json2xml(data))
+        return Json2xml.json2xml(data)
 
     if args.data:
         str_data = args.data
         data = Json2xml.fromstring(str_data)
-        print(Json2xml.json2xml(data))
+        return Json2xml.json2xml(data)
 
 if __name__ == "__main__":
     main(sys.argv)

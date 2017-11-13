@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '1.4.0'
+version = '2.0.0'
 
 setup(
     name='json2xml',
@@ -12,11 +12,11 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
-    install_requires=['BeautifulSoup4==4.5.3',
+    install_requires=[
                       'dict2xml==1.5',
                       'simplejson==3.10.0',
-                      'six==1.10.0',
-                      'lxml==3.7.3',
-                      'requests==2.13.0',
+                      'six==1.11.0',
+                      'lxml==4.1.1',
+                      'requests==2.18.4',
                       ],
 )

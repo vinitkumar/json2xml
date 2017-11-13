@@ -14,9 +14,9 @@ setup(
     include_package_data=True,
     install_requires=[
                       'dict2xml==1.5',
-                      'simplejson==3.10.0',
                       'six==1.11.0',
                       'lxml==4.1.1',
                       'requests==2.18.4',
+                      'xmltodict==0.11.0'
                       ],
 )

@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '2.1.1'
+version = '2.2.0'
 
 setup(
     name='json2xml',
@@ -15,7 +15,6 @@ setup(
     install_requires=[
                       'dict2xml==1.5',
                       'six==1.11.0',
-                      'lxml==4.1.1',
                       'requests==2.18.4',
                       'xmltodict==0.11.0'
                       ],

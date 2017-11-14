@@ -76,29 +76,3 @@ class Json2xml(object):
         if self.data:
             xmldata = dict2xml.dict2xml(self.data, wrap="all", indent="  ")
             return xmldata
-
-
-def main(argv=None):
-    parser = argparse.ArgumentParser(description='Utility to convert json to valid xml.')
-    parser.add_argument('--url', dest='url', action='store')
-    parser.add_argument('--file', dest='file', action='store')
-    parser.add_argument('--data', dest='data', action='store')
-    args = parser.parse_args()
-
-    if args.url:
-        url = args.url
-        data = Json2xml.fromurl(url)
-        return Json2xml.json2xml(data)
-
-    if args.file:
-        file = args.file
-        data = Json2xml.fromjsonfile(file)
-        return Json2xml.json2xml(data)
-
-    if args.data:
-        str_data = args.data
-        data = Json2xml.fromstring(str_data)
-        return Json2xml.json2xml(data)
-
-if __name__ == "__main__":
-    main(sys.argv)

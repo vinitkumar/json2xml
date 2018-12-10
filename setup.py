@@ -15,7 +15,7 @@ setup(
     install_requires=[
                       'dict2xml==1.5',
                       'six==1.11.0',
-                      'requests==2.18.4',
+                      'requests>=2.20.0',
                       'xmltodict==0.11.0'
                       ],
 )

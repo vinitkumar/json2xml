@@ -3,9 +3,8 @@
 [![Build Status](https://travis-ci.org/vinitkumar/json2xml.svg?branch=master)](https://travis-ci.org/vinitkumar/json2xml)
 [![Downloads](https://pepy.tech/badge/json2xml)](https://pepy.tech/project/json2xml)
 
-A Simple python utility to convert JSON to XML(Supports 3.5.x and 3.6.x).
-It can be used to convert a json file to xml or from an URL that returns json data.
-
+A simple python utility to convert JSON to XML(Supports 3.5.x and 3.6.x and 3.7.x).
+It can be used to convert a json to xml from a json file, URL or even from a JSON string.
 ### How to install
 
 ```
@@ -53,5 +52,5 @@ data_object.json2xml() #xml output
 
 ### Bugs, features
 
-- If you find any bug, open a [new ticket](https://github.com/vinitkumar/json2xml/issues/new)
-- If you have an intresting Idea for contribution, open a ticket for that too and propose the idea. If we agree, you can open a pull request.
+- If you find any bug, open a [BUG](https://github.com/vinitkumar/json2xml/issues/new?assignees=&labels=&template=bug_report.md&title=)
+- If you have an intresting Idea for contribution, open a [FEATURE](https://github.com/vinitkumar/json2xml/issues/new?assignees=&labels=&template=feature_request.md&title=) and propose the idea. If we agree, you can open a pull request.

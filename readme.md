@@ -52,5 +52,5 @@ data_object.json2xml() #xml output
 
 ### Bugs, features
 
-- If you find any bug, open a [BUG](https://github.com/vinitkumar/json2xml/issues/new?assignees=&labels=&template=bug_report.md&title=)
+- If you find any bug, open a [BUG](https://github.com/vinitkumar/json2xml/issues/new?assignees=&labels=&template=bug_report.md&title=).
 - If you have an intresting Idea for contribution, open a [FEATURE](https://github.com/vinitkumar/json2xml/issues/new?assignees=&labels=&template=feature_request.md&title=) and propose the idea. If we agree, you can open a pull request.

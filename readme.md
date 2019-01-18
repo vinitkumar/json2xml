@@ -4,7 +4,7 @@
 [![Downloads](https://pepy.tech/badge/json2xml)](https://pepy.tech/project/json2xml)
 
 A simple python utility to convert JSON to XML(supports latest stable version of 3.7.x, 3.6.x and 3.5.x series).
-It accepts string from url, file, and directly json string
+It accepts string from url, file, and directly from json string
 
 ### Installation
 

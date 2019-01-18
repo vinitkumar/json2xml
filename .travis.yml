@@ -1,7 +1,9 @@
 language: python
+dist: xenial
 python:
-  - "3.6.0"
-  - "3.5.2"
+  - "3.7.2"
+  - "3.6"
+  - "3.5"
 install:
   - python setup.py install
 # command to run tests

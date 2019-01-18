@@ -4,3 +4,4 @@ json2xml.egg-info
 build
 *.swp
 dist/*
+.mypy_cache

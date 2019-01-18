@@ -1,8 +1,8 @@
 language: python
 python:
-  - "3.7.2"
-  - "3.6.8"
-  - "3.5.6"
+  - "3.7"
+  - "3.6"
+  - "3.5"
 install:
   - python setup.py install
 # command to run tests

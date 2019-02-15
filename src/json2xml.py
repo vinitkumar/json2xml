@@ -1,7 +1,5 @@
 #! /usr/bin/env python
-import argparse
 import json
-import sys
 
 import dict2xml
 import requests

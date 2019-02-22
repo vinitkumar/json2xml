@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '2.2.1'
+version = '2.3.0'
 
 setup(
     name='json2xml',

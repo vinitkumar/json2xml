@@ -6,7 +6,7 @@
 
 import unittest
 
-from json2xml import json2xml
+from json2xml import json2xml, readfromjson, readfromstring, readfromurl
 
 
 class TestJson2xml(unittest.TestCase):
@@ -18,5 +18,11 @@ class TestJson2xml(unittest.TestCase):
     def tearDown(self):
         """Tear down test fixtures, if any."""
 
-    def test_000_something(self):
+    def test_read_from_json(self):
         """Test something."""
+        data = readfromjson("examples/licht.json")
+        assert type(data) is dict
+
+    def test_read_from_url(self):
+        data = readfromurl("https://coderwall.com/vinitcool76.json")
+        assert type(data) is dict

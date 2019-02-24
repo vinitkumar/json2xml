@@ -3,7 +3,7 @@ import requests
 import sys
 
 
-def readfromjson(filename: str):
+def readfromjson(filename: str) -> dict:
     """
     Reads a json string and emits json string
     """
@@ -11,6 +11,7 @@ def readfromjson(filename: str):
         json_data = open(filename)
         data = json.load(json_data)
         json_data.close()
+        print(type(data))
         return data
     except ValueError as e:
         print(e)
@@ -20,7 +21,7 @@ def readfromjson(filename: str):
         sys.exit(e)
 
 
-def readfromurl(url: str, params: None):
+def readfromurl(url: str, params: dict = None) -> dict:
     """
     Loads json from an URL over the internets
     """
@@ -32,7 +33,7 @@ def readfromurl(url: str, params: None):
         sys.exit(response.text)
 
 
-def readfromstring(jsondata: str):
+def readfromstring(jsondata: str) -> dict:
     """
     Loads json from string
     """

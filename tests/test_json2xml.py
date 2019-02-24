@@ -26,3 +26,9 @@ class TestJson2xml(unittest.TestCase):
     def test_read_from_url(self):
         data = readfromurl("https://coderwall.com/vinitcool76.json")
         assert type(data) is dict
+
+    def test_read_from_string(self):
+        data = readfromstring(
+            '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
+        )
+        assert type(data) is dict

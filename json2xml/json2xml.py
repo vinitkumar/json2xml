@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
-import sys
-import dict2xml
-import requests
 
 
 class Json2xml(object):

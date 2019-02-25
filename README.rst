@@ -60,6 +60,29 @@ The usage is simple:
     data = readfromjson("examples/licht.json")
     print(json2xml.Json2xml(data).to_xml())
 
+
+** Custom Wrappers and indent***
+
+By defualt, a wrapper `all` and indent `2` is set. However, you can change this easily in your code like this:
+
+.. code-block:: python
+
+    from json2xml import json2xml, readfromurl, readfromstring, readfromjson
+    data = readfromstring(
+        '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
+    )
+    print(json2xml.Json2xml(data, wrapper="custom", indent=8).to_xml())
+
+
+Outputs this:
+
+.. code-block:: xml
+    <custom>
+        <avatar_url>https://avatars0.githubusercontent.com/u/1?v=4</avatar_url>
+        <id>1</id>
+        <login>mojombo</login>
+    </custom>
+
 The methods are simple and easy to use and there are also checks inside of code to exit cleanly
 in case any of the input(file, string or API URL) returns invalid JSON.
 

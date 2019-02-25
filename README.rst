@@ -30,7 +30,35 @@ Simple Python Library to convert JSON to XML
 Features
 --------
 
-* TODO
+It lets you convert json to xml in following ways:
+
+* from a `json` string
+* from a `json` file
+* from an API that emits `json` data
+
+Usage
+-----
+
+The usage is simple:
+
+    from json2xml import json2xml, readfromurl, readfromstring, readfromjson
+
+    # get the xml from an URL that return json
+    data = readfromurl("https://coderwall.com/vinitcool76.json")
+    print(json2xml.Json2xml(data).to_xml())
+
+    # get the xml from a json string
+    data = readfromstring(
+        '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
+    )
+    print(json2xml.Json2xml(data).to_xml())
+
+    # get the data from an URL
+    data = readfromjson("examples/licht.json")
+    print(json2xml.Json2xml(data).to_xml())
+
+The methods are simple and easy to use and there are also checks inside of code to exit cleanly
+in case any of the input(file, string or API URL) returns invalid JSON.
 
 Credits
 -------

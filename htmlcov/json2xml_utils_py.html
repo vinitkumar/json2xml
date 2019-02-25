@@ -42,22 +42,22 @@
 
 <div class="help_panel">
     <img id="panel_icon" src="keybd_open.png" alt="Hide keyboard shortcuts" />
-    <p class="legend">Hot-keys on this page</p>
+<p class="legend">Hot-keys on this page</p>
     <div>
-    <p class="keyhelp">
+<p class="keyhelp">
         <span class="key">r</span>
         <span class="key">m</span>
         <span class="key">x</span>
         <span class="key">p</span> &nbsp; toggle line displays
     </p>
-    <p class="keyhelp">
+<p class="keyhelp">
         <span class="key">j</span>
         <span class="key">k</span> &nbsp; next/prev highlighted chunk
     </p>
-    <p class="keyhelp">
+<p class="keyhelp">
         <span class="key">0</span> &nbsp; (zero) top of page
     </p>
-    <p class="keyhelp">
+<p class="keyhelp">
         <span class="key">1</span> &nbsp; (one) first highlighted chunk
     </p>
     </div>
@@ -117,7 +117,7 @@
 <p id="n48" class="stm mis"><a href="#n48">48</a></p>
 <p id="n49" class="stm mis"><a href="#n49">49</a></p>
 <p id="n50" class="stm run hide_run"><a href="#n50">50</a></p>
-
+                
             </td>
             <td class="text">
 <p id="t1" class="stm run hide_run"><span class="key">import</span> <span class="nam">json</span><span class="strut">&nbsp;</span></p>
@@ -125,52 +125,52 @@
 <p id="t3" class="stm run hide_run"><span class="key">import</span> <span class="nam">sys</span><span class="strut">&nbsp;</span></p>
 <p id="t4" class="pln"><span class="strut">&nbsp;</span></p>
 <p id="t5" class="pln"><span class="strut">&nbsp;</span></p>
-<p id="t6" class="stm run hide_run"><span class="key">def</span> <span class="nam">readfromjson</span><span class="op">(</span><span class="nam">filename</span><span class="op">:</span> <span class="nam">str</span><span class="op">)</span> <span class="op">-></span> <span class="nam">dict</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t7" class="pln">    <span class="str">"""</span><span class="strut">&nbsp;</span></p>
-<p id="t8" class="pln"><span class="str">    Reads a json string and emits json string</span><span class="strut">&nbsp;</span></p>
-<p id="t9" class="pln"><span class="str">    """</span><span class="strut">&nbsp;</span></p>
-<p id="t10" class="stm run hide_run">    <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t11" class="stm run hide_run">        <span class="nam">json_data</span> <span class="op">=</span> <span class="nam">open</span><span class="op">(</span><span class="nam">filename</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t12" class="stm run hide_run">        <span class="nam">data</span> <span class="op">=</span> <span class="nam">json</span><span class="op">.</span><span class="nam">load</span><span class="op">(</span><span class="nam">json_data</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t13" class="stm run hide_run">        <span class="nam">json_data</span><span class="op">.</span><span class="nam">close</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t14" class="stm run hide_run">        <span class="nam">print</span><span class="op">(</span><span class="nam">type</span><span class="op">(</span><span class="nam">data</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t15" class="stm run hide_run">        <span class="key">return</span> <span class="nam">data</span><span class="strut">&nbsp;</span></p>
-<p id="t16" class="stm run hide_run">    <span class="key">except</span> <span class="nam">ValueError</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t17" class="stm mis">        <span class="nam">print</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t18" class="stm mis">        <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t19" class="stm run hide_run">    <span class="key">except</span> <span class="nam">IOError</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t20" class="stm run hide_run">        <span class="nam">print</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t21" class="stm run hide_run">        <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t6" class="stm run hide_run"><span class="key">def</span> <span class="nam">readfromjson</span><span class="op">(</span><span class="nam">filename</span><span class="op">:</span> <span class="nam">str</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="nam">dict</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t7" class="pln">&nbsp; &nbsp; <span class="str">&quot;&quot;&quot;</span><span class="strut">&nbsp;</span></p>
+<p id="t8" class="pln"><span class="str">&nbsp; &nbsp; Reads a json string and emits json string</span><span class="strut">&nbsp;</span></p>
+<p id="t9" class="pln"><span class="str">&nbsp; &nbsp; &quot;&quot;&quot;</span><span class="strut">&nbsp;</span></p>
+<p id="t10" class="stm run hide_run">&nbsp; &nbsp; <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t11" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">json_data</span> <span class="op">=</span> <span class="nam">open</span><span class="op">(</span><span class="nam">filename</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t12" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">data</span> <span class="op">=</span> <span class="nam">json</span><span class="op">.</span><span class="nam">load</span><span class="op">(</span><span class="nam">json_data</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t13" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">json_data</span><span class="op">.</span><span class="nam">close</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t14" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">print</span><span class="op">(</span><span class="nam">type</span><span class="op">(</span><span class="nam">data</span><span class="op">)</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t15" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="key">return</span> <span class="nam">data</span><span class="strut">&nbsp;</span></p>
+<p id="t16" class="stm run hide_run">&nbsp; &nbsp; <span class="key">except</span> <span class="nam">ValueError</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t17" class="stm mis">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">print</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t18" class="stm mis">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t19" class="stm run hide_run">&nbsp; &nbsp; <span class="key">except</span> <span class="nam">IOError</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t20" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">print</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t21" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t22" class="pln"><span class="strut">&nbsp;</span></p>
 <p id="t23" class="pln"><span class="strut">&nbsp;</span></p>
-<p id="t24" class="stm run hide_run"><span class="key">def</span> <span class="nam">readfromurl</span><span class="op">(</span><span class="nam">url</span><span class="op">:</span> <span class="nam">str</span><span class="op">,</span> <span class="nam">params</span><span class="op">:</span> <span class="nam">dict</span> <span class="op">=</span> <span class="key">None</span><span class="op">)</span> <span class="op">-></span> <span class="nam">dict</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t25" class="pln">    <span class="str">"""</span><span class="strut">&nbsp;</span></p>
-<p id="t26" class="pln"><span class="str">    Loads json from an URL over the internets</span><span class="strut">&nbsp;</span></p>
-<p id="t27" class="pln"><span class="str">    """</span><span class="strut">&nbsp;</span></p>
-<p id="t28" class="stm run hide_run">    <span class="nam">response</span> <span class="op">=</span> <span class="nam">requests</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="nam">url</span><span class="op">,</span> <span class="nam">params</span><span class="op">=</span><span class="nam">params</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t29" class="stm run hide_run">    <span class="key">if</span> <span class="nam">response</span><span class="op">.</span><span class="nam">status_code</span> <span class="op">==</span> <span class="num">200</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t30" class="stm run hide_run">        <span class="nam">data</span> <span class="op">=</span> <span class="nam">response</span><span class="op">.</span><span class="nam">json</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t31" class="stm run hide_run">        <span class="key">return</span> <span class="nam">data</span><span class="strut">&nbsp;</span></p>
-<p id="t32" class="pln">    <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t33" class="stm run hide_run">        <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="nam">response</span><span class="op">.</span><span class="nam">text</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t24" class="stm run hide_run"><span class="key">def</span> <span class="nam">readfromurl</span><span class="op">(</span><span class="nam">url</span><span class="op">:</span> <span class="nam">str</span><span class="op">,</span> <span class="nam">params</span><span class="op">:</span> <span class="nam">dict</span> <span class="op">=</span> <span class="key">None</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="nam">dict</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t25" class="pln">&nbsp; &nbsp; <span class="str">&quot;&quot;&quot;</span><span class="strut">&nbsp;</span></p>
+<p id="t26" class="pln"><span class="str">&nbsp; &nbsp; Loads json from an URL over the internets</span><span class="strut">&nbsp;</span></p>
+<p id="t27" class="pln"><span class="str">&nbsp; &nbsp; &quot;&quot;&quot;</span><span class="strut">&nbsp;</span></p>
+<p id="t28" class="stm run hide_run">&nbsp; &nbsp; <span class="nam">response</span> <span class="op">=</span> <span class="nam">requests</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="nam">url</span><span class="op">,</span> <span class="nam">params</span><span class="op">=</span><span class="nam">params</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t29" class="stm run hide_run">&nbsp; &nbsp; <span class="key">if</span> <span class="nam">response</span><span class="op">.</span><span class="nam">status_code</span> <span class="op">==</span> <span class="num">200</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t30" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">data</span> <span class="op">=</span> <span class="nam">response</span><span class="op">.</span><span class="nam">json</span><span class="op">(</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t31" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="key">return</span> <span class="nam">data</span><span class="strut">&nbsp;</span></p>
+<p id="t32" class="pln">&nbsp; &nbsp; <span class="key">else</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t33" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="nam">response</span><span class="op">.</span><span class="nam">text</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
 <p id="t34" class="pln"><span class="strut">&nbsp;</span></p>
 <p id="t35" class="pln"><span class="strut">&nbsp;</span></p>
-<p id="t36" class="stm run hide_run"><span class="key">def</span> <span class="nam">readfromstring</span><span class="op">(</span><span class="nam">jsondata</span><span class="op">:</span> <span class="nam">str</span><span class="op">)</span> <span class="op">-></span> <span class="nam">dict</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t37" class="pln">    <span class="str">"""</span><span class="strut">&nbsp;</span></p>
-<p id="t38" class="pln"><span class="str">    Loads json from string</span><span class="strut">&nbsp;</span></p>
-<p id="t39" class="pln"><span class="str">    """</span><span class="strut">&nbsp;</span></p>
-<p id="t40" class="stm run hide_run">    <span class="key">if</span> <span class="nam">type</span><span class="op">(</span><span class="nam">jsondata</span><span class="op">)</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">str</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t41" class="stm mis">        <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="str">"the input doesn't seem to be valid string"</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t42" class="stm run hide_run">    <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t43" class="stm run hide_run">        <span class="nam">data</span> <span class="op">=</span> <span class="nam">json</span><span class="op">.</span><span class="nam">loads</span><span class="op">(</span><span class="nam">jsondata</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t44" class="stm run hide_run">    <span class="key">except</span> <span class="nam">ValueError</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t45" class="stm run hide_run">        <span class="nam">print</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t46" class="stm run hide_run">        <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t47" class="stm mis">    <span class="key">except</span> <span class="nam">Exception</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t48" class="stm mis">        <span class="nam">print</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t49" class="stm mis">        <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-<p id="t50" class="stm run hide_run">    <span class="key">return</span> <span class="nam">data</span><span class="strut">&nbsp;</span></p>
-
+<p id="t36" class="stm run hide_run"><span class="key">def</span> <span class="nam">readfromstring</span><span class="op">(</span><span class="nam">jsondata</span><span class="op">:</span> <span class="nam">str</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="nam">dict</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t37" class="pln">&nbsp; &nbsp; <span class="str">&quot;&quot;&quot;</span><span class="strut">&nbsp;</span></p>
+<p id="t38" class="pln"><span class="str">&nbsp; &nbsp; Loads json from string</span><span class="strut">&nbsp;</span></p>
+<p id="t39" class="pln"><span class="str">&nbsp; &nbsp; &quot;&quot;&quot;</span><span class="strut">&nbsp;</span></p>
+<p id="t40" class="stm run hide_run">&nbsp; &nbsp; <span class="key">if</span> <span class="nam">type</span><span class="op">(</span><span class="nam">jsondata</span><span class="op">)</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">str</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t41" class="stm mis">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="str">&quot;the input doesn&#39;t seem to be valid string&quot;</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t42" class="stm run hide_run">&nbsp; &nbsp; <span class="key">try</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t43" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">data</span> <span class="op">=</span> <span class="nam">json</span><span class="op">.</span><span class="nam">loads</span><span class="op">(</span><span class="nam">jsondata</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t44" class="stm run hide_run">&nbsp; &nbsp; <span class="key">except</span> <span class="nam">ValueError</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t45" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">print</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t46" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t47" class="stm mis">&nbsp; &nbsp; <span class="key">except</span> <span class="nam">Exception</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t48" class="stm mis">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">print</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t49" class="stm mis">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">sys</span><span class="op">.</span><span class="nam">exit</span><span class="op">(</span><span class="nam">e</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+<p id="t50" class="stm run hide_run">&nbsp; &nbsp; <span class="key">return</span> <span class="nam">data</span><span class="strut">&nbsp;</span></p>
+                
             </td>
         </tr>
     </table>
@@ -179,8 +179,8 @@
 <div id="footer">
     <div class="content">
         <p>
-            <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.5.2</a>,
-            created at 2019-02-26 01:43
+            <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.org">coverage.py v4.0.3</a>,
+            created at 2019-02-26 01:48
         </p>
     </div>
 </div>

@@ -42,22 +42,22 @@
 
 <div class="help_panel">
     <img id="panel_icon" src="keybd_open.png" alt="Hide keyboard shortcuts" />
-    <p class="legend">Hot-keys on this page</p>
+<p class="legend">Hot-keys on this page</p>
     <div>
-    <p class="keyhelp">
+<p class="keyhelp">
         <span class="key">r</span>
         <span class="key">m</span>
         <span class="key">x</span>
         <span class="key">p</span> &nbsp; toggle line displays
     </p>
-    <p class="keyhelp">
+<p class="keyhelp">
         <span class="key">j</span>
         <span class="key">k</span> &nbsp; next/prev highlighted chunk
     </p>
-    <p class="keyhelp">
+<p class="keyhelp">
         <span class="key">0</span> &nbsp; (zero) top of page
     </p>
-    <p class="keyhelp">
+<p class="keyhelp">
         <span class="key">1</span> &nbsp; (one) first highlighted chunk
     </p>
     </div>
@@ -80,7 +80,7 @@
 <p id="n11" class="stm run hide_run"><a href="#n11">11</a></p>
 <p id="n12" class="stm run hide_run"><a href="#n12">12</a></p>
 <p id="n13" class="stm run hide_run"><a href="#n13">13</a></p>
-
+                
             </td>
             <td class="text">
 <p id="t1" class="pln"><span class="com"># -*- coding: utf-8 -*-</span><span class="strut">&nbsp;</span></p>
@@ -88,15 +88,15 @@
 <p id="t3" class="pln"><span class="strut">&nbsp;</span></p>
 <p id="t4" class="pln"><span class="strut">&nbsp;</span></p>
 <p id="t5" class="stm run hide_run"><span class="key">class</span> <span class="nam">Json2xml</span><span class="op">(</span><span class="nam">object</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t6" class="stm run hide_run">    <span class="key">def</span> <span class="nam">__init__</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">data</span><span class="op">:</span> <span class="nam">str</span><span class="op">,</span> <span class="nam">wrapper</span><span class="op">:</span> <span class="nam">str</span> <span class="op">=</span> <span class="str">"all"</span><span class="op">,</span> <span class="nam">indent</span><span class="op">:</span> <span class="nam">int</span> <span class="op">=</span> <span class="num">4</span><span class="op">)</span> <span class="op">-></span> <span class="key">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t7" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">data</span> <span class="op">=</span> <span class="nam">data</span><span class="strut">&nbsp;</span></p>
-<p id="t8" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">indent</span> <span class="op">=</span> <span class="nam">indent</span><span class="strut">&nbsp;</span></p>
-<p id="t9" class="stm run hide_run">        <span class="nam">self</span><span class="op">.</span><span class="nam">wrapper</span> <span class="op">=</span> <span class="nam">wrapper</span><span class="strut">&nbsp;</span></p>
+<p id="t6" class="stm run hide_run">&nbsp; &nbsp; <span class="key">def</span> <span class="nam">__init__</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">data</span><span class="op">:</span> <span class="nam">str</span><span class="op">,</span> <span class="nam">wrapper</span><span class="op">:</span> <span class="nam">str</span> <span class="op">=</span> <span class="str">&quot;all&quot;</span><span class="op">,</span> <span class="nam">indent</span><span class="op">:</span> <span class="nam">int</span> <span class="op">=</span> <span class="num">4</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="key">None</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t7" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">self</span><span class="op">.</span><span class="nam">data</span> <span class="op">=</span> <span class="nam">data</span><span class="strut">&nbsp;</span></p>
+<p id="t8" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">self</span><span class="op">.</span><span class="nam">indent</span> <span class="op">=</span> <span class="nam">indent</span><span class="strut">&nbsp;</span></p>
+<p id="t9" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="nam">self</span><span class="op">.</span><span class="nam">wrapper</span> <span class="op">=</span> <span class="nam">wrapper</span><span class="strut">&nbsp;</span></p>
 <p id="t10" class="pln"><span class="strut">&nbsp;</span></p>
-<p id="t11" class="stm run hide_run">    <span class="key">def</span> <span class="nam">to_xml</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t12" class="stm run hide_run">        <span class="key">if</span> <span class="nam">self</span><span class="op">.</span><span class="nam">data</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
-<p id="t13" class="stm run hide_run">            <span class="key">return</span> <span class="nam">dict2xml</span><span class="op">.</span><span class="nam">dict2xml</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">data</span><span class="op">,</span> <span class="nam">self</span><span class="op">.</span><span class="nam">wrapper</span><span class="op">,</span> <span class="nam">indent</span><span class="op">=</span><span class="nam">self</span><span class="op">.</span><span class="nam">indent</span> <span class="op">*</span> <span class="str">" "</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
-
+<p id="t11" class="stm run hide_run">&nbsp; &nbsp; <span class="key">def</span> <span class="nam">to_xml</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t12" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; <span class="key">if</span> <span class="nam">self</span><span class="op">.</span><span class="nam">data</span><span class="op">:</span><span class="strut">&nbsp;</span></p>
+<p id="t13" class="stm run hide_run">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="key">return</span> <span class="nam">dict2xml</span><span class="op">.</span><span class="nam">dict2xml</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">data</span><span class="op">,</span> <span class="nam">self</span><span class="op">.</span><span class="nam">wrapper</span><span class="op">,</span> <span class="nam">indent</span><span class="op">=</span><span class="nam">self</span><span class="op">.</span><span class="nam">indent</span> <span class="op">*</span> <span class="str">&quot; &quot;</span><span class="op">)</span><span class="strut">&nbsp;</span></p>
+                
             </td>
         </tr>
     </table>
@@ -105,8 +105,8 @@
 <div id="footer">
     <div class="content">
         <p>
-            <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.5.2</a>,
-            created at 2019-02-26 01:43
+            <a class="nav" href="index.html">&#xab; index</a> &nbsp; &nbsp; <a class="nav" href="https://coverage.readthedocs.org">coverage.py v4.0.3</a>,
+            created at 2019-02-26 01:48
         </p>
     </div>
 </div>

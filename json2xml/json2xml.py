@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import dict2xml
 
 
 class Json2xml(object):

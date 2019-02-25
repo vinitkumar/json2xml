@@ -40,6 +40,7 @@ Usage
 -----
 
 The usage is simple:
+
 .. code-block:: python
       from json2xml import json2xml, readfromurl, readfromstring, readfromjson
 

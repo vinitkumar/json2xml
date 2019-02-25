@@ -77,6 +77,7 @@ By defualt, a wrapper `all` and indent `2` is set. However, you can change this 
 Outputs this:
 
 .. code-block:: xml
+
     <custom>
         <avatar_url>https://avatars0.githubusercontent.com/u/1?v=4</avatar_url>
         <id>1</id>

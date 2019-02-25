@@ -1,21 +1,46 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""The setup script."""
+
 from setuptools import setup, find_packages
 
-version = '2.3.0'
+with open("README.rst") as readme_file:
+    readme = readme_file.read()
+
+with open("HISTORY.rst") as history_file:
+    history = history_file.read()
+
+requirements = [open("requirements_prod.txt").read()]
+
+setup_requirements = []
+
+test_requirements = []
 
 setup(
-    name='json2xml',
-    version=version,
-    description='A simple python package to convert json from file, URL or string to xml data',
-    author='Vinit Kumar',
-    author_email='vinit1414.08@bitmesra.ac.in',
-    url='https://github.com/vinitkumar/json2xml',
-    packages=find_packages(),
-    zip_safe=False,
+    author="Vinit Kumar",
+    author_email="mail@vinitkumar.me",
+    classifiers=[
+        "Development Status :: 2 - Pre-Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: Apache Software License",
+        "Natural Language :: English",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+    ],
+    description="Simple Python Library to convert JSON to XML",
+    install_requires=requirements,
+    license="Apache Software License 2.0",
+    long_description=readme + "\n\n" + history,
     include_package_data=True,
-    install_requires=[
-                      'dict2xml==1.5',
-                      'six==1.11.0',
-                      'requests>=2.20.0',
-                      'xmltodict==0.11.0'
-                      ],
+    keywords="json2xml",
+    name="json2xml",
+    packages=find_packages(include=["json2xml"]),
+    setup_requires=setup_requirements,
+    test_suite="tests",
+    tests_require=test_requirements,
+    url="https://github.com/vinitkumar/json2xml",
+    version="3.0.0",
+    zip_safe=False,
 )

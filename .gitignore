@@ -5,3 +5,4 @@ build
 *.swp
 dist/*
 .mypy_cache
+.eggs

@@ -6,7 +6,9 @@
 
 import unittest
 import pytest
+import xmltodict
 
+from collections import OrderedDict
 from json2xml import json2xml, readfromjson, readfromstring, readfromurl
 
 
@@ -55,3 +57,11 @@ class TestJson2xml(unittest.TestCase):
                 '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"'
             )
         assert pytest_wrapped_e.type == SystemExit
+
+    def test_json_to_xml_conversion(self):
+        data = readfromstring(
+            '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
+        )
+        xmldata = json2xml.Json2xml(data).to_xml()
+        dict_from_xml = xmltodict.parse(xmldata)
+        assert type(dict_from_xml["all"]) == OrderedDict

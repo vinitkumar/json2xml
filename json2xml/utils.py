@@ -11,7 +11,6 @@ def readfromjson(filename: str) -> dict:
         json_data = open(filename)
         data = json.load(json_data)
         json_data.close()
-        print(type(data))
         return data
     except ValueError as e:
         print(e)

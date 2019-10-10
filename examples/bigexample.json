@@ -1,0 +1,105 @@
+[
+{
+    "publication_number": "EP-0477689-B1",
+    "application_number": "EP-91115483-A",
+    "country_code": "EP",
+    "kind_code": "B1",
+    "application_kind": "A",
+    "application_number_formatted": "EP19910115483",
+    "pct_number": "",
+    "family_id": "24344316",
+    "title_localized": [
+      {
+        "text": "Verfahren zur Herstellung eines zur Filtration geeigneten porösen Polysulfon-Mediums",
+        "language": "de"
+      },
+      {
+        "text": "Procédé de fabrication d&#39;un milieu poreux en polysulfone approprié à la filtration",
+        "language": "fr"
+      },
+      {
+        "text": "Process for the preparation of porous polysulfone media suitable for filtration",
+        "language": "en"
+      }
+    ],
+    "inventor": [
+      "BEDWELL, WILLIAM B.",
+      "YATES, STEPHEN F."
+    ],
+    "inventor_harmonized": [
+      {
+        "name": "BEDWELL WILLIAM B",
+        "country_code": "US"
+      },
+      {
+        "name": "YATES STEPHEN F",
+        "country_code": "US"
+      }
+    ],
+    "assignee": [
+      "Cpc Engineering Corporation"
+    ],
+    "assignee_harmonized": [
+      {
+        "name": "CPC ENG CORP",
+        "country_code": "US"
+      }
+    ],
+    "entity_status": "",
+    "art_unit": ""
+  },
+  {
+    "publication_number": "EP-2309181-B1",
+    "application_number": "EP-10012345-A",
+    "country_code": "EP",
+    "kind_code": "B1",
+    "application_kind": "A",
+    "application_number_formatted": "EP20100012345",
+    "pct_number": "",
+    "family_id": "43332270",
+    "title_localized": [
+      {
+        "text": "Installation de chaudière à combustion à oxy-fuel et son procédé de fonctionnement",
+        "language": "fr"
+      },
+      {
+        "text": "Oxyfuel combustion boiler plant and operation method of oxyfuel combustion boiler plant",
+        "language": "en"
+      },
+      {
+        "text": "Oxyfuel-Brennkessel und Betriebsverfahren dafür",
+        "language": "de"
+      }
+    ],
+    "inventor": [
+      "TANIGUCHI, MASAYUKI",
+      "SHIBATA, TSUYOSHI",
+      "HAYASHI, YOSHIHARU"
+    ],
+    "inventor_harmonized": [
+      {
+        "name": "TANIGUCHI MASAYUKI",
+        "country_code": "JP"
+      },
+      {
+        "name": "SHIBATA TSUYOSHI",
+        "country_code": "JP"
+      },
+      {
+        "name": "HAYASHI YOSHIHARU",
+        "country_code": "JP"
+      }
+    ],
+    "assignee": [
+      "Mitsubishi Hitachi Power Systems, Ltd."
+    ],
+    "assignee_harmonized": [
+      {
+        "name": "MITSUBISHI HITACHI POWER SYS",
+        "country_code": "JP"
+      }
+    ],
+    "entity_status": "",
+    "art_unit": ""
+  }
+]

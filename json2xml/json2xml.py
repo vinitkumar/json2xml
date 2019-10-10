@@ -4,7 +4,7 @@ import dicttoxml
 
 
 class Json2xml(object):
-    def __init__(self, data: str, wrapper: str = "all", pretty:bool=True) -> None:
+    def __init__(self, data: str, wrapper: str = "all", pretty: bool=True) -> None:
         self.data = data
         self.pretty = pretty
         self.wrapper = wrapper

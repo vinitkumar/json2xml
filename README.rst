@@ -66,7 +66,7 @@ The usage is simple:
 
 ** Custom Wrappers and indent***
 
-By default, a wrapper `all` and indent `2` is set. However, you can change this easily in your code like this:
+By default, a wrapper `all` and pretty `True is set. However, you can change this easily in your code like this:
 
 .. code-block:: python
 
@@ -74,18 +74,18 @@ By default, a wrapper `all` and indent `2` is set. However, you can change this 
     data = readfromstring(
         '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
     )
-    print(json2xml.Json2xml(data, wrapper="custom", indent=8).to_xml())
+    print(json2xml.Json2xml(data, wrapper="custom", pretty=True).to_xml())
 
 
 Outputs this:
 
 .. code-block:: xml
-
-    <custom>
-        <avatar_url>https://avatars0.githubusercontent.com/u/1?v=4</avatar_url>
-        <id>1</id>
-        <login>mojombo</login>
-    </custom>
+    <?xml version="1.0" ?>
+    <all>
+      <login type="str">mojombo</login>
+      <id type="int">1</id>
+      <avatar_url type="str">https://avatars0.githubusercontent.com/u/1?v=4</avatar_url>
+    </all>
 
 The methods are simple and easy to use and there are also checks inside of code to exit cleanly
 in case any of the input(file, string or API URL) returns invalid JSON.

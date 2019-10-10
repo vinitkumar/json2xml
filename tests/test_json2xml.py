@@ -70,7 +70,7 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
         )
-        xmldata = json2xml.Json2xml(data, wrapper="test", indent=8).to_xml()
+        xmldata = json2xml.Json2xml(data, wrapper="test", pretty=True).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # test must be present, snce it is the wrpper
         assert "test" in old_dict.keys()

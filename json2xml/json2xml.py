@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
-import dict2xml
+from xml.dom.minidom import parseString
+import dicttoxml
 
 
 class Json2xml(object):
-    def __init__(self, data: str, wrapper: str = "all", indent: int = 4) -> None:
+    def __init__(self, data: str, wrapper: str = "all", pretty: bool=True) -> None:
         self.data = data
-        self.indent = indent
+        self.pretty = pretty
         self.wrapper = wrapper
 
     def to_xml(self):
+        """
+        Convert to xml using dicttoxml.dicttoxml and then pretty print it.
+        """
         if self.data:
-            return dict2xml.dict2xml(self.data, self.wrapper, indent=self.indent * " ")
+            xml_data = dicttoxml.dicttoxml(self.data, custom_root=self.wrapper)
+            if self.pretty:
+                return parseString(xml_data).toprettyxml()
+            return xml_data

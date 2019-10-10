@@ -80,6 +80,7 @@ By default, a wrapper `all` and pretty `True is set. However, you can change thi
 Outputs this:
 
 .. code-block:: xml
+
     <?xml version="1.0" ?>
     <all>
       <login type="str">mojombo</login>

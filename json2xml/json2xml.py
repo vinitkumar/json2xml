@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import dict2xml
+import dicttoxml
 
 
 class Json2xml(object):
@@ -9,5 +9,17 @@ class Json2xml(object):
         self.wrapper = wrapper
 
     def to_xml(self):
+        """
+        dicttoxml.dicttoxml(
+            obj,
+            root=True,
+            custom_root='root',
+            ids=False,
+            attr_type=True,
+            item_func=<function default_item_func at 0x1031d4320>,
+            cdata=False,
+        )
+
+        """
         if self.data:
-            return dict2xml.dict2xml(self.data, self.wrapper, indent=self.indent * " ")
+            return dicttoxml.dicttoxml(self.data, custom_root=self.wrapper)

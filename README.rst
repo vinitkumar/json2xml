@@ -66,7 +66,7 @@ The usage is simple:
 
 ** Custom Wrappers and indent***
 
-By default, a wrapper `all` and pretty `True is set. However, you can change this easily in your code like this:
+By default, a wrapper `all` and pretty `True` is set. However, you can change this easily in your code like this:
 
 .. code-block:: python
 

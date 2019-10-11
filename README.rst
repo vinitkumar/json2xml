@@ -74,7 +74,7 @@ By default, a wrapper `all` and pretty `True` is set. However, you can change th
     data = readfromstring(
         '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
     )
-    print(json2xml.Json2xml(data, wrapper="custom", pretty=True).to_xml())
+    print(json2xml.Json2xml(data, wrapper="all", pretty=True).to_xml())
 
 
 Outputs this:

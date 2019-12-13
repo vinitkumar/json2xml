@@ -1,6 +1,7 @@
+"""Utils methods to convert XML data to dict from various sources"""
+import sys
 import json
 import requests
-import sys
 
 
 def readfromjson(filename: str) -> dict:
@@ -12,12 +13,12 @@ def readfromjson(filename: str) -> dict:
         data = json.load(json_data)
         json_data.close()
         return data
-    except ValueError as e:
-        print(e)
-        sys.exit(e)
-    except IOError as e:
-        print(e)
-        sys.exit(e)
+    except ValueError as exp:
+        print(exp)
+        sys.exit(exp)
+    except IOError as exp:
+        print(exp)
+        sys.exit(exp)
 
 
 def readfromurl(url: str, params: dict = None) -> dict:
@@ -28,22 +29,21 @@ def readfromurl(url: str, params: dict = None) -> dict:
     if response.status_code == 200:
         data = response.json()
         return data
-    else:
-        sys.exit(response.text)
+    sys.exit(response.text)
 
 
 def readfromstring(jsondata: str) -> dict:
     """
     Loads json from string
     """
-    if type(jsondata) is not str:
+    if not isinstance(jsondata, str):
         sys.exit("the input doesn't seem to be valid string")
     try:
         data = json.loads(jsondata)
-    except ValueError as e:
-        print(e)
-        sys.exit(e)
-    except Exception as e:
-        print(e)
-        sys.exit(e)
+    except ValueError as exp:
+        print(exp)
+        sys.exit(exp)
+    except Exception as exp:
+        print(exp)
+        sys.exit(exp)
     return data

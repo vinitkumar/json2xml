@@ -3,8 +3,12 @@ from xml.dom.minidom import parseString
 import dicttoxml
 
 
-class Json2xml(object):
-    def __init__(self, data: str, wrapper: str = "all", pretty: bool=True) -> None:
+class Json2xml:
+    def __init__(
+            self, data: str,
+            wrapper: str = "all",
+            pretty: bool = True
+    ):
         self.data = data
         self.pretty = pretty
         self.wrapper = wrapper
@@ -18,3 +22,4 @@ class Json2xml(object):
             if self.pretty:
                 return parseString(xml_data).toprettyxml()
             return xml_data
+        return None

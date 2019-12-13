@@ -5,10 +5,10 @@
 
 
 import unittest
+from collections import OrderedDict
 import pytest
 import xmltodict
 
-from collections import OrderedDict
 from json2xml import json2xml
 from json2xml.utils import readfromjson, readfromstring, readfromurl
 

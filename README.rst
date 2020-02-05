@@ -48,7 +48,7 @@ The usage is simple:
 .. code-block:: python
 
     from json2xml import json2xml
-    from json2xml.utils from readfromurl, readfromstring, readfromjson
+    from json2xml.utils import readfromurl, readfromstring, readfromjson
 
     # get the xml from an URL that return json
     data = readfromurl("https://coderwall.com/vinitcool76.json")
@@ -72,7 +72,7 @@ By default, a wrapper `all` and pretty `True` is set. However, you can change th
 .. code-block:: python
 
     from json2xml import json2xml
-    from json2xml.utils from readfromurl, readfromstring, readfromjson
+    from json2xml.utils import readfromurl, readfromstring, readfromjson
     data = readfromstring(
         '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
     )

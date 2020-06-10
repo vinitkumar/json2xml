@@ -91,7 +91,7 @@ Outputs this:
     </all>
 
 
-** Option Attribute Type
+** Optional Attribute Type Support**
 
 Now, we can also specify if the output xml needs to have type specified or not. Here is the usage:
 

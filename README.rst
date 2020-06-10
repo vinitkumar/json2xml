@@ -90,6 +90,33 @@ Outputs this:
       <avatar_url type="str">https://avatars0.githubusercontent.com/u/1?v=4</avatar_url>
     </all>
 
+
+** Optional Attribute Type Support**
+
+Now, we can also specify if the output xml needs to have type specified or not. Here is the usage:
+
+ .. code-block:: python
+
+    from json2xml import json2xml
+    from json2xml.utils import readfromurl, readfromstring, readfromjson
+    data = readfromstring(
+        '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
+    )
+    print(json2xml.Json2xml(data, wrapper="all", pretty=True, attr_type=False).to_xml())
+
+
+Outputs this:
+
+.. code-block:: xml
+
+    <?xml version="1.0" ?>
+    <all>
+      <login>mojombo</login>
+      <id>1</id>
+      <avatar_url>https://avatars0.githubusercontent.com/u/1?v=4</avatar_url>
+    </all>
+
+
 The methods are simple and easy to use and there are also checks inside of code to exit cleanly
 in case any of the input(file, string or API URL) returns invalid JSON.
 

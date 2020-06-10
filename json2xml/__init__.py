@@ -4,7 +4,7 @@
 
 __author__ = """Vinit Kumar"""
 __email__ = "mail@vinitkumar.me"
-__version__ = "3.3.2"
+__version__ = "3.4.0"
 
 
 # from .utils import readfromurl, readfromstring, readfromjson

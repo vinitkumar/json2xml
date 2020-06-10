@@ -91,5 +91,4 @@ install: clean ## install the package to the active Python's site-packages
 release-to-py:
 	rm -rf dist/*
 	python setup.py install
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+	twine upload dist/*

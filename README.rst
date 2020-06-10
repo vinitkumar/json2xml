@@ -65,7 +65,8 @@ The usage is simple:
     print(json2xml.Json2xml(data).to_xml())
 
 
-** Custom Wrappers and indent***
+Custom Wrappers and indent
+--------------------------
 
 By default, a wrapper `all` and pretty `True` is set. However, you can change this easily in your code like this:
 
@@ -91,7 +92,8 @@ Outputs this:
     </all>
 
 
-** Optional Attribute Type Support**
+Optional Attribute Type Support
+-------------------------------
 
 Now, we can also specify if the output xml needs to have type specified or not. Here is the usage:
 

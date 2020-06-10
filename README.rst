@@ -91,7 +91,6 @@ Outputs this:
       <avatar_url type="str">https://avatars0.githubusercontent.com/u/1?v=4</avatar_url>
     </all>
 
-
 Optional Attribute Type Support
 -------------------------------
 

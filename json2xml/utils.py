@@ -4,6 +4,19 @@ import json
 import requests
 
 
+class JSONReadError(Exception):
+    pass
+
+
+class URLReadError(Exception):
+    pass
+
+
+class StringReadError(Exception):
+    pass
+
+
+
 def readfromjson(filename: str) -> dict:
     """
     Reads a json string and emits json string
@@ -15,10 +28,10 @@ def readfromjson(filename: str) -> dict:
         return data
     except ValueError as exp:
         print(exp)
-        sys.exit(exp)
+        raise JSONReadError
     except IOError as exp:
         print(exp)
-        sys.exit(exp)
+        raise JSONReadError
 
 
 def readfromurl(url: str, params: dict = None) -> dict:
@@ -29,7 +42,8 @@ def readfromurl(url: str, params: dict = None) -> dict:
     if response.status_code == 200:
         data = response.json()
         return data
-    sys.exit(response.text)
+    # sys.exit(response.text)
+    raise URLReadError
 
 
 def readfromstring(jsondata: str) -> dict:
@@ -42,8 +56,10 @@ def readfromstring(jsondata: str) -> dict:
         data = json.loads(jsondata)
     except ValueError as exp:
         print(exp)
-        sys.exit(exp)
+        raise StringReadError
+        # sys.exit(exp)
     except Exception as exp:
         print(exp)
-        sys.exit(exp)
+        raise StringReadError
+        # sys.exit(exp)
     return data

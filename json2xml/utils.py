@@ -1,7 +1,19 @@
 """Utils methods to convert XML data to dict from various sources"""
-import sys
 import json
 import requests
+
+
+class JSONReadError(Exception):
+    pass
+
+
+class URLReadError(Exception):
+    pass
+
+
+class StringReadError(Exception):
+    pass
+
 
 
 def readfromjson(filename: str) -> dict:
@@ -15,10 +27,10 @@ def readfromjson(filename: str) -> dict:
         return data
     except ValueError as exp:
         print(exp)
-        sys.exit(exp)
+        raise JSONReadError
     except IOError as exp:
         print(exp)
-        sys.exit(exp)
+        raise JSONReadError("Invalid JSON File")
 
 
 def readfromurl(url: str, params: dict = None) -> dict:
@@ -29,7 +41,7 @@ def readfromurl(url: str, params: dict = None) -> dict:
     if response.status_code == 200:
         data = response.json()
         return data
-    sys.exit(response.text)
+    raise URLReadError("URL is not returning correct response")
 
 
 def readfromstring(jsondata: str) -> dict:
@@ -37,13 +49,13 @@ def readfromstring(jsondata: str) -> dict:
     Loads json from string
     """
     if not isinstance(jsondata, str):
-        sys.exit("the input doesn't seem to be valid string")
+        raise StringReadError("Sorry! the string doesn't seems to a proper JSON")
     try:
         data = json.loads(jsondata)
     except ValueError as exp:
         print(exp)
-        sys.exit(exp)
+        raise StringReadError("Sorry! the string doesn't seems to a proper JSON")
     except Exception as exp:
         print(exp)
-        sys.exit(exp)
+        raise StringReadError("Sorry! the string doesn't seems to a proper JSON")
     return data

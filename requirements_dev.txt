@@ -8,7 +8,7 @@ Sphinx==1.8.1
 twine==1.12.1
 dict2xml==1.5
 six==1.11.0
-lxml==4.1.1
+lxml==4.6.2
 requests>=2.20.0
 coverage==4.0.3
 xmltodict==0.11.0

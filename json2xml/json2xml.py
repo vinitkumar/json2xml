@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from xml.dom.minidom import parseString
 import dicttoxml
+import logging
 
+dicttoxml.LOG.setLevel(logging.ERROR)
 
 class Json2xml:
     def __init__(

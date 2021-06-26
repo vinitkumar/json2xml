@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing import Optional, Any
 from xml.dom.minidom import parseString
 import dicttoxml
 
@@ -15,7 +16,7 @@ class Json2xml:
         self.wrapper = wrapper
         self.attr_type = attr_type
 
-    def to_xml(self):
+    def to_xml(self) -> Optional[Any]:
         """
         Convert to xml using dicttoxml.dicttoxml and then pretty print it.
         """

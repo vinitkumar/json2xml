@@ -14,12 +14,11 @@ from __future__ import unicode_literals
 __version__ = "1.7.4"
 version = __version__
 
-from random import randint
 import collections
-import numbers
 import logging
+import numbers
+from random import randint
 from xml.dom.minidom import parseString
-
 
 LOG = logging.getLogger("dicttoxml")
 
@@ -192,8 +191,6 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata):
     output = []
     addline = output.append
 
-    item_name = item_func(parent)
-
     for key, val in obj.items():
         LOG.info(
             'Looping inside convert_dict(): key="%s", val="%s", type(val)="%s"'
@@ -328,7 +325,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata):
     return "".join(output)
 
 
-def convert_kv(key, val, attr_type, attr={}, cdata=False):
+def convert_kv(key, val, attr_type, attr={}, cdata: bool = False):
     """Converts a number or string into an XML element"""
     LOG.info(
         'Inside convert_kv(): key="%s", val="%s", type(val) is: "%s"'
@@ -343,7 +340,7 @@ def convert_kv(key, val, attr_type, attr={}, cdata=False):
     return "<%s%s>%s</%s>" % (
         key,
         attrstring,
-        wrap_cdata(val) if cdata == True else escape_xml(val),
+        wrap_cdata(val) if cdata else escape_xml(val),
         key,
     )
 
@@ -360,7 +357,7 @@ def convert_bool(key, val, attr_type, attr={}, cdata=False):
     if attr_type:
         attr["type"] = get_xml_type(val)
     attrstring = make_attrstring(attr)
-    return "<%s%s>%s</%s>" % (key, attrstring, unicode(val).lower(), key)
+    return "<%s%s>%s</%s>" % (key, attrstring, str(val).lower(), key)
 
 
 def convert_none(key, val, attr_type, attr={}, cdata=False):
@@ -377,7 +374,7 @@ def convert_none(key, val, attr_type, attr={}, cdata=False):
 
 def dicttoxml(
     obj,
-    root=True,
+    root: bool = True,
     custom_root="root",
     ids=False,
     attr_type=True,
@@ -409,7 +406,7 @@ def dicttoxml(
     )
     output = []
     addline = output.append
-    if root == True:
+    if root:
         addline('<?xml version="1.0" encoding="UTF-8" ?>')
         addline(
             "<%s>%s</%s>"

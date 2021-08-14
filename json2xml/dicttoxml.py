@@ -23,18 +23,6 @@ from xml.dom.minidom import parseString
 
 LOG = logging.getLogger("dicttoxml")
 
-# python 3 doesn't have a unicode type
-try:
-    unicode
-except:
-    unicode = str
-
-# python 3 doesn't have a long type
-try:
-    long
-except:
-    long = int
-
 
 def set_debug(debug=True, filename="dicttoxml.log"):
     if debug:
@@ -53,10 +41,7 @@ def unicode_me(something):
     Python 3 doesn't have a `unicode()` function, so `unicode()` is an alias
     for `str()`, but `str()` doesn't take a second argument, hence this kludge.
     """
-    try:
-        return unicode(something, "utf-8")
-    except:
-        return unicode(something)
+    return str(something)
 
 
 ids = []  # initialize list of unique ids
@@ -102,7 +87,7 @@ def get_xml_type(val):
 
 
 def escape_xml(s):
-    if type(s) in (str, unicode):
+    if type(s) is str:
         s = unicode_me(s)  # avoid UnicodeDecodeError
         s = s.replace("&", "&amp;")
         s = s.replace('"', "&quot;")
@@ -177,7 +162,7 @@ def convert(obj, ids, attr_type, item_func, cdata, parent="root"):
 
     item_name = item_func(parent)
 
-    if isinstance(obj, numbers.Number) or type(obj) in (str, unicode):
+    if isinstance(obj, numbers.Number) or type(obj) is str:
         return convert_kv(item_name, obj, attr_type, cdata)
 
     if hasattr(obj, "isoformat"):
@@ -219,7 +204,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata):
 
         key, attr = make_valid_xml_name(key, attr)
 
-        if isinstance(val, numbers.Number) or type(val) in (str, unicode):
+        if isinstance(val, numbers.Number) or type(val) is str:
             addline(convert_kv(key, val, attr_type, attr, cdata))
 
         elif hasattr(val, "isoformat"):  # datetime
@@ -282,7 +267,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata):
             % (unicode_me(item), item_name, type(item).__name__)
         )
         attr = {} if not ids else {"id": "%s_%s" % (this_id, i + 1)}
-        if isinstance(item, numbers.Number) or type(item) in (str, unicode):
+        if isinstance(item, numbers.Number) or type(item) in (str):
             addline(convert_kv(item_name, item, attr_type, attr, cdata))
 
         elif hasattr(item, "isoformat"):  # datetime

@@ -156,13 +156,13 @@ def convert(obj, ids, attr_type, item_func, cdata, parent="root"):
 
     item_name = item_func(parent)
 
-    if isinstance(obj, numbers.Number) or type(obj) is str:
+    if isinstance(obj, numbers.Number) or isinstance(obj, str):
         return convert_kv(item_name, obj, attr_type, cdata)
 
     if hasattr(obj, "isoformat"):
         return convert_kv(item_name, obj.isoformat(), attr_type, cdata)
 
-    if type(obj) == bool:
+    if isinstance(obj, bool):
         return convert_bool(item_name, obj, attr_type, cdata)
 
     if obj is None:
@@ -196,13 +196,13 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata):
 
         key, attr = make_valid_xml_name(key, attr)
 
-        if isinstance(val, numbers.Number) or type(val) is str:
+        if isinstance(val, numbers.Number) or isinstance(val, str):
             addline(convert_kv(key, val, attr_type, attr, cdata))
 
         elif hasattr(val, "isoformat"):  # datetime
             addline(convert_kv(key, val.isoformat(), attr_type, attr, cdata))
 
-        elif type(val) == bool:
+        elif isinstance(val, bool):
             addline(convert_bool(key, val, attr_type, attr, cdata))
 
         elif isinstance(val, dict):
@@ -259,13 +259,13 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata):
             % (unicode_me(item), item_name, type(item).__name__)
         )
         attr = {} if not ids else {"id": "%s_%s" % (this_id, i + 1)}
-        if isinstance(item, numbers.Number) or type(item) is str:
+        if isinstance(item, numbers.Number) or isinstance(item, str):
             addline(convert_kv(item_name, item, attr_type, attr, cdata))
 
         elif hasattr(item, "isoformat"):  # datetime
             addline(convert_kv(item_name, item.isoformat(), attr_type, attr, cdata))
 
-        elif type(item) == bool:
+        elif isinstance(item, bool):
             addline(convert_bool(item_name, item, attr_type, attr, cdata))
 
         elif isinstance(item, dict):

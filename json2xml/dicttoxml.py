@@ -1,19 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-"""
-Converts a Python dictionary or other native data type into a valid XML string.
-
-Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other number-like objects) and collection (`list`, `set`, `tuple` and `dict`, as well as iterable and dict-like objects) data types, with arbitrary nesting for the collections. Items with a `datetime` type are converted to ISO format strings. Items with a `None` type become empty XML elements.
-
-This module works with both Python 2 and 3.
-"""
-
-from __future__ import unicode_literals
-
-__version__ = "1.7.4"
-version = __version__
-
 import collections
 import logging
 import numbers
@@ -21,6 +8,14 @@ from random import randint
 from xml.dom.minidom import parseString
 
 LOG = logging.getLogger("dicttoxml")
+
+"""
+Converts a Python dictionary or other native data type into a valid XML string.
+
+Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other number-like objects) and collection (`list`, `set`, `tuple` and `dict`, as well as iterable and dict-like objects) data types, with arbitrary nesting for the collections. Items with a `datetime` type are converted to ISO format strings. Items with a `None` type become empty XML elements.
+
+This module works with both Python 2 and 3.
+"""
 
 
 def set_debug(debug=True, filename="dicttoxml.log"):
@@ -86,7 +81,7 @@ def get_xml_type(val):
 
 
 def escape_xml(s):
-    if type(s) is str:
+    if isinstance(s, str):
         s = unicode_me(s)  # avoid UnicodeDecodeError
         s = s.replace("&", "&amp;")
         s = s.replace('"', "&quot;")
@@ -264,7 +259,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata):
             % (unicode_me(item), item_name, type(item).__name__)
         )
         attr = {} if not ids else {"id": "%s_%s" % (this_id, i + 1)}
-        if isinstance(item, numbers.Number) or type(item) in (str):
+        if isinstance(item, numbers.Number) or type(item) is str:
             addline(convert_kv(item_name, item, attr_type, attr, cdata))
 
         elif hasattr(item, "isoformat"):  # datetime

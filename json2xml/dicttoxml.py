@@ -21,24 +21,6 @@ This module works with both Python 2 and 3.
 """
 
 
-def set_debug(debug=True, filename="dicttoxml.log"):
-    if debug:
-        import datetime
-
-        print("Debug mode is on. Events are logged at: %s" % (filename))
-        logging.basicConfig(filename=filename, level=logging.INFO)
-        LOG.info("\nLogging session starts: %s" % (str(datetime.datetime.today())))
-    else:
-        logging.basicConfig(level=logging.WARNING)
-        print("Debug mode is off.")
-
-
-def unicode_me(something):
-    """Converts strings with non-ASCII characters to unicode for LOG.
-    Python 3 doesn't have a `unicode()` function, so `unicode()` is an alias
-    for `str()`, but `str()` doesn't take a second argument, hence this kludge.
-    """
-    return str(something)
 
 
 ids = []  # initialize list of unique ids
@@ -86,7 +68,7 @@ def get_xml_type(val):
 def escape_xml(s:str) -> str:
 
     if isinstance(s, str):
-        s = unicode_me(s)  # avoid UnicodeDecodeError
+        s = str(s)  # avoid UnicodeDecodeError
         s = s.replace("&", "&amp;")
         s = s.replace('"', "&quot;")
         s = s.replace("'", "&apos;")
@@ -103,7 +85,7 @@ def make_attrstring(attr):
 
 def key_is_valid_xml(key):
     """Checks that a key is a valid XML name"""
-    LOG.info('Inside key_is_valid_xml(). Testing "%s"' % (unicode_me(key)))
+    LOG.info('Inside key_is_valid_xml(). Testing "%s"' % (str(key)))
     test_xml = '<?xml version="1.0" encoding="UTF-8" ?><%s>foo</%s>' % (key, key)
     try:
         parseString(test_xml)
@@ -112,19 +94,17 @@ def key_is_valid_xml(key):
         return False
 
 
-def make_valid_xml_name(key, attr: Dict):
+def make_valid_xml_name(key, attr: Dict[str, Any]):
     """Tests an XML name and fixes it if invalid"""
     LOG.info(
         'Inside make_valid_xml_name(). Testing key "%s" with attr "%s"'
-        % (unicode_me(key), unicode_me(attr))
+        % (str(key), str(attr))
     )
-    print('attr', attr, type(attr))
     key = escape_xml(key)
-    # nothing happens at escape_xml if attr is not a string, we don't 
+    # nothing happens at escape_xml if attr is not a string, we don't
     # need to pass it to the method at all.
     # attr = escape_xml(attr)
 
-    print('after attr', attr, type(attr))
 
     # pass through if key is already valid
     if key_is_valid_xml(key):
@@ -146,7 +126,7 @@ def make_valid_xml_name(key, attr: Dict):
 
 def wrap_cdata(s):
     """Wraps a string into CDATA sections"""
-    s = unicode_me(s).replace("]]>", "]]]]><![CDATA[>")
+    s = str(s).replace("]]>", "]]]]><![CDATA[>")
     return "<![CDATA[" + s + "]]>"
 
 
@@ -160,11 +140,10 @@ def convert(obj, ids, attr_type, item_func, cdata, parent="root"):
 
     LOG.info(
         'Inside convert(). obj type is: "%s", obj="%s"'
-        % (type(obj).__name__, unicode_me(obj))
+        % (type(obj).__name__, str(obj))
     )
 
     item_name = item_func(parent)
-    print(item_name)
 
     if isinstance(obj, numbers.Number) or isinstance(obj, str):
         return convert_kv(item_name, obj, attr_type, cdata)
@@ -191,7 +170,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata):
     """Converts a dict into an XML string."""
     LOG.info(
         'Inside convert_dict(): obj type is: "%s", obj="%s"'
-        % (type(obj).__name__, unicode_me(obj))
+        % (type(obj).__name__, str(obj))
     )
     output = []
     addline = output.append
@@ -199,7 +178,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata):
     for key, val in obj.items():
         LOG.info(
             'Looping inside convert_dict(): key="%s", val="%s", type(val)="%s"'
-            % (unicode_me(key), unicode_me(val), type(val).__name__)
+            % (str(key), str(val), type(val).__name__)
         )
 
         attr = {} if not ids else {"id": "%s" % (get_unique_id(parent))}
@@ -266,7 +245,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata):
     for i, item in enumerate(items):
         LOG.info(
             'Looping inside convert_list(): item="%s", item_name="%s", type="%s"'
-            % (unicode_me(item), item_name, type(item).__name__)
+            % (str(item), item_name, type(item).__name__)
         )
         attr = {} if not ids else {"id": "%s_%s" % (this_id, i + 1)}
         if isinstance(item, numbers.Number) or isinstance(item, str):
@@ -334,7 +313,7 @@ def convert_kv(key, val, attr_type, attr={}, cdata: bool = False):
     """Converts a number or string into an XML element"""
     LOG.info(
         'Inside convert_kv(): key="%s", val="%s", type(val) is: "%s"'
-        % (unicode_me(key), unicode_me(val), type(val).__name__)
+        % (str(key), str(val), type(val).__name__)
     )
 
     key, attr = make_valid_xml_name(key, attr)
@@ -354,7 +333,7 @@ def convert_bool(key, val, attr_type, attr={}, cdata=False):
     """Converts a boolean into an XML element"""
     LOG.info(
         'Inside convert_bool(): key="%s", val="%s", type(val) is: "%s"'
-        % (unicode_me(key), unicode_me(val), type(val).__name__)
+        % (str(key), str(val), type(val).__name__)
     )
 
     key, attr = make_valid_xml_name(key, attr)
@@ -367,7 +346,7 @@ def convert_bool(key, val, attr_type, attr={}, cdata=False):
 
 def convert_none(key, val, attr_type, attr={}, cdata=False):
     """Converts a null value into an XML element"""
-    LOG.info('Inside convert_none(): key="%s"' % (unicode_me(key)))
+    LOG.info('Inside convert_none(): key="%s"' % (str(key)))
 
     key, attr = make_valid_xml_name(key, attr)
 
@@ -402,10 +381,9 @@ def dicttoxml(
     - cdata specifies whether string values should be wrapped in CDATA sections.
       Default is False
     """
-    print(obj, root, custom_root)
     LOG.info(
         'Inside dicttoxml(): type(obj) is: "%s", obj="%s"'
-        % (type(obj).__name__, unicode_me(obj))
+        % (type(obj).__name__, str(obj))
     )
     output = []
     addline = output.append

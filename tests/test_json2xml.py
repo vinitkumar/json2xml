@@ -24,8 +24,14 @@ class TestJson2xml(unittest.TestCase):
 
     def test_read_from_json(self):
         """Test something."""
-        data = readfromjson("examples/licht.json")
-        assert type(data) is dict
+        data = readfromjson("examples/bigexample.json")
+        if type(data) == 'list':
+            # it's json array, so we just take the first element and check it's type
+            assert type(data[0]) is dict
+        else:
+            data = readfromjson("examples/licht.json")
+            assert type(data) is dict
+
 
     def test_read_from_invalid_json(self):
         """Test something."""

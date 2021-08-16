@@ -24,9 +24,7 @@ class Json2xml:
         if self.data:
             # xml_data = dicttoxml.dicttoxml(self.data, root=self.root, custom_root=self.wrapper, attr_type=self.attr_type)
             xml_data = dicttoxml.dicttoxml(self.data, custom_root=self.wrapper, attr_type=self.attr_type)
-            print("DEBUG" * 80)
             print(xml_data)
-            print("DEBUG" * 80)
             if self.pretty:
                 return parseString(xml_data).toprettyxml()
             return xml_data

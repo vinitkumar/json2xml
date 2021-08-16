@@ -7,6 +7,9 @@ import numbers
 from random import randint
 from xml.dom.minidom import parseString
 
+
+from typing import Dict, List, Any, Iterable, Union
+
 LOG = logging.getLogger("dicttoxml")
 
 """
@@ -80,7 +83,8 @@ def get_xml_type(val):
     return type(val).__name__
 
 
-def escape_xml(s):
+def escape_xml(s:str) -> str:
+
     if isinstance(s, str):
         s = unicode_me(s)  # avoid UnicodeDecodeError
         s = s.replace("&", "&amp;")
@@ -108,14 +112,19 @@ def key_is_valid_xml(key):
         return False
 
 
-def make_valid_xml_name(key, attr):
+def make_valid_xml_name(key, attr: Dict):
     """Tests an XML name and fixes it if invalid"""
     LOG.info(
         'Inside make_valid_xml_name(). Testing key "%s" with attr "%s"'
         % (unicode_me(key), unicode_me(attr))
     )
+    print('attr', attr, type(attr))
     key = escape_xml(key)
-    attr = escape_xml(attr)
+    # nothing happens at escape_xml if attr is not a string, we don't 
+    # need to pass it to the method at all.
+    # attr = escape_xml(attr)
+
+    print('after attr', attr, type(attr))
 
     # pass through if key is already valid
     if key_is_valid_xml(key):
@@ -155,6 +164,7 @@ def convert(obj, ids, attr_type, item_func, cdata, parent="root"):
     )
 
     item_name = item_func(parent)
+    print(item_name)
 
     if isinstance(obj, numbers.Number) or isinstance(obj, str):
         return convert_kv(item_name, obj, attr_type, cdata)
@@ -392,9 +402,7 @@ def dicttoxml(
     - cdata specifies whether string values should be wrapped in CDATA sections.
       Default is False
     """
-    print("BUG" * 80)
     print(obj, root, custom_root)
-    print("BUG" * 80)
     LOG.info(
         'Inside dicttoxml(): type(obj) is: "%s", obj="%s"'
         % (type(obj).__name__, unicode_me(obj))

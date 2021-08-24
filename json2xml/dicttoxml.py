@@ -124,7 +124,7 @@ def make_valid_xml_name(key, attr: Dict[str, Any]):
     return key, attr
 
 
-def wrap_cdata(s):
+def wrap_cdata(s: str) -> str:
     """Wraps a string into CDATA sections"""
     s = str(s).replace("]]>", "]]]]><![CDATA[>")
     return "<![CDATA[" + s + "]]>"
@@ -238,7 +238,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata):
     addline = output.append
 
     item_name = item_func(parent)
-
+    this_id = None
     if ids:
         this_id = get_unique_id(parent)
 
@@ -389,14 +389,7 @@ def dicttoxml(
     addline = output.append
     if root:
         addline('<?xml version="1.0" encoding="UTF-8" ?>')
-        addline(
-            "<%s>%s</%s>"
-            % (
-                custom_root,
-                convert(obj, ids, attr_type, item_func, cdata, parent=custom_root),
-                custom_root,
-            )
-        )
+        addline(f"<{custom_root}>{convert(obj, ids, attr_type, item_func, cdata, parent=custom_root)}</{custom_root}>")
     else:
         addline(convert(obj, ids, attr_type, item_func, cdata, parent=""))
     return "".join(output).encode("utf-8")

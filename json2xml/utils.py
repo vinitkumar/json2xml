@@ -37,6 +37,9 @@ def readfromurl(url: str, params: dict = None) -> dict:
     """
     Loads json from an URL over the internets
     """
+    # TODO: See if we can remove requests too from the deps too. Then, we will become
+    # zero deps.
+    # REFERENCE: this article https://dev.to/bowmanjd/http-calls-in-python-without-requests-or-other-external-dependencies-5aj1
     response = requests.get(url, params=params)
     if response.status_code == 200:
         data = response.json()

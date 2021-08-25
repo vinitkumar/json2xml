@@ -8,19 +8,20 @@ from random import randint
 from xml.dom.minidom import parseString
 
 
-from typing import Dict, List, Any, Iterable, Union
+from typing import Dict, Any
 
 LOG = logging.getLogger("dicttoxml")
 
 """
 Converts a Python dictionary or other native data type into a valid XML string.
 
-Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other number-like objects) and collection (`list`, `set`, `tuple` and `dict`, as well as iterable and dict-like objects) data types, with arbitrary nesting for the collections. Items with a `datetime` type are converted to ISO format strings. Items with a `None` type become empty XML elements.
-
+Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other
+        number-like objects) and collection (`list`, `set`, `tuple` and `dict`, as well as iterable and
+                dict-like objects) data types, with arbitrary nesting for the collections.
+        Items with a `datetime` type are converted to ISO format strings.
+        Items with a `None` type become empty XML elements.
 This module works with both Python 2 and 3.
 """
-
-
 
 
 ids = []  # initialize list of unique ids
@@ -65,7 +66,7 @@ def get_xml_type(val):
     return type(val).__name__
 
 
-def escape_xml(s:str) -> str:
+def escape_xml(s: str) -> str:
 
     if isinstance(s, str):
         s = str(s)  # avoid UnicodeDecodeError
@@ -105,7 +106,6 @@ def make_valid_xml_name(key, attr: Dict[str, Any]):
     # need to pass it to the method at all.
     # attr = escape_xml(attr)
 
-
     # pass through if key is already valid
     if key_is_valid_xml(key):
         return key, attr
@@ -139,8 +139,7 @@ def convert(obj, ids, attr_type, item_func, cdata, parent="root"):
     based on their data type"""
 
     LOG.info(
-        'Inside convert(). obj type is: "%s", obj="%s"'
-        % (type(obj).__name__, str(obj))
+        'Inside convert(). obj type is: "%s", obj="%s"' % (type(obj).__name__, str(obj))
     )
 
     item_name = item_func(parent)
@@ -387,5 +386,7 @@ def dicttoxml(
     )
     output = []
     output.append('<?xml version="1.0" encoding="UTF-8" ?>')
-    output.append(f"<{custom_root}>{convert(obj, ids, attr_type, item_func, cdata, parent=custom_root)}</{custom_root}>")
+    output.append(
+        f"<{custom_root}>{convert(obj, ids, attr_type, item_func, cdata, parent=custom_root)}</{custom_root}>"
+    )
     return "".join(output).encode("utf-8")

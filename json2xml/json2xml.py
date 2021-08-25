@@ -22,7 +22,12 @@ class Json2xml:
         Convert to xml using dicttoxml.dicttoxml and then pretty print it.
         """
         if self.data:
-            xml_data = dicttoxml.dicttoxml(self.data, root=self.root, custom_root=self.wrapper, attr_type=self.attr_type)
+            xml_data = dicttoxml.dicttoxml(
+                self.data,
+                root=self.root,
+                custom_root=self.wrapper,
+                attr_type=self.attr_type
+            )
             if self.pretty:
                 return parseString(xml_data).toprettyxml()
             return xml_data

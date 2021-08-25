@@ -32,7 +32,6 @@ class TestJson2xml(unittest.TestCase):
             data = readfromjson("examples/licht.json")
             assert type(data) is dict
 
-
     def test_read_from_invalid_json(self):
         """Test something."""
         with pytest.raises(JSONReadError) as pytest_wrapped_e:

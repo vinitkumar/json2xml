@@ -24,8 +24,13 @@ class TestJson2xml(unittest.TestCase):
 
     def test_read_from_json(self):
         """Test something."""
-        data = readfromjson("examples/licht.json")
-        assert type(data) is dict
+        data = readfromjson("examples/bigexample.json")
+        if type(data) == 'list':
+            # it's json array, so we just take the first element and check it's type
+            assert type(data[0]) is dict
+        else:
+            data = readfromjson("examples/licht.json")
+            assert type(data) is dict
 
     def test_read_from_invalid_json(self):
         """Test something."""
@@ -67,7 +72,18 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
         )
-        xmldata = json2xml.Json2xml(data, wrapper="test", pretty=True).to_xml()
+        xmldata = json2xml.Json2xml(data, root=False, wrapper="test", pretty=False).to_xml()
+        old_dict = xmltodict.parse(xmldata)
+        # test must be present, snce it is the wrpper
+        assert "test" in old_dict.keys()
+        # reverse test, say a wrapper called ramdom won't be present
+        assert "random" not in old_dict.keys()
+
+    def test_no_wrapper_and_indent(self):
+        data = readfromstring(
+            '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
+        )
+        xmldata = json2xml.Json2xml(data, root=False, wrapper="test", pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # test must be present, snce it is the wrpper
         assert "test" in old_dict.keys()

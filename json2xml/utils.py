@@ -38,6 +38,8 @@ def readfromurl(url: str, params: Optional[Dict[str, str]] = None) -> Dict[str, 
     """
     Loads json from an URL over the internets
     """
+    # TODO: See if we can remove requests too from the deps too. Then, we will become
+    # zero deps. refernce link here: https://bit.ly/3gzICjU
     response = requests.get(url, params=params)
     if response.status_code == 200:
         data = response.json()

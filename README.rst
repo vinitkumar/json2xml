@@ -30,6 +30,12 @@ Simple Python Library to convert JSON to XML
 * Documentation: https://json2xml.readthedocs.io.
 
 
+Update
+------
+
+The dict2xml project has been forked and integrated in the project itself. This helped with cleaning up the code
+and also doing improvements. The goal is to remove all the dependencies from this project.
+
 Features
 --------
 

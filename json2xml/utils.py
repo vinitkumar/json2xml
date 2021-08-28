@@ -1,5 +1,6 @@
 """Utils methods to convert XML data to dict from various sources"""
 import json
+from typing import Dict, Optional
 import requests
 
 
@@ -16,7 +17,7 @@ class StringReadError(Exception):
 
 
 
-def readfromjson(filename: str) -> dict:
+def readfromjson(filename: str) -> Dict[str, str]:
     """
     Reads a json string and emits json string
     """
@@ -33,10 +34,12 @@ def readfromjson(filename: str) -> dict:
         raise JSONReadError("Invalid JSON File")
 
 
-def readfromurl(url: str, params: dict = None) -> dict:
+def readfromurl(url: str, params: Optional[Dict[str, str]] = None) -> Dict[str, str]:
     """
     Loads json from an URL over the internets
     """
+    # TODO: See if we can remove requests too from the deps too. Then, we will become
+    # zero deps. refernce link here: https://bit.ly/3gzICjU
     response = requests.get(url, params=params)
     if response.status_code == 200:
         data = response.json()
@@ -44,7 +47,7 @@ def readfromurl(url: str, params: dict = None) -> dict:
     raise URLReadError("URL is not returning correct response")
 
 
-def readfromstring(jsondata: str) -> dict:
+def readfromstring(jsondata: str) -> Dict[str, str]:
     """
     Loads json from string
     """

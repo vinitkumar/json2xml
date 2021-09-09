@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import Optional, Any
 from xml.dom.minidom import parseString
-from json2xml import dicttoxml
+import dicttoxml
 
 
 class Json2xml:
@@ -10,13 +10,15 @@ class Json2xml:
             wrapper: str = "all",
             root: bool = True,
             pretty: bool = True,
-            attr_type: bool = True
+            attr_type: bool = True,
+            item_wrap: bool = True
     ):
         self.data = data
         self.pretty = pretty
         self.wrapper = wrapper
         self.attr_type = attr_type
         self.root = root
+        self.item_wrap = item_wrap
 
     def to_xml(self) -> Optional[Any]:
         """
@@ -27,7 +29,8 @@ class Json2xml:
                 self.data,
                 root=self.root,
                 custom_root=self.wrapper,
-                attr_type=self.attr_type
+                attr_type=self.attr_type,
+                item_wrap=self.item_wrap
             )
             if self.pretty:
                 return parseString(xml_data).toprettyxml()

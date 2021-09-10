@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from typing import Optional, Any
 from xml.dom.minidom import parseString
-import dicttoxml
+from json2xml import dicttoxml
 
 
 class Json2xml:

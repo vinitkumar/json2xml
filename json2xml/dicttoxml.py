@@ -275,14 +275,22 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                         )
                     )
             else:
-                addline(
-                    '<%s type="dict">%s</%s>'
-                    % (
-                        item_name,
-                        convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
-                        item_name,
+                if (item_wrap):
+                    addline(
+                        '<%s type="dict">%s</%s>'
+                        % (
+                            item_name,
+                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            item_name,
+                        )
                     )
-                )
+                else:
+                    addline(
+                        '%s'
+                        % (
+                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                        )
+                    )
 
         elif isinstance(item, collections.Iterable):
             if not attr_type:

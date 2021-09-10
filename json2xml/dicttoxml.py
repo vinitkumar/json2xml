@@ -258,12 +258,20 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
 
         elif isinstance(item, dict):
             if not attr_type:
-                if (item_wrap):
+                if item_wrap:
                     addline(
                         "<%s>%s</%s>"
                         % (
                             item_name,
-                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            convert_dict(
+                                item,
+                                ids,
+                                parent,
+                                attr_type,
+                                item_func,
+                                cdata,
+                                item_wrap,
+                            ),
                             item_name,
                         )
                     )
@@ -271,24 +279,48 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                     addline(
                         "%s"
                         % (
-                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            convert_dict(
+                                item,
+                                ids,
+                                parent,
+                                attr_type,
+                                item_func,
+                                cdata,
+                                item_wrap,
+                            ),
                         )
                     )
             else:
-                if (item_wrap):
+                if item_wrap:
                     addline(
                         '<%s type="dict">%s</%s>'
                         % (
                             item_name,
-                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            convert_dict(
+                                item,
+                                ids,
+                                parent,
+                                attr_type,
+                                item_func,
+                                cdata,
+                                item_wrap,
+                            ),
                             item_name,
                         )
                     )
                 else:
                     addline(
-                        '%s'
+                        "%s"
                         % (
-                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            convert_dict(
+                                item,
+                                ids,
+                                parent,
+                                attr_type,
+                                item_func,
+                                cdata,
+                                item_wrap,
+                            ),
                         )
                     )
 
@@ -299,7 +331,9 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                     % (
                         item_name,
                         make_attrstring(attr),
-                        convert_list(item, ids, item_name, attr_type, item_func, cdata, item_wrap),
+                        convert_list(
+                            item, ids, item_name, attr_type, item_func, cdata, item_wrap
+                        ),
                         item_name,
                     )
                 )
@@ -309,7 +343,9 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                     % (
                         item_name,
                         make_attrstring(attr),
-                        convert_list(item, ids, item_name, attr_type, item_func, cdata, item_wrap),
+                        convert_list(
+                            item, ids, item_name, attr_type, item_func, cdata, item_wrap
+                        ),
                         item_name,
                     )
                 )

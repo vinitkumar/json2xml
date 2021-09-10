@@ -61,7 +61,7 @@ def get_xml_type(val):
         return "null"
     if isinstance(val, dict):
         return "dict"
-    if isinstance(val, collections.Iterable):
+    if isinstance(val, collections.abc.Iterable):
         return "list"
     return type(val).__name__
 
@@ -159,7 +159,7 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
     if isinstance(obj, dict):
         return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
 
-    if isinstance(obj, collections.Iterable):
+    if isinstance(obj, collections.abc.Iterable):
         return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
 
     raise TypeError("Unsupported data type: %s (%s)" % (obj, type(obj).__name__))
@@ -206,7 +206,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
                 )
             )
 
-        elif isinstance(val, collections.Iterable):
+        elif isinstance(val, collections.abc.Iterable):
             if attr_type:
                 attr["type"] = get_xml_type(val)
             addline(
@@ -258,12 +258,20 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
 
         elif isinstance(item, dict):
             if not attr_type:
-                if (item_wrap):
+                if item_wrap:
                     addline(
                         "<%s>%s</%s>"
                         % (
                             item_name,
-                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            convert_dict(
+                                item,
+                                ids,
+                                parent,
+                                attr_type,
+                                item_func,
+                                cdata,
+                                item_wrap,
+                            ),
                             item_name,
                         )
                     )
@@ -271,35 +279,61 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                     addline(
                         "%s"
                         % (
-                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            convert_dict(
+                                item,
+                                ids,
+                                parent,
+                                attr_type,
+                                item_func,
+                                cdata,
+                                item_wrap,
+                            ),
                         )
                     )
             else:
-                if (item_wrap):
+                if item_wrap:
                     addline(
                         '<%s type="dict">%s</%s>'
                         % (
                             item_name,
-                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            convert_dict(
+                                item,
+                                ids,
+                                parent,
+                                attr_type,
+                                item_func,
+                                cdata,
+                                item_wrap,
+                            ),
                             item_name,
                         )
                     )
                 else:
                     addline(
-                        '%s'
+                        "%s"
                         % (
-                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            convert_dict(
+                                item,
+                                ids,
+                                parent,
+                                attr_type,
+                                item_func,
+                                cdata,
+                                item_wrap,
+                            ),
                         )
                     )
 
-        elif isinstance(item, collections.Iterable):
+        elif isinstance(item, collections.abc.Iterable):
             if not attr_type:
                 addline(
                     "<%s %s>%s</%s>"
                     % (
                         item_name,
                         make_attrstring(attr),
-                        convert_list(item, ids, item_name, attr_type, item_func, cdata, item_wrap),
+                        convert_list(
+                            item, ids, item_name, attr_type, item_func, cdata, item_wrap
+                        ),
                         item_name,
                     )
                 )
@@ -309,7 +343,9 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                     % (
                         item_name,
                         make_attrstring(attr),
-                        convert_list(item, ids, item_name, attr_type, item_func, cdata, item_wrap),
+                        convert_list(
+                            item, ids, item_name, attr_type, item_func, cdata, item_wrap
+                        ),
                         item_name,
                     )
                 )

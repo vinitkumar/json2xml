@@ -97,6 +97,37 @@ Outputs this:
       <avatar_url type="str">https://avatars0.githubusercontent.com/u/1?v=4</avatar_url>
     </all>
 
+Omit List item
+--------------
+
+By default, items in an array are wrapped in <item></item>. However, you can change this easily in your code like this:
+
+.. code-block:: python
+
+    from json2xml import json2xml
+    from json2xml.utils import readfromurl, readfromstring, readfromjson
+    data = readfromstring(
+        '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }]}'
+    )
+    print(json2xml.Json2xml(data, item_wrap=False).to_xml())
+
+
+Outputs this:
+
+.. code-block:: xml
+
+    <?xml version="1.0" ?>
+    <all>
+      <my_items type="list">
+        <my_item>
+            <id type="int">1</id>
+        </my_item>
+        <my_item>
+            <id type="int">2</id>
+        </my_item>
+      </list>
+    </all>
+
 Optional Attribute Type Support
 -------------------------------
 

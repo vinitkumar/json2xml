@@ -89,3 +89,24 @@ class TestJson2xml(unittest.TestCase):
         assert "test" in old_dict.keys()
         # reverse test, say a wrapper called ramdom won't be present
         assert "random" not in old_dict.keys()
+
+    def test_item_wrap(self):
+        data = readfromstring(
+            '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }]}'
+        )
+        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
+        old_dict = xmltodict.parse(xmldata)
+        # item must be present within my_items
+        assert "item" in old_dict['all']['my_items']
+
+        xmldata = json2xml.Json2xml(data, root=False, pretty=False, item_wrap=False, attr_type=False).to_xml()
+        old_dict = xmltodict.parse(xmldata)
+        # my_item must be present within my_items
+        assert "my_item" in old_dict['all']['my_items']
+
+        xmldata = json2xml.Json2xml(data, root=False, pretty=False, item_wrap=False).to_xml()
+        print(xmldata)
+        old_dict = xmltodict.parse(xmldata)
+        # my_item must be present within my_items
+        print(old_dict['all']['my_items'])
+        assert "my_item" in old_dict['all']['my_items']

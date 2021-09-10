@@ -134,7 +134,7 @@ def default_item_func(parent):
     return "item"
 
 
-def convert(obj, ids, attr_type, item_func, cdata, parent="root"):
+def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
     """Routes the elements of an object to the right function to convert them
     based on their data type"""
 
@@ -157,15 +157,15 @@ def convert(obj, ids, attr_type, item_func, cdata, parent="root"):
         return convert_none(item_name, "", attr_type, cdata)
 
     if isinstance(obj, dict):
-        return convert_dict(obj, ids, parent, attr_type, item_func, cdata)
+        return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
 
     if isinstance(obj, collections.Iterable):
-        return convert_list(obj, ids, parent, attr_type, item_func, cdata)
+        return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
 
     raise TypeError("Unsupported data type: %s (%s)" % (obj, type(obj).__name__))
 
 
-def convert_dict(obj, ids, parent, attr_type, item_func, cdata):
+def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
     """Converts a dict into an XML string."""
     LOG.info(
         'Inside convert_dict(): obj type is: "%s", obj="%s"'
@@ -201,7 +201,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata):
                 % (
                     key,
                     make_attrstring(attr),
-                    convert_dict(val, ids, key, attr_type, item_func, cdata),
+                    convert_dict(val, ids, key, attr_type, item_func, cdata, item_wrap),
                     key,
                 )
             )
@@ -214,7 +214,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata):
                 % (
                     key,
                     make_attrstring(attr),
-                    convert_list(val, ids, key, attr_type, item_func, cdata),
+                    convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap),
                     key,
                 )
             )
@@ -230,7 +230,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata):
     return "".join(output)
 
 
-def convert_list(items, ids, parent, attr_type, item_func, cdata):
+def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
     """Converts a list into an XML string."""
     LOG.info("Inside convert_list()")
     output = []
@@ -258,23 +258,39 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata):
 
         elif isinstance(item, dict):
             if not attr_type:
-                addline(
-                    "<%s>%s</%s>"
-                    % (
-                        item_name,
-                        convert_dict(item, ids, parent, attr_type, item_func, cdata),
-                        item_name,
+                if (item_wrap):
+                    addline(
+                        "<%s>%s</%s>"
+                        % (
+                            item_name,
+                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            item_name,
+                        )
                     )
-                )
+                else:
+                    addline(
+                        "%s"
+                        % (
+                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                        )
+                    )
             else:
-                addline(
-                    '<%s type="dict">%s</%s>'
-                    % (
-                        item_name,
-                        convert_dict(item, ids, parent, attr_type, item_func, cdata),
-                        item_name,
+                if (item_wrap):
+                    addline(
+                        '<%s type="dict">%s</%s>'
+                        % (
+                            item_name,
+                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                            item_name,
+                        )
                     )
-                )
+                else:
+                    addline(
+                        '%s'
+                        % (
+                            convert_dict(item, ids, parent, attr_type, item_func, cdata, item_wrap),
+                        )
+                    )
 
         elif isinstance(item, collections.Iterable):
             if not attr_type:
@@ -283,7 +299,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata):
                     % (
                         item_name,
                         make_attrstring(attr),
-                        convert_list(item, ids, item_name, attr_type, item_func, cdata),
+                        convert_list(item, ids, item_name, attr_type, item_func, cdata, item_wrap),
                         item_name,
                     )
                 )
@@ -293,7 +309,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata):
                     % (
                         item_name,
                         make_attrstring(attr),
-                        convert_list(item, ids, item_name, attr_type, item_func, cdata),
+                        convert_list(item, ids, item_name, attr_type, item_func, cdata, item_wrap),
                         item_name,
                     )
                 )
@@ -361,6 +377,7 @@ def dicttoxml(
     custom_root="root",
     ids=False,
     attr_type=True,
+    item_wrap=True,
     item_func=default_item_func,
     cdata=False,
 ):
@@ -377,6 +394,8 @@ def dicttoxml(
     - item_func specifies what function should generate the element name for
       items in a list.
       Default is 'item'
+    - item_wrap specifies whether to nest items in array in <item/>
+      Default is True
     - cdata specifies whether string values should be wrapped in CDATA sections.
       Default is False
     """
@@ -387,6 +406,6 @@ def dicttoxml(
     output = []
     output.append('<?xml version="1.0" encoding="UTF-8" ?>')
     output.append(
-        f"<{custom_root}>{convert(obj, ids, attr_type, item_func, cdata, parent=custom_root)}</{custom_root}>"
+        f"<{custom_root}>{convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root)}</{custom_root}>"
     )
     return "".join(output).encode("utf-8")

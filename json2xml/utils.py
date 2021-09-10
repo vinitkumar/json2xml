@@ -16,7 +16,6 @@ class StringReadError(Exception):
     pass
 
 
-
 def readfromjson(filename: str) -> Dict[str, str]:
     """
     Reads a json string and emits json string

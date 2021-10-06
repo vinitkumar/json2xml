@@ -1,4 +1,5 @@
 .idea
+.tox
 *.pyc
 json2xml.egg-info
 build

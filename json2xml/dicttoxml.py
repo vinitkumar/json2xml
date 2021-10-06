@@ -5,8 +5,7 @@ import collections
 import logging
 import numbers
 from random import randint
-from xml.dom.minidom import parseString
-
+from defusedxml.minidom import parseString
 
 from typing import Dict, Any
 

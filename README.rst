@@ -21,6 +21,7 @@ json2xml
      :target: https://coveralls.io/github/vinitkumar/json2xml?branch=master
 
 
+.. |PyPI version fury.io| image:: https://badge.fury.io/py/ansicolortags.svg
 
 
 Simple Python Library to convert JSON to XML

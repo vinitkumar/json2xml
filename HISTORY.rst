@@ -16,7 +16,6 @@ v3.7.0 / 2021-09-11
   * :bookmark: feat: final release for v3.7.0
   * :bookmark: feat: bump version
 
-
 ========================
 v3.7.0beta2 / 2021-09-10
 ========================

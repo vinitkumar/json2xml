@@ -5,26 +5,17 @@ json2xml
 
 .. image:: https://img.shields.io/pypi/v/json2xml.svg
         :target: https://pypi.python.org/pypi/json2xml
-
-.. image:: https://img.shields.io/travis/vinitkumar/json2xml.svg
-        :target: https://travis-ci.org/vinitkumar/json2xml
-
+.. image:: https://github.com/vinitkumar/json2xml/actions/workflows/pythonpackage.yml/badge.svg
+.. image:: https://img.shields.io/pypi/pyversions/json2xml.svg
+.. image:: https://badge.fury.io/py/json2xml.svg
 .. image:: https://readthedocs.org/projects/json2xml/badge/?version=latest
         :target: https://json2xml.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
-
-.. image:: https://pyup.io/repos/github/vinitkumar/json2xml/shield.svg
-     :target: https://pyup.io/repos/github/vinitkumar/json2xml/
-     :alt: Updates
-
 .. image:: https://coveralls.io/repos/github/vinitkumar/json2xml/badge.svg?branch=master
      :target: https://coveralls.io/github/vinitkumar/json2xml?branch=master
 
 
-
-
 Simple Python Library to convert JSON to XML
-
 
 * Free software: Apache Software License 2.0
 * Documentation: https://json2xml.readthedocs.io.

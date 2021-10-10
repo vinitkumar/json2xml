@@ -2,18 +2,22 @@
 History
 =======
 
+===================
 v3.8.0 / 2021-10-07
 ===================
 
   * Feat/security improvements (#81)
   * :arrow_up: feat: python 3.10 released (#79)
 
+===================
 v3.7.0 / 2021-09-11
 ===================
 
   * :bookmark: feat: final release for v3.7.0
   * :bookmark: feat: bump version
 
+
+========================
 v3.7.0beta2 / 2021-09-10
 ========================
 
@@ -21,6 +25,7 @@ v3.7.0beta2 / 2021-09-10
   * item ommision (#76)
   * Create FUNDING.yml
 
+========================
 v3.7.0beta1 / 2021-08-28
 ========================
 
@@ -30,6 +35,7 @@ v3.7.0beta1 / 2021-08-28
   * chore(deps-dev): bump lxml from 4.6.2 to 4.6.3 (#68)
   * Bump lxml from 4.1.1 to 4.6.2 (#66)
 
+===================
 v3.6.0 / 2020-11-12
 ===================
 
@@ -39,12 +45,14 @@ v3.6.0 / 2020-11-12
   * feat: try & support more os and python versions
   * Update pythonpackage.yml
 
+===================
 v3.5.0 / 2020-08-24
 ===================
 
   * feat: remove six as dependency as we are python3 only, resolves #60 (#61)
   * feat: update makefile for the correct command
 
+===================
 v3.4.1 / 2020-06-10
 ===================
 
@@ -57,6 +65,7 @@ v3.4.1 / 2020-06-10
   * Merge github.com:vinitkumar/json2xml
   * feat: fix typo in the readme
 
+===================
 v3.3.3 / 2020-02-05
 ===================
 
@@ -77,6 +86,7 @@ v3.3.3 / 2020-02-05
   * fix: remove print statement in json read because it confuses people
   * fix typo in readme
 
+===================
 v3.0.0 / 2019-02-26
 ===================
 

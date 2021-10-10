@@ -5,6 +5,7 @@ json2xml
 
 .. image:: https://img.shields.io/pypi/v/json2xml.svg
         :target: https://pypi.python.org/pypi/json2xml
+.. image:: https://github.com/vinitkumar/json2xml/actions/workflows/pythonpackage.yml/badge.svg
 .. image:: https://img.shields.io/pypi/pyversions/json2xml.svg
 .. image:: https://badge.fury.io/py/json2xml.svg
 .. image:: https://readthedocs.org/projects/json2xml/badge/?version=latest

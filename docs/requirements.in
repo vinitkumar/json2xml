@@ -1,1 +1,11 @@
 furo
+sphinx
+sphinx-autobuild
+
+# if using typehints
+sphinx-autodoc-typehints
+
+mock
+autodoc
+
+defusedxml

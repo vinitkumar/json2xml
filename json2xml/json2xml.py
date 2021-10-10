@@ -6,12 +6,13 @@ from json2xml import dicttoxml
 
 class Json2xml:
     def __init__(
-            self, data: str,
-            wrapper: str = "all",
-            root: bool = True,
-            pretty: bool = True,
-            attr_type: bool = True,
-            item_wrap: bool = True
+        self,
+        data: str,
+        wrapper: str = "all",
+        root: bool = True,
+        pretty: bool = True,
+        attr_type: bool = True,
+        item_wrap: bool = True,
     ):
         self.data = data
         self.pretty = pretty
@@ -30,7 +31,7 @@ class Json2xml:
                 root=self.root,
                 custom_root=self.wrapper,
                 attr_type=self.attr_type,
-                item_wrap=self.item_wrap
+                item_wrap=self.item_wrap,
             )
             if self.pretty:
                 return parseString(xml_data).toprettyxml()

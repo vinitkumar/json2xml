@@ -1,3 +1,13 @@
+"""
+Converts a Python dictionary or other native data type into a valid XML string.
+
+Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other
+        number-like objects) and collection (`list`, `set`, `tuple` and `dict`, as well as iterable and
+                dict-like objects) data types, with arbitrary nesting for the collections.
+        Items with a `datetime` type are converted to ISO format strings.
+        Items with a `None` type become empty XML elements.
+This module works with both Python 2 and 3.
+"""
 #!/usr/bin/env python
 # coding: utf-8
 
@@ -10,17 +20,6 @@ from defusedxml.minidom import parseString
 from typing import Dict, Any
 
 LOG = logging.getLogger("dicttoxml")
-
-"""
-Converts a Python dictionary or other native data type into a valid XML string.
-
-Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other
-        number-like objects) and collection (`list`, `set`, `tuple` and `dict`, as well as iterable and
-                dict-like objects) data types, with arbitrary nesting for the collections.
-        Items with a `datetime` type are converted to ISO format strings.
-        Items with a `None` type become empty XML elements.
-This module works with both Python 2 and 3.
-"""
 
 
 ids = []  # initialize list of unique ids

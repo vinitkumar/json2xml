@@ -115,6 +115,10 @@ class TestJson2xml(unittest.TestCase):
     def test_dicttoxml_bug(self):
         input_dict = {'response': {'results': {'user': [{'name': 'Ezequiel', 'age': '33', 'city': 'San Isidro'}, {'name': 'Belén', 'age': '30', 'city': 'San Isidro'}]}}}
 
-        with pytest.raises(AttributeError) as pytest_wrapped_e:
-            json2xml.Json2xml(json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False).to_xml()
-        assert pytest_wrapped_e.type == AttributeError
+        # with pytest.raises(AttributeError) as pytest_wrapped_e:
+        #     json2xml.Json2xml(json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False).to_xml()
+        # assert pytest_wrapped_e.type == AttributeError
+
+        xmldata = json2xml.Json2xml(json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False).to_xml()
+        old_dict = xmltodict.parse(xmldata)
+        assert 'response' in old_dict.keys()

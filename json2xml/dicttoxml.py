@@ -143,10 +143,10 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
     item_name = item_func(parent)
 
     if isinstance(obj, numbers.Number) or isinstance(obj, str):
-        return convert_kv(item_name, obj, attr_type, cdata)
+        return convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata)
 
     if hasattr(obj, "isoformat"):
-        return convert_kv(item_name, obj.isoformat(), attr_type, cdata)
+        return convert_kv(key=item_name, val=obj.isoformat(), attr_type=attr_type, attr={}, cdata=cdata)
 
     if isinstance(obj, bool):
         return convert_bool(item_name, obj, attr_type, cdata)
@@ -183,10 +183,10 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
         key, attr = make_valid_xml_name(key, attr)
 
         if isinstance(val, numbers.Number) or isinstance(val, str):
-            addline(convert_kv(key, val, attr_type, attr, cdata))
+            addline(convert_kv(key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata))
 
         elif hasattr(val, "isoformat"):  # datetime
-            addline(convert_kv(key, val.isoformat(), attr_type, attr, cdata))
+            addline(convert_kv(key=key, val=val.isoformat(), attr_type=attr_type, attr=attr, cdata=cdata))
 
         elif isinstance(val, bool):
             addline(convert_bool(key, val, attr_type, attr, cdata))
@@ -246,10 +246,10 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
         )
         attr = {} if not ids else {"id": "%s_%s" % (this_id, i + 1)}
         if isinstance(item, numbers.Number) or isinstance(item, str):
-            addline(convert_kv(item_name, item, attr_type, attr, cdata))
+            addline(convert_kv(key=item_name, val=item, attr_type=attr_type, attr=attr, cdata=cdata))
 
         elif hasattr(item, "isoformat"):  # datetime
-            addline(convert_kv(item_name, item.isoformat(), attr_type, attr, cdata))
+            addline(convert_kv(key=item_name, val=item.isoformat(), attr_type=attr_type, attr=attr, cdata=cdata))
 
         elif isinstance(item, bool):
             addline(convert_bool(item_name, item, attr_type, attr, cdata))

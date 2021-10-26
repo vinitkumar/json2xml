@@ -71,6 +71,7 @@ By default, a wrapper `all` and pretty `True` is set. However, you can change th
 
     from json2xml import json2xml
     from json2xml.utils import readfromurl, readfromstring, readfromjson
+
     data = readfromstring(
         '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
     )
@@ -97,9 +98,8 @@ By default, items in an array are wrapped in <item></item>. However, you can cha
 
     from json2xml import json2xml
     from json2xml.utils import readfromurl, readfromstring, readfromjson
-    data = readfromstring(
-        '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }]}'
-    )
+
+    data = readfromstring('{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }]}')
     print(json2xml.Json2xml(data, item_wrap=False).to_xml())
 
 
@@ -128,6 +128,7 @@ Now, we can also specify if the output xml needs to have type specified or not. 
 
     from json2xml import json2xml
     from json2xml.utils import readfromurl, readfromstring, readfromjson
+
     data = readfromstring(
         '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
     )

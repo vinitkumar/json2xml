@@ -93,17 +93,26 @@ class TestJson2xml(unittest.TestCase):
 
     def test_item_wrap(self):
         data = readfromstring(
-            '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }]}'
+            '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"],"empty_list":[]}'
         )
         xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # item must be present within my_items
+        print(xmldata)
         assert "item" in old_dict['all']['my_items']
+        assert "item" in old_dict['all']['my_str_items']
+
+    def test_no_item_wrap(self):
+        data = readfromstring(
+            '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"],"empty_list":[]}'
+        )
 
         xmldata = json2xml.Json2xml(data, root=False, pretty=False, item_wrap=False, attr_type=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # my_item must be present within my_items
+        print(xmldata)
         assert "my_item" in old_dict['all']['my_items']
+        assert "my_str_items" in old_dict['all']
 
         xmldata = json2xml.Json2xml(data, root=False, pretty=False, item_wrap=False).to_xml()
         print(xmldata)

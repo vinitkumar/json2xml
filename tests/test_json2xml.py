@@ -86,14 +86,14 @@ class TestJson2xml(unittest.TestCase):
         )
         xmldata = json2xml.Json2xml(data, root=False, wrapper="test", pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
-        # test must be present, snce it is the wrpper
+        # test must be present, since it is the wrpper
         assert "test" in old_dict.keys()
         # reverse test, say a wrapper called ramdom won't be present
         assert "random" not in old_dict.keys()
 
     def test_item_wrap(self):
         data = readfromstring(
-            '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"],"empty_list":[]}'
+            '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}'
         )
         xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
@@ -104,22 +104,40 @@ class TestJson2xml(unittest.TestCase):
 
     def test_no_item_wrap(self):
         data = readfromstring(
-            '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"],"empty_list":[]}'
+            '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}'
         )
-
-        xmldata = json2xml.Json2xml(data, root=False, pretty=False, item_wrap=False, attr_type=False).to_xml()
+        xmldata = json2xml.Json2xml(data, root=False, pretty=False, item_wrap=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # my_item must be present within my_items
         print(xmldata)
         assert "my_item" in old_dict['all']['my_items']
         assert "my_str_items" in old_dict['all']
 
-        xmldata = json2xml.Json2xml(data, root=False, pretty=False, item_wrap=False).to_xml()
-        print(xmldata)
+    def test_empty_array(self):
+        data = readfromstring(
+            '{"empty_list":[]}'
+        )
+        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
-        # my_item must be present within my_items
-        print(old_dict['all']['my_items'])
-        assert "my_item" in old_dict['all']['my_items']
+        print(xmldata)
+        # item empty_list be present within all
+        assert "empty_list" in old_dict['all']
+
+    def test_attrs(self):
+        data = readfromstring(
+            '{"my_string":"a","my_int":1,"my_float":1.1,"my_bool":true,"my_null":null,"empty_list":[],"empty_dict":{}}'
+        )
+        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
+        old_dict = xmltodict.parse(xmldata)
+        print(xmldata)
+        # test all attrs
+        assert "str" == old_dict['all']['my_string']['@type']
+        assert "int" == old_dict['all']['my_int']['@type']
+        assert "float" == old_dict['all']['my_float']['@type']
+        assert "bool" == old_dict['all']['my_bool']['@type']
+        assert "null" == old_dict['all']['my_null']['@type']
+        assert "list" == old_dict['all']['empty_list']['@type']
+        assert "dict" == old_dict['all']['empty_dict']['@type']
 
     def test_dicttoxml_bug(self):
         input_dict = {'response': {'results': {'user': [{'name': 'Ezequiel', 'age': '33', 'city': 'San Isidro'}, {'name': 'Belén', 'age': '30', 'city': 'San Isidro'}]}}}

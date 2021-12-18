@@ -204,46 +204,23 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
                 )
             )
 
-        elif isinstance(val, collections.abc.Iterable):
+        elif isinstance(val, collections.abc.Iterable) and val:
             if attr_type:
                 attr["type"] = get_xml_type(val)
-            if val:
-                if isinstance(val[0], numbers.Number) or isinstance(val[0], str):
-                    if item_wrap:
-                        addline(
-                            "<%s%s>%s</%s>"
-                            % (
-                                key,
-                                make_attrstring(attr),
-                                convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap),
-                                key,
-                            )
-                        )
-                    else:
-                        addline(
-                            convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap)
-                        )
-                else:
-                    addline(
-                        "<%s%s>%s</%s>"
-                        % (
-                            key,
-                            make_attrstring(attr),
-                            convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap),
-                            key,
-                        )
-                    )
+            if isinstance(val[0], numbers.Number) or isinstance(val[0], str) and not item_wrap:
+                addline(convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap))
             else:
                 addline(
-                    "<%s%s></%s>"
+                    "<%s%s>%s</%s>"
                     % (
                         key,
                         make_attrstring(attr),
+                        convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap),
                         key,
                     )
                 )
 
-        elif val is None:
+        elif not val:
             addline(convert_none(key, val, attr_type, attr, cdata))
 
         else:
@@ -275,14 +252,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
             if item_wrap:
                 addline(convert_kv(key=item_name, val=item, attr_type=attr_type, attr=attr, cdata=cdata))
             else:
-                addline(
-                    "<%s>%s</%s>"
-                    % (
-                        parent,
-                        item,
-                        parent,
-                    )
-                )
+                addline(convert_kv(key=parent, val=item, attr_type=attr_type, attr=attr, cdata=cdata))
 
         elif hasattr(item, "isoformat"):  # datetime
             addline(convert_kv(key=item_name, val=item.isoformat(), attr_type=attr_type, attr=attr, cdata=cdata))

@@ -10,4 +10,4 @@ Development Lead
 Contributors
 ------------
 
-* Jeff Groom <mail@jgroom33@outlook.com>
+* Jeff Groom <jgroom33@outlook.com>

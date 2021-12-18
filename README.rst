@@ -110,7 +110,7 @@ Default output:
 
 .. code-block:: xml
 
-<?xml version="1.0" ?>
+    <?xml version="1.0" ?>
     <all>
       <my_items type="list">
         <item type="dict">

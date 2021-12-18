@@ -1,9 +1,10 @@
 History
 =======
 
-v3.9.0beta0 / 2021-12-15
-===================
+v3.9.0 / 2021-12-19
+==================
 
+  * feat: generate history
   * feat: item_wrap for str and int (#93)
 
 v3.8.4 / 2021-10-24

@@ -92,16 +92,54 @@ Outputs this:
 Omit List item
 --------------
 
-By default, items in an array are wrapped in <item></item>. However, you can change this easily in your code like this:
+Assume the following json input
+
+.. code-block:: json
+
+    {
+      "my_items": [
+        { "my_item": { "id": 1 } },
+        { "my_item": { "id": 2 } }
+      ],
+      "my_str_items": ["a", "b"]
+    }
+
+By default, items in an array are wrapped in <item></item>.
+
+Default output:
+
+.. code-block:: xml
+
+<?xml version="1.0" ?>
+    <all>
+      <my_items type="list">
+        <item type="dict">
+          <my_item type="dict">
+            <id type="int">1</id>
+          </my_item>
+        </item>
+        <item type="dict">
+          <my_item type="dict">
+            <id type="int">2</id>
+          </my_item>
+        </item>
+      </my_items>
+      <my_str_items type="list">
+        <item type="str">a</item>
+        <item type="str">b</item>
+      </my_str_items>
+      <empty type="list"/>
+    </all>
+
+However, you can change this behavior using the item_wrap property like this:
 
 .. code-block:: python
 
     from json2xml import json2xml
     from json2xml.utils import readfromurl, readfromstring, readfromjson
 
-    data = readfromstring('{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }]}')
+    data = readfromstring('{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}')
     print(json2xml.Json2xml(data, item_wrap=False).to_xml())
-
 
 Outputs this:
 
@@ -110,13 +148,15 @@ Outputs this:
     <?xml version="1.0" ?>
     <all>
       <my_items type="list">
-        <my_item>
-            <id type="int">1</id>
+        <my_item type="dict">
+          <id type="int">1</id>
         </my_item>
-        <my_item>
-            <id type="int">2</id>
+        <my_item type="dict">
+          <id type="int">2</id>
         </my_item>
-      </list>
+      </my_items>
+      <my_str_items type="str">a</my_str_items>
+      <my_str_items type="str">b</my_str_items>
     </all>
 
 Optional Attribute Type Support

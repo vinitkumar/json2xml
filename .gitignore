@@ -1,4 +1,5 @@
 .idea
+G
 .tox
 *.pyc
 json2xml.egg-info
@@ -8,3 +9,5 @@ dist/*
 .mypy_cache
 .eggs
 .DS_Store
+.coverage
+htmlcov

@@ -35,4 +35,4 @@ jobs:
         flake8 json2xml/ --exit-zero
     - name: Test with pytest
       run: |
-        python setup.py test
+        tox

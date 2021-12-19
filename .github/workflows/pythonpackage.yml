@@ -35,4 +35,5 @@ jobs:
         flake8 json2xml/ --exit-zero
     - name: Test with pytest
       run: |
+        pip install --upgrade tox
         tox

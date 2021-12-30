@@ -1,8 +1,27 @@
 History
 =======
 
+v3.10.0rc1 / 2021-12-31
+=======================
+
+  * feat: bump to a rc1 version
+  * Add support for Python3.11 alpha and upgrade pytest and py (#97)
+  * Feat: drop 3.11.0 alphas from the test matrix for now
+  * feat: find the versions that are in the CI
+  * fix: typo in the name of python 3.11 version
+  * sunsetting python 3.6 and add support for python3.11 alpha
+  * chore: prepare for release 3.9.0
+  * fix email
+  * fix readme
+  * - update readme - add tests - refactor
+  * resolve #93
+  * chore: run black on readme doc
+  * fix: more issues
+  * fix: garbage in history
+  * feat: generate history
+
 v3.9.0 / 2021-12-19
-==================
+===================
 
   * feat: generate history
   * feat: item_wrap for str and int (#93)

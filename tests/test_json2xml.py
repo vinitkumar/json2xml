@@ -74,7 +74,7 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, wrapper="test", pretty=False).to_xml()
+        xmldata = json2xml.Json2xml(data, wrapper="test", pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # test must be present, snce it is the wrpper
         assert "test" in old_dict.keys()
@@ -85,7 +85,7 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, wrapper="test", pretty=False).to_xml()
+        xmldata = json2xml.Json2xml(data, wrapper="test", pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # test must be present, since it is the wrpper
         assert "test" in old_dict.keys()
@@ -96,7 +96,7 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
+        xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # item must be present within my_items
         print(xmldata)
@@ -107,7 +107,7 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, pretty=False, item_wrap=False).to_xml()
+        xmldata = json2xml.Json2xml(data, pretty=False, item_wrap=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # my_item must be present within my_items
         print(xmldata)
@@ -118,7 +118,7 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"empty_list":[]}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
+        xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         print(xmldata)
         # item empty_list be present within all
@@ -128,7 +128,7 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"my_string":"a","my_int":1,"my_float":1.1,"my_bool":true,"my_null":null,"empty_list":[],"empty_dict":{}}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
+        xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         print(xmldata)
         # test all attrs

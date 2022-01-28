@@ -11,6 +11,7 @@ import xmltodict
 import json
 
 from json2xml import json2xml
+from json2xml.dicttoxml import dicttoxml
 from json2xml.utils import readfromjson, readfromstring, readfromurl, JSONReadError, StringReadError, URLReadError
 
 
@@ -149,3 +150,18 @@ class TestJson2xml(unittest.TestCase):
         xmldata = json2xml.Json2xml(json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         assert 'response' in old_dict.keys()
+
+    def test_dict2xml_no_root(self):
+        payload = {'mock': 'payload'}
+        result = dicttoxml(payload, attr_type=False, root=False)
+        assert b'<mock>payload</mock>' == result
+
+    def test_dict2xml_with_root(self):
+        payload = {'mock': 'payload'}
+        result = dicttoxml(payload, attr_type=False)
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><root><mock>payload</mock></root>' == result
+
+    def test_dict2xml_with_custom_root(self):
+        payload = {'mock': 'payload'}
+        result = dicttoxml(payload, attr_type=False, custom_root="element")
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><element><mock>payload</mock></element>' == result

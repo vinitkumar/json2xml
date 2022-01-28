@@ -6,6 +6,8 @@
 
 import unittest
 from collections import OrderedDict
+from pyexpat import ExpatError
+
 import pytest
 import xmltodict
 import json
@@ -81,16 +83,13 @@ class TestJson2xml(unittest.TestCase):
         # reverse test, say a wrapper called ramdom won't be present
         assert "random" not in old_dict.keys()
 
-    def test_no_wrapper_and_indent(self):
+    def test_no_wrapper(self):
         data = readfromstring(
             '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
         )
-        xmldata = json2xml.Json2xml(data, wrapper="test", pretty=False).to_xml()
-        old_dict = xmltodict.parse(xmldata)
-        # test must be present, since it is the wrpper
-        assert "test" in old_dict.keys()
-        # reverse test, say a wrapper called ramdom won't be present
-        assert "random" not in old_dict.keys()
+        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
+        assert xmldata.startswith(b'<login type="str">mojombo</login>')
+        self.assertRaises(ExpatError, xmltodict.parse, xmldata)
 
     def test_item_wrap(self):
         data = readfromstring(

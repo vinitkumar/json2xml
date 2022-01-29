@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from typing import Optional, Any
 from defusedxml.minidom import parseString
 from json2xml import dicttoxml

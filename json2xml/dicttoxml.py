@@ -27,7 +27,7 @@ ids = []  # initialize list of unique ids
 
 def make_id(element, start=100000, end=999999):
     """Returns a random integer"""
-    return "%s_%s" % (element, randint(start, end))
+    return f"{element}_{randint(start, end)}"
 
 
 def get_unique_id(element):
@@ -78,14 +78,14 @@ def escape_xml(s: str) -> str:
 
 def make_attrstring(attr):
     """Returns an attribute string in the form key="val" """
-    attrstring = " ".join(['%s="%s"' % (k, v) for k, v in attr.items()])
-    return "%s%s" % (" " if attrstring != "" else "", attrstring)
+    attrstring = " ".join([f'{k}="{v}"' for k, v in attr.items()])
+    return "{}{}".format(" " if attrstring != "" else "", attrstring)
 
 
 def key_is_valid_xml(key):
     """Checks that a key is a valid XML name"""
     LOG.info('Inside key_is_valid_xml(). Testing "%s"' % (str(key)))
-    test_xml = '<?xml version="1.0" encoding="UTF-8" ?><%s>foo</%s>' % (key, key)
+    test_xml = f'<?xml version="1.0" encoding="UTF-8" ?><{key}>foo</{key}>'
     try:
         parseString(test_xml)
         return True
@@ -137,7 +137,7 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
     based on their data type"""
 
     LOG.info(
-        'Inside convert(). obj type is: "%s", obj="%s"' % (type(obj).__name__, str(obj))
+        f'Inside convert(). obj type is: "{type(obj).__name__}", obj="{str(obj)}"'
     )
 
     item_name = item_func(parent)
@@ -160,7 +160,7 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
     if isinstance(obj, collections.abc.Iterable):
         return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
 
-    raise TypeError("Unsupported data type: %s (%s)" % (obj, type(obj).__name__))
+    raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
 
 
 def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
@@ -225,7 +225,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
 
         else:
             raise TypeError(
-                "Unsupported data type: %s (%s)" % (val, type(val).__name__)
+                f"Unsupported data type: {val} ({type(val).__name__})"
             )
 
     return "".join(output)
@@ -247,7 +247,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
             'Looping inside convert_list(): item="%s", item_name="%s", type="%s"'
             % (str(item), item_name, type(item).__name__)
         )
-        attr = {} if not ids else {"id": "%s_%s" % (this_id, i + 1)}
+        attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
         if isinstance(item, numbers.Number) or isinstance(item, str):
             if item_wrap:
                 addline(convert_kv(key=item_name, val=item, attr_type=attr_type, attr=attr, cdata=cdata))
@@ -359,7 +359,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
 
         else:
             raise TypeError(
-                "Unsupported data type: %s (%s)" % (item, type(item).__name__)
+                f"Unsupported data type: {item} ({type(item).__name__})"
             )
     return "".join(output)
 
@@ -376,7 +376,7 @@ def convert_kv(key, val, attr_type, attr={}, cdata: bool = False):
     if attr_type:
         attr["type"] = get_xml_type(val)
     attrstring = make_attrstring(attr)
-    return "<%s%s>%s</%s>" % (
+    return "<{}{}>{}</{}>".format(
         key,
         attrstring,
         wrap_cdata(val) if cdata else escape_xml(val),
@@ -396,7 +396,7 @@ def convert_bool(key, val, attr_type, attr={}, cdata=False):
     if attr_type:
         attr["type"] = get_xml_type(val)
     attrstring = make_attrstring(attr)
-    return "<%s%s>%s</%s>" % (key, attrstring, str(val).lower(), key)
+    return f"<{key}{attrstring}>{str(val).lower()}</{key}>"
 
 
 def convert_none(key, val, attr_type, attr={}, cdata=False):
@@ -408,7 +408,7 @@ def convert_none(key, val, attr_type, attr={}, cdata=False):
     if attr_type:
         attr["type"] = get_xml_type(val)
     attrstring = make_attrstring(attr)
-    return "<%s%s></%s>" % (key, attrstring, key)
+    return f"<{key}{attrstring}></{key}>"
 
 
 def dicttoxml(
@@ -446,7 +446,7 @@ def dicttoxml(
     output = []
     if root:
         output.append('<?xml version="1.0" encoding="UTF-8" ?>')
-        output.append('<%s>%s</%s>' % (
+        output.append('<{}>{}</{}>'.format(
             custom_root,
             convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root),
             custom_root

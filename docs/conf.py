@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # json2xml documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
@@ -47,9 +46,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'json2xml'
-copyright = u"2019, Vinit Kumar"
-author = u"Vinit Kumar"
+project = 'json2xml'
+copyright = "2019, Vinit Kumar"
+author = "Vinit Kumar"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -129,8 +128,8 @@ latex_elements = {
 # [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'json2xml.tex',
-     u'json2xml Documentation',
-     u'Vinit Kumar', 'manual'),
+     'json2xml Documentation',
+     'Vinit Kumar', 'manual'),
 ]
 
 
@@ -140,7 +139,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     (master_doc, 'json2xml',
-     u'json2xml Documentation',
+     'json2xml Documentation',
      [author], 1)
 ]
 
@@ -152,7 +151,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'json2xml',
-     u'json2xml Documentation',
+     'json2xml Documentation',
      author,
      'json2xml',
      'One line description of project.',

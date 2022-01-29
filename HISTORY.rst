@@ -1,9 +1,12 @@
 History
 =======
 
-v3.10.0rc1 / 2021-12-31
-=======================
+v3.10.0 / 2022-01-29
+====================
 
+  * bump version to 3.10.0
+  * fix: we support Python3.7+ now (#101)
+  * Issue: #99 dicttoxml igores the root param (#100)
   * feat: bump to a rc1 version
   * Add support for Python3.11 alpha and upgrade pytest and py (#97)
   * Feat: drop 3.11.0 alphas from the test matrix for now

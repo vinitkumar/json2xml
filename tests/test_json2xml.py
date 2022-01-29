@@ -6,11 +6,14 @@
 
 import unittest
 from collections import OrderedDict
+from pyexpat import ExpatError
+
 import pytest
 import xmltodict
 import json
 
 from json2xml import json2xml
+from json2xml.dicttoxml import dicttoxml
 from json2xml.utils import readfromjson, readfromstring, readfromurl, JSONReadError, StringReadError, URLReadError
 
 
@@ -73,29 +76,26 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, wrapper="test", pretty=False).to_xml()
+        xmldata = json2xml.Json2xml(data, wrapper="test", pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # test must be present, snce it is the wrpper
         assert "test" in old_dict.keys()
         # reverse test, say a wrapper called ramdom won't be present
         assert "random" not in old_dict.keys()
 
-    def test_no_wrapper_and_indent(self):
+    def test_no_wrapper(self):
         data = readfromstring(
             '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, wrapper="test", pretty=False).to_xml()
-        old_dict = xmltodict.parse(xmldata)
-        # test must be present, since it is the wrpper
-        assert "test" in old_dict.keys()
-        # reverse test, say a wrapper called ramdom won't be present
-        assert "random" not in old_dict.keys()
+        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
+        assert xmldata.startswith(b'<login type="str">mojombo</login>')
+        self.assertRaises(ExpatError, xmltodict.parse, xmldata)
 
     def test_item_wrap(self):
         data = readfromstring(
             '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
+        xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # item must be present within my_items
         print(xmldata)
@@ -106,7 +106,7 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, pretty=False, item_wrap=False).to_xml()
+        xmldata = json2xml.Json2xml(data, pretty=False, item_wrap=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # my_item must be present within my_items
         print(xmldata)
@@ -117,7 +117,7 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"empty_list":[]}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
+        xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         print(xmldata)
         # item empty_list be present within all
@@ -127,7 +127,7 @@ class TestJson2xml(unittest.TestCase):
         data = readfromstring(
             '{"my_string":"a","my_int":1,"my_float":1.1,"my_bool":true,"my_null":null,"empty_list":[],"empty_dict":{}}'
         )
-        xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
+        xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         print(xmldata)
         # test all attrs
@@ -149,3 +149,18 @@ class TestJson2xml(unittest.TestCase):
         xmldata = json2xml.Json2xml(json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         assert 'response' in old_dict.keys()
+
+    def test_dict2xml_no_root(self):
+        payload = {'mock': 'payload'}
+        result = dicttoxml(payload, attr_type=False, root=False)
+        assert b'<mock>payload</mock>' == result
+
+    def test_dict2xml_with_root(self):
+        payload = {'mock': 'payload'}
+        result = dicttoxml(payload, attr_type=False)
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><root><mock>payload</mock></root>' == result
+
+    def test_dict2xml_with_custom_root(self):
+        payload = {'mock': 'payload'}
+        result = dicttoxml(payload, attr_type=False, custom_root="element")
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><element><mock>payload</mock></element>' == result

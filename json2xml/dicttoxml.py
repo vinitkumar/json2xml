@@ -43,7 +43,7 @@ def get_unique_id(element):
     return ids[-1]
 
 
-def get_xml_type(val):
+def get_xml_type(val) -> str:
     """Returns the data type for the xml type attribute"""
     if type(val).__name__ in ("str", "unicode"):
         return "str"

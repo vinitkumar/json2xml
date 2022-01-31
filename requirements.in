@@ -1,6 +1,4 @@
 requests>=2.20.0
 defusedxml==0.7.1
-pytest==7.0.0rc1
-py==1.11.0
 xmltodict
 

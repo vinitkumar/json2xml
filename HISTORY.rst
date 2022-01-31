@@ -1,6 +1,20 @@
 History
 =======
 
+v3.11.0 / 2022-01-31
+====================
+
+  * bump version
+  * feat: remove comments
+  * Feat: install pytest separately and run pytests now
+  * fix tox
+  * add some documentation on testing
+  * split testing libs away from release
+  * fix: update changelog
+  * bump version to 3.10.0
+  * fix: we support Python3.7+ now (#101)
+  * Issue: #99 dicttoxml igores the root param (#100)
+
 v3.10.0 / 2022-01-29
 ====================
 

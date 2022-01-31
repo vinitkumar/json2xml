@@ -6,7 +6,7 @@ Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicod
                 dict-like objects) data types, with arbitrary nesting for the collections.
         Items with a `datetime` type are converted to ISO format strings.
         Items with a `None` type become empty XML elements.
-This module works with both Python 2 and 3.
+This module works with Python 3.7+
 """
 #!/usr/bin/env python
 # coding: utf-8

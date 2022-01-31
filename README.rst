@@ -190,6 +190,18 @@ Outputs this:
 The methods are simple and easy to use and there are also checks inside of code to exit cleanly
 in case any of the input(file, string or API URL) returns invalid JSON.
 
+Testing
+-------
+
+This is provided by pytest, which is straight forward.
+
+ .. code-block:: bash
+
+    python3.8 -mvenv venv
+    source venv/bin/activate
+    python setup.py test
+
+
 Credits
 -------
 

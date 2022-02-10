@@ -1,9 +1,36 @@
 History
 =======
 
-v3.10.0rc1 / 2021-12-31
-=======================
+v3.14.0 / 2022-02-10
+====================
 
+  * fix: remove unused imports
+  * bump version
+  * fix: issue with uncaught UnicodeDecodeError
+  * cancel jobs for concurrent builds in same PR
+  * pypi is stable now
+  * feat: update tox config
+
+v3.11.0 / 2022-01-31
+====================
+
+  * bump version
+  * feat: remove comments
+  * Feat: install pytest separately and run pytests now
+  * fix tox
+  * add some documentation on testing
+  * split testing libs away from release
+  * fix: update changelog
+  * bump version to 3.10.0
+  * fix: we support Python3.7+ now (#101)
+  * Issue: #99 dicttoxml igores the root param (#100)
+
+v3.10.0 / 2022-01-29
+====================
+
+  * bump version to 3.10.0
+  * fix: we support Python3.7+ now (#101)
+  * Issue: #99 dicttoxml igores the root param (#100)
   * feat: bump to a rc1 version
   * Add support for Python3.11 alpha and upgrade pytest and py (#97)
   * Feat: drop 3.11.0 alphas from the test matrix for now

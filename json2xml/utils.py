@@ -7,6 +7,8 @@ import requests
 class JSONReadError(Exception):
     pass
 
+class InvalidDataError(Exception):
+    pass
 
 class URLReadError(Exception):
     pass
@@ -28,7 +30,7 @@ def readfromjson(filename: str) -> Dict[str, str]:
     except ValueError as exp:
         print(exp)
         raise JSONReadError
-    except IOError as exp:
+    except OSError as exp:
         print(exp)
         raise JSONReadError("Invalid JSON File")
 

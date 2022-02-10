@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """The setup script."""
 
@@ -16,7 +15,7 @@ requirements = [open("requirements.txt").read()]
 
 setup_requirements = []
 
-test_requirements = []
+test_requirements = ["pytest==7.0.0rc1", "py==1.11.0"]
 
 setup(
     author="Vinit Kumar",

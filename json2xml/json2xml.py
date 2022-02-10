@@ -1,4 +1,3 @@
-import xml
 from typing import Optional, Any
 from defusedxml.minidom import parseString
 from pyexpat import ExpatError

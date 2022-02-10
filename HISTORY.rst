@@ -1,6 +1,16 @@
 History
 =======
 
+v3.14.0 / 2022-02-10
+====================
+
+  * fix: remove unused imports
+  * bump version
+  * fix: issue with uncaught UnicodeDecodeError
+  * cancel jobs for concurrent builds in same PR
+  * pypi is stable now
+  * feat: update tox config
+
 v3.11.0 / 2022-01-31
 ====================
 

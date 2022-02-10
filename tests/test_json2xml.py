@@ -13,7 +13,7 @@ import json
 
 from json2xml import json2xml
 from json2xml.dicttoxml import dicttoxml
-from json2xml.utils import readfromjson, readfromstring, readfromurl, JSONReadError, StringReadError, URLReadError
+from json2xml.utils import InvalidDataError, readfromjson, readfromstring, readfromurl, JSONReadError, StringReadError, URLReadError
 
 
 class TestJson2xml(unittest.TestCase):
@@ -163,3 +163,9 @@ class TestJson2xml(unittest.TestCase):
         payload = {'mock': 'payload'}
         result = dicttoxml(payload, attr_type=False, custom_root="element")
         assert b'<?xml version="1.0" encoding="UTF-8" ?><element><mock>payload</mock></element>' == result
+
+    def test_bad_data(self):
+        data = b"!\0a\8f".decode("utf-8")
+        with pytest.raises(InvalidDataError) as pytest_wrapped_e:
+            result = json2xml.Json2xml(data).to_xml()
+        assert pytest_wrapped_e.type == InvalidDataError

@@ -1,6 +1,9 @@
+import xml
 from typing import Optional, Any
 from defusedxml.minidom import parseString
+from pyexpat import ExpatError
 from json2xml import dicttoxml
+from .utils import InvalidDataError
 
 
 class Json2xml:
@@ -33,6 +36,10 @@ class Json2xml:
                 item_wrap=self.item_wrap,
             )
             if self.pretty:
-                return parseString(xml_data).toprettyxml()
+                try:
+                    result = parseString(xml_data).toprettyxml()
+                except ExpatError as e:
+                    raise InvalidDataError
+                return result
             return xml_data
         return None

@@ -6,6 +6,9 @@ from .utils import InvalidDataError
 
 
 class Json2xml:
+    """
+    Wrapper class to convert the data to xml
+    """
     def __init__(
         self,
         data: str,

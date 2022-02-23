@@ -207,16 +207,9 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
             if isinstance(val[0], numbers.Number) or isinstance(val[0], str) and not item_wrap:
                 addline(convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap))
             else:
-                addline(
-                    "<%s%s>%s</%s>"
-                    % (
-                        key,
-                        make_attrstring(attr),
-                        convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap),
-                        key,
-                    )
-                )
-
+                attrstring = make_attrstring(attr)
+                list_str = convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap)
+                addline(f"<{key}{attrstring}>{list_str}</{key}>")
         elif not val:
             addline(convert_none(key, val, attr_type, attr, cdata))
 

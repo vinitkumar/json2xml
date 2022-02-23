@@ -178,7 +178,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
 
         key, attr = make_valid_xml_name(key, attr)
 
-        if isinstance(val, numbers.Number) or isinstance(val, str):
+        if isinstance(val, (numbers.Number, str)):
             addline(convert_kv(key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata))
 
         elif hasattr(val, "isoformat"):  # datetime
@@ -230,7 +230,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
             f'Looping inside convert_list(): item="{str(item)}", item_name="{item_name}", type="{type(item).__name__}"'
         )
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
-        if isinstance(item, numbers.Number) or isinstance(item, str):
+        if isinstance(item, (numbers.Number, str)):
             if item_wrap:
                 addline(convert_kv(key=item_name, val=item, attr_type=attr_type, attr=attr, cdata=cdata))
             else:

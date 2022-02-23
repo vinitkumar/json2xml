@@ -1,6 +1,22 @@
 History
 =======
 
+3.15.0 / 2022-02-24
+===================
+
+  * Merge remote-tracking branch 'origin/master'
+  * bump version and prepare for new release
+  * feat: new python versions to test against (#110)
+  * Fix/perflint (#109)
+  * feat: support latest version of 3.10 and 3.11 alpha3 (#98)
+  * feat: generate changelog
+  * fix: remove unused imports
+  * bump version
+  * fix: issue with uncaught UnicodeDecodeError
+  * cancel jobs for concurrent builds in same PR
+  * pypi is stable now
+  * feat: update tox config
+
 v3.14.0 / 2022-02-10
 ====================
 

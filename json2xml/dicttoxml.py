@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
 Converts a Python dictionary or other native data type into a valid XML string.
 
@@ -8,8 +10,6 @@ Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicod
         Items with a `None` type become empty XML elements.
 This module works with Python 3.7+
 """
-#!/usr/bin/env python
-# coding: utf-8
 
 import collections
 import logging
@@ -79,12 +79,12 @@ def escape_xml(s: str) -> str:
 def make_attrstring(attr):
     """Returns an attribute string in the form key="val" """
     attrstring = " ".join([f'{k}="{v}"' for k, v in attr.items()])
-    return "{}{}".format(" " if attrstring != "" else "", attrstring)
+    return f'{" " if attrstring != "" else ""}{attrstring}'
 
 
 def key_is_valid_xml(key):
     """Checks that a key is a valid XML name"""
-    LOG.info('Inside key_is_valid_xml(). Testing "%s"' % (str(key)))
+    LOG.info(f'Inside key_is_valid_xml(). Testing "{str(key)}"')
     test_xml = f'<?xml version="1.0" encoding="UTF-8" ?><{key}>foo</{key}>'
     try:
         parseString(test_xml)
@@ -96,8 +96,7 @@ def key_is_valid_xml(key):
 def make_valid_xml_name(key, attr: Dict[str, Any]):
     """Tests an XML name and fixes it if invalid"""
     LOG.info(
-        'Inside make_valid_xml_name(). Testing key "%s" with attr "%s"'
-        % (str(key), str(attr))
+        f'Inside make_valid_xml_name(). Testing key "{str(key)}" with attr "{str(attr)}"'
     )
     key = escape_xml(key)
     # nothing happens at escape_xml if attr is not a string, we don't
@@ -110,7 +109,7 @@ def make_valid_xml_name(key, attr: Dict[str, Any]):
 
     # prepend a lowercase n if the key is numeric
     if key.isdigit():
-        return "n%s" % (key), attr
+        return f"n{key}", attr
 
     # replace spaces with underscores if that fixes the problem
     if key_is_valid_xml(key.replace(" ", "_")):
@@ -136,17 +135,23 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
     """Routes the elements of an object to the right function to convert them
     based on their data type"""
 
-    LOG.info(
-        f'Inside convert(). obj type is: "{type(obj).__name__}", obj="{str(obj)}"'
-    )
+    LOG.info(f'Inside convert(). obj type is: "{type(obj).__name__}", obj="{str(obj)}"')
 
     item_name = item_func(parent)
 
-    if isinstance(obj, numbers.Number) or isinstance(obj, str):
-        return convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata)
+    if isinstance(obj, (numbers.Number, str)):
+        return convert_kv(
+            key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
+        )
 
     if hasattr(obj, "isoformat"):
-        return convert_kv(key=item_name, val=obj.isoformat(), attr_type=attr_type, attr={}, cdata=cdata)
+        return convert_kv(
+            key=item_name,
+            val=obj.isoformat(),
+            attr_type=attr_type,
+            attr={},
+            cdata=cdata,
+        )
 
     if isinstance(obj, bool):
         return convert_bool(item_name, obj, attr_type, cdata)
@@ -166,27 +171,37 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
 def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
     """Converts a dict into an XML string."""
     LOG.info(
-        'Inside convert_dict(): obj type is: "%s", obj="%s"'
-        % (type(obj).__name__, str(obj))
+        f'Inside convert_dict(): obj type is: "{type(obj).__name__}", obj="{str(obj)}"'
     )
     output = []
     addline = output.append
 
     for key, val in obj.items():
         LOG.info(
-            'Looping inside convert_dict(): key="%s", val="%s", type(val)="%s"'
-            % (str(key), str(val), type(val).__name__)
+            f'Looping inside convert_dict(): key="{str(key)}", val="{str(val)}", type(val)="{type(val).__name__}"'
         )
 
-        attr = {} if not ids else {"id": "%s" % (get_unique_id(parent))}
+        attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
 
         key, attr = make_valid_xml_name(key, attr)
 
-        if isinstance(val, numbers.Number) or isinstance(val, str):
-            addline(convert_kv(key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata))
+        if isinstance(val, (numbers.Number, str)):
+            addline(
+                convert_kv(
+                    key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
+                )
+            )
 
         elif hasattr(val, "isoformat"):  # datetime
-            addline(convert_kv(key=key, val=val.isoformat(), attr_type=attr_type, attr=attr, cdata=cdata))
+            addline(
+                convert_kv(
+                    key=key,
+                    val=val.isoformat(),
+                    attr_type=attr_type,
+                    attr=attr,
+                    cdata=cdata,
+                )
+            )
 
         elif isinstance(val, bool):
             addline(convert_bool(key, val, attr_type, attr, cdata))
@@ -194,39 +209,34 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
         elif isinstance(val, dict):
             if attr_type:
                 attr["type"] = get_xml_type(val)
-            addline(
-                "<%s%s>%s</%s>"
-                % (
-                    key,
-                    make_attrstring(attr),
-                    convert_dict(val, ids, key, attr_type, item_func, cdata, item_wrap),
-                    key,
-                )
+            dict_str = convert_dict(
+                val, ids, key, attr_type, item_func, cdata, item_wrap
             )
+            attrstring = make_attrstring(attr)
+            addline(f"<{key}{attrstring}>{dict_str}</{key}>")
 
         elif isinstance(val, collections.abc.Iterable) and val:
             if attr_type:
                 attr["type"] = get_xml_type(val)
-            if isinstance(val[0], numbers.Number) or isinstance(val[0], str) and not item_wrap:
-                addline(convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap))
-            else:
+            if (
+                isinstance(val[0], numbers.Number)
+                or isinstance(val[0], str)
+                and not item_wrap
+            ):
                 addline(
-                    "<%s%s>%s</%s>"
-                    % (
-                        key,
-                        make_attrstring(attr),
-                        convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap),
-                        key,
-                    )
+                    convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap)
                 )
-
+            else:
+                attrstring = make_attrstring(attr)
+                list_str = convert_list(
+                    val, ids, key, attr_type, item_func, cdata, item_wrap
+                )
+                addline(f"<{key}{attrstring}>{list_str}</{key}>")
         elif not val:
             addline(convert_none(key, val, attr_type, attr, cdata))
 
         else:
-            raise TypeError(
-                f"Unsupported data type: {val} ({type(val).__name__})"
-            )
+            raise TypeError(f"Unsupported data type: {val} ({type(val).__name__})")
 
     return "".join(output)
 
@@ -244,131 +254,90 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
 
     for i, item in enumerate(items):
         LOG.info(
-            'Looping inside convert_list(): item="%s", item_name="%s", type="%s"'
-            % (str(item), item_name, type(item).__name__)
+            f'Looping inside convert_list(): item="{str(item)}", item_name="{item_name}", type="{type(item).__name__}"'
         )
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
-        if isinstance(item, numbers.Number) or isinstance(item, str):
+        if isinstance(item, (numbers.Number, str)):
             if item_wrap:
-                addline(convert_kv(key=item_name, val=item, attr_type=attr_type, attr=attr, cdata=cdata))
+                addline(
+                    convert_kv(
+                        key=item_name,
+                        val=item,
+                        attr_type=attr_type,
+                        attr=attr,
+                        cdata=cdata,
+                    )
+                )
             else:
-                addline(convert_kv(key=parent, val=item, attr_type=attr_type, attr=attr, cdata=cdata))
+                addline(
+                    convert_kv(
+                        key=parent,
+                        val=item,
+                        attr_type=attr_type,
+                        attr=attr,
+                        cdata=cdata,
+                    )
+                )
 
         elif hasattr(item, "isoformat"):  # datetime
-            addline(convert_kv(key=item_name, val=item.isoformat(), attr_type=attr_type, attr=attr, cdata=cdata))
+            addline(
+                convert_kv(
+                    key=item_name,
+                    val=item.isoformat(),
+                    attr_type=attr_type,
+                    attr=attr,
+                    cdata=cdata,
+                )
+            )
 
         elif isinstance(item, bool):
             addline(convert_bool(item_name, item, attr_type, attr, cdata))
 
         elif isinstance(item, dict):
+            item_dict_str = convert_dict(
+                item,
+                ids,
+                parent,
+                attr_type,
+                item_func,
+                cdata,
+                item_wrap,
+            )
             if not attr_type:
                 if item_wrap:
-                    addline(
-                        "<%s>%s</%s>"
-                        % (
-                            item_name,
-                            convert_dict(
-                                item,
-                                ids,
-                                parent,
-                                attr_type,
-                                item_func,
-                                cdata,
-                                item_wrap,
-                            ),
-                            item_name,
-                        )
-                    )
+                    addline(f"<{item_name}>{item_dict_str}</{item_name}>")
                 else:
-                    addline(
-                        "%s"
-                        % (
-                            convert_dict(
-                                item,
-                                ids,
-                                parent,
-                                attr_type,
-                                item_func,
-                                cdata,
-                                item_wrap,
-                            ),
-                        )
-                    )
+                    addline(f"{item_dict_str}")
             else:
                 if item_wrap:
-                    addline(
-                        '<%s type="dict">%s</%s>'
-                        % (
-                            item_name,
-                            convert_dict(
-                                item,
-                                ids,
-                                parent,
-                                attr_type,
-                                item_func,
-                                cdata,
-                                item_wrap,
-                            ),
-                            item_name,
-                        )
-                    )
+                    addline(f'<{item_name} type="dict">{item_dict_str}</{item_name}>')
                 else:
-                    addline(
-                        "%s"
-                        % (
-                            convert_dict(
-                                item,
-                                ids,
-                                parent,
-                                attr_type,
-                                item_func,
-                                cdata,
-                                item_wrap,
-                            ),
-                        )
-                    )
+                    addline(f"{item_dict_str}")
 
         elif isinstance(item, collections.abc.Iterable):
+            attrstring = make_attrstring(attr)
+            convert_list_str = convert_list(
+                item, ids, item_name, attr_type, item_func, cdata, item_wrap
+            )
             if not attr_type:
-                addline(
-                    "<%s %s>%s</%s>"
-                    % (
-                        item_name,
-                        make_attrstring(attr),
-                        convert_list(
-                            item, ids, item_name, attr_type, item_func, cdata, item_wrap
-                        ),
-                        item_name,
-                    )
-                )
+                addline(f"<{item_name} {attrstring}>{convert_list_str}</{item_name}>")
             else:
                 addline(
-                    '<%s type="list"%s>%s</%s>'
-                    % (
-                        item_name,
-                        make_attrstring(attr),
-                        convert_list(
-                            item, ids, item_name, attr_type, item_func, cdata, item_wrap
-                        ),
-                        item_name,
-                    )
+                    f'<{item_name} type="list"{attrstring}>{convert_list_str}</{item_name}>'
                 )
 
         elif item is None:
             addline(convert_none(item_name, None, attr_type, attr, cdata))
 
         else:
-            raise TypeError(
-                f"Unsupported data type: {item} ({type(item).__name__})"
-            )
+            raise TypeError(f"Unsupported data type: {item} ({type(item).__name__})")
     return "".join(output)
 
 
 def convert_kv(key, val, attr_type, attr={}, cdata: bool = False):
     """Converts a number or string into an XML element"""
     LOG.info(
-        'Inside convert_kv(): key="%s", val="%s", type(val) is: "%s"'
-        % (str(key), str(val), type(val).__name__)
+        f'Inside convert_kv(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
     )
 
     key, attr = make_valid_xml_name(key, attr)
@@ -376,19 +345,13 @@ def convert_kv(key, val, attr_type, attr={}, cdata: bool = False):
     if attr_type:
         attr["type"] = get_xml_type(val)
     attrstring = make_attrstring(attr)
-    return "<{}{}>{}</{}>".format(
-        key,
-        attrstring,
-        wrap_cdata(val) if cdata else escape_xml(val),
-        key,
-    )
+    return f"<{key}{attrstring}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
 
 
 def convert_bool(key, val, attr_type, attr={}, cdata=False):
     """Converts a boolean into an XML element"""
     LOG.info(
-        'Inside convert_bool(): key="%s", val="%s", type(val) is: "%s"'
-        % (str(key), str(val), type(val).__name__)
+        f'Inside convert_bool(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
     )
 
     key, attr = make_valid_xml_name(key, attr)
@@ -401,7 +364,7 @@ def convert_bool(key, val, attr_type, attr={}, cdata=False):
 
 def convert_none(key, val, attr_type, attr={}, cdata=False):
     """Converts a null value into an XML element"""
-    LOG.info('Inside convert_none(): key="%s"' % (str(key)))
+    LOG.info(f'Inside convert_none(): key="{str(key)}"')
 
     key, attr = make_valid_xml_name(key, attr)
 
@@ -440,18 +403,18 @@ def dicttoxml(
       Default is False
     """
     LOG.info(
-        'Inside dicttoxml(): type(obj) is: "%s", obj="%s"'
-        % (type(obj).__name__, str(obj))
+        f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}", obj="{str(obj)}"'
     )
     output = []
     if root:
         output.append('<?xml version="1.0" encoding="UTF-8" ?>')
-        output.append('<{}>{}</{}>'.format(
-            custom_root,
-            convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root),
-            custom_root
-        ))
+        output_elem = convert(
+            obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root
+        )
+        output.append(f"<{custom_root}>{output_elem}</{custom_root}>")
     else:
-        output.append(convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent=''))
+        output.append(
+            convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="")
+        )
 
     return "".join(output).encode("utf-8")

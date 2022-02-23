@@ -7,8 +7,10 @@ import requests
 class JSONReadError(Exception):
     pass
 
+
 class InvalidDataError(Exception):
     pass
+
 
 class URLReadError(Exception):
     pass

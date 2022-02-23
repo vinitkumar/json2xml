@@ -84,7 +84,7 @@ def make_attrstring(attr):
 
 def key_is_valid_xml(key):
     """Checks that a key is a valid XML name"""
-    LOG.info('Inside key_is_valid_xml(). Testing "%s"' % (str(key)))
+    LOG.info(f'Inside key_is_valid_xml(). Testing "{str(key)}"')
     test_xml = f'<?xml version="1.0" encoding="UTF-8" ?><{key}>foo</{key}>'
     try:
         parseString(test_xml)
@@ -96,8 +96,7 @@ def key_is_valid_xml(key):
 def make_valid_xml_name(key, attr: Dict[str, Any]):
     """Tests an XML name and fixes it if invalid"""
     LOG.info(
-        'Inside make_valid_xml_name(). Testing key "%s" with attr "%s"'
-        % (str(key), str(attr))
+        f'Inside make_valid_xml_name(). Testing key "{str(key)}" with attr "{str(attr)}"'
     )
     key = escape_xml(key)
     # nothing happens at escape_xml if attr is not a string, we don't
@@ -166,16 +165,14 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
 def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
     """Converts a dict into an XML string."""
     LOG.info(
-        'Inside convert_dict(): obj type is: "%s", obj="%s"'
-        % (type(obj).__name__, str(obj))
+        f'Inside convert_dict(): obj type is: "{type(obj).__name__}", obj="{str(obj)}"'
     )
     output = []
     addline = output.append
 
     for key, val in obj.items():
         LOG.info(
-            'Looping inside convert_dict(): key="%s", val="%s", type(val)="%s"'
-            % (str(key), str(val), type(val).__name__)
+            f'Looping inside convert_dict(): key="{str(key)}", val="{str(val)}", type(val)="{type(val).__name__}"'
         )
 
         attr = {} if not ids else {"id": "%s" % (get_unique_id(parent))}
@@ -244,8 +241,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
 
     for i, item in enumerate(items):
         LOG.info(
-            'Looping inside convert_list(): item="%s", item_name="%s", type="%s"'
-            % (str(item), item_name, type(item).__name__)
+            f'Looping inside convert_list(): item="{str(item)}", item_name="{item_name}", type="{type(item).__name__}"'
         )
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
         if isinstance(item, numbers.Number) or isinstance(item, str):
@@ -367,8 +363,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
 def convert_kv(key, val, attr_type, attr={}, cdata: bool = False):
     """Converts a number or string into an XML element"""
     LOG.info(
-        'Inside convert_kv(): key="%s", val="%s", type(val) is: "%s"'
-        % (str(key), str(val), type(val).__name__)
+        f'Inside convert_kv(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
     )
 
     key, attr = make_valid_xml_name(key, attr)
@@ -387,8 +382,7 @@ def convert_kv(key, val, attr_type, attr={}, cdata: bool = False):
 def convert_bool(key, val, attr_type, attr={}, cdata=False):
     """Converts a boolean into an XML element"""
     LOG.info(
-        'Inside convert_bool(): key="%s", val="%s", type(val) is: "%s"'
-        % (str(key), str(val), type(val).__name__)
+        f'Inside convert_bool(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
     )
 
     key, attr = make_valid_xml_name(key, attr)

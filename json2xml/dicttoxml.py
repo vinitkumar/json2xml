@@ -257,72 +257,25 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
             addline(convert_bool(item_name, item, attr_type, attr, cdata))
 
         elif isinstance(item, dict):
+            item_dict_str = convert_dict(
+                                item,
+                                ids,
+                                parent,
+                                attr_type,
+                                item_func,
+                                cdata,
+                                item_wrap,
+                            )
             if not attr_type:
                 if item_wrap:
-                    addline(
-                        "<%s>%s</%s>"
-                        % (
-                            item_name,
-                            convert_dict(
-                                item,
-                                ids,
-                                parent,
-                                attr_type,
-                                item_func,
-                                cdata,
-                                item_wrap,
-                            ),
-                            item_name,
-                        )
-                    )
+                    addline(f"<{item_name}>{item_dict_str}</{item_name}>")
                 else:
-                    addline(
-                        "%s"
-                        % (
-                            convert_dict(
-                                item,
-                                ids,
-                                parent,
-                                attr_type,
-                                item_func,
-                                cdata,
-                                item_wrap,
-                            ),
-                        )
-                    )
+                    addline(f"{item_dict_str}")
             else:
                 if item_wrap:
-                    addline(
-                        '<%s type="dict">%s</%s>'
-                        % (
-                            item_name,
-                            convert_dict(
-                                item,
-                                ids,
-                                parent,
-                                attr_type,
-                                item_func,
-                                cdata,
-                                item_wrap,
-                            ),
-                            item_name,
-                        )
-                    )
+                    addline(f'<{item_name} type="dict">{item_dict_str}</{item_name}>')
                 else:
-                    addline(
-                        "%s"
-                        % (
-                            convert_dict(
-                                item,
-                                ids,
-                                parent,
-                                attr_type,
-                                item_func,
-                                cdata,
-                                item_wrap,
-                            ),
-                        )
-                    )
+                    addline(f'{item_dict_str}')
 
         elif isinstance(item, collections.abc.Iterable):
             attrstring = make_attrstring(attr)

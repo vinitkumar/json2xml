@@ -371,12 +371,7 @@ def convert_kv(key, val, attr_type, attr={}, cdata: bool = False):
     if attr_type:
         attr["type"] = get_xml_type(val)
     attrstring = make_attrstring(attr)
-    return "<{}{}>{}</{}>".format(
-        key,
-        attrstring,
-        wrap_cdata(val) if cdata else escape_xml(val),
-        key,
-    )
+    return f"<{key}{attrstring}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
 
 
 def convert_bool(key, val, attr_type, attr={}, cdata=False):

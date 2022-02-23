@@ -37,7 +37,7 @@ class Json2xml:
             if self.pretty:
                 try:
                     result = parseString(xml_data).toprettyxml()
-                except ExpatError as e:
+                except ExpatError:
                     raise InvalidDataError
                 return result
             return xml_data

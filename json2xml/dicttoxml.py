@@ -79,8 +79,7 @@ def escape_xml(s: str) -> str:
 def make_attrstring(attr):
     """Returns an attribute string in the form key="val" """
     attrstring = " ".join([f'{k}="{v}"' for k, v in attr.items()])
-    return "{}{}".format(" " if attrstring != "" else "", attrstring)
-
+    return f'{" " if attrstring != "" else ""}{attrstring}'
 
 def key_is_valid_xml(key):
     """Checks that a key is a valid XML name"""
@@ -109,7 +108,7 @@ def make_valid_xml_name(key, attr: Dict[str, Any]):
 
     # prepend a lowercase n if the key is numeric
     if key.isdigit():
-        return "n%s" % (key), attr
+        return f"n{key}", attr
 
     # replace spaces with underscores if that fixes the problem
     if key_is_valid_xml(key.replace(" ", "_")):
@@ -175,7 +174,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
             f'Looping inside convert_dict(): key="{str(key)}", val="{str(val)}", type(val)="{type(val).__name__}"'
         )
 
-        attr = {} if not ids else {"id": "%s" % (get_unique_id(parent))}
+        attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
 
         key, attr = make_valid_xml_name(key, attr)
 
@@ -316,7 +315,7 @@ def convert_bool(key, val, attr_type, attr={}, cdata=False):
 
 def convert_none(key, val, attr_type, attr={}, cdata=False):
     """Converts a null value into an XML element"""
-    LOG.info('Inside convert_none(): key="%s"' % (str(key)))
+    LOG.info(f'Inside convert_none(): key="{str(key)}"')
 
     key, attr = make_valid_xml_name(key, attr)
 
@@ -355,8 +354,7 @@ def dicttoxml(
       Default is False
     """
     LOG.info(
-        'Inside dicttoxml(): type(obj) is: "%s", obj="%s"'
-        % (type(obj).__name__, str(obj))
+        f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}", obj="{str(obj)}"'
     )
     output = []
     if root:

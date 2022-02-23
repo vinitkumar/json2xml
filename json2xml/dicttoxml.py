@@ -191,15 +191,9 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
         elif isinstance(val, dict):
             if attr_type:
                 attr["type"] = get_xml_type(val)
-            addline(
-                "<%s%s>%s</%s>"
-                % (
-                    key,
-                    make_attrstring(attr),
-                    convert_dict(val, ids, key, attr_type, item_func, cdata, item_wrap),
-                    key,
-                )
-            )
+            dict_str = convert_dict(val, ids, key, attr_type, item_func, cdata, item_wrap)
+            attrstring = make_attrstring(attr)
+            addline(f"<{key}{attrstring}>{dict_str}</{key}>")
 
         elif isinstance(val, collections.abc.Iterable) and val:
             if attr_type:

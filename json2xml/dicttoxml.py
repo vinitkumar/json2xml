@@ -142,7 +142,7 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
 
     item_name = item_func(parent)
 
-    if isinstance(obj, numbers.Number) or isinstance(obj, str):
+    if isinstance(obj, (numbers.Number, str)):
         return convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata)
 
     if hasattr(obj, "isoformat"):

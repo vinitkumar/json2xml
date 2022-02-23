@@ -325,29 +325,15 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                     )
 
         elif isinstance(item, collections.abc.Iterable):
+            attrstring = make_attrstring(attr)
+            convert_list_str = convert_list(item, ids, item_name, attr_type, item_func, cdata, item_wrap)
             if not attr_type:
                 addline(
-                    "<%s %s>%s</%s>"
-                    % (
-                        item_name,
-                        make_attrstring(attr),
-                        convert_list(
-                            item, ids, item_name, attr_type, item_func, cdata, item_wrap
-                        ),
-                        item_name,
-                    )
+                    f"<{item_name} {attrstring}>{convert_list_str}</{item_name}>"
                 )
             else:
                 addline(
-                    '<%s type="list"%s>%s</%s>'
-                    % (
-                        item_name,
-                        make_attrstring(attr),
-                        convert_list(
-                            item, ids, item_name, attr_type, item_func, cdata, item_wrap
-                        ),
-                        item_name,
-                    )
+                    f'<{item_name} type="list"{attrstring}>{convert_list_str}</{item_name}>'
                 )
 
         elif item is None:

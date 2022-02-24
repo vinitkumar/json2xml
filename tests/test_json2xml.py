@@ -39,7 +39,7 @@ class TestJson2xml(unittest.TestCase):
     def test_read_from_invalid_json(self):
         """Test something."""
         with pytest.raises(JSONReadError) as pytest_wrapped_e:
-            data = readfromjson("examples/licht_wrong.json")
+            readfromjson("examples/licht_wrong.json")
         assert pytest_wrapped_e.type == JSONReadError
 
     def test_read_from_url(self):
@@ -48,7 +48,7 @@ class TestJson2xml(unittest.TestCase):
 
     def test_read_from_wrong_url(self):
         with pytest.raises(URLReadError) as pytest_wrapped_e:
-            data = readfromurl("https://coderwall.com/vinitcool76.jsoni")
+            readfromurl("https://coderwall.com/vinitcool76.jsoni")
         assert pytest_wrapped_e.type == URLReadError
 
     def test_read_from_jsonstring(self):
@@ -59,7 +59,7 @@ class TestJson2xml(unittest.TestCase):
 
     def test_read_from_invalid_jsonstring(self):
         with pytest.raises(StringReadError) as pytest_wrapped_e:
-            data = readfromstring(
+            readfromstring(
                 '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"'
             )
         assert pytest_wrapped_e.type == StringReadError
@@ -140,13 +140,18 @@ class TestJson2xml(unittest.TestCase):
         assert "dict" == old_dict['all']['empty_dict']['@type']
 
     def test_dicttoxml_bug(self):
-        input_dict = {'response': {'results': {'user': [{'name': 'Ezequiel', 'age': '33', 'city': 'San Isidro'}, {'name': 'Belén', 'age': '30', 'city': 'San Isidro'}]}}}
+        input_dict = {
+            'response': {
+                'results': {
+                    'user': [{
+                        'name': 'Ezequiel', 'age': '33', 'city': 'San Isidro'
+                        }, {
+                        'name': 'Belén', 'age': '30', 'city': 'San Isidro'}]}}}
 
-        # with pytest.raises(AttributeError) as pytest_wrapped_e:
-        #     json2xml.Json2xml(json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False).to_xml()
-        # assert pytest_wrapped_e.type == AttributeError
+        xmldata = json2xml.Json2xml(
+            json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False
+            ).to_xml()
 
-        xmldata = json2xml.Json2xml(json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         assert 'response' in old_dict.keys()
 
@@ -166,7 +171,8 @@ class TestJson2xml(unittest.TestCase):
         assert b'<?xml version="1.0" encoding="UTF-8" ?><element><mock>payload</mock></element>' == result
 
     def test_bad_data(self):
-        data = b"!\0a\8f".decode("utf-8")
+        data = b"!\0a8f"
+        decoded = data.decode("utf-8")
         with pytest.raises(InvalidDataError) as pytest_wrapped_e:
-            result = json2xml.Json2xml(data).to_xml()
+            json2xml.Json2xml(decoded).to_xml()
         assert pytest_wrapped_e.type == InvalidDataError

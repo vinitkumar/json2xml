@@ -1,0 +1,5 @@
+# When installing dev dependencies also install the user dependencies
+-r requirements.txt
+
+flake8
+pytest

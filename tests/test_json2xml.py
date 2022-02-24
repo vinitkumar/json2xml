@@ -13,7 +13,8 @@ import json
 
 from json2xml import json2xml
 from json2xml.dicttoxml import dicttoxml
-from json2xml.utils import InvalidDataError, readfromjson, readfromstring, readfromurl, JSONReadError, StringReadError, URLReadError
+from json2xml.utils import InvalidDataError, readfromjson, readfromstring, readfromurl, \
+    JSONReadError, StringReadError, URLReadError
 
 
 class TestJson2xml(unittest.TestCase):

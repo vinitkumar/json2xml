@@ -15,7 +15,7 @@ requirements = [open("requirements.txt").read()]
 
 setup_requirements = []
 
-test_requirements = ["pytest==7.0.0rc1", "py==1.11.0"]
+test_requirements = ["pytest==7.0.1", "py==1.11.0"]
 
 setup(
     author="Vinit Kumar",
@@ -30,6 +30,9 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: Python :: Implementation :: PyPy",
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     description="Simple Python Library to convert JSON to XML",
     install_requires=requirements,

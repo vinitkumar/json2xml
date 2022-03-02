@@ -8,3 +8,4 @@ dist/*
 .mypy_cache
 .eggs
 .DS_Store
+venv

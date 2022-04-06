@@ -3,11 +3,9 @@ json2xml
 ========
 
 
-.. image:: https://img.shields.io/pypi/v/json2xml.svg
-        :target: https://pypi.python.org/pypi/json2xml
+.. image:: https://badge.fury.io/py/json2xml.svg
 .. image:: https://github.com/vinitkumar/json2xml/actions/workflows/pythonpackage.yml/badge.svg
 .. image:: https://img.shields.io/pypi/pyversions/json2xml.svg
-.. image:: https://badge.fury.io/py/json2xml.svg
 .. image:: https://readthedocs.org/projects/json2xml/badge/?version=latest
         :target: https://json2xml.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
@@ -24,8 +22,8 @@ Simple Python Library to convert JSON to XML
 Update
 ------
 
-The dict2xml project has been forked and integrated in the project itself. This helped with cleaning up the code
-and also doing improvements. The goal is to remove all the dependencies from this project.
+The dict2xml project has been integrated in the project itself. This helped with cleaning up the code
+and making improvements. Long term goal for the project is to reduce the number of dependencies.
 
 Features
 --------

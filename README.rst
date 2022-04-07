@@ -4,6 +4,8 @@ json2xml
 
 
 .. image:: https://badge.fury.io/py/json2xml.svg
+.. image:: https://static.pepy.tech/personalized-badge/json2xml?period=total&units=international_system&left_color=blue&right_color=orange&left_text=Downloads
+ :target: https://pepy.tech/project/json2xml
 .. image:: https://github.com/vinitkumar/json2xml/actions/workflows/pythonpackage.yml/badge.svg
 .. image:: https://img.shields.io/pypi/pyversions/json2xml.svg
 .. image:: https://readthedocs.org/projects/json2xml/badge/?version=latest

@@ -2,7 +2,6 @@
 
 """
 Converts a Python dictionary or other native data type into a valid XML string.
-
 Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other
         number-like objects) and collection (`list`, `set`, `tuple` and `dict`, as well as iterable and
                 dict-like objects) data types, with arbitrary nesting for the collections.
@@ -65,7 +64,6 @@ def get_xml_type(val):
 
 
 def escape_xml(s: str) -> str:
-
     if isinstance(s, str):
         s = str(s)  # avoid UnicodeDecodeError
         s = s.replace("&", "&amp;")
@@ -115,6 +113,10 @@ def make_valid_xml_name(key, attr: Dict[str, Any]):
     if key_is_valid_xml(key.replace(" ", "_")):
         return key.replace(" ", "_"), attr
 
+    # allow namespace prefixes + ignore @flat in key
+    if key_is_valid_xml(key.replace(":", "").replace("@flat", "")):
+        return key, attr
+
     # key is still invalid - move it into a name attribute
     attr["name"] = key
     key = "key"
@@ -134,8 +136,9 @@ def default_item_func(parent):
 def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
     """Routes the elements of an object to the right function to convert them
     based on their data type"""
-
-    LOG.info(f'Inside convert(). obj type is: "{type(obj).__name__}", obj="{str(obj)}"')
+    LOG.info(f'Inside convert(). type(obj)="{type(obj).__name__}"')
+    # avoid cpu consuming object serialization => extra if
+    if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  obj="{str(obj)}"')
 
     item_name = item_func(parent)
 
@@ -171,19 +174,49 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
 
     raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
 
+def is_primitive_type(val):
+    t = get_xml_type(val)
+    return t in {'str', 'int', 'float', 'bool', 'number', 'null'}
+
+def dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap):
+    keys_str = ', '.join(key for key in item)
+    LOG.info(f'Inside dict_item2xml_str: type(obj)="{type(item).__name__}", keys="{keys_str}"')
+    # avoid cpu consuming object serialization => extra if
+    if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  item="{str(item)}"')
+
+    if attr_type:
+        attr["type"] = get_xml_type(item)
+    attr = item.pop("@attrs", attr)  # update attr with custom @attr if exists
+    rawitem = item["@val"] if "@val" in item else item
+    subtree = rawitem if is_primitive_type(rawitem) else convert(rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name) # we can not use convert_dict, because rawitem could be non-dict
+    if item.get("@flat", False): return subtree
+    attrstring = make_attrstring(attr)
+    return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
+
+def list2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap):
+    if attr_type:
+        attr["type"] = get_xml_type(item)
+    key_name = item_func(item_name)
+    if item_name.endswith('@flat'): item_name = item_name[0:-5]
+    subtree = convert_list(item, ids, item_name, attr_type, item_func, cdata, item_wrap)
+    if key_name.endswith('@flat'): return subtree
+    if len(item)>0 and is_primitive_type(item[0]) and not item_wrap: return subtree
+    attrstring = make_attrstring(attr)
+    return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
 
 def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
     """Converts a dict into an XML string."""
-    LOG.info(
-        f'Inside convert_dict(): obj type is: "{type(obj).__name__}", obj="{str(obj)}"'
-    )
+    keys_str = ', '.join(key for key in obj)
+    LOG.info(f'Inside convert_dict(): type(obj)="{type(obj).__name__}", keys="{keys_str}"')
+    # avoid cpu consuming object serialization => extra if
+    if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  obj="{str(obj)}"')
+
     output = []
     addline = output.append
 
     for key, val in obj.items():
-        LOG.info(
-            f'Looping inside convert_dict(): key="{str(key)}", val="{str(val)}", type(val)="{type(val).__name__}"'
-        )
+        LOG.info(f'Looping inside convert_dict(): key="{str(key)}", type(val)="{type(val).__name__}"')
+        if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  val="{str(val)}"')
 
         attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
 
@@ -215,31 +248,11 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
             )
 
         elif isinstance(val, dict):
-            if attr_type:
-                attr["type"] = get_xml_type(val)
-            dict_str = convert_dict(
-                val, ids, key, attr_type, item_func, cdata, item_wrap
-            )
-            attrstring = make_attrstring(attr)
-            addline(f"<{key}{attrstring}>{dict_str}</{key}>")
+            addline(dict2xml_str(attr_type, attr, val, item_func, cdata, key, item_wrap))
 
-        elif isinstance(val, collections.abc.Iterable) and val:
-            if attr_type:
-                attr["type"] = get_xml_type(val)
-            if (
-                isinstance(val[0], numbers.Number)
-                or isinstance(val[0], str)
-                and not item_wrap
-            ):
-                addline(
-                    convert_list(val, ids, key, attr_type, item_func, cdata, item_wrap)
-                )
-            else:
-                attrstring = make_attrstring(attr)
-                list_str = convert_list(
-                    val, ids, key, attr_type, item_func, cdata, item_wrap
-                )
-                addline(f"<{key}{attrstring}>{list_str}</{key}>")
+        elif isinstance(val, collections.abc.Iterable):
+            addline(list2xml_str(attr_type, attr, val, item_func, cdata, key, item_wrap))
+
         elif not val:
             addline(convert_none(key, val, attr_type, attr, cdata))
 
@@ -251,19 +264,24 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
 
 def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
     """Converts a list into an XML string."""
-    LOG.info("Inside convert_list()")
+    LOG.info(f'Inside convert_list(): type(items)="{type(items).__name__}"')
+    # avoid cpu consuming object serialization => extra if
+    if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  items="{str(items)}"')
+
     output = []
     addline = output.append
 
     item_name = item_func(parent)
+    if item_name.endswith('@flat'): item_name = item_name[:-5]
     this_id = None
     if ids:
         this_id = get_unique_id(parent)
 
     for i, item in enumerate(items):
-        LOG.info(
-            f'Looping inside convert_list(): item="{str(item)}", item_name="{item_name}", type="{type(item).__name__}"'
-        )
+        LOG.info(f'Looping inside convert_list(): index="{str(i)}", type="{type(item).__name__}"')
+        # avoid cpu consuming object serialization => extra if
+        if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  item="{str(item)}"')
+
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
         if isinstance(item, (numbers.Number, str)):
             if item_wrap:
@@ -302,37 +320,10 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
             addline(convert_bool(item_name, item, attr_type, attr, cdata))
 
         elif isinstance(item, dict):
-            item_dict_str = convert_dict(
-                item,
-                ids,
-                parent,
-                attr_type,
-                item_func,
-                cdata,
-                item_wrap,
-            )
-            if not attr_type:
-                if item_wrap:
-                    addline(f"<{item_name}>{item_dict_str}</{item_name}>")
-                else:
-                    addline(f"{item_dict_str}")
-            else:
-                if item_wrap:
-                    addline(f'<{item_name} type="dict">{item_dict_str}</{item_name}>')
-                else:
-                    addline(f"{item_dict_str}")
+            addline(dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap))
 
         elif isinstance(item, collections.abc.Iterable):
-            attrstring = make_attrstring(attr)
-            convert_list_str = convert_list(
-                item, ids, item_name, attr_type, item_func, cdata, item_wrap
-            )
-            if not attr_type:
-                addline(f"<{item_name} {attrstring}>{convert_list_str}</{item_name}>")
-            else:
-                addline(
-                    f'<{item_name} type="list"{attrstring}>{convert_list_str}</{item_name}>'
-                )
+            addline(list2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap))
 
         elif item is None:
             addline(convert_none(item_name, None, attr_type, attr, cdata))
@@ -391,6 +382,7 @@ def dicttoxml(
     item_wrap=True,
     item_func=default_item_func,
     cdata=False,
+    xml_namespaces={}
 ):
     """Converts a python object into XML.
     Arguments:
@@ -409,17 +401,32 @@ def dicttoxml(
       Default is True
     - cdata specifies whether string values should be wrapped in CDATA sections.
       Default is False
+    - xml_namespaces is a dictionary where key is xmlns prefix and value the urn,
+      e.g. { 'flex': 'http://www.w3.org/flex/flexBase', 'xsl': "http://www.w3.org/1999/XSL/Transform"}
+      will result in <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">...
+      Default is {}
+
+    Dictionaries-keys with special char '@' has special meaning:
+    @attrs: This allows custom xml attributes. Sample {'@attr':{'a':'b'}, 'x':'y'} results in <root a="b"><x>y</x></root>
+    @flat: If a key ends with @flat (or dict contains key '@flat'), encapsulating node is omitted. Similar to item_wrap parameter for lists.
+    @val: @attrs required compelex dict type. If primitive type should be used, then @val is used as key. Sample {'@attr':{'a':'b'}, '@val':'y'} results in <root a="b">y</root>
+          Esp. if item['x'] is primitive type, you can set: item['x'] = {'@val': item['x'], '@attrs':{'a':'b'}}
     """
-    LOG.info(
-        f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}", obj="{str(obj)}"'
-    )
+    LOG.info(f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}"')
+    # avoid cpu consuming object serialization (problem for large objects) => extra if
+    if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  obj="{str(obj)}"')
+
     output = []
+    namespacestr = ''
+    for prefix in xml_namespaces:
+        ns = xml_namespaces[prefix]
+        namespacestr += f' xmlns:{prefix}="{ns}"'
     if root:
         output.append('<?xml version="1.0" encoding="UTF-8" ?>')
         output_elem = convert(
             obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root
         )
-        output.append(f"<{custom_root}>{output_elem}</{custom_root}>")
+        output.append(f"<{custom_root}{namespacestr}>{output_elem}</{custom_root}>")
     else:
         output.append(
             convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="")

@@ -139,6 +139,13 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
 
     item_name = item_func(parent)
 
+    # since bool is also a subtype of number.Number and int, the check for bool
+    # never comes and hence we get wrong value for the xml type bool
+    # here, we just change order and check for bool first, because no other
+    # type other than bool can be true for bool check
+    if isinstance(obj, bool):
+        return convert_bool(item_name, obj, attr_type, cdata)
+
     if isinstance(obj, (numbers.Number, str)):
         return convert_kv(
             key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
@@ -152,9 +159,6 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
             attr={},
             cdata=cdata,
         )
-
-    if isinstance(obj, bool):
-        return convert_bool(item_name, obj, attr_type, cdata)
 
     if obj is None:
         return convert_none(item_name, "", attr_type, cdata)
@@ -185,7 +189,14 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
 
         key, attr = make_valid_xml_name(key, attr)
 
-        if isinstance(val, (numbers.Number, str)):
+        # since bool is also a subtype of number.Number and int, the check for bool
+        # never comes and hence we get wrong value for the xml type bool
+        # here, we just change order and check for bool first, because no other
+        # type other than bool can be true for bool check
+        if isinstance(val, bool):
+            addline(convert_bool(key, val, attr_type, attr, cdata))
+
+        elif isinstance(val, (numbers.Number, str)):
             addline(
                 convert_kv(
                     key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
@@ -202,9 +213,6 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
                     cdata=cdata,
                 )
             )
-
-        elif isinstance(val, bool):
-            addline(convert_bool(key, val, attr_type, attr, cdata))
 
         elif isinstance(val, dict):
             if attr_type:

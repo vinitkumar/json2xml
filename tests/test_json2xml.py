@@ -176,3 +176,11 @@ class TestJson2xml(unittest.TestCase):
         with pytest.raises(InvalidDataError) as pytest_wrapped_e:
             json2xml.Json2xml(decoded).to_xml()
         assert pytest_wrapped_e.type == InvalidDataError
+
+    def test_read_boolean_data_from_json(self):
+        """Test correct return for boolean types."""
+        data = readfromjson("examples/booleanjson.json")
+        result = json2xml.Json2xml(data).to_xml()
+        dict_from_xml = xmltodict.parse(result)
+        assert dict_from_xml["all"]["boolean"]["#text"] != 'True'
+        assert dict_from_xml["all"]["boolean"]["#text"] == 'true'

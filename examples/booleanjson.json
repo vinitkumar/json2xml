@@ -1,0 +1,8 @@
+{
+      "boolean": true,
+      "boolean_dict_list": [
+        {"boolean_dict": {"boolean": true}},
+        {"boolean_dict": {"boolean": false}}
+      ],
+      "boolean_list": [true, false]
+}

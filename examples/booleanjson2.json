@@ -1,0 +1,5 @@
+{
+      "boolean_list": [true, false],
+      "number_array": [1, 2, 3],
+      "string_array": ["a", "b", "c"]
+}

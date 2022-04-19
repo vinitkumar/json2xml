@@ -137,6 +137,7 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
 
     LOG.info(f'Inside convert(). obj type is: "{type(obj).__name__}", obj="{str(obj)}"')
 
+
     item_name = item_func(parent)
 
     # since bool is also a subtype of number.Number and int, the check for bool
@@ -265,7 +266,11 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
             f'Looping inside convert_list(): item="{str(item)}", item_name="{item_name}", type="{type(item).__name__}"'
         )
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
-        if isinstance(item, (numbers.Number, str)):
+
+        if isinstance(item, bool):
+            addline(convert_bool(item_name, item, attr_type, attr, cdata))
+
+        elif isinstance(item, (numbers.Number, str)):
             if item_wrap:
                 addline(
                     convert_kv(
@@ -298,8 +303,6 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                 )
             )
 
-        elif isinstance(item, bool):
-            addline(convert_bool(item_name, item, attr_type, attr, cdata))
 
         elif isinstance(item, dict):
             item_dict_str = convert_dict(

@@ -1,6 +1,12 @@
 History
 =======
 
+3.17.1 / 2022-04-20
+===================
+
+  * fix: issue with wrong output for boolean list
+  * fix: pull requests also trigger action runs
+
 3.17.0 / 2022-04-18
 ===================
 

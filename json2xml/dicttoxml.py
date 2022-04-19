@@ -142,6 +142,13 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
 
     item_name = item_func(parent)
 
+    # since bool is also a subtype of number.Number and int, the check for bool
+    # never comes and hence we get wrong value for the xml type bool
+    # here, we just change order and check for bool first, because no other
+    # type other than bool can be true for bool check
+    if isinstance(obj, bool):
+        return convert_bool(item_name, obj, attr_type, cdata)
+
     if isinstance(obj, (numbers.Number, str)):
         return convert_kv(
             key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
@@ -155,9 +162,6 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
             attr={},
             cdata=cdata,
         )
-
-    if isinstance(obj, bool):
-        return convert_bool(item_name, obj, attr_type, cdata)
 
     if obj is None:
         return convert_none(item_name, "", attr_type, cdata)
@@ -186,6 +190,7 @@ def dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap):
     rawitem = item["@val"] if "@val" in item else item
     subtree = rawitem if is_primitive_type(rawitem) else convert(rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name) # we can not use convert_dict, because rawitem could be non-dict
     if item.get("@flat", False): return subtree
+    if not item_wrap: return subtree
     attrstring = make_attrstring(attr)
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
 
@@ -218,7 +223,14 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
 
         key, attr = make_valid_xml_name(key, attr)
 
-        if isinstance(val, (numbers.Number, str)):
+        # since bool is also a subtype of number.Number and int, the check for bool
+        # never comes and hence we get wrong value for the xml type bool
+        # here, we just change order and check for bool first, because no other
+        # type other than bool can be true for bool check
+        if isinstance(val, bool):
+            addline(convert_bool(key, val, attr_type, attr, cdata))
+
+        elif isinstance(val, (numbers.Number, str)):
             addline(
                 convert_kv(
                     key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
@@ -235,9 +247,6 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
                     cdata=cdata,
                 )
             )
-
-        elif isinstance(val, bool):
-            addline(convert_bool(key, val, attr_type, attr, cdata))
 
         elif isinstance(val, dict):
             addline(dict2xml_str(attr_type, attr, val, item_func, cdata, key, item_wrap))

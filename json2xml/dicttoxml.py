@@ -178,7 +178,7 @@ def is_primitive_type(val):
     t = get_xml_type(val)
     return t in {'str', 'int', 'float', 'bool', 'number', 'null'}
 
-def dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap):
+def dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap, parentIsList):
     keys_str = ', '.join(key for key in item)
     LOG.info(f'Inside dict_item2xml_str: type(obj)="{type(item).__name__}", keys="{keys_str}"')
     # avoid cpu consuming object serialization => extra if
@@ -190,7 +190,7 @@ def dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap):
     rawitem = item["@val"] if "@val" in item else item
     subtree = rawitem if is_primitive_type(rawitem) else convert(rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name) # we can not use convert_dict, because rawitem could be non-dict
     if item.get("@flat", False): return subtree
-    if not item_wrap: return subtree
+    if parentIsList and not item_wrap: return subtree
     attrstring = make_attrstring(attr)
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
 
@@ -249,7 +249,7 @@ def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
             )
 
         elif isinstance(val, dict):
-            addline(dict2xml_str(attr_type, attr, val, item_func, cdata, key, item_wrap))
+            addline(dict2xml_str(attr_type, attr, val, item_func, cdata, key, item_wrap, False))
 
         elif isinstance(val, collections.abc.Iterable):
             addline(list2xml_str(attr_type, attr, val, item_func, cdata, key, item_wrap))
@@ -321,7 +321,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
             addline(convert_bool(item_name, item, attr_type, attr, cdata))
 
         elif isinstance(item, dict):
-            addline(dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap))
+            addline(dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap, True))
 
         elif isinstance(item, collections.abc.Iterable):
             addline(list2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap))

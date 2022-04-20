@@ -230,7 +230,7 @@ class TestJson2xml(unittest.TestCase):
 
     def test_dict2xml_with_val_and_custom_attr(self):
         # in order to use @attr in non-dict objects, we need to lift into a dict and combine with @val as key
-        data = {'list1': [1, 2, 3], 'list2': {'@attrs': {'myattr1':'myval1','myattr2':'myval2'}, '@val': [4, 5, 6]}}
+        data = {'list1': [1, 2, 3], 'list2': {'@attrs': {'myattr1': 'myval1', 'myattr2': 'myval2'}, '@val': [4, 5, 6]}}
         result = dicttoxml(data, attr_type=False)
         print(result)
         assert b'<?xml version="1.0" encoding="UTF-8" ?>' \

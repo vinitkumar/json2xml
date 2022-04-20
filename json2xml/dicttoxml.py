@@ -106,7 +106,7 @@ def make_valid_xml_name(key, attr: Dict[str, Any]):
         return key, attr
 
     # prepend a lowercase n if the key is numeric
-    if key.isdigit():
+    if isinstance(key, int) or key.isdigit():
         return f"n{key}", attr
 
     # replace spaces with underscores if that fixes the problem
@@ -179,7 +179,7 @@ def is_primitive_type(val):
     return t in {'str', 'int', 'float', 'bool', 'number', 'null'}
 
 def dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap, parentIsList):
-    keys_str = ', '.join(key for key in item)
+    keys_str = ', '.join(str(key) for key in item)
     LOG.info(f'Inside dict_item2xml_str: type(obj)="{type(item).__name__}", keys="{keys_str}"')
     # avoid cpu consuming object serialization => extra if
     if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  item="{str(item)}"')
@@ -197,17 +197,19 @@ def dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap, 
 def list2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap):
     if attr_type:
         attr["type"] = get_xml_type(item)
-    key_name = item_func(item_name)
-    if item_name.endswith('@flat'): item_name = item_name[0:-5]
+    flat = False
+    if item_name.endswith('@flat'):
+        item_name = item_name[0:-5]
+        flat = True
     subtree = convert_list(item, ids, item_name, attr_type, item_func, cdata, item_wrap)
-    if key_name.endswith('@flat'): return subtree
+    if flat: return subtree
     if len(item)>0 and is_primitive_type(item[0]) and not item_wrap: return subtree
     attrstring = make_attrstring(attr)
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
 
 def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
     """Converts a dict into an XML string."""
-    keys_str = ', '.join(key for key in obj)
+    keys_str = ', '.join(str(key) for key in obj)
     LOG.info(f'Inside convert_dict(): type(obj)="{type(obj).__name__}", keys="{keys_str}"')
     # avoid cpu consuming object serialization => extra if
     if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  obj="{str(obj)}"')

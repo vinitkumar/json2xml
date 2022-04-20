@@ -11,8 +11,8 @@ json2xml
 .. image:: https://readthedocs.org/projects/json2xml/badge/?version=latest
         :target: https://json2xml.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
-.. image:: https://coveralls.io/repos/github/vinitkumar/json2xml/badge.svg?branch=master
-     :target: https://coveralls.io/github/vinitkumar/json2xml?branch=master
+.. image:: https://codecov.io/gh/vinitkumar/json2xml/branch/master/graph/badge.svg?token=Yt2h55eTL2
+      :target: https://codecov.io/gh/vinitkumar/json2xml
 
 
 Simple Python Library to convert JSON to XML

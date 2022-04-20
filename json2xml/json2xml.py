@@ -1,7 +1,10 @@
-from typing import Optional, Any
+from typing import Any, Optional
+
 from defusedxml.minidom import parseString
 from pyexpat import ExpatError
+
 from json2xml import dicttoxml
+
 from .utils import InvalidDataError
 
 

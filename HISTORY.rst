@@ -1,6 +1,22 @@
 History
 =======
 
+3.17.1 / 2022-04-20
+===================
+
+  * fix: issue with wrong output for boolean list
+  * fix: pull requests also trigger action runs
+
+3.17.0 / 2022-04-18
+===================
+
+  * fix: return correct xml type for bool (#119)
+  * feat: add download counter
+  * fix: check latest alpha (#116)
+  * fix: check latest alpha (#115)
+  * chore(deps): bump waitress from 2.0.0 to 2.1.1 in /docs (#114)
+  * feat: only python3 wheels are created now
+
 3.15.0 / 2022-02-24
 ===================
 

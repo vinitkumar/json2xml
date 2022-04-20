@@ -284,7 +284,11 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
         if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  item="{str(item)}"')
 
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
-        if isinstance(item, (numbers.Number, str)):
+
+        if isinstance(item, bool):
+            addline(convert_bool(item_name, item, attr_type, attr, cdata))
+
+        elif isinstance(item, (numbers.Number, str)):
             if item_wrap:
                 addline(
                     convert_kv(
@@ -316,9 +320,6 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                     cdata=cdata,
                 )
             )
-
-        elif isinstance(item, bool):
-            addline(convert_bool(item_name, item, attr_type, attr, cdata))
 
         elif isinstance(item, dict):
             addline(dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap, True))

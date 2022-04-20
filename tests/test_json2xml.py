@@ -185,7 +185,6 @@ class TestJson2xml(unittest.TestCase):
         assert dict_from_xml["all"]["boolean"]["#text"] != 'True'
         assert dict_from_xml["all"]["boolean"]["#text"] == 'true'
 
-
     def test_read_boolean_data_from_json2(self):
         """Test correct return for boolean types."""
         data = readfromjson("examples/booleanjson2.json")

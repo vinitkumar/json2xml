@@ -138,7 +138,8 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
     based on their data type"""
     LOG.info(f'Inside convert(). type(obj)="{type(obj).__name__}"')
     # avoid cpu consuming object serialization => extra if
-    if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  obj="{str(obj)}"')
+    if LOG.getEffectiveLevel() <= logging.DEBUG:
+        LOG.debug(f'  obj="{str(obj)}"')
 
     item_name = item_func(parent)
     # since bool is also a subtype of number.Number and int, the check for bool
@@ -173,25 +174,33 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
 
     raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
 
+
 def is_primitive_type(val):
     t = get_xml_type(val)
     return t in {'str', 'int', 'float', 'bool', 'number', 'null'}
+
 
 def dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap, parentIsList):
     keys_str = ', '.join(str(key) for key in item)
     LOG.info(f'Inside dict_item2xml_str: type(obj)="{type(item).__name__}", keys="{keys_str}"')
     # avoid cpu consuming object serialization => extra if
-    if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  item="{str(item)}"')
+    if LOG.getEffectiveLevel() <= logging.DEBUG:
+        LOG.debug(f'  item="{str(item)}"')
 
     if attr_type:
         attr["type"] = get_xml_type(item)
     attr = item.pop("@attrs", attr)  # update attr with custom @attr if exists
     rawitem = item["@val"] if "@val" in item else item
-    subtree = rawitem if is_primitive_type(rawitem) else convert(rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name) # we can not use convert_dict, because rawitem could be non-dict
-    if item.get("@flat", False): return subtree
-    if parentIsList and not item_wrap: return subtree
+    if is_primitive_type(rawitem):
+        subtree = rawitem
+    else:
+        # we can not use convert_dict, because rawitem could be non-dict
+        subtree = convert(rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name)
+    if item.get("@flat", False) or (parentIsList and not item_wrap):
+        return subtree
     attrstring = make_attrstring(attr)
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
+
 
 def list2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap):
     if attr_type:
@@ -201,24 +210,27 @@ def list2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap):
         item_name = item_name[0:-5]
         flat = True
     subtree = convert_list(item, ids, item_name, attr_type, item_func, cdata, item_wrap)
-    if flat: return subtree
-    if len(item)>0 and is_primitive_type(item[0]) and not item_wrap: return subtree
+    if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap):
+        return subtree
     attrstring = make_attrstring(attr)
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
+
 
 def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap):
     """Converts a dict into an XML string."""
     keys_str = ', '.join(str(key) for key in obj)
     LOG.info(f'Inside convert_dict(): type(obj)="{type(obj).__name__}", keys="{keys_str}"')
     # avoid cpu consuming object serialization => extra if
-    if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  obj="{str(obj)}"')
+    if LOG.getEffectiveLevel() <= logging.DEBUG:
+        LOG.debug(f'  obj="{str(obj)}"')
 
     output = []
     addline = output.append
 
     for key, val in obj.items():
         LOG.info(f'Looping inside convert_dict(): key="{str(key)}", type(val)="{type(val).__name__}"')
-        if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  val="{str(val)}"')
+        if LOG.getEffectiveLevel() <= logging.DEBUG:
+            LOG.debug(f'  val="{str(val)}"')
 
         attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
 
@@ -268,13 +280,15 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
     """Converts a list into an XML string."""
     LOG.info(f'Inside convert_list(): type(items)="{type(items).__name__}"')
     # avoid cpu consuming object serialization => extra if
-    if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  items="{str(items)}"')
+    if LOG.getEffectiveLevel() <= logging.DEBUG:
+        LOG.debug(f'  items="{str(items)}"')
 
     output = []
     addline = output.append
 
     item_name = item_func(parent)
-    if item_name.endswith('@flat'): item_name = item_name[:-5]
+    if item_name.endswith('@flat'):
+        item_name = item_name[:-5]
     this_id = None
     if ids:
         this_id = get_unique_id(parent)
@@ -282,7 +296,8 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
     for i, item in enumerate(items):
         LOG.info(f'Looping inside convert_list(): index="{str(i)}", type="{type(item).__name__}"')
         # avoid cpu consuming object serialization => extra if
-        if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  item="{str(item)}"')
+        if LOG.getEffectiveLevel() <= logging.DEBUG:
+            LOG.debug(f'  item="{str(item)}"')
 
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
 
@@ -406,18 +421,21 @@ def dicttoxml(
       Default is False
     - xml_namespaces is a dictionary where key is xmlns prefix and value the urn,
       e.g. { 'flex': 'http://www.w3.org/flex/flexBase', 'xsl': "http://www.w3.org/1999/XSL/Transform"}
-      will result in <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">...
+      results in <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
       Default is {}
 
     Dictionaries-keys with special char '@' has special meaning:
-    @attrs: This allows custom xml attributes. Sample {'@attr':{'a':'b'}, 'x':'y'} results in <root a="b"><x>y</x></root>
-    @flat: If a key ends with @flat (or dict contains key '@flat'), encapsulating node is omitted. Similar to item_wrap parameter for lists.
-    @val: @attrs required compelex dict type. If primitive type should be used, then @val is used as key. Sample {'@attr':{'a':'b'}, '@val':'y'} results in <root a="b">y</root>
-          Esp. if item['x'] is primitive type, you can set: item['x'] = {'@val': item['x'], '@attrs':{'a':'b'}}
+    @attrs: This allows custom xml attributes: {'@attr':{'a':'b'}, 'x':'y'} results in <root a="b"><x>y</x></root>
+    @flat: If a key ends with @flat (or dict contains key '@flat'), encapsulating node is omitted. Similar to item_wrap.
+    @val: @attrs requires complex dict type. If primitive type should be used, then @val is used as key.
+          To add custom xml-attributes on a list {'list': [4, 5, 6]}, you do this:
+          {'list': {'@attrs': {'a':'b','c':'d'}, '@val': [4, 5, 6]}
+          which results in <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
     """
     LOG.info(f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}"')
     # avoid cpu consuming object serialization (problem for large objects) => extra if
-    if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  obj="{str(obj)}"')
+    if LOG.getEffectiveLevel() <= logging.DEBUG:
+        LOG.debug(f'  obj="{str(obj)}"')
 
     output = []
     namespacestr = ''

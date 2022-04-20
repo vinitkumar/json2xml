@@ -213,17 +213,27 @@ class TestJson2xml(unittest.TestCase):
         namespaces = {'ns1': 'http://www.google.de/ns1', 'ns2': 'http://www.google.de/ns2'}
         result = dicttoxml(data, attr_type=False, xml_namespaces=namespaces)
         print(result)
-        assert b'<?xml version="1.0" encoding="UTF-8" ?><root xmlns:ns1="http://www.google.de/ns1" xmlns:ns2="http://www.google.de/ns2"><ns1:node1>data in namespace 1</ns1:node1><ns2:node2>data in namespace 2</ns2:node2></root>' == result
+        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
+               b'<root xmlns:ns1="http://www.google.de/ns1" xmlns:ns2="http://www.google.de/ns2">' \
+               b'<ns1:node1>data in namespace 1</ns1:node1>' \
+               b'<ns2:node2>data in namespace 2</ns2:node2>' \
+               b'</root>' == result
 
     def test_dict2xml_with_flat(self):
-        data = {'flat_list@flat': [1,2,3], 'non_flat_list': [4,5,6]}
+        data = {'flat_list@flat': [1, 2, 3], 'non_flat_list': [4, 5, 6]}
         result = dicttoxml(data, attr_type=False)
         print(result)
-        assert b'<?xml version="1.0" encoding="UTF-8" ?><root><item>1</item><item>2</item><item>3</item><non_flat_list><item>4</item><item>5</item><item>6</item></non_flat_list></root>' == result
+        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
+               b'<root><item>1</item><item>2</item><item>3</item>' \
+               b'<non_flat_list><item>4</item><item>5</item><item>6</item></non_flat_list>' \
+               b'</root>' == result
 
     def test_dict2xml_with_val_and_custom_attr(self):
         # in order to use @attr in non-dict objects, we need to lift into a dict and combine with @val as key
-        data = {'list1': [1,2,3], 'list2': {'@attrs':{'myattr1':'myval1','myattr2':'myval2'}, '@val':[4,5,6]}}
+        data = {'list1': [1, 2, 3], 'list2': {'@attrs': {'myattr1':'myval1','myattr2':'myval2'}, '@val': [4, 5, 6]}}
         result = dicttoxml(data, attr_type=False)
         print(result)
-        assert b'<?xml version="1.0" encoding="UTF-8" ?><root><list1><item>1</item><item>2</item><item>3</item></list1><list2 myattr1="myval1" myattr2="myval2"><item>4</item><item>5</item><item>6</item></list2></root>' == result
+        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
+               b'<root><list1><item>1</item><item>2</item><item>3</item></list1>' \
+               b'<list2 myattr1="myval1" myattr2="myval2"><item>4</item><item>5</item><item>6</item></list2>' \
+               b'</root>' == result

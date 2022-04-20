@@ -140,6 +140,7 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
     # avoid cpu consuming object serialization => extra if
     if LOG.getEffectiveLevel() <= logging.DEBUG: LOG.debug(f'  obj="{str(obj)}"')
 
+
     item_name = item_func(parent)
 
     # since bool is also a subtype of number.Number and int, the check for bool
@@ -322,6 +323,7 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                     cdata=cdata,
                 )
             )
+
 
         elif isinstance(item, dict):
             addline(dict2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap, True))

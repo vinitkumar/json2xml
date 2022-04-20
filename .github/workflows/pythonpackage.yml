@@ -39,6 +39,20 @@ jobs:
         pip install py==1.11.0
         # stop the build if there are Python syntax errors or undefined names
         flake8 json2xml/ --exit-zero
-    - name: Test with pytest
-      run: |
-        pytest
+    - name: Unit tests
+      run: coverage run -m pytest
+
+    - name: Coveralls
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        parallel: true
+        flag-name: Unit Test
+
+  coveralls_finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        parallel-finished: true

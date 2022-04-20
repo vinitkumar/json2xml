@@ -15,9 +15,9 @@ import collections
 import logging
 import numbers
 from random import randint
-from defusedxml.minidom import parseString
+from typing import Any, Dict
 
-from typing import Dict, Any
+from defusedxml.minidom import parseString
 
 LOG = logging.getLogger("dicttoxml")
 
@@ -137,9 +137,7 @@ def convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="root"):
 
     LOG.info(f'Inside convert(). obj type is: "{type(obj).__name__}", obj="{str(obj)}"')
 
-
     item_name = item_func(parent)
-
     # since bool is also a subtype of number.Number and int, the check for bool
     # never comes and hence we get wrong value for the xml type bool
     # here, we just change order and check for bool first, because no other
@@ -302,7 +300,6 @@ def convert_list(items, ids, parent, attr_type, item_func, cdata, item_wrap):
                     cdata=cdata,
                 )
             )
-
 
         elif isinstance(item, dict):
             item_dict_str = convert_dict(

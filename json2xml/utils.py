@@ -1,6 +1,7 @@
 """Utils methods to convert XML data to dict from various sources"""
 import json
 from typing import Dict, Optional
+
 import requests
 
 

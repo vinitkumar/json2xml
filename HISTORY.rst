@@ -1,6 +1,21 @@
 History
 =======
 
+3.18.0 / 2022-04-23
+==================
+
+  * bump version
+  * improvements on dicttoxml (#121)
+  * feat: add correct badge
+  * feat: use codecov
+  * fix: flake8 tests
+  * fix: add coverage to the mix
+  * fix: lint issues and CI
+  * fix: check new CI stuff like lint and coverage
+  * feat: bump version and generate changelog
+  * fix: issue with wrong output for boolean list
+  * fix: pull requests also trigger action runs
+
 3.17.1 / 2022-04-20
 ===================
 

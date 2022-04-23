@@ -10,4 +10,6 @@ Development Lead
 Contributors
 ------------
 
-* Jeff Groom <jgroom33@outlook.com>
+Valueable contributions were made by these contributors.
+
+https://github.com/vinitkumar/json2xml/graphs/contributors

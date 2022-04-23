@@ -2,7 +2,7 @@ History
 =======
 
 3.18.0 / 2022-04-23
-==================
+===================
 
   * bump version
   * improvements on dicttoxml (#121)

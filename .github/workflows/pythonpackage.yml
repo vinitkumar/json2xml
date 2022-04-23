@@ -30,16 +30,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest
         pip install -r requirements.txt
-        python setup.py install
-    - name: Lint with flake8
-      run: |
         pip install flake8
         pip install xmltodict==0.12.0
         pip install pytest==7.0.1
         pip install coverage==6.3.2
         pip install py==1.11.0
+        python setup.py install
+    - name: Lint with flake8
+      run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 json2xml/ --exit-zero
+        flake8 json2xml/
     - name: Unit tests
       run: |
         coverage run -m pytest

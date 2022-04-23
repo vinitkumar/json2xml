@@ -197,9 +197,10 @@ This is provided by pytest, which is straight forward.
 
  .. code-block:: bash
 
-    python3.8 -mvenv venv
-    source venv/bin/activate
-    python setup.py test
+    virtualenv venv -p $(which python3.9)
+    pip install -r requirements-dev.txt
+    python setup.py install
+    pytest
 
 
 Credits

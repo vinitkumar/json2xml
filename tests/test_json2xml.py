@@ -241,3 +241,16 @@ class TestJson2xml(unittest.TestCase):
     def test_make_id(self):
         make_id_elem = dicttoxml.make_id("li")
         assert 'li' in make_id_elem
+
+    def test_get_unique_id(self):
+        unique_id_elem_1 = dicttoxml.get_unique_id("li")
+        unique_id_elem_2 = dicttoxml.get_unique_id("li")
+        unique_id_elem_3 = dicttoxml.get_unique_id("li")
+        unique_id_elem_4 = dicttoxml.get_unique_id("li")
+        assert len(list(set({unique_id_elem_1, unique_id_elem_2, unique_id_elem_3, unique_id_elem_4}))) == 4
+
+    def test_get_xml_type(self):
+        assert dicttoxml.get_xml_type("abc") == "str"
+        assert dicttoxml.get_xml_type(1) == "int"
+        assert dicttoxml.get_xml_type(True) == "bool"
+        assert dicttoxml.get_xml_type({}) == "dict"

@@ -12,11 +12,10 @@ Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicod
 This module works with Python 3.7+
 """
 
-import collections
 import datetime
 import logging
 import numbers
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from random import randint
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -54,7 +53,7 @@ ELEMENT = Union[
     float,
     bool,
     numbers.Number,
-    collections.abc.Sequence,
+    Sequence,
     datetime.datetime,
     datetime.date,
     None,
@@ -78,7 +77,7 @@ def get_xml_type(val: ELEMENT) -> str:
             return "number"
         if isinstance(val, dict):
             return "dict"
-        if isinstance(val, collections.abc.Sequence):
+        if isinstance(val, Sequence):
             return "list"
     else:
         return "null"
@@ -207,7 +206,7 @@ def convert(
     if isinstance(obj, dict):
         return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
 
-    if isinstance(obj, collections.abc.Sequence):
+    if isinstance(obj, Sequence):
         return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
 
     raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
@@ -270,7 +269,7 @@ def dict2xml_str(
 def list2xml_str(
     attr_type: bool,
     attr: Dict[str, Any],
-    item: collections.abc.Sequence[Any],
+    item: Sequence[Any],
     item_func: Callable[[str], str],
     cdata: bool,
     item_name: str,
@@ -361,7 +360,7 @@ def convert_dict(
                 )
             )
 
-        elif isinstance(val, collections.abc.Sequence):
+        elif isinstance(val, Sequence):
             print("DEBUGNEW", type(item_func))
             addline(
                 list2xml_str(
@@ -385,7 +384,7 @@ def convert_dict(
 
 
 def convert_list(
-    items: collections.abc.Sequence[Any],
+    items: Sequence[Any],
     ids: List[str],
     parent: str,
     attr_type: bool,
@@ -464,7 +463,7 @@ def convert_list(
                 )
             )
 
-        elif isinstance(item, collections.abc.Sequence):
+        elif isinstance(item, Sequence):
             print("DEBUGNEW", type(item_func))
             addline(
                 list2xml_str(

@@ -15,9 +15,8 @@ This module works with Python 3.7+
 import collections
 import logging
 import numbers
-import types
 from random import randint
-from typing import Any, Dict, Union, Tuple, List, Optional, Set
+from typing import Any, Dict, Union, Tuple, List, Optional
 from typing_extensions import reveal_type
 from collections.abc import Callable
 import datetime
@@ -51,7 +50,7 @@ def get_unique_id(element: str) -> str:
 
 
 ELEMENT = Union[
-    str, int, float, bool, numbers.Number, collections.abc.Sequence, datetime.datetime, datetime.date, None, Dict[str, Any]
+    str, int, float, bool, numbers.Number, collections.abc.Iterable, datetime.datetime, datetime.date, None
 ]
 
 
@@ -71,7 +70,7 @@ def get_xml_type(val: ELEMENT) -> str:
             return "number"
         if isinstance(val, dict):
             return "dict"
-        if isinstance(val, collections.abc.Sequence):
+        if isinstance(val, collections.abc.Iterable):
             return "list"
     else:
         return "null"
@@ -193,12 +192,12 @@ def convert(
 
     print("def convert attr_type", type(attr_type))
     if obj is None:
-        return convert_none(key=item_name, attr_type=attr_type, cdata=cdata)
+        return convert_none(key=item_name, val=None, attr_type=attr_type, cdata=cdata)
 
     if isinstance(obj, dict):
         return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
 
-    if isinstance(obj, collections.abc.Sequence):
+    if isinstance(obj, collections.abc.Iterable):
         return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
 
     raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
@@ -261,31 +260,33 @@ def dict2xml_str(
 def list2xml_str(
     attr_type: bool,
     attr: Dict[str, Any],
-    item: collections.abc.Sequence[Any],
+    item: collections.abc.Iterable[Any],
     item_func: Callable[[str], str],
     cdata: bool,
     item_name: str,
     item_wrap: bool,
 ) -> str:
-    if attr_type:
-        attr["type"] = get_xml_type(item)
-    flat = False
-    if item_name.endswith("@flat"):
-        item_name = item_name[0:-5]
-        flat = True
-    subtree = convert_list(
-        items=item,
-        ids=ids,
-        parent=item_name,
-        attr_type=attr_type,
-        item_func=item_func,
-        cdata=cdata,
-        item_wrap=item_wrap,
-    )
-    if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap):
-        return subtree
-    attrstring = make_attrstring(attr)
-    return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
+    if isinstance(item, List) or isinstance(item, Set):
+        if attr_type:
+            attr["type"] = get_xml_type(item)
+        flat = False
+        if item_name.endswith("@flat"):
+            item_name = item_name[0:-5]
+            flat = True
+        subtree = convert_list(
+            items=item,
+            ids=ids,
+            parent=item_name,
+            attr_type=attr_type,
+            item_func=item_func,
+            cdata=cdata,
+            item_wrap=item_wrap,
+        )
+        import pdb; pdb.set_trace()
+        if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap):
+            return subtree
+        attrstring = make_attrstring(attr)
+        return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
 
 
 def convert_dict(
@@ -352,7 +353,7 @@ def convert_dict(
                 )
             )
 
-        elif isinstance(val, collections.abc.Sequence):
+        elif isinstance(val, collections.abc.Iterable):
             print("DEBUGNEW", type(item_func))
             addline(
                 list2xml_str(
@@ -367,7 +368,7 @@ def convert_dict(
             )
 
         elif not val:
-            addline(convert_none(key, attr_type, attr, cdata))
+            addline(convert_none(key, val, attr_type, attr, cdata))
 
         else:
             raise TypeError(f"Unsupported data type: {val} ({type(val).__name__})")
@@ -376,7 +377,7 @@ def convert_dict(
 
 
 def convert_list(
-    items: collections.abc.Sequence[Any],
+    items: collections.abc.Iterable[Any],
     ids: List[str],
     parent: str,
     attr_type: bool,
@@ -455,7 +456,7 @@ def convert_list(
                 )
             )
 
-        elif isinstance(item, collections.abc.Sequence):
+        elif isinstance(item, collections.abc.Iterable):
             print("DEBUGNEW", type(item_func))
             addline(
                 list2xml_str(
@@ -470,7 +471,7 @@ def convert_list(
             )
 
         elif item is None:
-            addline(convert_none(item_name, attr_type, attr, cdata))
+            addline(convert_none(item_name, None, attr_type, attr, cdata))
 
         else:
             raise TypeError(f"Unsupported data type: {item} ({type(item).__name__})")
@@ -514,14 +515,14 @@ def convert_bool(
 
 
 def convert_none(
-    key: str,attr_type: bool, attr: Dict[str, Any] = {}, cdata: bool = False
+    key: str, val: None, attr_type: bool, attr: Dict[str, Any] = {}, cdata: bool = False
 ) -> str:
     """Converts a null value into an XML element"""
-    # LOG.info(f'Inside convert_none(): key="{str(key)}" val={type(val)}')
+    LOG.info(f'Inside convert_none(): key="{str(key)}"')
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
-        attr["type"] = get_xml_type(None)
+        attr["type"] = get_xml_type(val)
     attrstring = make_attrstring(attr)
     return f"<{key}{attrstring}></{key}>"
 

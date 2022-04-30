@@ -235,7 +235,7 @@ def dict2xml_str(
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
 
 
-def list2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap):
+def list2xml_str(attr_type: List[str], attr: Dict[str, Any], item, item_func: collections.abc.Iterable, cdata: bool, item_name: str, item_wrap: bool) -> str:
     if attr_type:
         attr["type"] = get_xml_type(item)
     flat = False
@@ -249,7 +249,7 @@ def list2xml_str(attr_type, attr, item, item_func, cdata, item_name, item_wrap):
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
 
 
-def convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap) -> str:
+def convert_dict(obj: Dict[str, Any], ids: List[int], parent: str, attr_type: bool, item_func:Callable[[str], str], cdata: bool, item_wrap: bool) -> str:
     """Converts a dict into an XML string."""
     keys_str = ", ".join(str(key) for key in obj)
     LOG.info(

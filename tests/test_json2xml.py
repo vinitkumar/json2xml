@@ -12,7 +12,7 @@ import xmltodict
 import json
 
 from json2xml import json2xml
-from json2xml.dicttoxml import dicttoxml
+from json2xml import dicttoxml
 from json2xml.utils import InvalidDataError, readfromjson, readfromstring, readfromurl, \
     JSONReadError, StringReadError, URLReadError
 
@@ -157,17 +157,17 @@ class TestJson2xml(unittest.TestCase):
 
     def test_dict2xml_no_root(self):
         payload = {'mock': 'payload'}
-        result = dicttoxml(payload, attr_type=False, root=False)
+        result = dicttoxml.dicttoxml(payload, attr_type=False, root=False)
         assert b'<mock>payload</mock>' == result
 
     def test_dict2xml_with_root(self):
         payload = {'mock': 'payload'}
-        result = dicttoxml(payload, attr_type=False)
+        result = dicttoxml.dicttoxml(payload, attr_type=False)
         assert b'<?xml version="1.0" encoding="UTF-8" ?><root><mock>payload</mock></root>' == result
 
     def test_dict2xml_with_custom_root(self):
         payload = {'mock': 'payload'}
-        result = dicttoxml(payload, attr_type=False, custom_root="element")
+        result = dicttoxml.dicttoxml(payload, attr_type=False, custom_root="element")
         assert b'<?xml version="1.0" encoding="UTF-8" ?><element><mock>payload</mock></element>' == result
 
     def test_bad_data(self):
@@ -211,7 +211,7 @@ class TestJson2xml(unittest.TestCase):
     def test_dict2xml_with_namespaces(self):
         data = {'ns1:node1': 'data in namespace 1', 'ns2:node2': 'data in namespace 2'}
         namespaces = {'ns1': 'http://www.google.de/ns1', 'ns2': 'http://www.google.de/ns2'}
-        result = dicttoxml(data, attr_type=False, xml_namespaces=namespaces)
+        result = dicttoxml.dicttoxml(data, attr_type=False, xml_namespaces=namespaces)
         print(result)
         assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
                b'<root xmlns:ns1="http://www.google.de/ns1" xmlns:ns2="http://www.google.de/ns2">' \
@@ -221,7 +221,7 @@ class TestJson2xml(unittest.TestCase):
 
     def test_dict2xml_with_flat(self):
         data = {'flat_list@flat': [1, 2, 3], 'non_flat_list': [4, 5, 6]}
-        result = dicttoxml(data, attr_type=False)
+        result = dicttoxml.dicttoxml(data, attr_type=False)
         print(result)
         assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
                b'<root><item>1</item><item>2</item><item>3</item>' \
@@ -231,9 +231,13 @@ class TestJson2xml(unittest.TestCase):
     def test_dict2xml_with_val_and_custom_attr(self):
         # in order to use @attr in non-dict objects, we need to lift into a dict and combine with @val as key
         data = {'list1': [1, 2, 3], 'list2': {'@attrs': {'myattr1': 'myval1', 'myattr2': 'myval2'}, '@val': [4, 5, 6]}}
-        result = dicttoxml(data, attr_type=False)
+        result = dicttoxml.dicttoxml(data, attr_type=False)
         print(result)
         assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
                b'<root><list1><item>1</item><item>2</item><item>3</item></list1>' \
                b'<list2 myattr1="myval1" myattr2="myval2"><item>4</item><item>5</item><item>6</item></list2>' \
                b'</root>' == result
+
+    def test_make_id(self):
+        make_id_elem = dicttoxml.make_id("li")
+        assert 'li' in make_id_elem

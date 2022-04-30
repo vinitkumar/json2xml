@@ -4,5 +4,6 @@
         {"boolean_dict": {"boolean": true}},
         {"boolean_dict": {"boolean": false}}
       ],
-      "boolean_list": [true, false]
+      "boolean_list": [true, false],
+      "null_atr": null
 }

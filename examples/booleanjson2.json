@@ -1,5 +1,7 @@
 {
       "boolean_list": [true, false],
       "number_array": [1, 2, 3],
-      "string_array": ["a", "b", "c"]
+      "string_array": ["a", "b", "c"],
+      "null_str": null,
+      "time": "2010-04-20T20:08:21.634121"
 }

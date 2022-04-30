@@ -13,14 +13,12 @@ This module works with Python 3.7+
 """
 
 import collections
+import datetime
 import logging
 import numbers
-import types
-from random import randint
-from typing import Any, Dict, Union, Tuple, List, Optional, Set
-from typing_extensions import reveal_type
 from collections.abc import Callable
-import datetime
+from random import randint
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from defusedxml.minidom import parseString
 
@@ -51,7 +49,16 @@ def get_unique_id(element: str) -> str:
 
 
 ELEMENT = Union[
-    str, int, float, bool, numbers.Number, collections.abc.Sequence, datetime.datetime, datetime.date, None, Dict[str, Any]
+    str,
+    int,
+    float,
+    bool,
+    numbers.Number,
+    collections.abc.Sequence,
+    datetime.datetime,
+    datetime.date,
+    None,
+    Dict[str, Any],
 ]
 
 
@@ -182,7 +189,9 @@ def convert(
             key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
         )
 
-    if hasattr(obj, "isoformat") and isinstance(obj, (datetime.datetime, datetime.date)):
+    if hasattr(obj, "isoformat") and isinstance(
+        obj, (datetime.datetime, datetime.date)
+    ):
         return convert_kv(
             key=item_name,
             val=obj.isoformat(),
@@ -220,7 +229,7 @@ def dict2xml_str(
     parentIsList: bool,
 ) -> str:
     """
-    dict2xml_str <class 'bool'> <class 'dict'> <class 'dict'> <class 'function'> <class 'bool'> <class 'str'> <class 'bool'> <class 'bool'>
+    parse dict2xml
     """
     print(
         "dict2xml_str",
@@ -514,7 +523,7 @@ def convert_bool(
 
 
 def convert_none(
-    key: str,attr_type: bool, attr: Dict[str, Any] = {}, cdata: bool = False
+    key: str, attr_type: bool, attr: Dict[str, Any] = {}, cdata: bool = False
 ) -> str:
     """Converts a null value into an XML element"""
     # LOG.info(f'Inside convert_none(): key="{str(key)}" val={type(val)}')

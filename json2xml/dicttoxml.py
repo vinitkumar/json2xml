@@ -39,10 +39,8 @@ def get_unique_id(element: str) -> str:
     while dup:
         if this_id not in ids:
             dup = False
-            print("get_unique_id", type(this_id))
             ids.append(this_id)
         else:
-            print("get_unique_id", type(this_id))
             this_id = make_id(element)
     return ids[-1]
 
@@ -63,7 +61,6 @@ ELEMENT = Union[
 
 def get_xml_type(val: ELEMENT) -> str:
     """Returns the data type for the xml type attribute"""
-    print("get_xml_type", type(val))
     if val is not None:
         if type(val).__name__ in ("str", "unicode"):
             return "str"
@@ -199,7 +196,6 @@ def convert(
             cdata=cdata,
         )
 
-    print("def convert attr_type", type(attr_type))
     if obj is None:
         return convert_none(key=item_name, attr_type=attr_type, cdata=cdata)
 
@@ -230,17 +226,6 @@ def dict2xml_str(
     """
     parse dict2xml
     """
-    print(
-        "dict2xml_str",
-        type(attr_type),
-        type(attr),
-        type(item),
-        type(item_func),
-        type(cdata),
-        type(item_name),
-        type(item_wrap),
-        type(parentIsList),
-    )
     keys_str = ", ".join(str(key) for key in item)
     LOG.info(
         f'Inside dict_item2xml_str: type(obj)="{type(item).__name__}", keys="{keys_str}"'
@@ -361,7 +346,6 @@ def convert_dict(
             )
 
         elif isinstance(val, Sequence):
-            print("DEBUGNEW", type(item_func))
             addline(
                 list2xml_str(
                     attr_type=attr_type,
@@ -418,8 +402,6 @@ def convert_list(
 
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
 
-        print("DEBUG list_str", type(item_func))
-
         if isinstance(item, bool):
             addline(convert_bool(item_name, item, attr_type, attr, cdata))
 
@@ -464,7 +446,6 @@ def convert_list(
             )
 
         elif isinstance(item, Sequence):
-            print("DEBUGNEW", type(item_func))
             addline(
                 list2xml_str(
                     attr_type=attr_type,
@@ -496,7 +477,6 @@ def convert_kv(
     LOG.info(
         f'Inside convert_kv(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
     )
-    print("convert_kv", type(val))
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -512,7 +492,6 @@ def convert_bool(
     LOG.info(
         f'Inside convert_bool(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
     )
-    print(type(key), type(val), type(attr_type), type(attr), type(cdata))
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:

@@ -101,7 +101,7 @@ def make_attrstring(attr: dict[str, Any]) -> str:
 
 def key_is_valid_xml(key: str) -> bool:
     """Checks that a key is a valid XML name"""
-    if DEBUGMODE:
+    if DEBUGMODE:  # pragma: no cover
         LOG.info(f'Inside key_is_valid_xml(). Testing "{str(key)}"')
     test_xml = f'<?xml version="1.0" encoding="UTF-8" ?><{key}>foo</{key}>'
     try:
@@ -113,7 +113,7 @@ def key_is_valid_xml(key: str) -> bool:
 
 def make_valid_xml_name(key: str, attr: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
     """Tests an XML name and fixes it if invalid"""
-    if DEBUGMODE:
+    if DEBUGMODE:  # pragma: no cover
         LOG.info(
             f'Inside make_valid_xml_name(). Testing key "{str(key)}" with attr "{str(attr)}"'
         )
@@ -231,7 +231,7 @@ def dict2xml_str(
     parse dict2xml
     """
     keys_str = ", ".join(str(key) for key in item)
-    if DEBUGMODE:
+    if DEBUGMODE:  # pragma: no cover
         LOG.info(
             f'Inside dict_item2xml_str: type(obj)="{type(item).__name__}", keys="{keys_str}"'
         )
@@ -297,7 +297,7 @@ def convert_dict(
 ) -> str:
     """Converts a dict into an XML string."""
     keys_str = ", ".join(str(key) for key in obj)
-    if DEBUGMODE:
+    if DEBUGMODE:  # pragma: no cover
         LOG.info(
             f'Inside convert_dict(): type(obj)="{type(obj).__name__}", keys="{keys_str}"'
         )
@@ -384,7 +384,7 @@ def convert_list(
     item_wrap: bool,
 ) -> str:
     """Converts a list into an XML string."""
-    if DEBUGMODE:
+    if DEBUGMODE:  # pragma: no cover
         LOG.info(f'Inside convert_list(): type(items)="{type(items).__name__}"')
         # avoid cpu consuming object serialization => extra if
         if LOG.getEffectiveLevel() <= logging.DEBUG:
@@ -483,7 +483,7 @@ def convert_kv(
     cdata: bool = False,
 ) -> str:
     """Converts a number or string into an XML element"""
-    if DEBUGMODE:
+    if DEBUGMODE:  # pragma: no cover
         LOG.info(
             f'Inside convert_kv(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
         )
@@ -499,7 +499,7 @@ def convert_bool(
     key: str, val: bool, attr_type: bool, attr: Dict[str, Any] = {}, cdata: bool = False
 ) -> str:
     """Converts a boolean into an XML element"""
-    if DEBUGMODE:
+    if DEBUGMODE:  # pragma: no cover
         LOG.info(
             f'Inside convert_bool(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
         )
@@ -564,7 +564,7 @@ def dicttoxml(
           {'list': {'@attrs': {'a':'b','c':'d'}, '@val': [4, 5, 6]}
           which results in <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
     """
-    if DEBUGMODE:
+    if DEBUGMODE:  # pragma: no cover
         LOG.info(
             f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}", type(ids") is : {type(ids).__name__}'
         )

@@ -21,8 +21,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from defusedxml.minidom import parseString
 
-DEBUGMODE = os.getenv("DEBUGMODE", False)
-LOG = logging.getLogger("dicttoxml")
+DEBUGMODE = os.getenv("DEBUGMODE", False)  # pragma: no cover
+LOG = logging.getLogger("dicttoxml")  # pragma: no cover
 
 
 ids: List[str] = []  # initialize list of unique ids

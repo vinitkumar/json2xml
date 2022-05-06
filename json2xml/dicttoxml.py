@@ -11,17 +11,17 @@ Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicod
         Items with a `None` type become empty XML elements.
 This module works with Python 3.7+
 """
-import os
 import datetime
 import logging
 import numbers
+import os
 from collections.abc import Callable, Sequence
 from random import randint
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from defusedxml.minidom import parseString
 
-DEBUGMODE = os.getenv("DEBUGMODE")
+DEBUGMODE = os.getenv("DEBUGMODE", False)
 LOG = logging.getLogger("dicttoxml")
 
 

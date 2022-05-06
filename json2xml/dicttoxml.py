@@ -25,7 +25,7 @@ DEBUGMODE = os.getenv("DEBUGMODE", False)  # pragma: no cover
 LOG = logging.getLogger("dicttoxml")  # pragma: no cover
 
 
-ids: List[str] = []  # initialize list of unique ids
+ids: list[str] = []  # initialize list of unique ids
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -82,7 +82,7 @@ def get_xml_type(val: ELEMENT) -> str:
     return type(val).__name__
 
 
-def escape_xml(s: Union[str, numbers.Number]) -> str:
+def escape_xml(s: str | numbers.Number) -> str:
     if isinstance(s, str):
         s = str(s)  # avoid UnicodeDecodeError
         s = s.replace("&", "&amp;")
@@ -111,7 +111,7 @@ def key_is_valid_xml(key: str) -> bool:
         return False
 
 
-def make_valid_xml_name(key: str, attr: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+def make_valid_xml_name(key: str, attr: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     """Tests an XML name and fixes it if invalid"""
     if DEBUGMODE:  # pragma: no cover
         LOG.info(
@@ -144,7 +144,7 @@ def make_valid_xml_name(key: str, attr: Dict[str, Any]) -> Tuple[str, Dict[str, 
     return key, attr
 
 
-def wrap_cdata(s: Union[str, numbers.Number]) -> str:
+def wrap_cdata(s: str | numbers.Number) -> str:
     """Wraps a string into CDATA sections"""
     s = str(s).replace("]]>", "]]]]><![CDATA[>")
     return "<![CDATA[" + s + "]]>"
@@ -219,8 +219,8 @@ def is_primitive_type(val: Any) -> bool:
 
 def dict2xml_str(
     attr_type: bool,
-    attr: Dict[str, Any],
-    item: Dict[str, Any],
+    attr: dict[str, Any],
+    item: dict[str, Any],
     item_func: Callable[[str], str],
     cdata: bool,
     item_name: str,
@@ -258,7 +258,7 @@ def dict2xml_str(
 
 def list2xml_str(
     attr_type: bool,
-    attr: Dict[str, Any],
+    attr: dict[str, Any],
     item: Sequence[Any],
     item_func: Callable[[str], str],
     cdata: bool,
@@ -287,8 +287,8 @@ def list2xml_str(
 
 
 def convert_dict(
-    obj: Dict[str, Any],
-    ids: List[str],
+    obj: dict[str, Any],
+    ids: list[str],
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -305,7 +305,7 @@ def convert_dict(
         if LOG.getEffectiveLevel() <= logging.DEBUG:
             LOG.debug(f'  obj="{str(obj)}"')
 
-    output: List[str] = []
+    output: list[str] = []
     addline = output.append
 
     for key, val in obj.items():
@@ -376,7 +376,7 @@ def convert_dict(
 
 def convert_list(
     items: Sequence[Any],
-    ids: List[str],
+    ids: list[str],
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -390,7 +390,7 @@ def convert_list(
         if LOG.getEffectiveLevel() <= logging.DEBUG:
             LOG.debug(f'  items="{str(items)}"')
 
-    output: List[str] = []
+    output: list[str] = []
     addline = output.append
 
     item_name = item_func(parent)
@@ -477,9 +477,9 @@ def convert_list(
 
 def convert_kv(
     key: str,
-    val: Union[str, numbers.Number],
+    val: str | numbers.Number,
     attr_type: bool,
-    attr: Dict[str, Any] = {},
+    attr: dict[str, Any] = {},
     cdata: bool = False,
 ) -> str:
     """Converts a number or string into an XML element"""
@@ -496,7 +496,7 @@ def convert_kv(
 
 
 def convert_bool(
-    key: str, val: bool, attr_type: bool, attr: Dict[str, Any] = {}, cdata: bool = False
+    key: str, val: bool, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
 ) -> str:
     """Converts a boolean into an XML element"""
     if DEBUGMODE:  # pragma: no cover
@@ -512,7 +512,7 @@ def convert_bool(
 
 
 def convert_none(
-    key: str, attr_type: bool, attr: Dict[str, Any] = {}, cdata: bool = False
+    key: str, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
 ) -> str:
     """Converts a null value into an XML element"""
     key, attr = make_valid_xml_name(key, attr)
@@ -524,10 +524,10 @@ def convert_none(
 
 
 def dicttoxml(
-    obj: Dict[str, Any],
+    obj: dict[str, Any],
     root: bool = True,
     custom_root: str = "root",
-    ids: Optional[List[int]] = None,
+    ids: list[int] | None = None,
     attr_type: bool = True,
     item_wrap: bool = True,
     item_func: Callable[[str], str] = default_item_func,

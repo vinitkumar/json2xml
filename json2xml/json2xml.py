@@ -1,6 +1,6 @@
-from  __future__ import annotations
+from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from defusedxml.minidom import parseString
 from pyexpat import ExpatError

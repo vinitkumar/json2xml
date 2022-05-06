@@ -17,7 +17,7 @@ import numbers
 import os
 from collections.abc import Callable, Sequence
 from random import randint
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Union
 
 from defusedxml.minidom import parseString
 
@@ -56,7 +56,7 @@ ELEMENT = Union[
     datetime.datetime,
     datetime.date,
     None,
-    Dict[str, Any],
+    dict[str, Any],
 ]
 
 

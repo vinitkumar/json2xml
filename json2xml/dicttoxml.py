@@ -17,7 +17,7 @@ import numbers
 import os
 from collections.abc import Callable, Sequence
 from random import randint
-from typing import Any, Union, Dict
+from typing import Any, Dict, Union
 
 from defusedxml.minidom import parseString
 

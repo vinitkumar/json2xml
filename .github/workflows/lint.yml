@@ -42,7 +42,10 @@ jobs:
           linters: isort
           run: isort --check --diff json2xml
 
+
+
   mypy:
+    name: mypy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -52,9 +55,11 @@ jobs:
         with:
           python-version: 3.9
           cache: 'pip'
-      - run: python -m pip install mypy types-requests==2.27.25 types-urllib3==1.26.14
+      - run: pip install --upgrade mypy types-requests types-urllib3
       - name: mypy
         uses: liskin/gh-problem-matcher-wrap@v1
         with:
-          linters: mypy json2xml
+          linters: mypy
+          run: |
+            mypy json2xml
 

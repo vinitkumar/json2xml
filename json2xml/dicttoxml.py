@@ -165,7 +165,7 @@ def convert(
 ) -> str:
     """Routes the elements of an object to the right function to convert them
     based on their data type"""
-    if DEBUGMODE:
+    if DEBUGMODE:  # pragma: no cover
         LOG.info(f'Inside convert(). type(obj)="{type(obj).__name__}"')
         # avoid cpu consuming object serialization => extra if
         if LOG.getEffectiveLevel() <= logging.DEBUG:
@@ -309,7 +309,7 @@ def convert_dict(
     addline = output.append
 
     for key, val in obj.items():
-        if DEBUGMODE:
+        if DEBUGMODE:  # pragma: no cover
             LOG.info(
                 f'Looping inside convert_dict(): key="{str(key)}", type(val)="{type(val).__name__}"'
             )
@@ -401,7 +401,7 @@ def convert_list(
         this_id = get_unique_id(parent)
 
     for i, item in enumerate(items):
-        if DEBUGMODE:
+        if DEBUGMODE:  # pragma: no cover
             LOG.info(
                 f'Looping inside convert_list(): index="{str(i)}", type="{type(item).__name__}"'
             )

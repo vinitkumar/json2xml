@@ -52,7 +52,7 @@ jobs:
         with:
           python-version: 3.9
           cache: 'pip'
-      - run: python -m pip install mypy && mypy --install-types
+      - run: python -m pip install mypy types-requests==2.27.25 types-urllib3==1.26.14
       - name: mypy
         uses: liskin/gh-problem-matcher-wrap@v1
         with:

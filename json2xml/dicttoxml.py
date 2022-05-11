@@ -11,20 +11,21 @@ Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicod
         Items with a `None` type become empty XML elements.
 This module works with Python 3.7+
 """
-
 import datetime
 import logging
 import numbers
+import os
 from collections.abc import Callable, Sequence
 from random import randint
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Union
 
 from defusedxml.minidom import parseString
 
-LOG = logging.getLogger("dicttoxml")
+DEBUGMODE = os.getenv("DEBUGMODE", False)  # pragma: no cover
+LOG = logging.getLogger("dicttoxml")  # pragma: no cover
 
 
-ids: List[str] = []  # initialize list of unique ids
+ids: list[str] = []  # initialize list of unique ids
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -81,7 +82,7 @@ def get_xml_type(val: ELEMENT) -> str:
     return type(val).__name__
 
 
-def escape_xml(s: Union[str, numbers.Number]) -> str:
+def escape_xml(s: str | numbers.Number) -> str:
     if isinstance(s, str):
         s = str(s)  # avoid UnicodeDecodeError
         s = s.replace("&", "&amp;")
@@ -100,7 +101,8 @@ def make_attrstring(attr: dict[str, Any]) -> str:
 
 def key_is_valid_xml(key: str) -> bool:
     """Checks that a key is a valid XML name"""
-    LOG.info(f'Inside key_is_valid_xml(). Testing "{str(key)}"')
+    if DEBUGMODE:  # pragma: no cover
+        LOG.info(f'Inside key_is_valid_xml(). Testing "{str(key)}"')
     test_xml = f'<?xml version="1.0" encoding="UTF-8" ?><{key}>foo</{key}>'
     try:
         parseString(test_xml)
@@ -109,11 +111,12 @@ def key_is_valid_xml(key: str) -> bool:
         return False
 
 
-def make_valid_xml_name(key: str, attr: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+def make_valid_xml_name(key: str, attr: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     """Tests an XML name and fixes it if invalid"""
-    LOG.info(
-        f'Inside make_valid_xml_name(). Testing key "{str(key)}" with attr "{str(attr)}"'
-    )
+    if DEBUGMODE:  # pragma: no cover
+        LOG.info(
+            f'Inside make_valid_xml_name(). Testing key "{str(key)}" with attr "{str(attr)}"'
+        )
     key = escape_xml(key)
     # nothing happens at escape_xml if attr is not a string, we don't
     # need to pass it to the method at all.
@@ -141,7 +144,7 @@ def make_valid_xml_name(key: str, attr: Dict[str, Any]) -> Tuple[str, Dict[str, 
     return key, attr
 
 
-def wrap_cdata(s: Union[str, numbers.Number]) -> str:
+def wrap_cdata(s: str | numbers.Number) -> str:
     """Wraps a string into CDATA sections"""
     s = str(s).replace("]]>", "]]]]><![CDATA[>")
     return "<![CDATA[" + s + "]]>"
@@ -162,10 +165,11 @@ def convert(
 ) -> str:
     """Routes the elements of an object to the right function to convert them
     based on their data type"""
-    LOG.info(f'Inside convert(). type(obj)="{type(obj).__name__}"')
-    # avoid cpu consuming object serialization => extra if
-    if LOG.getEffectiveLevel() <= logging.DEBUG:
-        LOG.debug(f'  obj="{str(obj)}"')
+    if DEBUGMODE:  # pragma: no cover
+        LOG.info(f'Inside convert(). type(obj)="{type(obj).__name__}"')
+        # avoid cpu consuming object serialization => extra if
+        if LOG.getEffectiveLevel() <= logging.DEBUG:
+            LOG.debug(f'  obj="{str(obj)}"')
 
     item_name = item_func(parent)
     # since bool is also a subtype of number.Number and int, the check for bool
@@ -215,8 +219,8 @@ def is_primitive_type(val: Any) -> bool:
 
 def dict2xml_str(
     attr_type: bool,
-    attr: Dict[str, Any],
-    item: Dict[str, Any],
+    attr: dict[str, Any],
+    item: dict[str, Any],
     item_func: Callable[[str], str],
     cdata: bool,
     item_name: str,
@@ -227,12 +231,13 @@ def dict2xml_str(
     parse dict2xml
     """
     keys_str = ", ".join(str(key) for key in item)
-    LOG.info(
-        f'Inside dict_item2xml_str: type(obj)="{type(item).__name__}", keys="{keys_str}"'
-    )
-    # avoid cpu consuming object serialization => extra if
-    if LOG.getEffectiveLevel() <= logging.DEBUG:
-        LOG.debug(f'  item="{str(item)}"')
+    if DEBUGMODE:  # pragma: no cover
+        LOG.info(
+            f'Inside dict_item2xml_str: type(obj)="{type(item).__name__}", keys="{keys_str}"'
+        )
+        # avoid cpu consuming object serialization => extra if
+        if LOG.getEffectiveLevel() <= logging.DEBUG:
+            LOG.debug(f'  item="{str(item)}"')
 
     if attr_type:
         attr["type"] = get_xml_type(item)
@@ -253,7 +258,7 @@ def dict2xml_str(
 
 def list2xml_str(
     attr_type: bool,
-    attr: Dict[str, Any],
+    attr: dict[str, Any],
     item: Sequence[Any],
     item_func: Callable[[str], str],
     cdata: bool,
@@ -282,8 +287,8 @@ def list2xml_str(
 
 
 def convert_dict(
-    obj: Dict[str, Any],
-    ids: List[str],
+    obj: dict[str, Any],
+    ids: list[str],
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -292,22 +297,24 @@ def convert_dict(
 ) -> str:
     """Converts a dict into an XML string."""
     keys_str = ", ".join(str(key) for key in obj)
-    LOG.info(
-        f'Inside convert_dict(): type(obj)="{type(obj).__name__}", keys="{keys_str}"'
-    )
-    # avoid cpu consuming object serialization => extra if
-    if LOG.getEffectiveLevel() <= logging.DEBUG:
-        LOG.debug(f'  obj="{str(obj)}"')
+    if DEBUGMODE:  # pragma: no cover
+        LOG.info(
+            f'Inside convert_dict(): type(obj)="{type(obj).__name__}", keys="{keys_str}"'
+        )
+        # avoid cpu consuming object serialization => extra if
+        if LOG.getEffectiveLevel() <= logging.DEBUG:
+            LOG.debug(f'  obj="{str(obj)}"')
 
-    output: List[str] = []
+    output: list[str] = []
     addline = output.append
 
     for key, val in obj.items():
-        LOG.info(
-            f'Looping inside convert_dict(): key="{str(key)}", type(val)="{type(val).__name__}"'
-        )
-        if LOG.getEffectiveLevel() <= logging.DEBUG:
-            LOG.debug(f'  val="{str(val)}"')
+        if DEBUGMODE:  # pragma: no cover
+            LOG.info(
+                f'Looping inside convert_dict(): key="{str(key)}", type(val)="{type(val).__name__}"'
+            )
+            if LOG.getEffectiveLevel() <= logging.DEBUG:
+                LOG.debug(f'  val="{str(val)}"')
 
         attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
 
@@ -369,7 +376,7 @@ def convert_dict(
 
 def convert_list(
     items: Sequence[Any],
-    ids: List[str],
+    ids: list[str],
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -377,12 +384,13 @@ def convert_list(
     item_wrap: bool,
 ) -> str:
     """Converts a list into an XML string."""
-    LOG.info(f'Inside convert_list(): type(items)="{type(items).__name__}"')
-    # avoid cpu consuming object serialization => extra if
-    if LOG.getEffectiveLevel() <= logging.DEBUG:
-        LOG.debug(f'  items="{str(items)}"')
+    if DEBUGMODE:  # pragma: no cover
+        LOG.info(f'Inside convert_list(): type(items)="{type(items).__name__}"')
+        # avoid cpu consuming object serialization => extra if
+        if LOG.getEffectiveLevel() <= logging.DEBUG:
+            LOG.debug(f'  items="{str(items)}"')
 
-    output: List[str] = []
+    output: list[str] = []
     addline = output.append
 
     item_name = item_func(parent)
@@ -393,12 +401,13 @@ def convert_list(
         this_id = get_unique_id(parent)
 
     for i, item in enumerate(items):
-        LOG.info(
-            f'Looping inside convert_list(): index="{str(i)}", type="{type(item).__name__}"'
-        )
-        # avoid cpu consuming object serialization => extra if
-        if LOG.getEffectiveLevel() <= logging.DEBUG:
-            LOG.debug(f'  item="{str(item)}"')
+        if DEBUGMODE:  # pragma: no cover
+            LOG.info(
+                f'Looping inside convert_list(): index="{str(i)}", type="{type(item).__name__}"'
+            )
+            # avoid cpu consuming object serialization => extra if
+            if LOG.getEffectiveLevel() <= logging.DEBUG:
+                LOG.debug(f'  item="{str(item)}"')
 
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
 
@@ -468,15 +477,16 @@ def convert_list(
 
 def convert_kv(
     key: str,
-    val: Union[str, numbers.Number],
+    val: str | numbers.Number,
     attr_type: bool,
-    attr: Dict[str, Any] = {},
+    attr: dict[str, Any] = {},
     cdata: bool = False,
 ) -> str:
     """Converts a number or string into an XML element"""
-    LOG.info(
-        f'Inside convert_kv(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
-    )
+    if DEBUGMODE:  # pragma: no cover
+        LOG.info(
+            f'Inside convert_kv(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
+        )
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -486,12 +496,13 @@ def convert_kv(
 
 
 def convert_bool(
-    key: str, val: bool, attr_type: bool, attr: Dict[str, Any] = {}, cdata: bool = False
+    key: str, val: bool, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
 ) -> str:
     """Converts a boolean into an XML element"""
-    LOG.info(
-        f'Inside convert_bool(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
-    )
+    if DEBUGMODE:  # pragma: no cover
+        LOG.info(
+            f'Inside convert_bool(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
+        )
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -501,10 +512,9 @@ def convert_bool(
 
 
 def convert_none(
-    key: str, attr_type: bool, attr: Dict[str, Any] = {}, cdata: bool = False
+    key: str, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
 ) -> str:
     """Converts a null value into an XML element"""
-    # LOG.info(f'Inside convert_none(): key="{str(key)}" val={type(val)}')
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -514,10 +524,10 @@ def convert_none(
 
 
 def dicttoxml(
-    obj: Dict[str, Any],
+    obj: dict[str, Any],
     root: bool = True,
     custom_root: str = "root",
-    ids: Optional[List[int]] = None,
+    ids: list[int] | None = None,
     attr_type: bool = True,
     item_wrap: bool = True,
     item_func: Callable[[str], str] = default_item_func,
@@ -555,12 +565,13 @@ def dicttoxml(
           {'list': {'@attrs': {'a':'b','c':'d'}, '@val': [4, 5, 6]}
           which results in <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
     """
-    LOG.info(
-        f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}", type(ids") is : {type(ids).__name__}'
-    )
-    # avoid cpu consuming object serialization (problem for large objects) => extra if
-    if LOG.getEffectiveLevel() <= logging.DEBUG:
-        LOG.debug(f'  obj="{str(obj)}"')
+    if DEBUGMODE:  # pragma: no cover
+        LOG.info(
+            f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}", type(ids") is : {type(ids).__name__}'
+        )
+        # avoid cpu consuming object serialization (problem for large objects) => extra if
+        if LOG.getEffectiveLevel() <= logging.DEBUG:
+            LOG.debug(f'  obj="{str(obj)}"')
 
     output = []
     namespacestr = ""

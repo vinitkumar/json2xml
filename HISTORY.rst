@@ -1,6 +1,28 @@
 History
 =======
 
+3.19.0rc1 / 2022-05-06
+======================
+
+  * Feat/remove logging by default (#131)
+  * remove old unused config
+  * feat: add types (#125)
+  * fix: issue with twine check
+  * fix: issue with long description
+  * refactor: xmltodict is only test dependency (#124)
+  * fix: add correct list of contributors
+  * feat: generate changelog
+  * improvements on dicttoxml (#121)
+  * feat: add correct badge
+  * feat: use codecov
+  * fix: flake8 tests
+  * fix: add coverage to the mix
+  * fix: lint issues and CI
+  * fix: check new CI stuff like lint and coverage
+  * feat: bump version and generate changelog
+  * fix: issue with wrong output for boolean list
+  * fix: pull requests also trigger action runs
+
 3.18.0 / 2022-04-23
 ===================
 

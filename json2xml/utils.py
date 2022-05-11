@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 """Utils methods to convert XML data to dict from various sources"""
 import json
-from typing import Dict, Optional
 
 import requests
 
@@ -21,7 +22,7 @@ class StringReadError(Exception):
     pass
 
 
-def readfromjson(filename: str) -> Dict[str, str]:
+def readfromjson(filename: str) -> dict[str, str]:
     """
     Reads a json string and emits json string
     """
@@ -38,7 +39,7 @@ def readfromjson(filename: str) -> Dict[str, str]:
         raise JSONReadError("Invalid JSON File")
 
 
-def readfromurl(url: str, params: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+def readfromurl(url: str, params: dict[str, str] | None = None) -> dict[str, str]:
     """
     Loads json from an URL over the internets
     """
@@ -51,7 +52,7 @@ def readfromurl(url: str, params: Optional[Dict[str, str]] = None) -> Dict[str, 
     raise URLReadError("URL is not returning correct response")
 
 
-def readfromstring(jsondata: str) -> Dict[str, str]:
+def readfromstring(jsondata: str) -> dict[str, str]:
     """
     Loads json from string
     """

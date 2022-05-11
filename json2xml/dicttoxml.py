@@ -572,7 +572,8 @@ def dicttoxml(
       {'@attr':{'a':'b'}, 'x':'y'} 
       results in 
       <root a="b"><x>y</x></root>
-      @flat: If a key ends with @flat (or dict contains key '@flat'), encapsulating node is omitted. Similar to item_wrap.
+      @flat: 
+        If a key ends with @flat (or dict contains key '@flat'), encapsulating node is omitted. Similar to item_wrap.
       @val: @attrs requires complex dict type. If primitive type should be used, then @val is used as key.
       To add custom xml-attributes on a list {'list': [4, 5, 6]}, you do this:
         {'list': {'@attrs': {'a':'b','c':'d'}, '@val': [4, 5, 6]}

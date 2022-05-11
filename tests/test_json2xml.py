@@ -210,6 +210,16 @@ class TestJson2xml(unittest.TestCase):
                b'<ns2:node2>data in namespace 2</ns2:node2>' \
                b'</root>' == result
 
+    def test_dict2xml_with_xmlns_namespaces(self):
+        data = {'ns1:node1': 'data in namespace 1', 'ns2:node2': 'data in namespace 2'}
+        namespaces = {'xmlns': "http://www.w3.org/1999/XSL/Transform"}
+        result = dicttoxml.dicttoxml(obj=data, attr_type=False, xml_namespaces=namespaces)
+        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
+               b'<root xmlns:http://www.w3.org/1999/XSL/Transform>' \
+               b'<ns1:node1>data in namespace 1</ns1:node1>' \
+               b'<ns2:node2>data in namespace 2</ns2:node2>' \
+               b'</root>' == result
+
     def test_dict2xml_with_xsi_location(self):
         data = {'bike': 'blue'}
         wrapper = 'vehicle'

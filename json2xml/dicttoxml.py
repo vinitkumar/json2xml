@@ -601,6 +601,11 @@ def dicttoxml(
                     ns = xml_namespaces[prefix][schema_att]
                     namespacestr += f' xsi:{schema_att}= {ns}'
 
+        elif prefix == 'xmlns':
+            # xmns needs no prefix
+            ns = xml_namespaces[prefix]
+            namespacestr += f' xmlns:{ns}'
+
         else:
             ns = xml_namespaces[prefix]
             namespacestr += f' xmlns:{prefix}="{ns}"'

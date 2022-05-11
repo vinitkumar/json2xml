@@ -141,12 +141,12 @@ class TestJson2xml(unittest.TestCase):
                 'results': {
                     'user': [{
                         'name': 'Ezequiel', 'age': '33', 'city': 'San Isidro'
-                        }, {
+                    }, {
                         'name': 'Belén', 'age': '30', 'city': 'San Isidro'}]}}}
 
         xmldata = json2xml.Json2xml(
             json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False
-            ).to_xml()
+        ).to_xml()
 
         old_dict = xmltodict.parse(xmldata)
         assert 'response' in old_dict.keys()
@@ -210,13 +210,29 @@ class TestJson2xml(unittest.TestCase):
                b'<ns2:node2>data in namespace 2</ns2:node2>' \
                b'</root>' == result
 
+    def test_dict2xml_with_xsi_location(self):
+        data = {'bike': 'blue'}
+        wrapper = 'vehicle'
+        namespaces = {
+            'xsi': {
+                'schemaInstance': "http://www.w3.org/2001/XMLSchema-instance",
+                'schemaLocation': "https://www.w3schools.com note.xsd"
+            }
+        }
+        result = dicttoxml.dicttoxml(data, custom_root=wrapper, xml_namespaces=namespaces, attr_type=False)
+        assert b'<?xml version="1.0" encoding="UTF-8" ?>'
+        b'<vehicle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' \
+            b'xsi:schemaLocation="https://www.w3schools.com/ note.xsd">'
+        b'<bike>blue</bike>'
+        b'</vehicle>' == result
+
     def test_dict2xml_with_flat(self):
         data = {'flat_list@flat': [1, 2, 3], 'non_flat_list': [4, 5, 6]}
         result = dicttoxml.dicttoxml(data, attr_type=False)
-        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
-               b'<root><item>1</item><item>2</item><item>3</item>' \
-               b'<non_flat_list><item>4</item><item>5</item><item>6</item></non_flat_list>' \
-               b'</root>' == result
+        assert b'<?xml version="1.0" encoding="UTF-8" ?>'
+        b'<root><item>1</item><item>2</item><item>3</item>'
+        b'<non_flat_list><item>4</item><item>5</item><item>6</item></non_flat_list>'
+        b'</root>' == result
 
     def test_dict2xml_with_val_and_custom_attr(self):
         # in order to use @attr in non-dict objects, we need to lift into a dict and combine with @val as key

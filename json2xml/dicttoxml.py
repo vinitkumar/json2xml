@@ -592,8 +592,18 @@ def dicttoxml(
     output = []
     namespacestr = ""
     for prefix in xml_namespaces:
-        ns = xml_namespaces[prefix]
-        namespacestr += f' xmlns:{prefix}="{ns}"'
+        if prefix == 'xsi':
+            for schema_att in xml_namespaces[prefix]:
+                if schema_att == 'schemaInstance':
+                    ns = xml_namespaces[prefix]['schemaInstance']
+                    namespacestr += f' xmlns:{prefix}="{ns}"'
+                elif schema_att == 'schemaLocation':
+                    ns = xml_namespaces[prefix][schema_att]
+                    namespacestr += f' xsi:{schema_att}= {ns}'
+
+        else:
+            ns = xml_namespaces[prefix]
+            namespacestr += f' xmlns:{prefix}="{ns}"'
     if root:
         output.append('<?xml version="1.0" encoding="UTF-8" ?>')
         output_elem = convert(

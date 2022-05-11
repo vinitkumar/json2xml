@@ -536,7 +536,7 @@ def dicttoxml(
 ) -> bytes:
     """Converts a python object into XML.
     
-    Arguments:
+    Arguments
     ----------
     - root specifies whether the output is wrapped in an XML root element
       Default is True

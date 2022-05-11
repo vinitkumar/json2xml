@@ -558,10 +558,10 @@ def dicttoxml(
       results in <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
 
     ..note::
-    Dictionaries-keys with special char '@' has special meaning:
-    @attrs: This allows custom xml attributes: {'@attr':{'a':'b'}, 'x':'y'} results in <root a="b"><x>y</x></root>
-    @flat: If a key ends with @flat (or dict contains key '@flat'), encapsulating node is omitted. Similar to item_wrap.
-    @val: @attrs requires complex dict type. If primitive type should be used, then @val is used as key.
+      Dictionaries-keys with special char '@' has special meaning:
+      @attrs: This allows custom xml attributes: {'@attr':{'a':'b'}, 'x':'y'} results in <root a="b"><x>y</x></root>
+      @flat: If a key ends with @flat (or dict contains key '@flat'), encapsulating node is omitted. Similar to item_wrap.
+      @val: @attrs requires complex dict type. If primitive type should be used, then @val is used as key.
           To add custom xml-attributes on a list {'list': [4, 5, 6]}, you do this:
           {'list': {'@attrs': {'a':'b','c':'d'}, '@val': [4, 5, 6]}
           which results in <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>

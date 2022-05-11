@@ -568,13 +568,16 @@ def dicttoxml(
 
     .. note::
       Dictionaries-keys with special char '@' has special meaning:
-      @attrs: This allows custom xml attributes: {'@attr':{'a':'b'}, 'x':'y'} results in <root a="b"><x>y</x></root>
+      @attrs: This allows custom xml attributes: 
+      {'@attr':{'a':'b'}, 'x':'y'} 
+      results in 
+      <root a="b"><x>y</x></root>
       @flat: If a key ends with @flat (or dict contains key '@flat'), encapsulating node is omitted. Similar to item_wrap.
       @val: @attrs requires complex dict type. If primitive type should be used, then @val is used as key.
       To add custom xml-attributes on a list {'list': [4, 5, 6]}, you do this:
-      .. code:: python 
         {'list': {'@attrs': {'a':'b','c':'d'}, '@val': [4, 5, 6]}
-      which results in <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
+      which results in 
+      <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
     
     """
     if DEBUGMODE:  # pragma: no cover

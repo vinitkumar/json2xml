@@ -230,11 +230,11 @@ class TestJson2xml(unittest.TestCase):
             }
         }
         result = dicttoxml.dicttoxml(data, custom_root=wrapper, xml_namespaces=namespaces, attr_type=False)
-        assert b'<?xml version="1.0" encoding="UTF-8" ?>'
-        b'<vehicle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' \
-            b'xsi:schemaLocation="https://www.w3schools.com/ note.xsd">'
-        b'<bike>blue</bike>'
-        b'</vehicle>' == result
+        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
+            b'<vehicle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' \
+            b'xsi:schemaLocation="https://www.w3schools.com/ note.xsd">' \
+            b'<bike>blue</bike>' \
+            b'</vehicle>' == result
 
     def test_dict2xml_with_flat(self):
         data = {'flat_list@flat': [1, 2, 3], 'non_flat_list': [4, 5, 6]}

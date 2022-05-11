@@ -524,7 +524,8 @@ def dicttoxml(
     cdata: bool = False,
     xml_namespaces: dict[str, Any] = {},
 ) -> bytes:
-    """Converts a python object into XML.
+    """
+    Converts a python object into XML.
     Arguments:
     - root specifies whether the output is wrapped in an XML root element
       Default is True

@@ -279,13 +279,14 @@ class TestJson2xml(unittest.TestCase):
         assert dicttoxml.get_xml_type(True) == "bool"
         assert dicttoxml.get_xml_type({}) == "dict"
 
-    # def test_list_parent_elements(self):
-    #     convert_list = dicttoxml.convert_list
-    #     default_item_func = dicttoxml.default_item_func
-    #     item = [{'frame_color': 'red'}, {'frame_color': 'green'}]
-    #     conList = convert_list(items=item, attr_type=False, cdata=False, ids=[],
-    #                            item_func=default_item_func, item_wrap=False, parent='Bike', list_headers=True)
-    #     assert f'<Bike<frame_color>red</frame_color></Bike><Bike<frame_color>green</frame_color></Bike>' == conList
+    def test_list_parent_elements(self):
+
+        default_item_func = dicttoxml.default_item_func
+        item = [{'frame_color': 'red'}, {'frame_color': 'green'}]
+        conList = dicttoxml.convert_list(items=item, attr_type=False, cdata=False, ids=None,
+                                         item_func=default_item_func, item_wrap=False, parent='Bike', list_headers=True)
+        assert f'<Bike<frame_color>red</frame_color></Bike>'
+        '<Bike<frame_color>green</frame_color></Bike>' == conList
 
     def test_dict2xml_str_list_header(self):
         from json2xml.dicttoxml import dict2xml_str
@@ -297,3 +298,12 @@ class TestJson2xml(unittest.TestCase):
                                parent=parent, list_headers=True)
 
         assert f'<Bike<frame_color>red</frame_color></Bike>' == xml_str
+
+    def test_list_headers(self):
+        dict = {"Bike": [
+            {'frame_color': 'red'},
+            {'frame_color': 'green'}
+        ]}
+        result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
+        assert b'<Bike<frame_color>red</frame_color></Bike>'
+        '<Bike<frame_color>green</frame_color></Bike>' == result

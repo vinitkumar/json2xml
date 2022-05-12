@@ -162,6 +162,7 @@ def convert(
     cdata: bool,
     item_wrap: bool,
     parent: str = "root",
+    list_headers: bool = False,
 ) -> str:
     """Routes the elements of an object to the right function to convert them
     based on their data type"""
@@ -204,10 +205,10 @@ def convert(
         return convert_none(key=item_name, attr_type=attr_type, cdata=cdata)
 
     if isinstance(obj, dict):
-        return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
+        return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
 
     if isinstance(obj, Sequence):
-        return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap)
+        return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
 
     raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
 
@@ -285,8 +286,11 @@ def list2xml_str(
         item_func=item_func,
         cdata=cdata,
         item_wrap=item_wrap,
+        list_headers=list_headers
     )
     if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap):
+        return subtree
+    elif list_headers:
         return subtree
     attrstring = make_attrstring(attr)
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
@@ -300,6 +304,7 @@ def convert_dict(
     item_func: Callable[[str], str],
     cdata: bool,
     item_wrap: bool,
+    list_headers: bool = False
 ) -> str:
     """Converts a dict into an XML string."""
     keys_str = ", ".join(str(key) for key in obj)
@@ -368,6 +373,7 @@ def convert_dict(
                     cdata=cdata,
                     item_name=key,
                     item_wrap=item_wrap,
+                    list_headers=list_headers
                 )
             )
 
@@ -544,6 +550,7 @@ def dicttoxml(
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,
     xml_namespaces: dict[str, Any] = {},
+    list_headers: bool = False
 ) -> bytes:
     """
     Converts a python object into XML.
@@ -628,7 +635,7 @@ def dicttoxml(
         output.append(f"<{custom_root}{namespacestr}>{output_elem}</{custom_root}>")
     else:
         output.append(
-            convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="")
+            convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
         )
 
     return "".join(output).encode("utf-8")

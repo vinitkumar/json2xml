@@ -244,6 +244,15 @@ class TestJson2xml(unittest.TestCase):
         b'<non_flat_list><item>4</item><item>5</item><item>6</item></non_flat_list>'
         b'</root>' == result
 
+    def test_dict2xml_omit_list(self):
+        obj = {'list': [
+            {'bike': 'blue'},
+            {'wheel': 'black'}
+        ]
+        }
+        dicttoxml.dicttoxml(obj, root=False, attr_type=False, item_wrap=False)
+        assert b'<list><bike>blue</bike><wheel>black</wheel></list>'
+
     def test_dict2xml_with_val_and_custom_attr(self):
         # in order to use @attr in non-dict objects, we need to lift into a dict and combine with @val as key
         data = {'list1': [1, 2, 3], 'list2': {'@attrs': {'myattr1': 'myval1', 'myattr2': 'myval2'}, '@val': [4, 5, 6]}}

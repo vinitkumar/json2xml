@@ -278,3 +278,22 @@ class TestJson2xml(unittest.TestCase):
         assert dicttoxml.get_xml_type(1) == "int"
         assert dicttoxml.get_xml_type(True) == "bool"
         assert dicttoxml.get_xml_type({}) == "dict"
+
+    # def test_list_parent_elements(self):
+    #     convert_list = dicttoxml.convert_list
+    #     default_item_func = dicttoxml.default_item_func
+    #     item = [{'frame_color': 'red'}, {'frame_color': 'green'}]
+    #     conList = convert_list(items=item, attr_type=False, cdata=False, ids=[],
+    #                            item_func=default_item_func, item_wrap=False, parent='Bike', list_headers=True)
+    #     assert f'<Bike<frame_color>red</frame_color></Bike><Bike<frame_color>green</frame_color></Bike>' == conList
+
+    def test_dict2xml_str_list_header(self):
+        from json2xml.dicttoxml import dict2xml_str
+        item_func = dicttoxml.default_item_func
+        item = {'frame_color': 'red'}
+        parent = 'Bike'
+        xml_str = dict2xml_str(attr_type=False, attr={}, item=item, item_func=item_func,
+                               cdata=False, item_name='item', item_wrap=False, parentIsList=True,
+                               parent=parent, list_headers=True)
+
+        assert f'<Bike<frame_color>red</frame_color></Bike>' == xml_str

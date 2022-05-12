@@ -226,6 +226,8 @@ def dict2xml_str(
     item_name: str,
     item_wrap: bool,
     parentIsList: bool,
+    parent: str = "",
+    list_headers: bool = False,
 ) -> str:
     """
     parse dict2xml
@@ -250,8 +252,11 @@ def dict2xml_str(
         subtree = convert(
             rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name
         )
-    if item.get("@flat", False) or (parentIsList and not item_wrap):
+    if parentIsList and list_headers:
+        return f"<{parent}{subtree}</{parent}>"
+    elif item.get("@flat", False) or (parentIsList and not item_wrap):
         return subtree
+
     attrstring = make_attrstring(attr)
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
 
@@ -264,6 +269,7 @@ def list2xml_str(
     cdata: bool,
     item_name: str,
     item_wrap: bool,
+    list_headers: bool = False,
 ) -> str:
     if attr_type:
         attr["type"] = get_xml_type(item)
@@ -382,6 +388,7 @@ def convert_list(
     item_func: Callable[[str], str],
     cdata: bool,
     item_wrap: bool,
+    list_headers: bool = False,
 ) -> str:
     """Converts a list into an XML string."""
     if DEBUGMODE:  # pragma: no cover
@@ -450,7 +457,10 @@ def convert_list(
         elif isinstance(item, dict):
             addline(
                 dict2xml_str(
-                    attr_type, attr, item, item_func, cdata, item_name, item_wrap, True
+                    attr_type, attr, item, item_func, cdata, item_name, item_wrap,
+                    parentIsList=True,
+                    parent=parent,
+                    list_headers=list_headers
                 )
             )
 
@@ -464,6 +474,7 @@ def convert_list(
                     cdata=cdata,
                     item_name=item_name,
                     item_wrap=item_wrap,
+                    list_headers=list_headers
                 )
             )
 

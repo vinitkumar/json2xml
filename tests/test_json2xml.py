@@ -328,3 +328,13 @@ class TestJson2xml(unittest.TestCase):
         result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
         assert b'<Bike><frame_color>red</frame_color></Bike>'
         '<Bike><frame_color>green</frame_color></Bike>' == result
+
+    def test_list_headers_root(self):
+        dict = {"Bike": [
+            {'frame_color': 'red'},
+            {'frame_color': 'green'}
+        ]}
+        result = dicttoxml.dicttoxml(dict, root=True, item_wrap=False, attr_type=False, list_headers=True)
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><root>'
+        b'<Bike><frame_color>red</frame_color><Bike>'
+        b'<Bike><frame_color>green</frame_color></Bike></root>' == result

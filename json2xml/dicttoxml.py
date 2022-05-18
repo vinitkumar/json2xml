@@ -630,7 +630,7 @@ def dicttoxml(
     if root:
         output.append('<?xml version="1.0" encoding="UTF-8" ?>')
         output_elem = convert(
-            obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root
+            obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
         )
         output.append(f"<{custom_root}{namespacestr}>{output_elem}</{custom_root}>")
     else:

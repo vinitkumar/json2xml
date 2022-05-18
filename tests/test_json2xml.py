@@ -329,6 +329,17 @@ class TestJson2xml(unittest.TestCase):
         assert b'<Bike><frame_color>red</frame_color></Bike>'
         '<Bike><frame_color>green</frame_color></Bike>' == result
 
+    def test_list_headers_nested(self):
+        dict = {"transport": {
+            "Bike": [
+                {'frame_color': 'red'},
+                {'frame_color': 'green'}
+            ]}
+        }
+        result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
+        assert b'<transport><Bike><frame_color>red</frame_color></Bike>'
+        b'<Bike><frame_color>green</frame_color></Bike></transport>' == result
+
     def test_list_headers_root(self):
         dict = {"Bike": [
             {'frame_color': 'red'},

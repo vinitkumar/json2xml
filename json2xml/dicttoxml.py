@@ -251,7 +251,7 @@ def dict2xml_str(
     else:
         # we can not use convert_dict, because rawitem could be non-dict
         subtree = convert(
-            rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name
+            rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers=True
         )
     if parentIsList and list_headers:
         return f"<{parent}>{subtree}</{parent}>"
@@ -359,7 +359,9 @@ def convert_dict(
         elif isinstance(val, dict):
             addline(
                 dict2xml_str(
-                    attr_type, attr, val, item_func, cdata, key, item_wrap, False
+                    attr_type, attr, val, item_func, cdata, key, item_wrap,
+                    False,
+                    list_headers=True
                 )
             )
 

@@ -254,7 +254,7 @@ def dict2xml_str(
             rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name
         )
     if parentIsList and list_headers:
-        return f"<{parent}{subtree}</{parent}>"
+        return f"<{parent}>{subtree}</{parent}>"
     elif item.get("@flat", False) or (parentIsList and not item_wrap):
         return subtree
 

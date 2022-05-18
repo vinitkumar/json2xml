@@ -318,7 +318,7 @@ class TestJson2xml(unittest.TestCase):
                                cdata=False, item_name='item', item_wrap=False, parentIsList=True,
                                parent=parent, list_headers=True)
 
-        assert f'{"<Bike<frame_color>red</frame_color></Bike>"}' == xml_str
+        assert f'{"<Bike><frame_color>red</frame_color></Bike>"}' == xml_str
 
     def test_list_headers(self):
         dict = {"Bike": [
@@ -326,5 +326,5 @@ class TestJson2xml(unittest.TestCase):
             {'frame_color': 'green'}
         ]}
         result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
-        assert b'<Bike<frame_color>red</frame_color></Bike>'
-        '<Bike<frame_color>green</frame_color></Bike>' == result
+        assert b'<Bike><frame_color>red</frame_color></Bike>'
+        '<Bike><frame_color>green</frame_color></Bike>' == result

@@ -236,6 +236,26 @@ class TestJson2xml(unittest.TestCase):
                b'<bike>blue</bike>'
         b'</vehicle>' == result
 
+    def test_dict2xml_xsi_xmlns(self):
+        data = {'bike': 'blue'}
+        wrapper = 'vehicle'
+        xml_namespace = {
+            'xsd': "https://www.w3schools.com/ note.xsd",
+            'xmlns': "http://www.google.de/ns1",
+            'xsi': {
+                'schemaInstance': "http://www.w3.org/2001/XMLSchema-instance",
+                'schemaLocation': "https://www.w3schools.com"
+            },
+
+        }
+        result = dicttoxml.dicttoxml(data, custom_root=wrapper, xml_namespaces=xml_namespace,
+                                     attr_type=False).decode()
+
+        assert '<?xml version="1.0" encoding="UTF-8" ?>'
+        '<vehicle xmlns:xsd="https://www.w3schools.com/ note.xsd" xmlns:http://www.google.de/ns1'
+        'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://www.w3schools.com">'
+        '<bike>blue</bike></vehicle>' == result
+
     def test_dict2xml_with_flat(self):
         data = {'flat_list@flat': [1, 2, 3], 'non_flat_list': [4, 5, 6]}
         result = dicttoxml.dicttoxml(data, attr_type=False)

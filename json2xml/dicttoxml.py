@@ -617,7 +617,7 @@ def dicttoxml(
                     namespacestr += f' xmlns:{prefix}="{ns}"'
                 elif schema_att == 'schemaLocation':
                     ns = xml_namespaces[prefix][schema_att]
-                    namespacestr += f' xsi:{schema_att}= {ns}'
+                    namespacestr += f' xsi:{schema_att}="{ns}"'
 
         elif prefix == 'xmlns':
             # xmns needs no prefix

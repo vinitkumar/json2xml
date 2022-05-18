@@ -622,7 +622,7 @@ def dicttoxml(
         elif prefix == 'xmlns':
             # xmns needs no prefix
             ns = xml_namespaces[prefix]
-            namespacestr += f' xmlns:"{ns}"'
+            namespacestr += f' xmlns="{ns}"'
 
         else:
             ns = xml_namespaces[prefix]

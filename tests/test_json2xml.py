@@ -214,8 +214,9 @@ class TestJson2xml(unittest.TestCase):
         data = {'ns1:node1': 'data in namespace 1', 'ns2:node2': 'data in namespace 2'}
         namespaces = {'xmlns': "http://www.w3.org/1999/XSL/Transform"}
         result = dicttoxml.dicttoxml(obj=data, attr_type=False, xml_namespaces=namespaces)
+
         assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
-               b'<root xmlns:http://www.w3.org/1999/XSL/Transform>' \
+               b'<root xmlns="http://www.w3.org/1999/XSL/Transform">' \
                b'<ns1:node1>data in namespace 1</ns1:node1>' \
                b'<ns2:node2>data in namespace 2</ns2:node2>' \
                b'</root>' == result
@@ -252,7 +253,7 @@ class TestJson2xml(unittest.TestCase):
                                      attr_type=False).decode()
 
         assert '<?xml version="1.0" encoding="UTF-8" ?>'
-        '<vehicle xmlns:xsd="https://www.w3schools.com/ note.xsd" xmlns:http://www.google.de/ns1'
+        '<vehicle xmlns:xsd="https://www.w3schools.com/ note.xsd" xmlns=http://www.google.de/ns1'
         'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://www.w3schools.com">'
         '<bike>blue</bike></vehicle>' == result
 

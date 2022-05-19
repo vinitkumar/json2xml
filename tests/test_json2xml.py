@@ -141,12 +141,12 @@ class TestJson2xml(unittest.TestCase):
                 'results': {
                     'user': [{
                         'name': 'Ezequiel', 'age': '33', 'city': 'San Isidro'
-                        }, {
+                    }, {
                         'name': 'Belén', 'age': '30', 'city': 'San Isidro'}]}}}
 
         xmldata = json2xml.Json2xml(
             json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False
-            ).to_xml()
+        ).to_xml()
 
         old_dict = xmltodict.parse(xmldata)
         assert 'response' in old_dict.keys()
@@ -210,13 +210,69 @@ class TestJson2xml(unittest.TestCase):
                b'<ns2:node2>data in namespace 2</ns2:node2>' \
                b'</root>' == result
 
+    def test_dict2xml_with_xmlns_namespaces(self):
+        data = {'ns1:node1': 'data in namespace 1', 'ns2:node2': 'data in namespace 2'}
+        namespaces = {'xmlns': "http://www.w3.org/1999/XSL/Transform"}
+        result = dicttoxml.dicttoxml(obj=data, attr_type=False, xml_namespaces=namespaces)
+
+        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
+               b'<root xmlns="http://www.w3.org/1999/XSL/Transform">' \
+               b'<ns1:node1>data in namespace 1</ns1:node1>' \
+               b'<ns2:node2>data in namespace 2</ns2:node2>' \
+               b'</root>' == result
+
+    def test_dict2xml_with_xsi_location(self):
+        data = {'bike': 'blue'}
+        wrapper = 'vehicle'
+        namespaces = {
+            'xsi': {
+                'schemaInstance': "http://www.w3.org/2001/XMLSchema-instance",
+                'schemaLocation': "https://www.w3schools.com note.xsd"
+            }
+        }
+        result = dicttoxml.dicttoxml(data, custom_root=wrapper, xml_namespaces=namespaces, attr_type=False)
+        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
+               b'<vehicle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' \
+               b'xsi:schemaLocation="https://www.w3schools.com/ note.xsd">' \
+               b'<bike>blue</bike>'
+        b'</vehicle>' == result
+
+    def test_dict2xml_xsi_xmlns(self):
+        data = {'bike': 'blue'}
+        wrapper = 'vehicle'
+        xml_namespace = {
+            'xsd': "https://www.w3schools.com/ note.xsd",
+            'xmlns': "http://www.google.de/ns1",
+            'xsi': {
+                'schemaInstance': "http://www.w3.org/2001/XMLSchema-instance",
+                'schemaLocation': "https://www.w3schools.com"
+            },
+
+        }
+        result = dicttoxml.dicttoxml(data, custom_root=wrapper, xml_namespaces=xml_namespace,
+                                     attr_type=False).decode()
+
+        assert '<?xml version="1.0" encoding="UTF-8" ?>'
+        '<vehicle xmlns:xsd="https://www.w3schools.com/ note.xsd" xmlns=http://www.google.de/ns1'
+        'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://www.w3schools.com">'
+        '<bike>blue</bike></vehicle>' == result
+
     def test_dict2xml_with_flat(self):
         data = {'flat_list@flat': [1, 2, 3], 'non_flat_list': [4, 5, 6]}
         result = dicttoxml.dicttoxml(data, attr_type=False)
-        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
-               b'<root><item>1</item><item>2</item><item>3</item>' \
-               b'<non_flat_list><item>4</item><item>5</item><item>6</item></non_flat_list>' \
-               b'</root>' == result
+        assert b'<?xml version="1.0" encoding="UTF-8" ?>'
+        b'<root><item>1</item><item>2</item><item>3</item>'
+        b'<non_flat_list><item>4</item><item>5</item><item>6</item></non_flat_list>'
+        b'</root>' == result
+
+    def test_dict2xml_omit_list(self):
+        obj = {'list': [
+            {'bike': 'blue'},
+            {'wheel': 'black'}
+        ]
+        }
+        dicttoxml.dicttoxml(obj, root=False, attr_type=False, item_wrap=False)
+        assert b'<list><bike>blue</bike><wheel>black</wheel></list>'
 
     def test_dict2xml_with_val_and_custom_attr(self):
         # in order to use @attr in non-dict objects, we need to lift into a dict and combine with @val as key
@@ -243,3 +299,53 @@ class TestJson2xml(unittest.TestCase):
         assert dicttoxml.get_xml_type(1) == "int"
         assert dicttoxml.get_xml_type(True) == "bool"
         assert dicttoxml.get_xml_type({}) == "dict"
+
+    def test_list_parent_elements(self):
+
+        default_item_func = dicttoxml.default_item_func
+        item = [{'frame_color': 'red'}, {'frame_color': 'green'}]
+        conList = dicttoxml.convert_list(items=item, attr_type=False, cdata=False, ids=None,
+                                         item_func=default_item_func, item_wrap=False, parent='Bike', list_headers=True)
+        assert f'{"<Bike<frame_color>red</frame_color></Bike>"}'
+        '{"<Bike<frame_color>green</frame_color></Bike>"}' == conList
+
+    def test_dict2xml_str_list_header(self):
+        from json2xml.dicttoxml import dict2xml_str
+        item_func = dicttoxml.default_item_func
+        item = {'frame_color': 'red'}
+        parent = 'Bike'
+        xml_str = dict2xml_str(attr_type=False, attr={}, item=item, item_func=item_func,
+                               cdata=False, item_name='item', item_wrap=False, parentIsList=True,
+                               parent=parent, list_headers=True)
+
+        assert f'{"<Bike><frame_color>red</frame_color></Bike>"}' == xml_str
+
+    def test_list_headers(self):
+        dict = {"Bike": [
+            {'frame_color': 'red'},
+            {'frame_color': 'green'}
+        ]}
+        result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
+        assert b'<Bike><frame_color>red</frame_color></Bike>'
+        '<Bike><frame_color>green</frame_color></Bike>' == result
+
+    def test_list_headers_nested(self):
+        dict = {"transport": {
+            "Bike": [
+                {'frame_color': 'red'},
+                {'frame_color': 'green'}
+            ]}
+        }
+        result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
+        assert b'<transport><Bike><frame_color>red</frame_color></Bike>'
+        b'<Bike><frame_color>green</frame_color></Bike></transport>' == result
+
+    def test_list_headers_root(self):
+        dict = {"Bike": [
+            {'frame_color': 'red'},
+            {'frame_color': 'green'}
+        ]}
+        result = dicttoxml.dicttoxml(dict, root=True, item_wrap=False, attr_type=False, list_headers=True)
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><root>'
+        b'<Bike><frame_color>red</frame_color><Bike>'
+        b'<Bike><frame_color>green</frame_color></Bike></root>' == result

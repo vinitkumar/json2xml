@@ -534,35 +534,52 @@ def dicttoxml(
     cdata: bool = False,
     xml_namespaces: dict[str, Any] = {},
 ) -> bytes:
-    """Converts a python object into XML.
-    Arguments:
-    - root specifies whether the output is wrapped in an XML root element
-      Default is True
-    - custom_root allows you to specify a custom root element.
-      Default is 'root'
-    - ids specifies whether elements get unique ids.
-      Default is False
-    - attr_type specifies whether elements get a data type attribute.
-      Default is True
-    - item_func specifies what function should generate the element name for
-      items in a list.
-      Default is 'item'
-    - item_wrap specifies whether to nest items in array in <item/>
-      Default is True
-    - cdata specifies whether string values should be wrapped in CDATA sections.
-      Default is False
-    - xml_namespaces is a dictionary where key is xmlns prefix and value the urn,
+    """
+    Converts a python object into XML.
+
+    Parameters
+    ----------
+    obj : dictionary
+
+    root : Default is True
+        specifies whether the output is wrapped in an XML root element
+
+    custom_root : Default is 'root'
+        allows you to specify a custom root element.
+
+    ids : Default is False
+        specifies whether elements get unique ids.
+
+    attr_type : Default is True
+        specifies whether elements get a data type attribute.
+
+    item_wrap : Default is True
+        specifies whether to nest items in array in <item/>
+
+    item_func : items in a list. Default is 'item'
+        specifies what function should generate the element name for
+
+    cdata : Default is False
+        specifies whether string values should be wrapped in CDATA sections.
+
+    xml_namespaces : is a dictionary where key is xmlns prefix and value the urn, Default is {}
       e.g. { 'flex': 'http://www.w3.org/flex/flexBase', 'xsl': "http://www.w3.org/1999/XSL/Transform"}
       results in <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
-      Default is {}
 
-    Dictionaries-keys with special char '@' has special meaning:
-    @attrs: This allows custom xml attributes: {'@attr':{'a':'b'}, 'x':'y'} results in <root a="b"><x>y</x></root>
-    @flat: If a key ends with @flat (or dict contains key '@flat'), encapsulating node is omitted. Similar to item_wrap.
-    @val: @attrs requires complex dict type. If primitive type should be used, then @val is used as key.
-          To add custom xml-attributes on a list {'list': [4, 5, 6]}, you do this:
-          {'list': {'@attrs': {'a':'b','c':'d'}, '@val': [4, 5, 6]}
-          which results in <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
+    .. note::
+      Dictionaries-keys with special char '@' has special meaning:
+      @attrs: This allows custom xml attributes:
+      {'@attr':{'a':'b'}, 'x':'y'}
+      results in
+      <root a="b"><x>y</x></root>
+      @flat: If a key ends with @flat (or dict contains key '@flat'),
+      encapsulating node is omitted. Similar to item_wrap.
+      @val: @attrs requires complex dict type. If primitive type should be used, then @val is used as key.
+      To add custom xml-attributes on a list {'list': [4, 5, 6]}, you do this:
+        {'list': {'@attrs': {'a':'b','c':'d'}, '@val': [4, 5, 6]}
+      which results in
+      <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
+
     """
     if DEBUGMODE:  # pragma: no cover
         LOG.info(

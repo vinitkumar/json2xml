@@ -236,7 +236,6 @@ class TestJson2xml(unittest.TestCase):
                b'<bike>blue</bike>'
         b'</vehicle>' == result
 
-
     def test_dict2xml_xsi_xmlns(self):
         data = {'bike': 'blue'}
         wrapper = 'vehicle'

@@ -590,8 +590,11 @@ def dicttoxml(
 
     :param xml_namespaces:
         is a dictionary where key is xmlns prefix and value the urn, Default is {}
-        e.g. { 'flex': 'http://www.w3.org/flex/flexBase', 'xsl': "http://www.w3.org/1999/XSL/Transform"}
-        results in <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
+
+        Example::
+            >>> { 'flex': 'http://www.w3.org/flex/flexBase', 'xsl': "http://www.w3.org/1999/XSL/Transform"}
+            >>> results in 
+            >>> <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
 
     .. note::
       Dictionaries-keys with special char '@' has special meaning:

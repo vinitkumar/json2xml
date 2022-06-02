@@ -9,3 +9,5 @@ dist/*
 .eggs
 .DS_Store
 venv
+.vscode
+tests/*.ipynb

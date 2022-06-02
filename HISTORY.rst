@@ -1,10 +1,18 @@
 History
 =======
 
-3.19.0rc1 / 2022-05-06
-======================
+3.19.0 / 2022-05-20
+===================
 
+  * Setting xsi location (#135)
+  * Repeat list headers (#138)
+  * add python3.11 support (#139)
+  * improved docs dicttoxml (#134)
+  * Fix/types working check ci mypy (#133)
+  * fix: ci supports mypy now (#132)
+  * generate changelog
   * Feat/remove logging by default (#131)
+  * Merge two dev requirements file (#129)
   * remove old unused config
   * feat: add types (#125)
   * fix: issue with twine check

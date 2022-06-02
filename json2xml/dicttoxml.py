@@ -619,6 +619,7 @@ def dicttoxml(
     encapsulating node is omitted. Similar to item_wrap.
     @val: @attrs requires complex dict type. If primitive type should be used, then @val is used as key.
     To add custom xml-attributes on a list {'list': [4, 5, 6]}, you do this:
+
     .. code-block:: python
 
         {'list': {'@attrs': {'a':'b','c':'d'}, '@val': [4, 5, 6]}

@@ -564,7 +564,7 @@ def dicttoxml(
         Default is True
         specifies wheter the output is wrapped in an XML root element
 
-     :param custom_root:
+    :param custom_root:
         Default is 'root'
         allows you to specify a custom root element.
 
@@ -592,36 +592,6 @@ def dicttoxml(
         is a dictionary where key is xmlns prefix and value the urn, Default is {}
         e.g. { 'flex': 'http://www.w3.org/flex/flexBase', 'xsl': "http://www.w3.org/1999/XSL/Transform"}
         results in <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
-
-    Parameters
-    ----------
-    some new text
-    obj : dictionary
-
-    root : Default is True
-        specifies whether the output is wrapped in an XML root element
-
-    custom_root : Default is 'root'
-        allows you to specify a custom root element.
-
-    ids : Default is False
-        specifies whether elements get unique ids.
-
-    attr_type : Default is True
-        specifies whether elements get a data type attribute.
-
-    item_wrap : Default is True
-        specifies whether to nest items in array in <item/>
-
-    item_func : items in a list. Default is 'item'
-        specifies what function should generate the element name for
-
-    cdata : Default is False
-        specifies whether string values should be wrapped in CDATA sections.
-
-    xml_namespaces : is a dictionary where key is xmlns prefix and value the urn, Default is {}
-      e.g. { 'flex': 'http://www.w3.org/flex/flexBase', 'xsl': "http://www.w3.org/1999/XSL/Transform"}
-      results in <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
 
     .. note::
       Dictionaries-keys with special char '@' has special meaning:

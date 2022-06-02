@@ -601,6 +601,22 @@ def dicttoxml(
 
             <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
 
+    :param bool list_headers:
+        Repeats the header for every element in a list 
+
+        .. code-block:: python
+
+            "Bike": [
+            {'frame_color': 'red'},
+            {'frame_color': 'green'}
+            ]}
+
+        results in 
+
+        .. code-block:: xml
+
+            <Bike><frame_color>red</frame_color></Bike>
+            <Bike><frame_color>green</frame_color></Bike>
 
     Dictionaries-keys with special char '@' has special meaning:
     @attrs: This allows custom xml attributes:

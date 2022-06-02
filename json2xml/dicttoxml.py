@@ -557,6 +557,32 @@ def dicttoxml(
     """
     Converts a python object into XML.
 
+    :param obj: dictionary
+    :param root: Default is True
+        specifies wheter the output is wrapped in an XML root element
+
+     :param custom_root: Default is 'root'
+        allows you to specify a custom root element.
+
+    :param ids: Default is False
+        specifies whether elements get unique ids.
+
+    :param attr_type: Default is True
+        specifies whether elements get a data type attribute.
+
+    :param item_wrap: Default is True
+        specifies whether to nest items in array in <item/>
+
+    :param item_func: items in a list. Default is 'item'
+        specifies what function should generate the element name for
+
+    :param cdata: Default is False
+        specifies whether string values should be wrapped in CDATA sections.
+
+    :param xml_namespaces: is a dictionary where key is xmlns prefix and value the urn, Default is {}
+      e.g. { 'flex': 'http://www.w3.org/flex/flexBase', 'xsl': "http://www.w3.org/1999/XSL/Transform"}
+      results in <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
+
     Parameters
     ----------
     obj : dictionary

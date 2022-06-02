@@ -602,7 +602,7 @@ def dicttoxml(
             <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
 
     :param bool list_headers:
-        Repeats the header for every element in a list 
+        Repeats the header for every element in a list. Example if True: 
 
         .. code-block:: python
 

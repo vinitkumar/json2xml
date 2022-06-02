@@ -601,19 +601,17 @@ def dicttoxml(
 
             <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
 
-    Dictionary-keys
-    ===============
 
     Dictionaries-keys with special char '@' has special meaning:
     @attrs: This allows custom xml attributes:
 
-    ..code-block:: python
+    .. code-block:: python
 
         {'@attr':{'a':'b'}, 'x':'y'}
 
     results in
 
-    ..code-block:: xml
+    .. code-block:: xml
 
         <root a="b"><x>y</x></root>
 

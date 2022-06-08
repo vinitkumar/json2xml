@@ -247,7 +247,10 @@ def dict2xml_str(
     attr = item.pop("@attrs", attr)  # update attr with custom @attr if exists
     rawitem = item["@val"] if "@val" in item else item
     if is_primitive_type(rawitem):
-        subtree = rawitem
+        if type(rawitem) == str or numbers.Number:
+            subtree = escape_xml(rawitem)
+        else:
+            subtree = rawitem
     else:
         # we can not use convert_dict, because rawitem could be non-dict
         subtree = convert(
@@ -259,6 +262,7 @@ def dict2xml_str(
         return subtree
 
     attrstring = make_attrstring(attr)
+
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
 
 

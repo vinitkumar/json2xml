@@ -200,6 +200,9 @@ class TestJson2xml(unittest.TestCase):
         assert dict_from_xml["all"]["string_array"]["item"][1]["#text"] == 'b'
         assert dict_from_xml["all"]["string_array"]["item"][2]["#text"] == 'c'
 
+
+class TestDict2xml(unittest.TestCase):
+
     def test_dict2xml_with_namespaces(self):
         data = {'ns1:node1': 'data in namespace 1', 'ns2:node2': 'data in namespace 2'}
         namespaces = {'ns1': 'http://www.google.de/ns1', 'ns2': 'http://www.google.de/ns2'}
@@ -281,6 +284,21 @@ class TestJson2xml(unittest.TestCase):
                b'<root><list1><item>1</item><item>2</item><item>3</item></list1>' \
                b'<list2 myattr1="myval1" myattr2="myval2"><item>4</item><item>5</item><item>6</item></list2>' \
                b'</root>' == result
+
+    def test_dict2xml_with_ampersand(self):
+        dict_without_attrs = {'Bicycles': 'Wheels & Steers'}
+        root = False
+        attr_type = False
+        result = dicttoxml.dicttoxml(
+            dict_without_attrs, root=root, attr_type=attr_type).decode('UTF-8')
+        assert '<Bicycles>Wheels &amp; Steers</Bicycles>' == result
+
+    def test_dict2xml_with_ampsersand_and_attrs(self):
+        dict_with_attrs = {'Bicycles': {'@attrs': {'xml:lang': 'nl'}, '@val': 'Wheels & Steers'}}
+        root = False
+        attr_type = False
+        assert '<Bicycles xml:lang="nl">Wheels &amp; Steers</Bicycles>' == dicttoxml.dicttoxml(
+            dict_with_attrs, root=root, attr_type=attr_type).decode('UTF-8')
 
     def test_make_id(self):
         make_id_elem = dicttoxml.make_id("li")

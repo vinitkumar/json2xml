@@ -27,7 +27,7 @@ def readfromjson(filename: str) -> dict[str, str]:
     Reads a json string and emits json string
     """
     try:
-        json_data = open(filename, encoding="UTF-8")
+        json_data = open(filename, encoding="utf-8")
         data = json.load(json_data)
         json_data.close()
         return data

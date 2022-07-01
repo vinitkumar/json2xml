@@ -1,6 +1,11 @@
 History
 =======
 
+3.19.3 / 2022-07-01
+===================
+
+  * Update utils.py add encoding type UTF-8 @readfromjson function as language(korean) needs UTF-8 encoding options. (#145)
+
 3.19.2 / 2022-06-09
 ===================
 

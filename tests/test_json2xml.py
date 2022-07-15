@@ -4,6 +4,7 @@
 
 
 import unittest
+import pytest
 from collections import OrderedDict
 from pyexpat import ExpatError
 
@@ -88,7 +89,7 @@ class TestJson2xml(unittest.TestCase):
         )
         xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
         assert xmldata.startswith(b'<login type="str">mojombo</login>')
-        self.assertRaises(ExpatError, xmltodict.parse, xmldata)
+        pytest.raises(ExpatError, xmltodict.parse, xmldata)
 
     def test_item_wrap(self):
         data = readfromstring(

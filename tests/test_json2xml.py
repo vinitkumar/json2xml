@@ -3,17 +3,18 @@
 """Tests for `json2xml` package."""
 
 
+import json
 import unittest
 from collections import OrderedDict
-from pyexpat import ExpatError
 
 import pytest
 import xmltodict
-import json
+from pyexpat import ExpatError
 
 from json2xml import json2xml
-from json2xml.utils import InvalidDataError, readfromjson, readfromstring, readfromurl, \
-    JSONReadError, StringReadError, URLReadError
+from json2xml.utils import (InvalidDataError, JSONReadError, StringReadError,
+                            URLReadError, readfromjson, readfromstring,
+                            readfromurl)
 
 
 class TestJson2xml(unittest.TestCase):
@@ -88,7 +89,7 @@ class TestJson2xml(unittest.TestCase):
         )
         xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
         assert xmldata.startswith(b'<login type="str">mojombo</login>')
-        self.assertRaises(ExpatError, xmltodict.parse, xmldata)
+        pytest.raises(ExpatError, xmltodict.parse, xmldata)
 
     def test_item_wrap(self):
         data = readfromstring(

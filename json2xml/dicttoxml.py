@@ -231,7 +231,7 @@ def dict2xml_str(
     """
     parse dict2xml
     """
-    ids = []
+    ids: list[str] = []  # initialize list of unique ids
     keys_str = ", ".join(str(key) for key in item)
     if DEBUGMODE:  # pragma: no cover
         LOG.info(
@@ -275,7 +275,7 @@ def list2xml_str(
     item_wrap: bool,
     list_headers: bool = False,
 ) -> str:
-    ids = []
+    ids: list[str] = []  # initialize list of unique ids
     if attr_type:
         attr["type"] = get_xml_type(item)
     flat = False

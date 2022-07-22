@@ -2,9 +2,8 @@
 
 """Tests for `json2xml` package."""
 
-
+import pytest
 import json
-import unittest
 from collections import OrderedDict
 
 import pytest
@@ -17,7 +16,7 @@ from json2xml.utils import (InvalidDataError, JSONReadError, StringReadError,
                             readfromurl)
 
 
-class TestJson2xml(unittest.TestCase):
+class TestJson2xml:
     """Tests for `json2xml` package."""
 
     def setUp(self):

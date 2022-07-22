@@ -1,10 +1,7 @@
-import unittest
-
 from json2xml import dicttoxml
 
 
-class TestDict2xml(unittest.TestCase):
-
+class TestDict2xml:
     def test_dict2xml_with_namespaces(self):
         data = {'ns1:node1': 'data in namespace 1', 'ns2:node2': 'data in namespace 2'}
         namespaces = {'ns1': 'http://www.google.de/ns1', 'ns2': 'http://www.google.de/ns2'}
@@ -113,11 +110,32 @@ class TestDict2xml(unittest.TestCase):
         unique_id_elem_4 = dicttoxml.get_unique_id("li")
         assert len(list(set({unique_id_elem_1, unique_id_elem_2, unique_id_elem_3, unique_id_elem_4}))) == 4
 
+    def test_key_is_valid_xml(self):
+        valid_key = "li"
+        invalid_key = "/li"
+        assert dicttoxml.key_is_valid_xml(valid_key) is True
+        assert dicttoxml.key_is_valid_xml(invalid_key) is False
+
     def test_get_xml_type(self):
         assert dicttoxml.get_xml_type("abc") == "str"
         assert dicttoxml.get_xml_type(1) == "int"
         assert dicttoxml.get_xml_type(True) == "bool"
         assert dicttoxml.get_xml_type({}) == "dict"
+
+    def test_is_primitive_type(self):
+        assert dicttoxml.is_primitive_type(True) is True
+        assert dicttoxml.is_primitive_type("abc") is True
+        assert dicttoxml.is_primitive_type({}) is False
+
+    def test_escape_xml(self):
+        elem = "&"
+        escaped_string = dicttoxml.escape_xml(elem)
+        assert "&" != escaped_string
+        assert "&amp;" == escaped_string
+
+    def test_wrap_cdata(self):
+        elem = "li"
+        assert "CDATA" in dicttoxml.wrap_cdata(elem)
 
     def test_list_parent_elements(self):
 

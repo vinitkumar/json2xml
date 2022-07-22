@@ -117,9 +117,9 @@ class TestDict2xml:
         assert dicttoxml.get_xml_type({}) == "dict"
 
     def test_is_primitive_type(self):
-        assert dicttoxml.is_primitive_type(True)  == True
-        assert dicttoxml.is_primitive_type("abc") == True
-        assert dicttoxml.is_primitive_type({}) == False
+        assert dicttoxml.is_primitive_type(True) is True
+        assert dicttoxml.is_primitive_type("abc") is True
+        assert dicttoxml.is_primitive_type({}) is False
 
     def test_escape_xml(self):
         elem = "&"

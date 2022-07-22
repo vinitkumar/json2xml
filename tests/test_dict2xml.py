@@ -113,8 +113,8 @@ class TestDict2xml:
     def test_key_is_valid_xml(self):
         valid_key = "li"
         invalid_key = "/li"
-        assert dicttoxml.key_is_valid_xml(valid_key) == True
-        assert dicttoxml.key_is_valid_xml(invalid_key) == False
+        assert dicttoxml.key_is_valid_xml(valid_key) is True
+        assert dicttoxml.key_is_valid_xml(invalid_key) is False
 
     def test_get_xml_type(self):
         assert dicttoxml.get_xml_type("abc") == "str"

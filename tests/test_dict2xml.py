@@ -2,7 +2,6 @@ from json2xml import dicttoxml
 
 
 class TestDict2xml:
-
     def test_dict2xml_with_namespaces(self):
         data = {'ns1:node1': 'data in namespace 1', 'ns2:node2': 'data in namespace 2'}
         namespaces = {'ns1': 'http://www.google.de/ns1', 'ns2': 'http://www.google.de/ns2'}
@@ -116,6 +115,12 @@ class TestDict2xml:
         assert dicttoxml.get_xml_type(1) == "int"
         assert dicttoxml.get_xml_type(True) == "bool"
         assert dicttoxml.get_xml_type({}) == "dict"
+
+    def test_escape_xml(self):
+        elem = "&"
+        escaped_string = dicttoxml.escape_xml(elem)
+        assert "&" != escaped_string
+        assert "&amp;" == escaped_string
 
     def test_list_parent_elements(self):
 

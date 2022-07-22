@@ -110,6 +110,12 @@ class TestDict2xml:
         unique_id_elem_4 = dicttoxml.get_unique_id("li")
         assert len(list(set({unique_id_elem_1, unique_id_elem_2, unique_id_elem_3, unique_id_elem_4}))) == 4
 
+    def test_key_is_valid_xml(self):
+        valid_key = "li"
+        invalid_key = "/li"
+        assert dicttoxml.key_is_valid_xml(valid_key) == True
+        assert dicttoxml.key_is_valid_xml(invalid_key) == False
+
     def test_get_xml_type(self):
         assert dicttoxml.get_xml_type("abc") == "str"
         assert dicttoxml.get_xml_type(1) == "int"

@@ -25,8 +25,6 @@ DEBUGMODE = os.getenv("DEBUGMODE", False)  # pragma: no cover
 LOG = logging.getLogger("dicttoxml")  # pragma: no cover
 
 
-
-
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
     """Returns a random integer"""
     return f"{element}_{randint(start, end)}"

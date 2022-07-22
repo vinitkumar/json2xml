@@ -1,4 +1,3 @@
-import unittest
 import pytest
 
 from json2xml import dicttoxml

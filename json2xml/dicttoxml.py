@@ -25,7 +25,6 @@ DEBUGMODE = os.getenv("DEBUGMODE", False)  # pragma: no cover
 LOG = logging.getLogger("dicttoxml")  # pragma: no cover
 
 
-ids: list[str] = []  # initialize list of unique ids
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -35,6 +34,7 @@ def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
 
 def get_unique_id(element: str) -> str:
     """Returns a unique id for a given element"""
+    ids: list[str] = []  # initialize list of unique ids
     this_id = make_id(element)
     dup = True
     while dup:
@@ -233,6 +233,7 @@ def dict2xml_str(
     """
     parse dict2xml
     """
+    ids = []
     keys_str = ", ".join(str(key) for key in item)
     if DEBUGMODE:  # pragma: no cover
         LOG.info(
@@ -276,6 +277,7 @@ def list2xml_str(
     item_wrap: bool,
     list_headers: bool = False,
 ) -> str:
+    ids = []
     if attr_type:
         attr["type"] = get_xml_type(item)
     flat = False

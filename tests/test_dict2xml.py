@@ -133,6 +133,10 @@ class TestDict2xml:
         assert "&" != escaped_string
         assert "&amp;" == escaped_string
 
+    def test_wrap_cdata(self):
+        elem = "li"
+        assert "CDATA" in dicttoxml.wrap_cdata(elem)
+
     def test_list_parent_elements(self):
 
         default_item_func = dicttoxml.default_item_func

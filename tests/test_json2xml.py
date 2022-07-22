@@ -6,7 +6,6 @@ import pytest
 import json
 from collections import OrderedDict
 
-import pytest
 import xmltodict
 from pyexpat import ExpatError
 

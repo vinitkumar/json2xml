@@ -1,6 +1,13 @@
 History
 =======
 
+3.19.4 / 2022-07-24
+===================
+
+  * Feat/unittest to pytest (#149)
+  * Feat/upgrade python test python311beta (#148)
+  * feat: test new version of 3.10 and 3.11 (#147)
+
 3.19.3 / 2022-07-01
 ===================
 

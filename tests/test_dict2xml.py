@@ -213,13 +213,13 @@ class TestDict2xml:
             b'</root>' == result
 
     def test_dict2xml_with_item_func_issue_151(self):
-        data = [{'x':[1]}]
+        data = [{'x': [1]}]
         result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_func=lambda y: y+'item')
         print(result)
         assert b'<item><x><xitem>1</xitem></x></item>' == result
 
     def test_dict2xml_issue_151(self):
-        data = [{'x':[1]}]
+        data = [{'x': [1]}]
         result = dicttoxml.dicttoxml(data, root=False, attr_type=False)
         print(result)
         assert b'<item><x><item>1</item></x></item>' == result

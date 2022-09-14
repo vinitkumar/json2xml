@@ -2,22 +2,20 @@
 
 """Tests for `json2xml` package."""
 
-
-import unittest
+import pytest
+import json
 from collections import OrderedDict
+
+import xmltodict
 from pyexpat import ExpatError
 
-import pytest
-import xmltodict
-import json
-
 from json2xml import json2xml
-from json2xml.dicttoxml import dicttoxml
-from json2xml.utils import InvalidDataError, readfromjson, readfromstring, readfromurl, \
-    JSONReadError, StringReadError, URLReadError
+from json2xml.utils import (InvalidDataError, JSONReadError, StringReadError,
+                            URLReadError, readfromjson, readfromstring,
+                            readfromurl)
 
 
-class TestJson2xml(unittest.TestCase):
+class TestJson2xml:
     """Tests for `json2xml` package."""
 
     def setUp(self):
@@ -89,7 +87,7 @@ class TestJson2xml(unittest.TestCase):
         )
         xmldata = json2xml.Json2xml(data, root=False, pretty=False).to_xml()
         assert xmldata.startswith(b'<login type="str">mojombo</login>')
-        self.assertRaises(ExpatError, xmltodict.parse, xmldata)
+        pytest.raises(ExpatError, xmltodict.parse, xmldata)
 
     def test_item_wrap(self):
         data = readfromstring(
@@ -98,7 +96,6 @@ class TestJson2xml(unittest.TestCase):
         xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # item must be present within my_items
-        print(xmldata)
         assert "item" in old_dict['all']['my_items']
         assert "item" in old_dict['all']['my_str_items']
 
@@ -109,7 +106,6 @@ class TestJson2xml(unittest.TestCase):
         xmldata = json2xml.Json2xml(data, pretty=False, item_wrap=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # my_item must be present within my_items
-        print(xmldata)
         assert "my_item" in old_dict['all']['my_items']
         assert "my_str_items" in old_dict['all']
 
@@ -119,7 +115,6 @@ class TestJson2xml(unittest.TestCase):
         )
         xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
-        print(xmldata)
         # item empty_list be present within all
         assert "empty_list" in old_dict['all']
 
@@ -129,7 +124,6 @@ class TestJson2xml(unittest.TestCase):
         )
         xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
-        print(xmldata)
         # test all attrs
         assert "str" == old_dict['all']['my_string']['@type']
         assert "int" == old_dict['all']['my_int']['@type']
@@ -145,30 +139,15 @@ class TestJson2xml(unittest.TestCase):
                 'results': {
                     'user': [{
                         'name': 'Ezequiel', 'age': '33', 'city': 'San Isidro'
-                        }, {
+                    }, {
                         'name': 'Belén', 'age': '30', 'city': 'San Isidro'}]}}}
 
         xmldata = json2xml.Json2xml(
             json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False
-            ).to_xml()
+        ).to_xml()
 
         old_dict = xmltodict.parse(xmldata)
         assert 'response' in old_dict.keys()
-
-    def test_dict2xml_no_root(self):
-        payload = {'mock': 'payload'}
-        result = dicttoxml(payload, attr_type=False, root=False)
-        assert b'<mock>payload</mock>' == result
-
-    def test_dict2xml_with_root(self):
-        payload = {'mock': 'payload'}
-        result = dicttoxml(payload, attr_type=False)
-        assert b'<?xml version="1.0" encoding="UTF-8" ?><root><mock>payload</mock></root>' == result
-
-    def test_dict2xml_with_custom_root(self):
-        payload = {'mock': 'payload'}
-        result = dicttoxml(payload, attr_type=False, custom_root="element")
-        assert b'<?xml version="1.0" encoding="UTF-8" ?><element><mock>payload</mock></element>' == result
 
     def test_bad_data(self):
         data = b"!\0a8f"
@@ -181,9 +160,7 @@ class TestJson2xml(unittest.TestCase):
         """Test correct return for boolean types."""
         data = readfromjson("examples/booleanjson.json")
         result = json2xml.Json2xml(data).to_xml()
-        print(result)
         dict_from_xml = xmltodict.parse(result)
-        print(dict_from_xml)
         assert dict_from_xml["all"]["boolean"]["#text"] != 'True'
         assert dict_from_xml["all"]["boolean"]["#text"] == 'true'
         assert dict_from_xml["all"]["boolean_dict_list"]["item"][0]["boolean_dict"]["boolean"]["#text"] == 'true'
@@ -195,9 +172,7 @@ class TestJson2xml(unittest.TestCase):
         """Test correct return for boolean types."""
         data = readfromjson("examples/booleanjson2.json")
         result = json2xml.Json2xml(data).to_xml()
-        print(result)
         dict_from_xml = xmltodict.parse(result)
-        print(dict_from_xml)
         assert dict_from_xml["all"]["boolean_list"]["item"][0]["#text"] != 'True'
         assert dict_from_xml["all"]["boolean_list"]["item"][0]["#text"] == 'true'
         assert dict_from_xml["all"]["boolean_list"]["item"][1]["#text"] == 'false'
@@ -207,33 +182,3 @@ class TestJson2xml(unittest.TestCase):
         assert dict_from_xml["all"]["string_array"]["item"][0]["#text"] == 'a'
         assert dict_from_xml["all"]["string_array"]["item"][1]["#text"] == 'b'
         assert dict_from_xml["all"]["string_array"]["item"][2]["#text"] == 'c'
-
-    def test_dict2xml_with_namespaces(self):
-        data = {'ns1:node1': 'data in namespace 1', 'ns2:node2': 'data in namespace 2'}
-        namespaces = {'ns1': 'http://www.google.de/ns1', 'ns2': 'http://www.google.de/ns2'}
-        result = dicttoxml(data, attr_type=False, xml_namespaces=namespaces)
-        print(result)
-        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
-               b'<root xmlns:ns1="http://www.google.de/ns1" xmlns:ns2="http://www.google.de/ns2">' \
-               b'<ns1:node1>data in namespace 1</ns1:node1>' \
-               b'<ns2:node2>data in namespace 2</ns2:node2>' \
-               b'</root>' == result
-
-    def test_dict2xml_with_flat(self):
-        data = {'flat_list@flat': [1, 2, 3], 'non_flat_list': [4, 5, 6]}
-        result = dicttoxml(data, attr_type=False)
-        print(result)
-        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
-               b'<root><item>1</item><item>2</item><item>3</item>' \
-               b'<non_flat_list><item>4</item><item>5</item><item>6</item></non_flat_list>' \
-               b'</root>' == result
-
-    def test_dict2xml_with_val_and_custom_attr(self):
-        # in order to use @attr in non-dict objects, we need to lift into a dict and combine with @val as key
-        data = {'list1': [1, 2, 3], 'list2': {'@attrs': {'myattr1': 'myval1', 'myattr2': 'myval2'}, '@val': [4, 5, 6]}}
-        result = dicttoxml(data, attr_type=False)
-        print(result)
-        assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
-               b'<root><list1><item>1</item><item>2</item><item>3</item></list1>' \
-               b'<list2 myattr1="myval1" myattr2="myval2"><item>4</item><item>5</item><item>6</item></list2>' \
-               b'</root>' == result

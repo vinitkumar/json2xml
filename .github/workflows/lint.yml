@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: 3.9
+          python-version: '3.10.5'
           cache: 'pip'
       - run: pip install --upgrade flake8
       - name: flake8
@@ -33,7 +33,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: 3.9
+          python-version: '3.10.5'
           cache: 'pip'
       - run: python -m pip install isort
       - name: isort
@@ -41,3 +41,25 @@ jobs:
         with:
           linters: isort
           run: isort --check --diff json2xml
+
+
+
+  mypy:
+    name: mypy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10.5'
+          cache: 'pip'
+      - run: pip install --upgrade mypy types-requests types-urllib3
+      - name: mypy
+        uses: liskin/gh-problem-matcher-wrap@v1
+        with:
+          linters: mypy
+          run: |
+            mypy json2xml
+

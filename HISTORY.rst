@@ -1,6 +1,77 @@
 History
 =======
 
+3.19.4 / 2022-07-24
+===================
+
+  * Feat/unittest to pytest (#149)
+  * Feat/upgrade python test python311beta (#148)
+  * feat: test new version of 3.10 and 3.11 (#147)
+
+3.19.3 / 2022-07-01
+===================
+
+  * Update utils.py add encoding type UTF-8 @readfromjson function as language(korean) needs UTF-8 encoding options. (#145)
+
+3.19.2 / 2022-06-09
+===================
+
+  * escape xml char when having attrs (#144)
+  * feat: adjust pytest config setting for easy loggin
+  * feat: bump python 3.10 and 3.11 version (#142)
+
+3.19.1 / 2022-06-05
+===================
+
+  * bump version of docs building
+  * chore(deps): bump waitress from 2.1.1 to 2.1.2 in /docs (#141)
+  * Docs update for dicttoxml (#140)
+
+3.19.0 / 2022-05-20
+===================
+
+  * Setting xsi location (#135)
+  * Repeat list headers (#138)
+  * add python3.11 support (#139)
+  * improved docs dicttoxml (#134)
+  * Fix/types working check ci mypy (#133)
+  * fix: ci supports mypy now (#132)
+  * generate changelog
+  * Feat/remove logging by default (#131)
+  * Merge two dev requirements file (#129)
+  * remove old unused config
+  * feat: add types (#125)
+  * fix: issue with twine check
+  * fix: issue with long description
+  * refactor: xmltodict is only test dependency (#124)
+  * fix: add correct list of contributors
+  * feat: generate changelog
+  * improvements on dicttoxml (#121)
+  * feat: add correct badge
+  * feat: use codecov
+  * fix: flake8 tests
+  * fix: add coverage to the mix
+  * fix: lint issues and CI
+  * fix: check new CI stuff like lint and coverage
+  * feat: bump version and generate changelog
+  * fix: issue with wrong output for boolean list
+  * fix: pull requests also trigger action runs
+
+3.18.0 / 2022-04-23
+===================
+
+  * bump version
+  * improvements on dicttoxml (#121)
+  * feat: add correct badge
+  * feat: use codecov
+  * fix: flake8 tests
+  * fix: add coverage to the mix
+  * fix: lint issues and CI
+  * fix: check new CI stuff like lint and coverage
+  * feat: bump version and generate changelog
+  * fix: issue with wrong output for boolean list
+  * fix: pull requests also trigger action runs
+
 3.17.1 / 2022-04-20
 ===================
 

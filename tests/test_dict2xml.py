@@ -146,8 +146,7 @@ class TestDict2xml:
         conList = dicttoxml.convert_list(items=item, attr_type=False, cdata=False, ids=None,
                                          item_func=default_item_func, item_wrap=False, parent='Bike', list_headers=True)
         print(conList)
-        assert f'<Bike><frame_color>red</frame_color></Bike>' \
-            '<Bike><frame_color>green</frame_color></Bike>' == conList
+        assert '<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>' == conList
 
     def test_dict2xml_str_list_header(self):
         from json2xml.dicttoxml import dict2xml_str
@@ -158,7 +157,7 @@ class TestDict2xml:
                                cdata=False, item_name='item', item_wrap=False, parentIsList=True,
                                parent=parent, list_headers=True)
 
-        assert f'{"<Bike><frame_color>red</frame_color></Bike>"}' == xml_str
+        assert '<Bike><frame_color>red</frame_color></Bike>' == xml_str
 
     def test_list_headers(self):
         dict = {"Bike": [
@@ -207,7 +206,7 @@ class TestDict2xml:
 
     def test_dict2xml_with_item_func(self):
         data = {'flat_list@flat': [1, 2, 3], 'non_flat_list': [4, 5, 6]}
-        result = dicttoxml.dicttoxml(data, attr_type=False, item_func=lambda x:'a')
+        result = dicttoxml.dicttoxml(data, attr_type=False, item_func=lambda x: 'a')
         print(result)
         assert b'<?xml version="1.0" encoding="UTF-8" ?>' \
             b'<root><a>1</a><a>2</a><a>3</a><non_flat_list><a>4</a><a>5</a><a>6</a></non_flat_list>' \

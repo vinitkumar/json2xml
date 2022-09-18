@@ -1,6 +1,12 @@
 History
 =======
 
+3.19.5 / 2022-09-18
+===================
+
+  * fix #138 and #151 + 2 new unit tests (#154)
+  * fix non-failing and failing unit tests for #152 (#153)
+
 3.19.4 / 2022-07-24
 ===================
 

@@ -16,8 +16,10 @@ import logging
 import numbers
 import os
 from collections.abc import Callable, Sequence
-from random import randint
+from random import SystemRandom
 from typing import Any, Dict, Union
+
+safe_random = SystemRandom()
 
 from defusedxml.minidom import parseString
 
@@ -27,7 +29,7 @@ LOG = logging.getLogger("dicttoxml")  # pragma: no cover
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
     """Returns a random integer"""
-    return f"{element}_{randint(start, end)}"
+    return f"{element}_{safe_random.randint(start, end)}"
 
 
 def get_unique_id(element: str) -> str:

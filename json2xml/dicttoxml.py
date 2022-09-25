@@ -18,11 +18,9 @@ import os
 from collections.abc import Callable, Sequence
 from random import SystemRandom
 from typing import Any, Dict, Union
-
-safe_random = SystemRandom()
-
 from defusedxml.minidom import parseString
 
+safe_random = SystemRandom()
 DEBUGMODE = os.getenv("DEBUGMODE", False)  # pragma: no cover
 LOG = logging.getLogger("dicttoxml")  # pragma: no cover
 

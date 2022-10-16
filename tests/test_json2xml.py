@@ -4,7 +4,6 @@
 
 import pytest
 import json
-from collections import OrderedDict
 
 import xmltodict
 from pyexpat import ExpatError
@@ -68,7 +67,7 @@ class TestJson2xml:
         )
         xmldata = json2xml.Json2xml(data).to_xml()
         dict_from_xml = xmltodict.parse(xmldata)
-        assert type(dict_from_xml["all"]) == OrderedDict
+        assert type(dict_from_xml["all"]) == dict
 
     def test_custom_wrapper_and_indent(self):
         data = readfromstring(

@@ -1,6 +1,12 @@
 History
 =======
 
+3.20.0 / 2022-10-16
+===================
+
+  * feat: make deps more flexible (#158)
+  * fix: use SystemRandom as a secure way for generating Random Integers (#156)
+
 3.19.5 / 2022-09-18
 ===================
 

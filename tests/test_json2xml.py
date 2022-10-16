@@ -4,7 +4,6 @@
 
 import pytest
 import json
-from collections import OrderedDict
 
 import xmltodict
 from pyexpat import ExpatError

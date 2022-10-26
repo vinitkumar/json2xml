@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.10.5'
+          python-version: '3.11'
           cache: 'pip'
       - run: pip install --upgrade flake8
       - name: flake8
@@ -33,7 +33,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.10.5'
+          python-version: '3.11'
           cache: 'pip'
       - run: python -m pip install isort
       - name: isort
@@ -53,7 +53,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: '3.10.5'
+          python-version: '3.11'
           cache: 'pip'
       - run: pip install --upgrade mypy types-requests types-urllib3
       - name: mypy

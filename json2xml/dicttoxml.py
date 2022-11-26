@@ -1,7 +1,18 @@
 from __future__ import annotations
 
-# coding: utf-8
+import datetime
+import logging
+import numbers
+import os
+from collections.abc import Callable
+from collections.abc import Sequence
+from random import SystemRandom
+from typing import Any
+from typing import Dict
+from typing import Union
 
+from defusedxml.minidom import parseString
+# coding: utf-8
 """
 Converts a Python dictionary or other native data type into a valid XML string.
 Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other
@@ -11,15 +22,6 @@ Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicod
         Items with a `None` type become empty XML elements.
 This module works with Python 3.7+
 """
-import datetime
-import logging
-import numbers
-import os
-from collections.abc import Callable, Sequence
-from random import SystemRandom
-from typing import Any, Dict, Union
-
-from defusedxml.minidom import parseString
 
 safe_random = SystemRandom()
 DEBUGMODE = os.getenv("DEBUGMODE", False)  # pragma: no cover
@@ -81,7 +83,7 @@ def get_xml_type(val: ELEMENT) -> str:
     return type(val).__name__
 
 
-def escape_xml(s: str | numbers.Number) -> str:
+def escape_xml(s: str) -> str:
     if isinstance(s, str):
         s = str(s)  # avoid UnicodeDecodeError
         s = s.replace("&", "&amp;")
@@ -247,8 +249,10 @@ def dict2xml_str(
     attr = item.pop("@attrs", attr)  # update attr with custom @attr if exists
     rawitem = item["@val"] if "@val" in item else item
     if is_primitive_type(rawitem):
-        if type(rawitem) == str or numbers.Number:
+        if type(rawitem) == str:
             subtree = escape_xml(rawitem)
+        elif type(rawitem) == numbers.Number:
+            subtree = rawitem
         else:
             subtree = rawitem
     else:
@@ -501,7 +505,7 @@ def convert_list(
 
 def convert_kv(
     key: str,
-    val: str | numbers.Number,
+    val: str,
     attr_type: bool,
     attr: dict[str, Any] = {},
     cdata: bool = False,

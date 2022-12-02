@@ -154,7 +154,7 @@ class TestDict2xml:
         item = {'frame_color': 'red'}
         parent = 'Bike'
         xml_str = dict2xml_str(attr_type=False, attr={}, item=item, item_func=item_func,
-                               cdata=False, item_name='item', item_wrap=False, parentIsList=True,
+                               cdata=False, item_name='item', item_wrap=False, parent_is_list=True,
                                parent=parent, list_headers=True)
 
         assert '<Bike><frame_color>red</frame_color></Bike>' == xml_str

@@ -10,8 +10,10 @@ from random import SystemRandom
 from typing import Any
 from typing import Dict
 from typing import Union
+from typing import Optional
 
 from defusedxml.minidom import parseString
+from xml.parsers.expat import ExpatError
 # coding: utf-8
 """
 Converts a Python dictionary or other native data type into a valid XML string.
@@ -108,7 +110,7 @@ def key_is_valid_xml(key: str) -> bool:
     try:
         parseString(test_xml)
         return True
-    except Exception:  # minidom does not implement exceptions well
+    except ExpatError:  # minidom does not implement exceptions well
         return False
 
 
@@ -181,15 +183,16 @@ def convert(
     if isinstance(obj, bool):
         return convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata)
 
+    if isinstance(obj, str):
+        return convert_kv(
+            key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
+        )
+
     if isinstance(obj, numbers.Number):
         return convert_kv(
             key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
         )
 
-    if isinstance(obj, str):
-        return convert_kv(
-            key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
-        )
 
     if hasattr(obj, "isoformat") and isinstance(
         obj, (datetime.datetime, datetime.date)
@@ -203,7 +206,7 @@ def convert(
         )
 
     if obj is None:
-        return convert_none(key=item_name, attr_type=attr_type, cdata=cdata)
+        return convert_none(key=item_name, attr=None, attr_type=attr_type, cdata=cdata)
 
     if isinstance(obj, dict):
         return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
@@ -227,7 +230,7 @@ def dict2xml_str(
     cdata: bool,
     item_name: str,
     item_wrap: bool,
-    parentIsList: bool,
+    parent_is_list: bool,
     parent: str = "",
     list_headers: bool = False,
 ) -> str:
@@ -260,9 +263,9 @@ def dict2xml_str(
         subtree = convert(
             rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers=list_headers
         )
-    if parentIsList and list_headers:
+    if parent_is_list and list_headers:
         return f"<{parent}>{subtree}</{parent}>"
-    elif item.get("@flat", False) or (parentIsList and not item_wrap):
+    elif item.get("@flat", False) or (parent_is_list and not item_wrap):
         return subtree
 
     attrstring = make_attrstring(attr)
@@ -347,12 +350,20 @@ def convert_dict(
         if isinstance(val, bool):
             addline(convert_bool(key, val, attr_type, attr, cdata))
 
-        elif isinstance(val, (numbers.Number, str)):
+        elif isinstance(val, numbers.Number):
             addline(
                 convert_kv(
                     key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
                 )
             )
+
+        elif isinstance(val, str):
+            addline(
+                convert_kv(
+                    key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
+                )
+            )
+
 
         elif hasattr(val, "isoformat"):  # datetime
             addline(
@@ -475,7 +486,7 @@ def convert_list(
             addline(
                 dict2xml_str(
                     attr_type, attr, item, item_func, cdata, item_name, item_wrap,
-                    parentIsList=True,
+                    parent_is_list=True,
                     parent=parent,
                     list_headers=list_headers
                 )
@@ -505,9 +516,9 @@ def convert_list(
 
 def convert_kv(
     key: str,
-    val: str,
+    val: str|numbers.Number,
     attr_type: bool,
-    attr: dict[str, Any] = {},
+    attr: Optional[Dict[str, Any]] = None,
     cdata: bool = False,
 ) -> str:
     """Converts a number or string into an XML element"""
@@ -524,9 +535,11 @@ def convert_kv(
 
 
 def convert_bool(
-    key: str, val: bool, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
+    key: str, val: bool, attr_type: bool, attr: Optional[Dict[str, Any]]=None, cdata: bool = False
 ) -> str:
     """Converts a boolean into an XML element"""
+    if attr is None:
+        attr = {}
     if DEBUGMODE:  # pragma: no cover
         LOG.info(
             f'Inside convert_bool(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
@@ -540,9 +553,11 @@ def convert_bool(
 
 
 def convert_none(
-    key: str, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
+    key: str, attr_type: bool, attr: Optional[Dict[str, Any]], cdata: bool = False
 ) -> str:
     """Converts a null value into an XML element"""
+    if attr is None:
+        attr = {}
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -560,7 +575,7 @@ def dicttoxml(
     item_wrap: bool = True,
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,
-    xml_namespaces: dict[str, Any] = {},
+    xml_namespaces: Dict[str, Any] = {},
     list_headers: bool = False
 ) -> bytes:
     """
@@ -656,6 +671,8 @@ def dicttoxml(
         <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
 
     """
+    if xml_namespaces is None:
+        xml_namespaces = {}
     if DEBUGMODE:  # pragma: no cover
         LOG.info(
             f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}", type(ids") is : {type(ids).__name__}'

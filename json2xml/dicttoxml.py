@@ -14,6 +14,7 @@ from typing import Union
 from xml.parsers.expat import ExpatError
 
 from defusedxml.minidom import parseString
+
 # coding: utf-8
 """
 Converts a Python dictionary or other native data type into a valid XML string.
@@ -193,7 +194,6 @@ def convert(
             key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
         )
 
-
     if hasattr(obj, "isoformat") and isinstance(
         obj, (datetime.datetime, datetime.date)
     ):
@@ -209,10 +209,28 @@ def convert(
         return convert_none(key=item_name, attr=None, attr_type=attr_type, cdata=cdata)
 
     if isinstance(obj, dict):
-        return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
+        return convert_dict(
+            obj,
+            ids,
+            parent,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            list_headers=list_headers,
+        )
 
     if isinstance(obj, Sequence):
-        return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
+        return convert_list(
+            obj,
+            ids,
+            parent,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            list_headers=list_headers,
+        )
 
     raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
 
@@ -261,7 +279,14 @@ def dict2xml_str(
     else:
         # we can not use convert_dict, because rawitem could be non-dict
         subtree = convert(
-            rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers=list_headers
+            rawitem,
+            ids,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            item_name,
+            list_headers=list_headers,
         )
     if parent_is_list and list_headers:
         return f"<{parent}>{subtree}</{parent}>"
@@ -298,7 +323,7 @@ def list2xml_str(
         item_func=item_func,
         cdata=cdata,
         item_wrap=item_wrap,
-        list_headers=list_headers
+        list_headers=list_headers,
     )
     if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap):
         return subtree
@@ -316,7 +341,7 @@ def convert_dict(
     item_func: Callable[[str], str],
     cdata: bool,
     item_wrap: bool,
-    list_headers: bool = False
+    list_headers: bool = False,
 ) -> str:
     """Converts a dict into an XML string."""
     keys_str = ", ".join(str(key) for key in obj)
@@ -364,7 +389,6 @@ def convert_dict(
                 )
             )
 
-
         elif hasattr(val, "isoformat"):  # datetime
             addline(
                 convert_kv(
@@ -379,9 +403,15 @@ def convert_dict(
         elif isinstance(val, dict):
             addline(
                 dict2xml_str(
-                    attr_type, attr, val, item_func, cdata, key, item_wrap,
+                    attr_type,
+                    attr,
+                    val,
+                    item_func,
+                    cdata,
+                    key,
+                    item_wrap,
                     False,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -395,7 +425,7 @@ def convert_dict(
                     cdata=cdata,
                     item_name=key,
                     item_wrap=item_wrap,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -485,10 +515,16 @@ def convert_list(
         elif isinstance(item, dict):
             addline(
                 dict2xml_str(
-                    attr_type, attr, item, item_func, cdata, item_name, item_wrap,
+                    attr_type,
+                    attr,
+                    item,
+                    item_func,
+                    cdata,
+                    item_name,
+                    item_wrap,
                     parent_is_list=True,
                     parent=parent,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -502,7 +538,7 @@ def convert_list(
                     cdata=cdata,
                     item_name=item_name,
                     item_wrap=item_wrap,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -516,7 +552,7 @@ def convert_list(
 
 def convert_kv(
     key: str,
-    val: str|numbers.Number,
+    val: str | numbers.Number,
     attr_type: bool,
     attr: Optional[Dict[str, Any]] = None,
     cdata: bool = False,
@@ -535,7 +571,11 @@ def convert_kv(
 
 
 def convert_bool(
-    key: str, val: bool, attr_type: bool, attr: Optional[Dict[str, Any]]=None, cdata: bool = False
+    key: str,
+    val: bool,
+    attr_type: bool,
+    attr: Optional[Dict[str, Any]] = None,
+    cdata: bool = False,
 ) -> str:
     """Converts a boolean into an XML element"""
     if attr is None:
@@ -576,7 +616,7 @@ def dicttoxml(
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,
     xml_namespaces: Dict[str, Any] = {},
-    list_headers: bool = False
+    list_headers: bool = False,
 ) -> bytes:
     """
     Converts a python object into XML.
@@ -684,16 +724,16 @@ def dicttoxml(
     output = []
     namespacestr = ""
     for prefix in xml_namespaces:
-        if prefix == 'xsi':
+        if prefix == "xsi":
             for schema_att in xml_namespaces[prefix]:
-                if schema_att == 'schemaInstance':
-                    ns = xml_namespaces[prefix]['schemaInstance']
+                if schema_att == "schemaInstance":
+                    ns = xml_namespaces[prefix]["schemaInstance"]
                     namespacestr += f' xmlns:{prefix}="{ns}"'
-                elif schema_att == 'schemaLocation':
+                elif schema_att == "schemaLocation":
                     ns = xml_namespaces[prefix][schema_att]
                     namespacestr += f' xsi:{schema_att}="{ns}"'
 
-        elif prefix == 'xmlns':
+        elif prefix == "xmlns":
             # xmns needs no prefix
             ns = xml_namespaces[prefix]
             namespacestr += f' xmlns="{ns}"'
@@ -704,12 +744,28 @@ def dicttoxml(
     if root:
         output.append('<?xml version="1.0" encoding="UTF-8" ?>')
         output_elem = convert(
-            obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
+            obj,
+            ids,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            parent=custom_root,
+            list_headers=list_headers,
         )
         output.append(f"<{custom_root}{namespacestr}>{output_elem}</{custom_root}>")
     else:
         output.append(
-            convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
+            convert(
+                obj,
+                ids,
+                attr_type,
+                item_func,
+                cdata,
+                item_wrap,
+                parent="",
+                list_headers=list_headers,
+            )
         )
 
     return "".join(output).encode("utf-8")

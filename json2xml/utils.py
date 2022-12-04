@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 import requests
+
 """Utils methods to convert XML data to dict from various sources"""
 
 

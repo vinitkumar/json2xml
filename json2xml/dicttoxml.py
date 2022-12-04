@@ -9,11 +9,11 @@ from collections.abc import Sequence
 from random import SystemRandom
 from typing import Any
 from typing import Dict
-from typing import Union
 from typing import Optional
+from typing import Union
+from xml.parsers.expat import ExpatError
 
 from defusedxml.minidom import parseString
-from xml.parsers.expat import ExpatError
 # coding: utf-8
 """
 Converts a Python dictionary or other native data type into a valid XML string.

@@ -159,7 +159,6 @@ class TestJson2xml:
         """Test correct return for boolean types."""
         data = readfromjson("examples/booleanjson.json")
         result = json2xml.Json2xml(data).to_xml()
-        import pdb; pdb.set_trace()
         dict_from_xml = xmltodict.parse(result)
         assert dict_from_xml["all"]["boolean"]["#text"] != 'True'
         assert dict_from_xml["all"]["boolean"]["#text"] == 'true'

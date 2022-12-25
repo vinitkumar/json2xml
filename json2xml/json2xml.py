@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from pyexpat import ExpatError
 from typing import Any
 
 from defusedxml.minidom import parseString
+from pyexpat import ExpatError
+
+from json2xml import dicttoxml
 
 from .utils import InvalidDataError
-from json2xml import dicttoxml
 
 
 class Json2xml:

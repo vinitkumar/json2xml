@@ -4,13 +4,9 @@ import datetime
 import logging
 import numbers
 import os
-from collections.abc import Callable
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from random import SystemRandom
-from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Union
+from typing import Any, Dict, Optional, Union
 from xml.parsers.expat import ExpatError
 
 from defusedxml.minidom import parseString
@@ -305,7 +301,7 @@ def list2xml_str(
     item_func: Callable[[str], str],
     cdata: bool,
     item_name: str,
-    item_wrap: bool,
+    item_wrap: bool = False,
     list_headers: bool = False,
 ) -> str:
     ids: list[str] = []  # initialize list of unique ids

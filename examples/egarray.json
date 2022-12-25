@@ -1,0 +1,5 @@
+{
+      'vehicle' : {
+          'attrs': {'transportation-mode'},
+          '@val': ['Bike', 'Bus', 'Tram']}
+}

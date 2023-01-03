@@ -27,10 +27,10 @@ def readfromjson(filename: str) -> dict[str, str]:
     Reads a json string and emits json string
     """
     try:
-        json_data = open(filename, encoding="utf-8")
-        data = json.load(json_data)
-        json_data.close()
-        return data
+        with open(filename, encoding="utf-8") as json_data:
+            data = json.load(json_data)
+            json_data.close()
+            return data
     except ValueError as exp:
         print(exp)
         raise JSONReadError

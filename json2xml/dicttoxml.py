@@ -247,7 +247,7 @@ def dict2xml_str(
     attr = item.pop("@attrs", attr)  # update attr with custom @attr if exists
     rawitem = item["@val"] if "@val" in item else item
     if is_primitive_type(rawitem):
-        if type(rawitem) == str or numbers.Number:
+        if type(rawitem) == str:
             subtree = escape_xml(rawitem)
         else:
             subtree = rawitem

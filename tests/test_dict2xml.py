@@ -104,33 +104,31 @@ class TestDict2xml:
 
     def test_dict2xml_list_items_with_attrs(self):
         dict_with_attrs = {
-            'transportation-mode' : [
+            'transportation-mode': [
                     {
                         '@attrs': {'xml:lang': 'nl'},
                         '@val': 'Fiets'
                     },
-                    {        
+                    {
                         '@attrs': {'xml:lang': 'nl'},
                         '@val': 'Bus'
                     },
                     {
                         '@attrs': {'xml:lang': 'en'},
                         '@val': 'Bike'
-                    }  
+                    }
             ]
         }
         wanted_xml_result = b'<transportation-mode xml:lang="nl">Fiets</transportation-mode>' \
             b'<transportation-mode xml:lang="nl">Bus</transportation-mode>' \
             b'<transportation-mode xml:lang="en">Bike</transportation-mode>'
-        
         xml_result = dicttoxml.dicttoxml(
-            dict_with_attrs, 
-            root=False, 
-            attr_type=False,  
+            dict_with_attrs,
+            root=False,
+            attr_type=False,
             item_wrap=False)
 
         assert xml_result == wanted_xml_result
-        
 
     def test_make_id(self):
         make_id_elem = dicttoxml.make_id("li")

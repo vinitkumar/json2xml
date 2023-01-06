@@ -1,4 +1,4 @@
-name: django CMS linters.yml
+name: json2xml linters.yml
 
 on: [push, pull_request]
 

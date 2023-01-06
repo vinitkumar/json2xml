@@ -3,7 +3,6 @@ from __future__ import annotations
 """Utils methods to convert XML data to dict from various sources"""
 import json
 
-import requests
 
 
 class JSONReadError(Exception):

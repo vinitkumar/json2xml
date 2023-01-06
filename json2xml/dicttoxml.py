@@ -247,7 +247,7 @@ def dict2xml_str(
     attr = item.pop("@attrs", attr)  # update attr with custom @attr if exists
     rawitem = item["@val"] if "@val" in item else item
     if is_primitive_type(rawitem):
-        if type(rawitem) == str or numbers.Number:
+        if type(rawitem) == str:
             subtree = escape_xml(rawitem)
         else:
             subtree = rawitem
@@ -607,6 +607,7 @@ def dicttoxml(
             <root xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:flex="http://www.w3.org/flex/flexBase">
 
     :param bool list_headers:
+        Default is False
         Repeats the header for every element in a list. Example if True:
 
         .. code-block:: python

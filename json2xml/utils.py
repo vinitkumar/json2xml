@@ -3,7 +3,7 @@ from __future__ import annotations
 """Utils methods to convert XML data to dict from various sources"""
 import json
 
-import requests
+import urllib3
 
 
 class JSONReadError(Exception):
@@ -43,11 +43,12 @@ def readfromurl(url: str, params: dict[str, str] | None = None) -> dict[str, str
     """
     Loads json from an URL over the internets
     """
-    # TODO: See if we can remove requests too from the deps too. Then, we will become
-    # zero deps. refernce link here: https://bit.ly/3gzICjU
-    response = requests.get(url, params=params)
-    if response.status_code == 200:
-        data = response.json()
+    # we need a PoolManager for connection pooling with urllib3. Also, params
+    # needs to be encoded too
+    http = urllib3.PoolManager()
+    response = http.request("GET", url, fields=params)
+    if response.status == 200:
+        data = json.loads(response.data.decode('utf-8'))
         return data
     raise URLReadError("URL is not returning correct response")
 

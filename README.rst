@@ -15,6 +15,9 @@ json2xml
       :target: https://codecov.io/gh/vinitkumar/json2xml
 
 
+You can sponsor my work for this plugin here: https://github.com/sponsors/vinitkumar/
+
+
 Simple Python Library to convert JSON to XML
 
 * Free software: Apache Software License 2.0

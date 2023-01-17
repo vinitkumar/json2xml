@@ -98,9 +98,8 @@ class TestDict2xml:
     def test_dict2xml_with_ampsersand_and_attrs(self):
         dict_with_attrs = {'Bicycles': {'@attrs': {'xml:lang': 'nl'}, '@val': 'Wheels & Steers'}}
         root = False
-        attr_type = False
         assert '<Bicycles xml:lang="nl">Wheels &amp; Steers</Bicycles>' == dicttoxml.dicttoxml(
-            dict_with_attrs, root=root, attr_type=attr_type).decode('UTF-8')
+            dict_with_attrs, root=root, attr_type=False).decode('UTF-8')
 
     def test_dict2xml_list_items_with_attrs(self):
         dict_with_attrs = {
@@ -126,7 +125,8 @@ class TestDict2xml:
             dict_with_attrs,
             root=False,
             attr_type=False,
-            item_wrap=False)
+            item_wrap=False,
+            list_headers=False)
 
         assert xml_result == wanted_xml_result
 
@@ -192,7 +192,12 @@ class TestDict2xml:
             {'frame_color': 'red'},
             {'frame_color': 'green'}
         ]}
-        result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
+        result = dicttoxml.dicttoxml(
+            dict,
+            root=False,
+            item_wrap=False,
+            attr_type=False,
+            list_headers=True)
         print(result)
         assert b'<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>' == result
 
@@ -251,3 +256,11 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, root=False, attr_type=False)
         print(result)
         assert b'<item><x><item>1</item></x></item>' == result
+
+    def test_dict2xml_attr_type(self):
+        data = {'bike': 'blue'}
+        result = dicttoxml.dicttoxml(
+            data,
+            root=False,
+            attr_type=True)
+        assert b'<bike type="str">blue</bike>' == result

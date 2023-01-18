@@ -1,6 +1,21 @@
 History
 =======
 
+3.21.0 / 2023-01-18
+===================
+
+  * Implement list item with attributes (#169)
+  * feat: add python3.12 alpha4 to the fix (#168)
+  * Feat/replace requests with urllib3 (#167)
+  * feat: add security reporting guidelines
+  * Add CodeQL workflow for GitHub code scanning (#160)
+  * Default is False for list_headers (#164)
+  * fix: ci issue due to mypy update on python3.11 (#166)
+  * chore(deps): bump certifi from 2021.10.8 to 2022.12.7 in /docs (#162)
+  * fix: open files properly
+  * feat: 3.11 is released 🎉 (#159)
+
+
 3.20.0 / 2022-10-16
 ===================
 

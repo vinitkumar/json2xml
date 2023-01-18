@@ -61,6 +61,16 @@ class TestDict2xml:
             'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://www.w3schools.com">' \
             '<bike>blue</bike></vehicle>' == result
 
+    def test_item_wrap_true(self):
+        data = {'bike': ['blue', 'green']}
+        result = dicttoxml.dicttoxml(obj=data, root=False, attr_type=False, item_wrap=True)
+        assert result == b'<bike><item>blue</item><item>green</item></bike>'
+
+    def test_item_wrap_false(self):
+        data = {'bike': ['blue', 'green']}
+        result = dicttoxml.dicttoxml(obj=data, root=False, attr_type=False, item_wrap=False)
+        assert result == b'<bike>blue</bike><bike>green</bike>'
+
     def test_dict2xml_with_flat(self):
         data = {'flat_list@flat': [1, 2, 3], 'non_flat_list': [4, 5, 6]}
         result = dicttoxml.dicttoxml(data, attr_type=False)
@@ -98,9 +108,40 @@ class TestDict2xml:
     def test_dict2xml_with_ampsersand_and_attrs(self):
         dict_with_attrs = {'Bicycles': {'@attrs': {'xml:lang': 'nl'}, '@val': 'Wheels & Steers'}}
         root = False
-        attr_type = False
         assert '<Bicycles xml:lang="nl">Wheels &amp; Steers</Bicycles>' == dicttoxml.dicttoxml(
-            dict_with_attrs, root=root, attr_type=attr_type).decode('UTF-8')
+            dict_with_attrs, root=root, attr_type=False).decode('UTF-8')
+
+    def test_dict2xml_list_items_with_attrs(self):
+        '''
+        Currently has an item wrap because item_name = 'item' this should not be the case with item_wrap as False
+        '''
+        dict_with_attrs = {
+            'transportation-mode': [
+                    {
+                        '@attrs': {'xml:lang': 'nl'},
+                        '@val': 'Fiets'
+                    },
+                    {
+                        '@attrs': {'xml:lang': 'nl'},
+                        '@val': 'Bus'
+                    },
+                    {
+                        '@attrs': {'xml:lang': 'en'},
+                        '@val': 'Bike'
+                    }
+            ]
+        }
+        wanted_xml_result = b'<transportation-mode xml:lang="nl">Fiets</transportation-mode>' \
+            b'<transportation-mode xml:lang="nl">Bus</transportation-mode>' \
+            b'<transportation-mode xml:lang="en">Bike</transportation-mode>'
+        xml_result = dicttoxml.dicttoxml(
+            dict_with_attrs,
+            root=False,
+            attr_type=False,
+            item_wrap=False,
+            list_headers=True)
+
+        assert xml_result == wanted_xml_result
 
     def test_make_id(self):
         make_id_elem = dicttoxml.make_id("li")
@@ -164,7 +205,12 @@ class TestDict2xml:
             {'frame_color': 'red'},
             {'frame_color': 'green'}
         ]}
-        result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
+        result = dicttoxml.dicttoxml(
+            dict,
+            root=False,
+            item_wrap=False,
+            attr_type=False,
+            list_headers=True)
         print(result)
         assert b'<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>' == result
 
@@ -223,3 +269,11 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, root=False, attr_type=False)
         print(result)
         assert b'<item><x><item>1</item></x></item>' == result
+
+    def test_dict2xml_attr_type(self):
+        data = {'bike': 'blue'}
+        result = dicttoxml.dicttoxml(
+            data,
+            root=False,
+            attr_type=True)
+        assert b'<bike type="str">blue</bike>' == result

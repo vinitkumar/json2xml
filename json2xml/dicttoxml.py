@@ -244,7 +244,7 @@ def dict2xml_str(
 
     if attr_type:
         attr["type"] = get_xml_type(item)
-    attr = item.pop("@attrs", attr)  # update attr with custom @attr if exists
+    val_attr: dict[str, str] = item.pop("@attrs", attr)  # update attr with custom @attr if exists
     rawitem = item["@val"] if "@val" in item else item
     if is_primitive_type(rawitem):
         if type(rawitem) == str:
@@ -256,12 +256,17 @@ def dict2xml_str(
         subtree = convert(
             rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers=list_headers
         )
+
     if parentIsList and list_headers:
+        if len(val_attr) > 0 and not item_wrap:
+            attrstring = make_attrstring(val_attr)
+            return f"<{parent}{attrstring}>{subtree}</{parent}>"
+        # should not return if there is an attr present
         return f"<{parent}>{subtree}</{parent}>"
     elif item.get("@flat", False) or (parentIsList and not item_wrap):
         return subtree
 
-    attrstring = make_attrstring(attr)
+    attrstring = make_attrstring(val_attr)
 
     return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
 
@@ -413,7 +418,7 @@ def convert_list(
     output: list[str] = []
     addline = output.append
 
-    item_name = item_func(parent)
+    item_name = item_func(parent)  # Is item_name still relevant if item_wrap is false
     if item_name.endswith("@flat"):
         item_name = item_name[:-5]
     this_id = None
@@ -470,7 +475,13 @@ def convert_list(
         elif isinstance(item, dict):
             addline(
                 dict2xml_str(
-                    attr_type, attr, item, item_func, cdata, item_name, item_wrap,
+                    attr_type=attr_type,
+                    attr=attr,
+                    item=item,
+                    item_func=item_func,
+                    cdata=cdata,
+                    item_name=item_name,
+                    item_wrap=item_wrap,
                     parentIsList=True,
                     parent=parent,
                     list_headers=list_headers
@@ -583,7 +594,29 @@ def dicttoxml(
 
     :param bool item_wrap:
         Default is True
-        specifies whether to nest items in array in <item/>
+        specifies whether to nest items in array in <item/> Example if True
+
+        ..code-block:: python
+
+            data = {'bike': ['blue', 'green']}
+
+        .. code-block:: xml
+
+            <bike>
+            <item>blue</item>
+            <item>green</item>
+            </bike>
+
+        Example if False
+
+        ..code-block:: python
+
+            data = {'bike': ['blue', 'green']}
+
+        ..code-block:: xml
+
+            <bike>blue</bike>
+            <bike>green</bike>'
 
     :param item_func:
         items in a list. Default is 'item'

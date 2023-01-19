@@ -1,6 +1,7 @@
 from json2xml import dicttoxml
 import pytest
 
+
 class TestDict2xml:
     def test_dict2xml_with_namespaces(self):
         data = {'ns1:node1': 'data in namespace 1', 'ns2:node2': 'data in namespace 2'}

@@ -1,16 +1,4 @@
 from __future__ import annotations
-
-# coding: utf-8
-
-"""
-Converts a Python dictionary or other native data type into a valid XML string.
-Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other
-        number-like objects) and collection (`list`, `set`, `tuple` and `dict`, as well as iterable and
-                dict-like objects) data types, with arbitrary nesting for the collections.
-        Items with a `datetime` type are converted to ISO format strings.
-        Items with a `None` type become empty XML elements.
-This module works with Python 3.7+
-"""
 import datetime
 import logging
 import numbers
@@ -22,8 +10,19 @@ from typing import Any, Dict, Union
 from defusedxml.minidom import parseString
 
 safe_random = SystemRandom()
-DEBUGMODE = os.getenv("DEBUGMODE", False)  # pragma: no cover
+DEBUG_MODE = os.getenv("DEBUGMODE", False)  # pragma: no cover
 LOG = logging.getLogger("dicttoxml")  # pragma: no cover
+
+
+"""
+Converts a Python dictionary or other native data type into a valid XML string.
+Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other
+        number-like objects) and collection (`list`, `set`, `tuple` and `dict`, as well as iterable and
+                dict-like objects) data types, with arbitrary nesting for the collections.
+        Items with a `datetime` type are converted to ISO format strings.
+        Items with a `None` type become empty XML elements.
+This module works with Python 3.7+
+"""
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -100,7 +99,7 @@ def make_attrstring(attr: dict[str, Any]) -> str:
 
 def key_is_valid_xml(key: str) -> bool:
     """Checks that a key is a valid XML name"""
-    if DEBUGMODE:  # pragma: no cover
+    if DEBUG_MODE:  # pragma: no cover
         LOG.info(f'Inside key_is_valid_xml(). Testing "{str(key)}"')
     test_xml = f'<?xml version="1.0" encoding="UTF-8" ?><{key}>foo</{key}>'
     try:
@@ -112,7 +111,7 @@ def key_is_valid_xml(key: str) -> bool:
 
 def make_valid_xml_name(key: str, attr: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     """Tests an XML name and fixes it if invalid"""
-    if DEBUGMODE:  # pragma: no cover
+    if DEBUG_MODE:  # pragma: no cover
         LOG.info(
             f'Inside make_valid_xml_name(). Testing key "{str(key)}" with attr "{str(attr)}"'
         )
@@ -165,7 +164,7 @@ def convert(
 ) -> str:
     """Routes the elements of an object to the right function to convert them
     based on their data type"""
-    if DEBUGMODE:  # pragma: no cover
+    if DEBUG_MODE:  # pragma: no cover
         LOG.info(f'Inside convert(). type(obj)="{type(obj).__name__}"')
         # avoid cpu consuming object serialization => extra if
         if LOG.getEffectiveLevel() <= logging.DEBUG:
@@ -234,7 +233,7 @@ def dict2xml_str(
     """
     ids: list[str] = []  # initialize list of unique ids
     keys_str = ", ".join(str(key) for key in item)
-    if DEBUGMODE:  # pragma: no cover
+    if DEBUG_MODE:  # pragma: no cover
         LOG.info(
             f'Inside dict_item2xml_str: type(obj)="{type(item).__name__}", keys="{keys_str}"'
         )
@@ -318,7 +317,7 @@ def convert_dict(
 ) -> str:
     """Converts a dict into an XML string."""
     keys_str = ", ".join(str(key) for key in obj)
-    if DEBUGMODE:  # pragma: no cover
+    if DEBUG_MODE:  # pragma: no cover
         LOG.info(
             f'Inside convert_dict(): type(obj)="{type(obj).__name__}", keys="{keys_str}"'
         )
@@ -330,7 +329,7 @@ def convert_dict(
     addline = output.append
 
     for key, val in obj.items():
-        if DEBUGMODE:  # pragma: no cover
+        if DEBUG_MODE:  # pragma: no cover
             LOG.info(
                 f'Looping inside convert_dict(): key="{str(key)}", type(val)="{type(val).__name__}"'
             )
@@ -400,7 +399,7 @@ def convert_dict(
 
 def convert_list(
     items: Sequence[Any],
-    ids: list[str],
+    ids: list[str] | None,
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -409,7 +408,7 @@ def convert_list(
     list_headers: bool = False,
 ) -> str:
     """Converts a list into an XML string."""
-    if DEBUGMODE:  # pragma: no cover
+    if DEBUG_MODE:  # pragma: no cover
         LOG.info(f'Inside convert_list(): type(items)="{type(items).__name__}"')
         # avoid cpu consuming object serialization => extra if
         if LOG.getEffectiveLevel() <= logging.DEBUG:
@@ -426,7 +425,7 @@ def convert_list(
         this_id = get_unique_id(parent)
 
     for i, item in enumerate(items):
-        if DEBUGMODE:  # pragma: no cover
+        if DEBUG_MODE:  # pragma: no cover
             LOG.info(
                 f'Looping inside convert_list(): index="{str(i)}", type="{type(item).__name__}"'
             )
@@ -518,7 +517,7 @@ def convert_kv(
     cdata: bool = False,
 ) -> str:
     """Converts a number or string into an XML element"""
-    if DEBUGMODE:  # pragma: no cover
+    if DEBUG_MODE:  # pragma: no cover
         LOG.info(
             f'Inside convert_kv(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
         )
@@ -526,15 +525,15 @@ def convert_kv(
 
     if attr_type:
         attr["type"] = get_xml_type(val)
-    attrstring = make_attrstring(attr)
-    return f"<{key}{attrstring}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    attr_string = make_attrstring(attr)
+    return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
 
 
 def convert_bool(
     key: str, val: bool, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
 ) -> str:
     """Converts a boolean into an XML element"""
-    if DEBUGMODE:  # pragma: no cover
+    if DEBUG_MODE:  # pragma: no cover
         LOG.info(
             f'Inside convert_bool(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
         )
@@ -542,8 +541,8 @@ def convert_bool(
 
     if attr_type:
         attr["type"] = get_xml_type(val)
-    attrstring = make_attrstring(attr)
-    return f"<{key}{attrstring}>{str(val).lower()}</{key}>"
+    attr_string = make_attrstring(attr)
+    return f"<{key}{attr_string}>{str(val).lower()}</{key}>"
 
 
 def convert_none(
@@ -554,8 +553,8 @@ def convert_none(
 
     if attr_type:
         attr["type"] = get_xml_type(None)
-    attrstring = make_attrstring(attr)
-    return f"<{key}{attrstring}></{key}>"
+    attr_string = make_attrstring(attr)
+    return f"<{key}{attr_string}></{key}>"
 
 
 def dicttoxml(
@@ -686,7 +685,7 @@ def dicttoxml(
         <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
 
     """
-    if DEBUGMODE:  # pragma: no cover
+    if DEBUG_MODE:  # pragma: no cover
         LOG.info(
             f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}", type(ids") is : {type(ids).__name__}'
         )
@@ -695,31 +694,31 @@ def dicttoxml(
             LOG.debug(f'  obj="{str(obj)}"')
 
     output = []
-    namespacestr = ""
+    namespace_str = ""
     for prefix in xml_namespaces:
         if prefix == 'xsi':
             for schema_att in xml_namespaces[prefix]:
                 if schema_att == 'schemaInstance':
                     ns = xml_namespaces[prefix]['schemaInstance']
-                    namespacestr += f' xmlns:{prefix}="{ns}"'
+                    namespace_str += f' xmlns:{prefix}="{ns}"'
                 elif schema_att == 'schemaLocation':
                     ns = xml_namespaces[prefix][schema_att]
-                    namespacestr += f' xsi:{schema_att}="{ns}"'
+                    namespace_str += f' xsi:{schema_att}="{ns}"'
 
         elif prefix == 'xmlns':
             # xmns needs no prefix
             ns = xml_namespaces[prefix]
-            namespacestr += f' xmlns="{ns}"'
+            namespace_str += f' xmlns="{ns}"'
 
         else:
             ns = xml_namespaces[prefix]
-            namespacestr += f' xmlns:{prefix}="{ns}"'
+            namespace_str += f' xmlns:{prefix}="{ns}"'
     if root:
         output.append('<?xml version="1.0" encoding="UTF-8" ?>')
         output_elem = convert(
             obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
         )
-        output.append(f"<{custom_root}{namespacestr}>{output_elem}</{custom_root}>")
+        output.append(f"<{custom_root}{namespace_str}>{output_elem}</{custom_root}>")
     else:
         output.append(
             convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)

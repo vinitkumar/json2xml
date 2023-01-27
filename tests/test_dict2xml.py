@@ -1,5 +1,6 @@
-from json2xml import dicttoxml
 import pytest
+
+from json2xml import dicttoxml
 
 
 class TestDict2xml:
@@ -147,24 +148,35 @@ class TestDict2xml:
     @pytest.fixture
     def dict_with_attrs(self) -> dict:
         return {
-            "transportation-mode": [
-                {"@attrs": {"xml:lang": "nl"}, "@val": "Fiets"},
-                {"@attrs": {"xml:lang": "nl"}, "@val": "Bus"},
-                {"@attrs": {"xml:lang": "en"}, "@val": "Bike"},
+            'transportation-mode': [
+                {
+                    '@attrs': {'xml:lang': 'nl'},
+                    '@val': 'Fiets'
+                },
+                {
+                    '@attrs': {'xml:lang': 'nl'},
+                    '@val': 'Bus'
+                },
+                {
+                    '@attrs': {'xml:lang': 'en'},
+                    '@val': 'Bike'
+                }
             ]
         }
-        wanted_xml_result = (
-            b'<transportation-mode xml:lang="nl">Fiets</transportation-mode>'
-            b'<transportation-mode xml:lang="nl">Bus</transportation-mode>'
-            b'<transportation-mode xml:lang="en">Bike</transportation-mode>'
-        )
+
+    def test_dict2xml_list_items_with_attrs(self, dict_with_attrs):
+        '''With list headers = True
+        '''
+
+        wanted_xml_result = b'<transportation-mode xml:lang="nl">Fiets</transportation-mode>' \
+                            b'<transportation-mode xml:lang="nl">Bus</transportation-mode>' \
+                            b'<transportation-mode xml:lang="en">Bike</transportation-mode>'
         xml_result = dicttoxml.dicttoxml(
             dict_with_attrs,
             root=False,
             attr_type=False,
             item_wrap=False,
-            list_headers=True,
-        )
+            list_headers=True)
 
         assert xml_result == wanted_xml_result
 

@@ -5,7 +5,8 @@ json2xml
 
 .. image:: https://badge.fury.io/py/json2xml.svg
 .. image:: https://static.pepy.tech/personalized-badge/json2xml?period=total&units=international_system&left_color=blue&right_color=orange&left_text=Downloads
- :target: https://pepy.tech/project/json2xml
+   :target: https://pepy.tech/project/json2xml
+
 .. image:: https://github.com/vinitkumar/json2xml/actions/workflows/pythonpackage.yml/badge.svg
 .. image:: https://img.shields.io/pypi/pyversions/json2xml.svg
 .. image:: https://readthedocs.org/projects/json2xml/badge/?version=latest
@@ -14,35 +15,24 @@ json2xml
 .. image:: https://codecov.io/gh/vinitkumar/json2xml/branch/master/graph/badge.svg?token=Yt2h55eTL2
       :target: https://codecov.io/gh/vinitkumar/json2xml
 
+A simple Python Library to convert JSON to XML
+Documentation: https://json2xml.readthedocs.io.
 
-You can sponsor my work for this plugin here: https://github.com/sponsors/vinitkumar/
-
-
-Simple Python Library to convert JSON to XML
-
-* Free software: Apache Software License 2.0
-* Documentation: https://json2xml.readthedocs.io.
-
-
-Update
-------
-
-The dict2xml project has been integrated in the project itself. This helped with cleaning up the code
-and making improvements. Long term goal for the project is to reduce the number of dependencies.
+An earlier dependency `dict2xml` project has been integrated into the project itself. It helped in cleaning up the code, adding types and tests.
 
 Features
---------
+^^^^^^^^
 
-It lets you convert json to xml in following ways:
+The library supports the following features:
 
-* from a `json` string
-* from a `json` file
-* from an API that emits `json` data
+* convert from a `json` string
+* convert from a `json` file
+* convert from an API that emits `json` data
 
-Usage
------
+Usage 
+^^^^^
 
-The usage is simple:
+The library can be used in these ways:
 
 
 .. code-block:: python
@@ -66,7 +56,7 @@ The usage is simple:
 
 
 Custom Wrappers and indent
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 By default, a wrapper `all` and pretty `True` is set. However, you can change this easily in your code like this:
 
@@ -93,7 +83,7 @@ Outputs this:
     </all>
 
 Omit List item
---------------
+^^^^^^^^^^^^^^
 
 Assume the following json input
 
@@ -163,7 +153,7 @@ Outputs this:
     </all>
 
 Optional Attribute Type Support
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Now, we can also specify if the output xml needs to have type specified or not. Here is the usage:
 
@@ -193,23 +183,20 @@ Outputs this:
 The methods are simple and easy to use and there are also checks inside of code to exit cleanly
 in case any of the input(file, string or API URL) returns invalid JSON.
 
-Testing
--------
+How to run tests
+^^^^^^^^^^^^^^^^
 
 This is provided by pytest, which is straight forward.
 
- .. code-block:: bash
+ .. code-block:: console
 
     virtualenv venv -p $(which python3.9)
     pip install -r requirements-dev.txt
     python setup.py install
-    pytest
+    pytest -vv
 
 
-Credits
--------
+Help and Support to maintain this project
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
-
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+- You can sponsor my work for this plugin here: https://github.com/sponsors/vinitkumar/

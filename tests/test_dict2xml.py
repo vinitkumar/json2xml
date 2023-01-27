@@ -1,4 +1,5 @@
 from json2xml import dicttoxml
+import pytest
 
 
 class TestDict2xml:
@@ -143,11 +144,9 @@ class TestDict2xml:
             )
         )
 
-    def test_dict2xml_list_items_with_attrs(self):
-        """
-        Currently has an item wrap because item_name = 'item' this should not be the case with item_wrap as False
-        """
-        dict_with_attrs = {
+    @pytest.fixture
+    def dict_with_attrs(self) -> dict:
+        return {
             "transportation-mode": [
                 {"@attrs": {"xml:lang": "nl"}, "@val": "Fiets"},
                 {"@attrs": {"xml:lang": "nl"}, "@val": "Bus"},
@@ -237,7 +236,6 @@ class TestDict2xml:
             "<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>"
             == con_list
         )
-
 
     def test_dict2xml_str_list_header(self):
         from json2xml.dicttoxml import dict2xml_str

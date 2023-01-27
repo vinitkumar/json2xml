@@ -261,7 +261,6 @@ def dict2xml_str(
         if len(val_attr) > 0 and not item_wrap:
             attrstring = make_attrstring(val_attr)
             return f"<{parent}{attrstring}>{subtree}</{parent}>"
-        # should not return if there is an attr present
         return f"<{parent}>{subtree}</{parent}>"
     elif item.get("@flat", False) or (parentIsList and not item_wrap):
         return subtree

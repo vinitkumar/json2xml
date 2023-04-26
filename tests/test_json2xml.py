@@ -2,16 +2,22 @@
 
 """Tests for `json2xml` package."""
 
-import pytest
 import json
 
+import pytest
 import xmltodict
 from pyexpat import ExpatError
 
 from json2xml import json2xml
-from json2xml.utils import (InvalidDataError, JSONReadError, StringReadError,
-                            URLReadError, readfromjson, readfromstring,
-                            readfromurl)
+from json2xml.utils import (
+    InvalidDataError,
+    JSONReadError,
+    StringReadError,
+    URLReadError,
+    readfromjson,
+    readfromstring,
+    readfromurl,
+)
 
 
 class TestJson2xml:

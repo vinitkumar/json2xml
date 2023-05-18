@@ -29,7 +29,7 @@ The library supports the following features:
 * convert from a `json` file
 * convert from an API that emits `json` data
 
-Usage 
+Usage
 ^^^^^
 
 The library can be used in these ways:

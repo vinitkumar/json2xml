@@ -187,3 +187,19 @@ class TestJson2xml:
         assert dict_from_xml["all"]["string_array"]["item"][0]["#text"] == 'a'
         assert dict_from_xml["all"]["string_array"]["item"][1]["#text"] == 'b'
         assert dict_from_xml["all"]["string_array"]["item"][2]["#text"] == 'c'
+
+    def test_dict_attr_crash(self):
+        data = data = {
+            "product": {
+                "@attrs": {
+                    "attr_name": "attr_value",
+                    "a": "b"
+                },
+                "@val": [],
+            },
+        }
+        result = json2xml.Json2xml(data).to_xml()
+        dict_from_xml = xmltodict.parse(result)
+        assert dict_from_xml["all"]["product"]["@attr_name"] == "attr_value"
+        assert dict_from_xml["all"]["product"]["@a"] == "b"
+

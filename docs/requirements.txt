@@ -48,7 +48,7 @@ pyparsing==2.4.7
     # via packaging
 pytz==2021.3
     # via babel
-requests==2.26.0
+requests==2.31.0
     # via sphinx
 six==1.16.0
     # via livereload
@@ -78,7 +78,7 @@ sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
-tornado==6.1
+tornado==6.3.2
     # via livereload
 urllib3==1.26.7
     # via requests

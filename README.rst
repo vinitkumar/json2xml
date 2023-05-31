@@ -44,13 +44,13 @@ The library can be used in these ways:
     data = readfromurl("https://coderwall.com/vinitcool76.json")
     print(json2xml.Json2xml(data).to_xml())
 
-    # get the xml from a json string
+    # get the xml from a json string like this:
     data = readfromstring(
         '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
     )
     print(json2xml.Json2xml(data).to_xml())
 
-    # get the data from an URL
+    # get the data from an a JSON file like this:
     data = readfromjson("examples/licht.json")
     print(json2xml.Json2xml(data).to_xml())
 

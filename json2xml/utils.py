@@ -31,11 +31,9 @@ def readfromjson(filename: str) -> dict[str, str]:
             data = json.load(json_data)
             json_data.close()
             return data
-    except ValueError as exp:
-        print(exp)
+    except ValueError:
         raise JSONReadError
-    except OSError as exp:
-        print(exp)
+    except OSError:
         raise JSONReadError("Invalid JSON File")
 
 
@@ -61,10 +59,6 @@ def readfromstring(jsondata: str) -> dict[str, str]:
         raise StringReadError("Sorry! the string doesn't seems to a proper JSON")
     try:
         data = json.loads(jsondata)
-    except ValueError as exp:
-        print(exp)
-        raise StringReadError("Sorry! the string doesn't seems to a proper JSON")
-    except Exception as exp:
-        print(exp)
+    except ValueError:
         raise StringReadError("Sorry! the string doesn't seems to a proper JSON")
     return data

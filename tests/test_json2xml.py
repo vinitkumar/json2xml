@@ -45,6 +45,11 @@ class TestJson2xml:
             readfromjson("examples/licht_wrong.json")
         assert pytest_wrapped_e.type == JSONReadError
 
+    def test_read_from_invalid_json2(self):
+        with pytest.raises(JSONReadError) as pytest_wrapped_e:
+            readfromjson("examples/wrongjson.json")
+        assert pytest_wrapped_e.type == JSONReadError
+
     def test_read_from_url(self):
         data = readfromurl("https://coderwall.com/vinitcool76.json")
         assert type(data) is dict
@@ -60,6 +65,16 @@ class TestJson2xml:
         )
         assert type(data) is dict
 
+    def test_read_from_invalid_string1(self):
+        with pytest.raises(StringReadError) as pytest_wrapped_e:
+            readfromstring(1)
+        assert pytest_wrapped_e.type == StringReadError
+
+    def test_read_from_invalid_string2(self):
+        with pytest.raises(StringReadError) as pytest_wrapped_e:
+            readfromstring(jsondata=None)
+        assert pytest_wrapped_e.type == StringReadError
+
     def test_read_from_invalid_jsonstring(self):
         with pytest.raises(StringReadError) as pytest_wrapped_e:
             readfromstring(
@@ -74,6 +89,11 @@ class TestJson2xml:
         xmldata = json2xml.Json2xml(data).to_xml()
         dict_from_xml = xmltodict.parse(xmldata)
         assert type(dict_from_xml["all"]) == dict
+
+    def test_json_to_xml_empty_data_conversion(self):
+        data = None
+        xmldata = json2xml.Json2xml(data).to_xml()
+        assert xmldata is None
 
     def test_custom_wrapper_and_indent(self):
         data = readfromstring(
@@ -202,4 +222,3 @@ class TestJson2xml:
         dict_from_xml = xmltodict.parse(result)
         assert dict_from_xml["all"]["product"]["@attr_name"] == "attr_value"
         assert dict_from_xml["all"]["product"]["@a"] == "b"
-

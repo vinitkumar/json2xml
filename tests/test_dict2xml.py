@@ -1,6 +1,7 @@
-import pytest
 import datetime
 import numbers
+
+import pytest
 
 from json2xml import dicttoxml
 
@@ -357,7 +358,6 @@ class TestDict2xml:
         assert b'<bike type="str">blue</bike>' == result
 
     def test_get_xml_type_number(self):
-        import numbers
         assert dicttoxml.get_xml_type(numbers.Number()) == "number"
 
     def test_convert_datetime(self):

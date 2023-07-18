@@ -60,7 +60,7 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source json2xml setup.py test
+	coverage run -m pytest -vv --disable-warnings
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html

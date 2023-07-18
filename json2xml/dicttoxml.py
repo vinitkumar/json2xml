@@ -542,6 +542,8 @@ def convert_bool(
     if attr_type:
         attr["type"] = get_xml_type(val)
     attr_string = make_attrstring(attr)
+    print("DEBUG: attr_string: ", attr_string)
+    print(attr_string)
     return f"<{key}{attr_string}>{str(val).lower()}</{key}>"
 
 

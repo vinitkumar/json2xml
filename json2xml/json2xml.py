@@ -16,7 +16,7 @@ class Json2xml:
     """
     def __init__(
         self,
-        data: Optional[dict[str, Any]],
+        data: dict[str, Any] | None,
         wrapper: str = "all",
         root: bool = True,
         pretty: bool = True,

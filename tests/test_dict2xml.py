@@ -1,3 +1,6 @@
+import datetime
+import numbers
+
 import pytest
 
 from json2xml import dicttoxml
@@ -353,3 +356,40 @@ class TestDict2xml:
         data = {"bike": "blue"}
         result = dicttoxml.dicttoxml(data, root=False, attr_type=True)
         assert b'<bike type="str">blue</bike>' == result
+
+    def test_get_xml_type_number(self):
+        assert dicttoxml.get_xml_type(numbers.Number()) == "number"
+
+    def test_convert_datetime(self):
+        dt = datetime.datetime(2023, 2, 15, 12, 30, 45)
+
+        expected = '<item_name type="datetime">2023-02-15 12:30:45</item_name>'
+
+        assert dicttoxml.convert_kv(
+            key='item_name',
+            val=dt,
+            attr_type='datetime',
+            attr={},
+            cdata=False
+        ) == expected
+
+    # write test for bool test
+    def test_basic_conversion(self):
+        xml = dicttoxml.convert_bool('key', True, False)
+        assert xml == '<key>true</key>'
+
+    def test_with_type_attribute(self):
+        xml = dicttoxml.convert_bool('key', False, True)
+        assert xml == '<key type="bool">false</key>'
+
+    def test_with_custom_attributes(self):
+        xml = dicttoxml.convert_bool('key', True, False, {'id': '1'})
+        assert xml == '<key id="1">true</key>'
+
+    def test_valid_key(self):
+        xml = dicttoxml.convert_bool('valid_key', False, False)
+        assert xml == '<valid_key type="bool">false</valid_key>'
+
+    def test_invalid_key(self):
+        xml = dicttoxml.convert_bool('invalid<key>', True, False)
+        assert xml == '<key type="bool" name="invalid&lt;key&gt;">true</key>'

@@ -1,6 +1,14 @@
 History
 =======
 
+4.0.0 / 2023-07-19
+==================
+
+  * feat: use Python 3.12 beta 4
+  * feat: check against pypy 3.10 too
+  * fix: drop support for Python 3.7
+  * Use fixture for attrs with dict and remove comment (#170)
+
 3.21.0 / 2023-01-18
 ===================
 

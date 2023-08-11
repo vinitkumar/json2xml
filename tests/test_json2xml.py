@@ -51,12 +51,12 @@ class TestJson2xml:
         assert pytest_wrapped_e.type == JSONReadError
 
     def test_read_from_url(self):
-        data = readfromurl("https://coderwall.com/vinitcool76.json")
+        data = readfromurl("https://api.publicapis.org/entries")
         assert type(data) is dict
 
     def test_read_from_wrong_url(self):
         with pytest.raises(URLReadError) as pytest_wrapped_e:
-            readfromurl("https://coderwall.com/vinitcool76.jsoni")
+            readfromurl("https://api.publicapis.org/entriesi")
         assert pytest_wrapped_e.type == URLReadError
 
     def test_read_from_jsonstring(self):

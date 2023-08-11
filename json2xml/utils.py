@@ -48,6 +48,10 @@ def readfromurl(url: str, params: dict[str, str] | None = None) -> dict[str, str
     if response.status == 200:
         data = json.loads(response.data.decode('utf-8'))
         return data
+    print("bug")
+    print(response.status)
+    print("bug")
+    print("bug")
     raise URLReadError("URL is not returning correct response")
 
 

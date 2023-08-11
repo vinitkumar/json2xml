@@ -41,7 +41,7 @@ The library can be used in these ways:
     from json2xml.utils import readfromurl, readfromstring, readfromjson
 
     # get the xml from an URL that return json
-    data = readfromurl("https://coderwall.com/vinitcool76.json")
+    data = readfromurl("https://api.publicapis.org/entries")
     print(json2xml.Json2xml(data).to_xml())
 
     # get the xml from a json string like this:

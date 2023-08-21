@@ -263,7 +263,7 @@ def dict2xml_str(
     parse dict2xml
     """
     ids: list[str] = []  # initialize list of unique ids
-    keys_str = ", ".join(str(key) for key in item)
+    ", ".join(str(key) for key in item)
 
     if attr_type:
         attr["type"] = get_xml_type(item)

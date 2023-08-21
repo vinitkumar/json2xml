@@ -4,144 +4,146 @@ History
 4.0.0 / 2023-07-19
 ==================
 
-  * feat: use Python 3.12 beta 4
-  * feat: check against pypy 3.10 too
-  * fix: drop support for Python 3.7
-  * Use fixture for attrs with dict and remove comment (#170)
+  * Updated to Python 3.12 beta 4
+  * Added check for pypy 3.10
+  * Dropped support for Python 3.7
+  * Updated fixture for attrs with dict and removed comment (#170)
 
 3.21.0 / 2023-01-18
 ===================
 
-  * Implement list item with attributes (#169)
-  * feat: add python3.12 alpha4 to the fix (#168)
-  * Feat/replace requests with urllib3 (#167)
-  * feat: add security reporting guidelines
-  * Add CodeQL workflow for GitHub code scanning (#160)
-  * Default is False for list_headers (#164)
-  * fix: ci issue due to mypy update on python3.11 (#166)
-  * chore(deps): bump certifi from 2021.10.8 to 2022.12.7 in /docs (#162)
-  * fix: open files properly
-  * feat: 3.11 is released 🎉 (#159)
-
+  * Implemented list item with attributes (#169)
+  * Added python3.12 alpha4 to the fix (#168)
+  * Replaced requests with urllib3 (#167)
+  * Added security reporting guidelines
+  * Added CodeQL workflow for GitHub code scanning (#160)
+  * Set default to False for list_headers (#164)
+  * Fixed ci issue due to mypy update on python3.11 (#166)
+  * Updated certifi from 2021.10.8 to 2022.12.7 in /docs (#162)
+  * Fixed file opening issue
+  * Celebrated release of Python 3.11 (#159)
 
 3.20.0 / 2022-10-16
 ===================
 
-  * feat: make deps more flexible (#158)
-  * fix: use SystemRandom as a secure way for generating Random Integers (#156)
+  * Made dependencies more flexible (#158)
+  * Used SystemRandom for secure random integer generation (#156)
 
 3.19.5 / 2022-09-18
 ===================
 
-  * fix #138 and #151 + 2 new unit tests (#154)
-  * fix non-failing and failing unit tests for #152 (#153)
+  * Fixed issues #138 and #151, added 2 new unit tests (#154)
+  * Fixed unit tests for #152 (#153)
 
 3.19.4 / 2022-07-24
 ===================
 
-  * Feat/unittest to pytest (#149)
-  * Feat/upgrade python test python311beta (#148)
-  * feat: test new version of 3.10 and 3.11 (#147)
+  * Transitioned from unittest to pytest (#149)
+  * Upgraded python test to python311beta (#148)
+  * Tested new version of 3.10 and 3.11 (#147)
 
 3.19.3 / 2022-07-01
 ===================
 
-  * Update utils.py add encoding type UTF-8 @readfromjson function as language(korean) needs UTF-8 encoding options. (#145)
+  * Added UTF-8 encoding type to @readfromjson function in utils.py for Korean language support (#145)
 
 3.19.2 / 2022-06-09
 ===================
 
-  * escape xml char when having attrs (#144)
-  * feat: adjust pytest config setting for easy loggin
-  * feat: bump python 3.10 and 3.11 version (#142)
+  * Escaped xml char when having attrs (#144)
+  * Adjusted pytest config setting for easier logging
+  * Bumped python 3.10 and 3.11 version (#142)
 
 3.19.1 / 2022-06-05
 ===================
 
-  * bump version of docs building
-  * chore(deps): bump waitress from 2.1.1 to 2.1.2 in /docs (#141)
-  * Docs update for dicttoxml (#140)
+  * Bumped version of docs building
+  * Updated waitress from 2.1.1 to 2.1.2 in /docs (#141)
+  * Updated docs for dicttoxml (#140)
 
 3.19.0 / 2022-05-20
 ===================
 
-  * Setting xsi location (#135)
-  * Repeat list headers (#138)
-  * add python3.11 support (#139)
-  * improved docs dicttoxml (#134)
-  * Fix/types working check ci mypy (#133)
-  * fix: ci supports mypy now (#132)
-  * generate changelog
-  * Feat/remove logging by default (#131)
-  * Merge two dev requirements file (#129)
-  * remove old unused config
-  * feat: add types (#125)
-  * fix: issue with twine check
-  * fix: issue with long description
-  * refactor: xmltodict is only test dependency (#124)
-  * fix: add correct list of contributors
-  * feat: generate changelog
-  * improvements on dicttoxml (#121)
-  * feat: add correct badge
-  * feat: use codecov
-  * fix: flake8 tests
-  * fix: add coverage to the mix
-  * fix: lint issues and CI
-  * fix: check new CI stuff like lint and coverage
-  * feat: bump version and generate changelog
-  * fix: issue with wrong output for boolean list
-  * fix: pull requests also trigger action runs
+  * Set xsi location (#135)
+  * Repeated list headers (#138)
+  * Added support for python3.11 (#139)
+  * Improved docs for dicttoxml (#134)
+  * Fixed types working check for ci mypy (#133)
+  * Added mypy support to ci (#132)
+  * Generated changelog
+  * Removed logging by default (#131)
+  * Merged two dev requirements files (#129)
+  * Removed old unused config
+  * Added types (#125)
+  * Fixed issue with twine check
+  * Fixed issue with long description
+  * Refactored: xmltodict is only test dependency now (#124)
+  * Added correct list of contributors
+  * Generated changelog
+  * Improved dicttoxml (#121)
+  * Added correct badge
+  * Started using codecov
+  * Fixed flake8 tests
+  * Added coverage to the mix
+  * Fixed lint issues and CI
+  * Checked new CI stuff like lint and coverage
+  * Bumped version and generated changelog
+  * Fixed issue with wrong output for boolean list
+  * Made pull requests trigger action runs
 
 3.18.0 / 2022-04-23
 ===================
 
-  * bump version
-  * improvements on dicttoxml (#121)
-  * feat: add correct badge
-  * feat: use codecov
-  * fix: flake8 tests
-  * fix: add coverage to the mix
-  * fix: lint issues and CI
-  * fix: check new CI stuff like lint and coverage
-  * feat: bump version and generate changelog
-  * fix: issue with wrong output for boolean list
-  * fix: pull requests also trigger action runs
+  * Bumped version
+  * Improved dicttoxml (#121)
+  * Added correct badge
+  * Started using codecov
+  * Fixed flake8 tests
+  * Added coverage to the mix
+  * Fixed lint issues and CI
+  * Checked new CI stuff like lint and coverage
+  * Bumped version and generated changelog
+  * Fixed issue with wrong output for boolean list
+  * Made pull requests trigger action runs
 
 3.17.1 / 2022-04-20
 ===================
 
-  * fix: issue with wrong output for boolean list
-  * fix: pull requests also trigger action runs
+  * Fixed issue with wrong output for boolean list
+  * Made pull requests trigger action runs
 
 3.17.0 / 2022-04-18
 ===================
 
-  * fix: return correct xml type for bool (#119)
-  * feat: add download counter
-  * fix: check latest alpha (#116)
-  * fix: check latest alpha (#115)
-  * chore(deps): bump waitress from 2.0.0 to 2.1.1 in /docs (#114)
-  * feat: only python3 wheels are created now
+  * Fixed return of correct xml type for bool (#119)
+  * Added download counter
+  * Checked latest alpha (#116)
+  * Checked latest alpha (#115)
+  * Updated waitress from 2.0.0 to 2.1.1 in /docs (#114)
+  * Only python3 wheels are created now
 
 3.15.0 / 2022-02-24
 ===================
 
-  * Merge remote-tracking branch 'origin/master'
-  * bump version and prepare for new release
-  * feat: new python versions to test against (#110)
-  * Fix/perflint (#109)
-  * feat: support latest version of 3.10 and 3.11 alpha3 (#98)
-  * feat: generate changelog
-  * fix: remove unused imports
-  * bump version
-  * fix: issue with uncaught UnicodeDecodeError
-  * cancel jobs for concurrent builds in same PR
-  * pypi is stable now
-  * feat: update tox config
+  * Merged remote-tracking branch 'origin/master'
+  * Bumped version and prepared for new release
+  * Added new python versions to test against (#110)
+  * Fixed perflint (#109)
+  * Supported latest version of 3.10 and 3.11 alpha3 (#98)
+  * Generated changelog
+  * Removed unused imports
+  * Bumped version
+  * Fixed issue with uncaught UnicodeDecodeError
+  * Cancelled jobs for concurrent builds in same PR
+  * Stabilized pypi
+  * Updated tox config
 
 v3.14.0 / 2022-02-10
 ====================
 
+  * Removed unused imports
+  * Bumped version
+  * Fixed issue with uncaught UnicodeDecodeError
   * fix: remove unused imports
   * bump version
   * fix: issue with uncaught UnicodeDecodeError
@@ -333,3 +335,4 @@ v3.0.0 / 2019-02-26
   * Cleanup Readme.md
   * Update issue templates
   * fix vulnerabilities in requests
+

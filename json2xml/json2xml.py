@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Any, Optional
 
 from defusedxml.minidom import parseString
@@ -16,7 +14,7 @@ class Json2xml:
     """
     def __init__(
         self,
-        data: dict[str, Any] | None,
+        data: Optional[dict[str, Any]] = None,
         wrapper: str = "all",
         root: bool = True,
         pretty: bool = True,
@@ -30,7 +28,7 @@ class Json2xml:
         self.root = root
         self.item_wrap = item_wrap
 
-    def to_xml(self) -> Any | None:
+    def to_xml(self) -> Optional[Any]:
         """
         Convert to xml using dicttoxml.dicttoxml and then pretty print it.
         """

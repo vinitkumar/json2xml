@@ -1,6 +1,6 @@
 """Utility methods for converting XML data to dictionary from various sources."""
 import json
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import urllib3
 

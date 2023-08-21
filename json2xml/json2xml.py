@@ -1,4 +1,4 @@
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
 
 from defusedxml.minidom import parseString
 from pyexpat import ExpatError

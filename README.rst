@@ -2,7 +2,6 @@
 json2xml
 ========
 
-
 .. image:: https://badge.fury.io/py/json2xml.svg
 .. image:: https://static.pepy.tech/personalized-badge/json2xml?period=total&units=international_system&left_color=blue&right_color=orange&left_text=Downloads
         :target: https://pepy.tech/project/json2xml
@@ -15,24 +14,25 @@ json2xml
 .. image:: https://codecov.io/gh/vinitkumar/json2xml/branch/master/graph/badge.svg?token=Yt2h55eTL2
       :target: https://codecov.io/gh/vinitkumar/json2xml
 
-A simple Python Library to convert JSON to XML
+json2xml is a Python library that allows you to convert JSON data into XML format. It's simple, efficient, and easy to use.
+
 Documentation: https://json2xml.readthedocs.io.
 
-An earlier dependency `dict2xml` project has been integrated into the project itself. It helped in cleaning up the code, adding types and tests.
+The library was initially dependent on the `dict2xml` project, but it has now been integrated into json2xml itself. This has led to cleaner code, the addition of types and tests, and overall improved performance.
 
 Features
 ^^^^^^^^
 
-The library supports the following features:
+json2xml supports the following features:
 
-* convert from a `json` string
-* convert from a `json` file
-* convert from an API that emits `json` data
+* Conversion from a `json` string to XML
+* Conversion from a `json` file to XML
+* Conversion from an API that emits `json` data to XML
 
 Usage
 ^^^^^
 
-The library can be used in these ways:
+You can use the json2xml library in the following ways:
 
 
 .. code-block:: python
@@ -40,25 +40,25 @@ The library can be used in these ways:
     from json2xml import json2xml
     from json2xml.utils import readfromurl, readfromstring, readfromjson
 
-    # get the xml from an URL that return json
+    # Convert JSON data from a URL to XML
     data = readfromurl("https://api.publicapis.org/entries")
     print(json2xml.Json2xml(data).to_xml())
 
-    # get the xml from a json string like this:
+    # Convert a JSON string to XML
     data = readfromstring(
         '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
     )
     print(json2xml.Json2xml(data).to_xml())
 
-    # get the data from an a JSON file like this:
+    # Convert a JSON file to XML
     data = readfromjson("examples/licht.json")
     print(json2xml.Json2xml(data).to_xml())
 
 
-Custom Wrappers and indent
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Custom Wrappers and Indentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, a wrapper `all` and pretty `True` is set. However, you can change this easily in your code like this:
+By default, a wrapper `all` and pretty `True` is set. However, you can easily change this in your code like this:
 
 .. code-block:: python
 
@@ -155,7 +155,7 @@ Outputs this:
 Optional Attribute Type Support
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Now, we can also specify if the output xml needs to have type specified or not. Here is the usage:
+You can also specify if the output XML needs to have type specified or not. Here is the usage:
 
  .. code-block:: python
 
@@ -200,3 +200,4 @@ Help and Support to maintain this project
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - You can sponsor my work for this plugin here: https://github.com/sponsors/vinitkumar/
+

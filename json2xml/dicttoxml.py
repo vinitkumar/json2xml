@@ -13,9 +13,6 @@ from defusedxml.minidom import parseString
 # Create a safe random number generator
 safe_random = SystemRandom()
 
-# Get the debug mode from environment variables
-DEBUG_MODE = os.getenv("DEBUGMODE", False)
-
 # Set up logging
 LOG = logging.getLogger("dicttoxml")
 
@@ -145,8 +142,6 @@ def key_is_valid_xml(key: str) -> bool:
     Returns:
         bool: True if the key is a valid XML name, False otherwise.
     """
-    if DEBUG_MODE:
-        LOG.info(f'Inside key_is_valid_xml(). Testing "{str(key)}"')
     test_xml = f'<?xml version="1.0" encoding="UTF-8" ?><{key}>foo</{key}>'
     try:
         parseString(test_xml)
@@ -157,10 +152,6 @@ def key_is_valid_xml(key: str) -> bool:
 
 def make_valid_xml_name(key: str, attr: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     """Tests an XML name and fixes it if invalid"""
-    if DEBUG_MODE:  # pragma: no cover
-        LOG.info(
-            f'Inside make_valid_xml_name(). Testing key "{str(key)}" with attr "{str(attr)}"'
-        )
     key = escape_xml(key)
     # nothing happens at escape_xml if attr is not a string, we don't
     # need to pass it to the method at all.
@@ -210,12 +201,6 @@ def convert(
 ) -> str:
     """Routes the elements of an object to the right function to convert them
     based on their data type"""
-    if DEBUG_MODE:  # pragma: no cover
-        LOG.info(f'Inside convert(). type(obj)="{type(obj).__name__}"')
-        # avoid cpu consuming object serialization => extra if
-        if LOG.getEffectiveLevel() <= logging.DEBUG:
-            LOG.debug(f'  obj="{str(obj)}"')
-
     item_name = item_func(parent)
     # since bool is also a subtype of number.Number and int, the check for bool
     # never comes and hence we get wrong value for the xml type bool
@@ -279,13 +264,6 @@ def dict2xml_str(
     """
     ids: list[str] = []  # initialize list of unique ids
     keys_str = ", ".join(str(key) for key in item)
-    if DEBUG_MODE:  # pragma: no cover
-        LOG.info(
-            f'Inside dict_item2xml_str: type(obj)="{type(item).__name__}", keys="{keys_str}"'
-        )
-        # avoid cpu consuming object serialization => extra if
-        if LOG.getEffectiveLevel() <= logging.DEBUG:
-            LOG.debug(f'  item="{str(item)}"')
 
     if attr_type:
         attr["type"] = get_xml_type(item)
@@ -361,26 +339,10 @@ def convert_dict(
     list_headers: bool = False
 ) -> str:
     """Converts a dict into an XML string."""
-    keys_str = ", ".join(str(key) for key in obj)
-    if DEBUG_MODE:  # pragma: no cover
-        LOG.info(
-            f'Inside convert_dict(): type(obj)="{type(obj).__name__}", keys="{keys_str}"'
-        )
-        # avoid cpu consuming object serialization => extra if
-        if LOG.getEffectiveLevel() <= logging.DEBUG:
-            LOG.debug(f'  obj="{str(obj)}"')
-
     output: list[str] = []
     addline = output.append
 
     for key, val in obj.items():
-        if DEBUG_MODE:  # pragma: no cover
-            LOG.info(
-                f'Looping inside convert_dict(): key="{str(key)}", type(val)="{type(val).__name__}"'
-            )
-            if LOG.getEffectiveLevel() <= logging.DEBUG:
-                LOG.debug(f'  val="{str(val)}"')
-
         attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
 
         key, attr = make_valid_xml_name(key, attr)
@@ -453,12 +415,6 @@ def convert_list(
     list_headers: bool = False,
 ) -> str:
     """Converts a list into an XML string."""
-    if DEBUG_MODE:  # pragma: no cover
-        LOG.info(f'Inside convert_list(): type(items)="{type(items).__name__}"')
-        # avoid cpu consuming object serialization => extra if
-        if LOG.getEffectiveLevel() <= logging.DEBUG:
-            LOG.debug(f'  items="{str(items)}"')
-
     output: list[str] = []
     addline = output.append
 
@@ -470,14 +426,6 @@ def convert_list(
         this_id = get_unique_id(parent)
 
     for i, item in enumerate(items):
-        if DEBUG_MODE:  # pragma: no cover
-            LOG.info(
-                f'Looping inside convert_list(): index="{str(i)}", type="{type(item).__name__}"'
-            )
-            # avoid cpu consuming object serialization => extra if
-            if LOG.getEffectiveLevel() <= logging.DEBUG:
-                LOG.debug(f'  item="{str(item)}"')
-
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
 
         if isinstance(item, bool):
@@ -562,10 +510,6 @@ def convert_kv(
     cdata: bool = False,
 ) -> str:
     """Converts a number or string into an XML element"""
-    if DEBUG_MODE:  # pragma: no cover
-        LOG.info(
-            f'Inside convert_kv(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
-        )
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -578,17 +522,11 @@ def convert_bool(
     key: str, val: bool, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
 ) -> str:
     """Converts a boolean into an XML element"""
-    if DEBUG_MODE:  # pragma: no cover
-        LOG.info(
-            f'Inside convert_bool(): key="{str(key)}", val="{str(val)}", type(val) is: "{type(val).__name__}"'
-        )
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
         attr["type"] = get_xml_type(val)
     attr_string = make_attrstring(attr)
-    print("DEBUG: attr_string: ", attr_string)
-    print(attr_string)
     return f"<{key}{attr_string}>{str(val).lower()}</{key}>"
 
 
@@ -732,14 +670,6 @@ def dicttoxml(
         <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
 
     """
-    if DEBUG_MODE:  # pragma: no cover
-        LOG.info(
-            f'Inside dicttoxml(): type(obj) is: "{type(obj).__name__}", type(ids") is : {type(ids).__name__}'
-        )
-        # avoid cpu consuming object serialization (problem for large objects) => extra if
-        if LOG.getEffectiveLevel() <= logging.DEBUG:
-            LOG.debug(f'  obj="{str(obj)}"')
-
     output = []
     namespace_str = ""
     for prefix in xml_namespaces:

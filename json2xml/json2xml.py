@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 
 from defusedxml.minidom import parseString
 from pyexpat import ExpatError
@@ -14,7 +14,7 @@ class Json2xml:
     """
     def __init__(
         self,
-        data: Optional[dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
         wrapper: str = "all",
         root: bool = True,
         pretty: bool = True,

@@ -34,7 +34,7 @@ class TestJson2xml:
         data = readfromjson("examples/bigexample.json")
         if isinstance(data, list):
             # it's json array, so we just take the first element and check it's type
-            assert type(data[0])  == dict
+            assert type(data[0])  == dict # noqa
         else:
             data = readfromjson("examples/licht.json")
             assert isinstance(data, dict)

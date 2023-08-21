@@ -10,29 +10,41 @@ from typing import Any, Dict, Union
 
 from defusedxml.minidom import parseString
 
+# Create a safe random number generator
 safe_random = SystemRandom()
-DEBUG_MODE = os.getenv("DEBUGMODE", False)  # pragma: no cover
-LOG = logging.getLogger("dicttoxml")  # pragma: no cover
 
+# Get the debug mode from environment variables
+DEBUG_MODE = os.getenv("DEBUGMODE", False)
 
-"""
-Converts a Python dictionary or other native data type into a valid XML string.
-Supports item (`int`, `float`, `long`, `decimal.Decimal`, `bool`, `str`, `unicode`, `datetime`, `none` and other
-        number-like objects) and collection (`list`, `set`, `tuple` and `dict`, as well as iterable and
-                dict-like objects) data types, with arbitrary nesting for the collections.
-        Items with a `datetime` type are converted to ISO format strings.
-        Items with a `None` type become empty XML elements.
-This module works with Python 3.7+
-"""
+# Set up logging
+LOG = logging.getLogger("dicttoxml")
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
-    """Returns a random integer"""
+    """
+    Generate a random ID for a given element.
+
+    Args:
+        element (str): The element to generate an ID for.
+        start (int, optional): The lower bound for the random number. Defaults to 100000.
+        end (int, optional): The upper bound for the random number. Defaults to 999999.
+
+    Returns:
+        str: The generated ID.
+    """
     return f"{element}_{safe_random.randint(start, end)}"
 
 
 def get_unique_id(element: str) -> str:
-    """Returns a unique id for a given element"""
+    """
+    Generate a unique ID for a given element.
+
+    Args:
+        element (str): The element to generate an ID for.
+
+    Returns:
+        str: The unique ID.
+    """
     ids: list[str] = []  # initialize list of unique ids
     this_id = make_id(element)
     dup = True
@@ -60,7 +72,15 @@ ELEMENT = Union[
 
 
 def get_xml_type(val: ELEMENT) -> str:
-    """Returns the data type for the xml type attribute"""
+    """
+    Get the XML type of a given value.
+
+    Args:
+        val (ELEMENT): The value to get the type of.
+
+    Returns:
+        str: The XML type.
+    """
     if val is not None:
         if type(val).__name__ in ("str", "unicode"):
             return "str"
@@ -82,6 +102,15 @@ def get_xml_type(val: ELEMENT) -> str:
 
 
 def escape_xml(s: str | numbers.Number) -> str:
+    """
+    Escape a string for use in XML.
+
+    Args:
+        s (str | numbers.Number): The string to escape.
+
+    Returns:
+        str: The escaped string.
+    """
     if isinstance(s, str):
         s = str(s)  # avoid UnicodeDecodeError
         s = s.replace("&", "&amp;")
@@ -93,14 +122,30 @@ def escape_xml(s: str | numbers.Number) -> str:
 
 
 def make_attrstring(attr: dict[str, Any]) -> str:
-    """Returns an attribute string in the form key="val" """
+    """
+    Create a string of XML attributes from a dictionary.
+
+    Args:
+        attr (dict[str, Any]): The dictionary of attributes.
+
+    Returns:
+        str: The string of XML attributes.
+    """
     attrstring = " ".join([f'{k}="{v}"' for k, v in attr.items()])
     return f'{" " if attrstring != "" else ""}{attrstring}'
 
 
 def key_is_valid_xml(key: str) -> bool:
-    """Checks that a key is a valid XML name"""
-    if DEBUG_MODE:  # pragma: no cover
+    """
+    Check if a key is a valid XML name.
+
+    Args:
+        key (str): The key to check.
+
+    Returns:
+        bool: True if the key is a valid XML name, False otherwise.
+    """
+    if DEBUG_MODE:
         LOG.info(f'Inside key_is_valid_xml(). Testing "{str(key)}"')
     test_xml = f'<?xml version="1.0" encoding="UTF-8" ?><{key}>foo</{key}>'
     try:
@@ -727,3 +772,4 @@ def dicttoxml(
         )
 
     return "".join(output).encode("utf-8")
+

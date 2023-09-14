@@ -32,12 +32,12 @@ class TestJson2xml:
     def test_read_from_json(self):
         """Test something."""
         data = readfromjson("examples/bigexample.json")
-        if type(data) == 'list':
+        if isinstance(data, list):
             # it's json array, so we just take the first element and check it's type
-            assert type(data[0]) is dict
+            assert isinstance(data[0], dict)
         else:
             data = readfromjson("examples/licht.json")
-            assert type(data) is dict
+            assert isinstance(data, dict)
 
     def test_read_from_invalid_json(self):
         """Test something."""
@@ -52,7 +52,7 @@ class TestJson2xml:
 
     def test_read_from_url(self):
         data = readfromurl("https://api.publicapis.org/entries")
-        assert type(data) is dict
+        assert isinstance(data, dict)
 
     def test_read_from_wrong_url(self):
         with pytest.raises(URLReadError) as pytest_wrapped_e:
@@ -63,7 +63,7 @@ class TestJson2xml:
         data = readfromstring(
             '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
         )
-        assert type(data) is dict
+        assert isinstance(data, dict)
 
     def test_read_from_invalid_string1(self):
         with pytest.raises(StringReadError) as pytest_wrapped_e:
@@ -88,7 +88,7 @@ class TestJson2xml:
         )
         xmldata = json2xml.Json2xml(data).to_xml()
         dict_from_xml = xmltodict.parse(xmldata)
-        assert type(dict_from_xml["all"]) == dict
+        assert isinstance(dict_from_xml["all"], dict)
 
     def test_json_to_xml_empty_data_conversion(self):
         data = None

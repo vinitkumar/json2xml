@@ -19,9 +19,13 @@
 #
 import os
 import sys
+import datetime
 sys.path.insert(0, os.path.abspath('..'))
 
 import json2xml
+
+
+year = datetime.datetime.now().year
 
 # -- General configuration ---------------------------------------------
 
@@ -47,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'json2xml'
-copyright = "2019, Vinit Kumar"
+copyright = f'{year}, Vinit Kumar'
 author = "Vinit Kumar"
 
 # The version info for the project you're documenting, acts as replacement

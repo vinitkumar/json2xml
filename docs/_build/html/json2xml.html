@@ -1,0 +1,633 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Contributing" href="contributing.html" /><link rel="prev" title="json2xml" href="modules.html" />
+
+    <!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
+        <title>json2xml package - json2xml 4.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b76e3c8a" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #eeffcc;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">json2xml 4.0.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">json2xml 4.0.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="readme.html">json2xml</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">json2xml</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of json2xml</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">json2xml package</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id1">4.0.0 / 2023-07-19</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id2">3.21.0 / 2023-01-18</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id3">3.20.0 / 2022-10-16</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id4">3.19.5 / 2022-09-18</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id5">3.19.4 / 2022-07-24</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id6">3.19.3 / 2022-07-01</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id7">3.19.2 / 2022-06-09</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id8">3.19.1 / 2022-06-05</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id9">3.19.0 / 2022-05-20</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id10">3.18.0 / 2022-04-23</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id11">3.17.1 / 2022-04-20</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id12">3.17.0 / 2022-04-18</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#id13">3.15.0 / 2022-02-24</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-14-0-2022-02-10">v3.14.0 / 2022-02-10</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-11-0-2022-01-31">v3.11.0 / 2022-01-31</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-10-0-2022-01-29">v3.10.0 / 2022-01-29</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-9-0-2021-12-19">v3.9.0 / 2021-12-19</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-8-4-2021-10-24">v3.8.4 / 2021-10-24</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-8-3-2021-10-24">v3.8.3 / 2021-10-24</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-8-0-2021-10-07">v3.8.0 / 2021-10-07</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-7-0-2021-09-11">v3.7.0 / 2021-09-11</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-7-0beta2-2021-09-10">v3.7.0beta2 / 2021-09-10</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-7-0beta1-2021-08-28">v3.7.0beta1 / 2021-08-28</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-6-0-2020-11-12">v3.6.0 / 2020-11-12</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-5-0-2020-08-24">v3.5.0 / 2020-08-24</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-4-1-2020-06-10">v3.4.1 / 2020-06-10</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-3-3-2020-02-05">v3.3.3 / 2020-02-05</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html#v3-0-0-2019-02-26">v3.0.0 / 2019-02-26</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="json2xml-package">
+<h1>json2xml package<a class="headerlink" href="#json2xml-package" title="Link to this heading">#</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">#</a></h2>
+</section>
+<section id="module-json2xml.dicttoxml">
+<span id="json2xml-dicttoxml-module"></span><h2>json2xml.dicttoxml module<a class="headerlink" href="#module-json2xml.dicttoxml" title="Link to this heading">#</a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.LOG">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">LOG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;Logger</span> <span class="pre">dicttoxml</span> <span class="pre">(WARNING)&gt;</span></em><a class="headerlink" href="#json2xml.dicttoxml.LOG" title="Link to this definition">#</a></dt>
+<dd><p>Converts a Python dictionary or other native data type into a valid XML string.
+Supports item (<cite>int</cite>, <cite>float</cite>, <cite>long</cite>, <cite>decimal.Decimal</cite>, <cite>bool</cite>, <cite>str</cite>, <cite>unicode</cite>, <cite>datetime</cite>, <cite>none</cite> and other</p>
+<blockquote>
+<div><dl class="simple">
+<dt>number-like objects) and collection (<cite>list</cite>, <cite>set</cite>, <cite>tuple</cite> and <cite>dict</cite>, as well as iterable and</dt><dd><p>dict-like objects) data types, with arbitrary nesting for the collections.</p>
+</dd>
+</dl>
+<p>Items with a <cite>datetime</cite> type are converted to ISO format strings.
+Items with a <cite>None</cite> type become empty XML elements.</p>
+</div></blockquote>
+<p>This module works with Python 3.7+</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.convert">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">date</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_wrap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'root'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#convert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.convert" title="Link to this definition">#</a></dt>
+<dd><p>Routes the elements of an object to the right function to convert them
+based on their data type</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.convert_bool">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">convert_bool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#convert_bool"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.convert_bool" title="Link to this definition">#</a></dt>
+<dd><p>Converts a boolean into an XML element</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.convert_dict">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">convert_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_wrap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#convert_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.convert_dict" title="Link to this definition">#</a></dt>
+<dd><p>Converts a dict into an XML string.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.convert_kv">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">convert_kv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#convert_kv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.convert_kv" title="Link to this definition">#</a></dt>
+<dd><p>Converts a number or string into an XML element</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.convert_list">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">convert_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_wrap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#convert_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.convert_list" title="Link to this definition">#</a></dt>
+<dd><p>Converts a list into an XML string.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.convert_none">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">convert_none</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#convert_none"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.convert_none" title="Link to this definition">#</a></dt>
+<dd><p>Converts a null value into an XML element</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.default_item_func">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">default_item_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#default_item_func"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.default_item_func" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.dict2xml_str">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">dict2xml_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attr_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_wrap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parentIsList</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#dict2xml_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.dict2xml_str" title="Link to this definition">#</a></dt>
+<dd><p>parse dict2xml</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.dicttoxml">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">dicttoxml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">obj:</span> <span class="pre">dict[str,</span> <span class="pre">~typing.Any],</span> <span class="pre">root:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True,</span> <span class="pre">custom_root:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'root',</span> <span class="pre">ids:</span> <span class="pre">list[int]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">attr_type:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True,</span> <span class="pre">item_wrap:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True,</span> <span class="pre">item_func:</span> <span class="pre">~collections.abc.Callable[[str],</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;function</span> <span class="pre">default_item_func&gt;,</span> <span class="pre">cdata:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False,</span> <span class="pre">xml_namespaces:</span> <span class="pre">dict[str,</span> <span class="pre">~typing.Any]</span> <span class="pre">=</span> <span class="pre">{},</span> <span class="pre">list_headers:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytes</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#dicttoxml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.dicttoxml" title="Link to this definition">#</a></dt>
+<dd><p>Converts a python object into XML.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> (<em>dict</em>) – dictionary</p></li>
+<li><p><strong>root</strong> (<em>bool</em>) – Default is True
+specifies wheter the output is wrapped in an XML root element</p></li>
+<li><p><strong>custom_root</strong> – Default is ‘root’
+allows you to specify a custom root element.</p></li>
+<li><p><strong>ids</strong> (<em>bool</em>) – Default is False
+specifies whether elements get unique ids.</p></li>
+<li><p><strong>attr_type</strong> (<em>bool</em>) – Default is True
+specifies whether elements get a data type attribute.</p></li>
+<li><p><strong>item_wrap</strong> (<em>bool</em>) – <p>Default is True
+specifies whether to nest items in array in &lt;item/&gt; Example if True</p>
+<p>..code-block:: python</p>
+<blockquote>
+<div><p>data = {‘bike’: [‘blue’, ‘green’]}</p>
+</div></blockquote>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;bike&gt;</span>
+<span class="nt">&lt;item&gt;</span>blue<span class="nt">&lt;/item&gt;</span>
+<span class="nt">&lt;item&gt;</span>green<span class="nt">&lt;/item&gt;</span>
+<span class="nt">&lt;/bike&gt;</span>
+</pre></div>
+</div>
+<p>Example if False</p>
+<p>..code-block:: python</p>
+<blockquote>
+<div><p>data = {‘bike’: [‘blue’, ‘green’]}</p>
+</div></blockquote>
+<p>..code-block:: xml</p>
+<blockquote>
+<div><p>&lt;bike&gt;blue&lt;/bike&gt;
+&lt;bike&gt;green&lt;/bike&gt;’</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>item_func</strong> – items in a list. Default is ‘item’
+specifies what function should generate the element name for</p></li>
+<li><p><strong>cdata</strong> (<em>bool</em>) – Default is False
+specifies whether string values should be wrapped in CDATA sections.</p></li>
+<li><p><strong>xml_namespaces</strong> – <p>is a dictionary where key is xmlns prefix and value the urn, Default is {}. Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span> <span class="s1">&#39;flex&#39;</span><span class="p">:</span> <span class="s1">&#39;http://www.w3.org/flex/flexBase&#39;</span><span class="p">,</span> <span class="s1">&#39;xsl&#39;</span><span class="p">:</span> <span class="s2">&quot;http://www.w3.org/1999/XSL/Transform&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>results in</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;root</span><span class="w"> </span><span class="na">xmlns:xsl=</span><span class="s">&quot;http://www.w3.org/1999/XSL/Transform&quot;</span><span class="w"> </span><span class="na">xmlns:flex=</span><span class="s">&quot;http://www.w3.org/flex/flexBase&quot;</span><span class="nt">&gt;</span>
+</pre></div>
+</div>
+</p></li>
+<li><p><strong>list_headers</strong> (<em>bool</em>) – <p>Default is False
+Repeats the header for every element in a list. Example if True:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;Bike&quot;</span><span class="p">:</span> <span class="p">[</span>
+<span class="p">{</span><span class="s1">&#39;frame_color&#39;</span><span class="p">:</span> <span class="s1">&#39;red&#39;</span><span class="p">},</span>
+<span class="p">{</span><span class="s1">&#39;frame_color&#39;</span><span class="p">:</span> <span class="s1">&#39;green&#39;</span><span class="p">}</span>
+<span class="p">]}</span>
+</pre></div>
+</div>
+<p>results in</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;Bike&gt;&lt;frame_color&gt;</span>red<span class="nt">&lt;/frame_color&gt;&lt;/Bike&gt;</span>
+<span class="nt">&lt;Bike&gt;&lt;frame_color&gt;</span>green<span class="nt">&lt;/frame_color&gt;&lt;/Bike&gt;</span>
+</pre></div>
+</div>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p>Dictionaries-keys with special char ‘&#64;’ has special meaning:
+&#64;attrs: This allows custom xml attributes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;@attr&#39;</span><span class="p">:{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span><span class="s1">&#39;b&#39;</span><span class="p">},</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="s1">&#39;y&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>results in</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;root</span><span class="w"> </span><span class="na">a=</span><span class="s">&quot;b&quot;</span><span class="nt">&gt;&lt;x&gt;</span>y<span class="nt">&lt;/x&gt;&lt;/root&gt;</span>
+</pre></div>
+</div>
+<p>&#64;flat: If a key ends with &#64;flat (or dict contains key <a class="reference external" href="mailto:'&#37;&#52;&#48;flat">‘<span>&#64;</span>flat</a>’),
+encapsulating node is omitted. Similar to item_wrap.
+&#64;val: &#64;attrs requires complex dict type. If primitive type should be used, then &#64;val is used as key.
+To add custom xml-attributes on a list {‘list’: [4, 5, 6]}, you do this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;list&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;@attrs&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span><span class="s1">&#39;b&#39;</span><span class="p">,</span><span class="s1">&#39;c&#39;</span><span class="p">:</span><span class="s1">&#39;d&#39;</span><span class="p">},</span> <span class="s1">&#39;@val&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]}</span>
+</pre></div>
+</div>
+<p>which results in</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;list</span><span class="w"> </span><span class="na">a=</span><span class="s">&quot;b&quot;</span><span class="w"> </span><span class="na">c=</span><span class="s">&quot;d&quot;</span><span class="nt">&gt;&lt;item&gt;</span>4<span class="nt">&lt;/item&gt;&lt;item&gt;</span>5<span class="nt">&lt;/item&gt;&lt;item&gt;</span>6<span class="nt">&lt;/item&gt;&lt;/list&gt;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.escape_xml">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">escape_xml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#escape_xml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.escape_xml" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.get_unique_id">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">get_unique_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#get_unique_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.get_unique_id" title="Link to this definition">#</a></dt>
+<dd><p>Returns a unique id for a given element</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.get_xml_type">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">get_xml_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">date</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#get_xml_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.get_xml_type" title="Link to this definition">#</a></dt>
+<dd><p>Returns the data type for the xml type attribute</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.is_primitive_type">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">is_primitive_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#is_primitive_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.is_primitive_type" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.key_is_valid_xml">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">key_is_valid_xml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#key_is_valid_xml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.key_is_valid_xml" title="Link to this definition">#</a></dt>
+<dd><p>Checks that a key is a valid XML name</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.list2xml_str">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">list2xml_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attr_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cdata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_wrap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_headers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#list2xml_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.list2xml_str" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.make_attrstring">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">make_attrstring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#make_attrstring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.make_attrstring" title="Link to this definition">#</a></dt>
+<dd><p>Returns an attribute string in the form key=”val”</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.make_id">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">make_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">999999</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#make_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.make_id" title="Link to this definition">#</a></dt>
+<dd><p>Returns a random integer</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.make_valid_xml_name">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">make_valid_xml_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#make_valid_xml_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.make_valid_xml_name" title="Link to this definition">#</a></dt>
+<dd><p>Tests an XML name and fixes it if invalid</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.dicttoxml.wrap_cdata">
+<span class="sig-prename descclassname"><span class="pre">json2xml.dicttoxml.</span></span><span class="sig-name descname"><span class="pre">wrap_cdata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Number</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/json2xml/dicttoxml.html#wrap_cdata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.dicttoxml.wrap_cdata" title="Link to this definition">#</a></dt>
+<dd><p>Wraps a string into CDATA sections</p>
+</dd></dl>
+
+</section>
+<section id="module-json2xml.json2xml">
+<span id="json2xml-json2xml-module"></span><h2>json2xml.json2xml module<a class="headerlink" href="#module-json2xml.json2xml" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="json2xml.json2xml.Json2xml">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">json2xml.json2xml.</span></span><span class="sig-name descname"><span class="pre">Json2xml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wrapper</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pretty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item_wrap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/json2xml/json2xml.html#Json2xml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.json2xml.Json2xml" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Wrapper class to convert the data to xml</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="json2xml.json2xml.Json2xml.to_xml">
+<span class="sig-name descname"><span class="pre">to_xml</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/json2xml/json2xml.html#Json2xml.to_xml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.json2xml.Json2xml.to_xml" title="Link to this definition">#</a></dt>
+<dd><p>Convert to xml using dicttoxml.dicttoxml and then pretty print it.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-json2xml.utils">
+<span id="json2xml-utils-module"></span><h2>json2xml.utils module<a class="headerlink" href="#module-json2xml.utils" title="Link to this heading">#</a></h2>
+<p>Utils methods to convert XML data to dict from various sources</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="json2xml.utils.InvalidDataError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">json2xml.utils.</span></span><span class="sig-name descname"><span class="pre">InvalidDataError</span></span><a class="reference internal" href="_modules/json2xml/utils.html#InvalidDataError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.utils.InvalidDataError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="json2xml.utils.JSONReadError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">json2xml.utils.</span></span><span class="sig-name descname"><span class="pre">JSONReadError</span></span><a class="reference internal" href="_modules/json2xml/utils.html#JSONReadError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.utils.JSONReadError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="json2xml.utils.StringReadError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">json2xml.utils.</span></span><span class="sig-name descname"><span class="pre">StringReadError</span></span><a class="reference internal" href="_modules/json2xml/utils.html#StringReadError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.utils.StringReadError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="json2xml.utils.URLReadError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">json2xml.utils.</span></span><span class="sig-name descname"><span class="pre">URLReadError</span></span><a class="reference internal" href="_modules/json2xml/utils.html#URLReadError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.utils.URLReadError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.utils.readfromjson">
+<span class="sig-prename descclassname"><span class="pre">json2xml.utils.</span></span><span class="sig-name descname"><span class="pre">readfromjson</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/json2xml/utils.html#readfromjson"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.utils.readfromjson" title="Link to this definition">#</a></dt>
+<dd><p>Reads a json string and emits json string</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.utils.readfromstring">
+<span class="sig-prename descclassname"><span class="pre">json2xml.utils.</span></span><span class="sig-name descname"><span class="pre">readfromstring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jsondata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/json2xml/utils.html#readfromstring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.utils.readfromstring" title="Link to this definition">#</a></dt>
+<dd><p>Loads json from string</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="json2xml.utils.readfromurl">
+<span class="sig-prename descclassname"><span class="pre">json2xml.utils.</span></span><span class="sig-name descname"><span class="pre">readfromurl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/json2xml/utils.html#readfromurl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#json2xml.utils.readfromurl" title="Link to this definition">#</a></dt>
+<dd><p>Loads json from an URL over the internets</p>
+</dd></dl>
+
+</section>
+<section id="module-json2xml">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-json2xml" title="Link to this heading">#</a></h2>
+<p>Top-level package for json2xml.</p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="contributing.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Contributing</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="modules.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">json2xml</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2019, Vinit Kumar
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">json2xml package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-json2xml.dicttoxml">json2xml.dicttoxml module</a><ul>
+<li><a class="reference internal" href="#json2xml.dicttoxml.LOG"><code class="docutils literal notranslate"><span class="pre">LOG</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.convert"><code class="docutils literal notranslate"><span class="pre">convert()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.convert_bool"><code class="docutils literal notranslate"><span class="pre">convert_bool()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.convert_dict"><code class="docutils literal notranslate"><span class="pre">convert_dict()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.convert_kv"><code class="docutils literal notranslate"><span class="pre">convert_kv()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.convert_list"><code class="docutils literal notranslate"><span class="pre">convert_list()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.convert_none"><code class="docutils literal notranslate"><span class="pre">convert_none()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.default_item_func"><code class="docutils literal notranslate"><span class="pre">default_item_func()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.dict2xml_str"><code class="docutils literal notranslate"><span class="pre">dict2xml_str()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.dicttoxml"><code class="docutils literal notranslate"><span class="pre">dicttoxml()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.escape_xml"><code class="docutils literal notranslate"><span class="pre">escape_xml()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.get_unique_id"><code class="docutils literal notranslate"><span class="pre">get_unique_id()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.get_xml_type"><code class="docutils literal notranslate"><span class="pre">get_xml_type()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.is_primitive_type"><code class="docutils literal notranslate"><span class="pre">is_primitive_type()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.key_is_valid_xml"><code class="docutils literal notranslate"><span class="pre">key_is_valid_xml()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.list2xml_str"><code class="docutils literal notranslate"><span class="pre">list2xml_str()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.make_attrstring"><code class="docutils literal notranslate"><span class="pre">make_attrstring()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.make_id"><code class="docutils literal notranslate"><span class="pre">make_id()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.make_valid_xml_name"><code class="docutils literal notranslate"><span class="pre">make_valid_xml_name()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.dicttoxml.wrap_cdata"><code class="docutils literal notranslate"><span class="pre">wrap_cdata()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-json2xml.json2xml">json2xml.json2xml module</a><ul>
+<li><a class="reference internal" href="#json2xml.json2xml.Json2xml"><code class="docutils literal notranslate"><span class="pre">Json2xml</span></code></a><ul>
+<li><a class="reference internal" href="#json2xml.json2xml.Json2xml.to_xml"><code class="docutils literal notranslate"><span class="pre">Json2xml.to_xml()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-json2xml.utils">json2xml.utils module</a><ul>
+<li><a class="reference internal" href="#json2xml.utils.InvalidDataError"><code class="docutils literal notranslate"><span class="pre">InvalidDataError</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.utils.JSONReadError"><code class="docutils literal notranslate"><span class="pre">JSONReadError</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.utils.StringReadError"><code class="docutils literal notranslate"><span class="pre">StringReadError</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.utils.URLReadError"><code class="docutils literal notranslate"><span class="pre">URLReadError</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.utils.readfromjson"><code class="docutils literal notranslate"><span class="pre">readfromjson()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.utils.readfromstring"><code class="docutils literal notranslate"><span class="pre">readfromstring()</span></code></a></li>
+<li><a class="reference internal" href="#json2xml.utils.readfromurl"><code class="docutils literal notranslate"><span class="pre">readfromurl()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-json2xml">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=3304f9e4"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=32e29ea5"></script>
+    </body>
+</html>

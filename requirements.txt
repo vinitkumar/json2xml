@@ -6,5 +6,5 @@
 #
 defusedxml==0.7.1
     # via -r requirements.in
-urllib3==1.26.13
+urllib3==1.26.17
     # via -r requirements.in

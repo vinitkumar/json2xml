@@ -3,7 +3,6 @@ from __future__ import annotations
 import datetime
 import logging
 import numbers
-import os
 from collections.abc import Callable, Sequence
 from random import SystemRandom
 from typing import Any, Dict, Union
@@ -270,7 +269,7 @@ def dict2xml_str(
     val_attr: dict[str, str] = item.pop("@attrs", attr)  # update attr with custom @attr if exists
     rawitem = item["@val"] if "@val" in item else item
     if is_primitive_type(rawitem):
-        if isinstance(rawitem , str):
+        if isinstance(rawitem, str):
             subtree = escape_xml(rawitem)
         else:
             subtree = rawitem
@@ -702,4 +701,3 @@ def dicttoxml(
         )
 
     return "".join(output).encode("utf-8")
-

@@ -1,6 +1,19 @@
 History
 =======
 
+4.0.1 / 2023-10-13
+==================
+
+  * feat: get local working for 3.12 and fix some code quality issue
+  * Fix/make docs better (#186)
+  * fix: issue with hardcoded year
+  * feat: upgrade sphinx theme
+  * fix: issues with ruff linting, use isinstance in place of type
+  * fix: make readme better
+  * chore(deps): bump tornado from 6.3.2 to 6.3.3 in /docs (#185)
+  * chore(deps): bump certifi from 2022.12.7 to 2023.7.22 in /docs (#183)
+  * chore(deps): bump pygments from 2.10.0 to 2.15.0 in /docs (#182)
+
 4.0.0 / 2023-07-19
 ==================
 

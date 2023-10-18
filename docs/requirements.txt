@@ -86,7 +86,7 @@ sphinxcontrib-serializinghtml==1.1.9
     # via sphinx
 tornado==6.3.3
     # via livereload
-urllib3==1.26.17
+urllib3==1.26.18
     # via requests
 waitress==2.1.2
     # via webtest

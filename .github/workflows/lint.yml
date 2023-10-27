@@ -45,4 +45,5 @@ jobs:
           linters: mypy
           run: |
             mypy json2xml
+            mypy tests
 

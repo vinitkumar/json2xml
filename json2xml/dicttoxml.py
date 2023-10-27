@@ -209,18 +209,12 @@ def convert(
         return convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata)
 
     if isinstance(obj, numbers.Number):
-        return convert_kv(
-            key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
-        )
+        return convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata)
 
     if isinstance(obj, str):
-        return convert_kv(
-            key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
-        )
+        return convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata)
 
-    if hasattr(obj, "isoformat") and isinstance(
-        obj, (datetime.datetime, datetime.date)
-    ):
+    if hasattr(obj, "isoformat") and isinstance(obj, (datetime.datetime, datetime.date)):
         return convert_kv(
             key=item_name,
             val=obj.isoformat(),
@@ -275,9 +269,7 @@ def dict2xml_str(
             subtree = rawitem
     else:
         # we can not use convert_dict, because rawitem could be non-dict
-        subtree = convert(
-            rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers=list_headers
-        )
+        subtree = convert(rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers=list_headers)
 
     if parentIsList and list_headers:
         if len(val_attr) > 0 and not item_wrap:
@@ -317,7 +309,7 @@ def list2xml_str(
         item_func=item_func,
         cdata=cdata,
         item_wrap=item_wrap,
-        list_headers=list_headers
+        list_headers=list_headers,
     )
     if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap):
         return subtree
@@ -335,7 +327,7 @@ def convert_dict(
     item_func: Callable[[str], str],
     cdata: bool,
     item_wrap: bool,
-    list_headers: bool = False
+    list_headers: bool = False,
 ) -> str:
     """Converts a dict into an XML string."""
     output: list[str] = []
@@ -354,11 +346,7 @@ def convert_dict(
             addline(convert_bool(key, val, attr_type, attr, cdata))
 
         elif isinstance(val, (numbers.Number, str)):
-            addline(
-                convert_kv(
-                    key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
-                )
-            )
+            addline(convert_kv(key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata))
 
         elif hasattr(val, "isoformat"):  # datetime
             addline(
@@ -373,11 +361,7 @@ def convert_dict(
 
         elif isinstance(val, dict):
             addline(
-                dict2xml_str(
-                    attr_type, attr, val, item_func, cdata, key, item_wrap,
-                    False,
-                    list_headers=list_headers
-                )
+                dict2xml_str(attr_type, attr, val, item_func, cdata, key, item_wrap, False, list_headers=list_headers)
             )
 
         elif isinstance(val, Sequence):
@@ -390,7 +374,7 @@ def convert_dict(
                     cdata=cdata,
                     item_name=key,
                     item_wrap=item_wrap,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -475,7 +459,7 @@ def convert_list(
                     item_wrap=item_wrap,
                     parentIsList=True,
                     parent=parent,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -489,7 +473,7 @@ def convert_list(
                     cdata=cdata,
                     item_name=item_name,
                     item_wrap=item_wrap,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -517,9 +501,7 @@ def convert_kv(
     return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
 
 
-def convert_bool(
-    key: str, val: bool, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
-) -> str:
+def convert_bool(key: str, val: bool, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False) -> str:
     """Converts a boolean into an XML element"""
     key, attr = make_valid_xml_name(key, attr)
 
@@ -529,9 +511,7 @@ def convert_bool(
     return f"<{key}{attr_string}>{str(val).lower()}</{key}>"
 
 
-def convert_none(
-    key: str, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
-) -> str:
+def convert_none(key: str, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False) -> str:
     """Converts a null value into an XML element"""
     key, attr = make_valid_xml_name(key, attr)
 
@@ -551,7 +531,7 @@ def dicttoxml(
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,
     xml_namespaces: dict[str, Any] = {},
-    list_headers: bool = False
+    list_headers: bool = False,
 ) -> bytes:
     """
     Converts a python object into XML.
@@ -672,16 +652,16 @@ def dicttoxml(
     output = []
     namespace_str = ""
     for prefix in xml_namespaces:
-        if prefix == 'xsi':
+        if prefix == "xsi":
             for schema_att in xml_namespaces[prefix]:
-                if schema_att == 'schemaInstance':
-                    ns = xml_namespaces[prefix]['schemaInstance']
+                if schema_att == "schemaInstance":
+                    ns = xml_namespaces[prefix]["schemaInstance"]
                     namespace_str += f' xmlns:{prefix}="{ns}"'
-                elif schema_att == 'schemaLocation':
+                elif schema_att == "schemaLocation":
                     ns = xml_namespaces[prefix][schema_att]
                     namespace_str += f' xsi:{schema_att}="{ns}"'
 
-        elif prefix == 'xmlns':
+        elif prefix == "xmlns":
             # xmns needs no prefix
             ns = xml_namespaces[prefix]
             namespace_str += f' xmlns="{ns}"'
@@ -696,8 +676,6 @@ def dicttoxml(
         )
         output.append(f"<{custom_root}{namespace_str}>{output_elem}</{custom_root}>")
     else:
-        output.append(
-            convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
-        )
+        output.append(convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers))
 
     return "".join(output).encode("utf-8")

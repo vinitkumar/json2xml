@@ -77,9 +77,7 @@ class TestJson2xml:
 
     def test_read_from_invalid_jsonstring(self):
         with pytest.raises(StringReadError) as pytest_wrapped_e:
-            readfromstring(
-                '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"'
-            )
+            readfromstring('{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"')
         assert pytest_wrapped_e.type == StringReadError
 
     def test_json_to_xml_conversion(self):
@@ -115,33 +113,27 @@ class TestJson2xml:
         pytest.raises(ExpatError, xmltodict.parse, xmldata)
 
     def test_item_wrap(self):
-        data = readfromstring(
-            '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}'
-        )
+        data = readfromstring('{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}')
         xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # item must be present within my_items
-        assert "item" in old_dict['all']['my_items']
-        assert "item" in old_dict['all']['my_str_items']
+        assert "item" in old_dict["all"]["my_items"]
+        assert "item" in old_dict["all"]["my_str_items"]
 
     def test_no_item_wrap(self):
-        data = readfromstring(
-            '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}'
-        )
+        data = readfromstring('{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}')
         xmldata = json2xml.Json2xml(data, pretty=False, item_wrap=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # my_item must be present within my_items
-        assert "my_item" in old_dict['all']['my_items']
-        assert "my_str_items" in old_dict['all']
+        assert "my_item" in old_dict["all"]["my_items"]
+        assert "my_str_items" in old_dict["all"]
 
     def test_empty_array(self):
-        data = readfromstring(
-            '{"empty_list":[]}'
-        )
+        data = readfromstring('{"empty_list":[]}')
         xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # item empty_list be present within all
-        assert "empty_list" in old_dict['all']
+        assert "empty_list" in old_dict["all"]
 
     def test_attrs(self):
         data = readfromstring(
@@ -150,29 +142,32 @@ class TestJson2xml:
         xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         old_dict = xmltodict.parse(xmldata)
         # test all attrs
-        assert "str" == old_dict['all']['my_string']['@type']
-        assert "int" == old_dict['all']['my_int']['@type']
-        assert "float" == old_dict['all']['my_float']['@type']
-        assert "bool" == old_dict['all']['my_bool']['@type']
-        assert "null" == old_dict['all']['my_null']['@type']
-        assert "list" == old_dict['all']['empty_list']['@type']
-        assert "dict" == old_dict['all']['empty_dict']['@type']
+        assert "str" == old_dict["all"]["my_string"]["@type"]
+        assert "int" == old_dict["all"]["my_int"]["@type"]
+        assert "float" == old_dict["all"]["my_float"]["@type"]
+        assert "bool" == old_dict["all"]["my_bool"]["@type"]
+        assert "null" == old_dict["all"]["my_null"]["@type"]
+        assert "list" == old_dict["all"]["empty_list"]["@type"]
+        assert "dict" == old_dict["all"]["empty_dict"]["@type"]
 
     def test_dicttoxml_bug(self):
         input_dict = {
-            'response': {
-                'results': {
-                    'user': [{
-                        'name': 'Ezequiel', 'age': '33', 'city': 'San Isidro'
-                    }, {
-                        'name': 'Belén', 'age': '30', 'city': 'San Isidro'}]}}}
+            "response": {
+                "results": {
+                    "user": [
+                        {"name": "Ezequiel", "age": "33", "city": "San Isidro"},
+                        {"name": "Belén", "age": "30", "city": "San Isidro"},
+                    ]
+                }
+            }
+        }
 
         xmldata = json2xml.Json2xml(
-            json.dumps(input_dict), wrapper='response', pretty=False, attr_type=False, item_wrap=False
+            json.dumps(input_dict), wrapper="response", pretty=False, attr_type=False, item_wrap=False
         ).to_xml()
 
         old_dict = xmltodict.parse(xmldata)
-        assert 'response' in old_dict.keys()
+        assert "response" in old_dict.keys()
 
     def test_bad_data(self):
         data = b"!\0a8f"
@@ -186,35 +181,32 @@ class TestJson2xml:
         data = readfromjson("examples/booleanjson.json")
         result = json2xml.Json2xml(data).to_xml()
         dict_from_xml = xmltodict.parse(result)
-        assert dict_from_xml["all"]["boolean"]["#text"] != 'True'
-        assert dict_from_xml["all"]["boolean"]["#text"] == 'true'
-        assert dict_from_xml["all"]["boolean_dict_list"]["item"][0]["boolean_dict"]["boolean"]["#text"] == 'true'
-        assert dict_from_xml["all"]["boolean_dict_list"]["item"][1]["boolean_dict"]["boolean"]["#text"] == 'false'
-        assert dict_from_xml["all"]["boolean_list"]["item"][0]["#text"] == 'true'
-        assert dict_from_xml["all"]["boolean_list"]["item"][1]["#text"] == 'false'
+        assert dict_from_xml["all"]["boolean"]["#text"] != "True"
+        assert dict_from_xml["all"]["boolean"]["#text"] == "true"
+        assert dict_from_xml["all"]["boolean_dict_list"]["item"][0]["boolean_dict"]["boolean"]["#text"] == "true"
+        assert dict_from_xml["all"]["boolean_dict_list"]["item"][1]["boolean_dict"]["boolean"]["#text"] == "false"
+        assert dict_from_xml["all"]["boolean_list"]["item"][0]["#text"] == "true"
+        assert dict_from_xml["all"]["boolean_list"]["item"][1]["#text"] == "false"
 
     def test_read_boolean_data_from_json2(self):
         """Test correct return for boolean types."""
         data = readfromjson("examples/booleanjson2.json")
         result = json2xml.Json2xml(data).to_xml()
         dict_from_xml = xmltodict.parse(result)
-        assert dict_from_xml["all"]["boolean_list"]["item"][0]["#text"] != 'True'
-        assert dict_from_xml["all"]["boolean_list"]["item"][0]["#text"] == 'true'
-        assert dict_from_xml["all"]["boolean_list"]["item"][1]["#text"] == 'false'
-        assert dict_from_xml["all"]["number_array"]["item"][0]["#text"] == '1'
-        assert dict_from_xml["all"]["number_array"]["item"][1]["#text"] == '2'
-        assert dict_from_xml["all"]["number_array"]["item"][2]["#text"] == '3'
-        assert dict_from_xml["all"]["string_array"]["item"][0]["#text"] == 'a'
-        assert dict_from_xml["all"]["string_array"]["item"][1]["#text"] == 'b'
-        assert dict_from_xml["all"]["string_array"]["item"][2]["#text"] == 'c'
+        assert dict_from_xml["all"]["boolean_list"]["item"][0]["#text"] != "True"
+        assert dict_from_xml["all"]["boolean_list"]["item"][0]["#text"] == "true"
+        assert dict_from_xml["all"]["boolean_list"]["item"][1]["#text"] == "false"
+        assert dict_from_xml["all"]["number_array"]["item"][0]["#text"] == "1"
+        assert dict_from_xml["all"]["number_array"]["item"][1]["#text"] == "2"
+        assert dict_from_xml["all"]["number_array"]["item"][2]["#text"] == "3"
+        assert dict_from_xml["all"]["string_array"]["item"][0]["#text"] == "a"
+        assert dict_from_xml["all"]["string_array"]["item"][1]["#text"] == "b"
+        assert dict_from_xml["all"]["string_array"]["item"][2]["#text"] == "c"
 
     def test_dict_attr_crash(self):
         data = data = {
             "product": {
-                "@attrs": {
-                    "attr_name": "attr_value",
-                    "a": "b"
-                },
+                "@attrs": {"attr_name": "attr_value", "a": "b"},
                 "@val": [],
             },
         }

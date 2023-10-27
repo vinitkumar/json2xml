@@ -25,9 +25,7 @@ class TestDict2xml:
     def test_dict2xml_with_xmlns_namespaces(self):
         data = {"ns1:node1": "data in namespace 1", "ns2:node2": "data in namespace 2"}
         namespaces = {"xmlns": "http://www.w3.org/1999/XSL/Transform"}
-        result = dicttoxml.dicttoxml(
-            obj=data, attr_type=False, xml_namespaces=namespaces
-        )
+        result = dicttoxml.dicttoxml(obj=data, attr_type=False, xml_namespaces=namespaces)
         assert (
             b'<?xml version="1.0" encoding="UTF-8" ?>'
             b'<root xmlns="http://www.w3.org/1999/XSL/Transform">'
@@ -45,9 +43,7 @@ class TestDict2xml:
                 "schemaLocation": "https://www.w3schools.com/note.xsd",
             }
         }
-        result = dicttoxml.dicttoxml(
-            data, custom_root=wrapper, xml_namespaces=namespaces, attr_type=False
-        )
+        result = dicttoxml.dicttoxml(data, custom_root=wrapper, xml_namespaces=namespaces, attr_type=False)
         print(result)
         assert (
             b'<?xml version="1.0" encoding="UTF-8" ?>'
@@ -68,9 +64,7 @@ class TestDict2xml:
                 "schemaLocation": "https://www.w3schools.com",
             },
         }
-        result = dicttoxml.dicttoxml(
-            data, custom_root=wrapper, xml_namespaces=xml_namespace, attr_type=False
-        ).decode()
+        result = dicttoxml.dicttoxml(data, custom_root=wrapper, xml_namespaces=xml_namespace, attr_type=False).decode()
         print(result)
         assert (
             '<?xml version="1.0" encoding="UTF-8" ?>'
@@ -83,16 +77,12 @@ class TestDict2xml:
 
     def test_item_wrap_true(self):
         data = {"bike": ["blue", "green"]}
-        result = dicttoxml.dicttoxml(
-            obj=data, root=False, attr_type=False, item_wrap=True
-        )
+        result = dicttoxml.dicttoxml(obj=data, root=False, attr_type=False, item_wrap=True)
         assert result == b"<bike><item>blue</item><item>green</item></bike>"
 
     def test_item_wrap_false(self):
         data = {"bike": ["blue", "green"]}
-        result = dicttoxml.dicttoxml(
-            obj=data, root=False, attr_type=False, item_wrap=False
-        )
+        result = dicttoxml.dicttoxml(obj=data, root=False, attr_type=False, item_wrap=False)
         assert result == b"<bike>blue</bike><bike>green</bike>"
 
     def test_dict2xml_with_flat(self):
@@ -131,55 +121,37 @@ class TestDict2xml:
         dict_without_attrs = {"Bicycles": "Wheels & Steers"}
         root = False
         attr_type = False
-        result = dicttoxml.dicttoxml(
-            dict_without_attrs, root=root, attr_type=attr_type
-        ).decode("UTF-8")
+        result = dicttoxml.dicttoxml(dict_without_attrs, root=root, attr_type=attr_type).decode("UTF-8")
         assert "<Bicycles>Wheels &amp; Steers</Bicycles>" == result
 
     def test_dict2xml_with_ampsersand_and_attrs(self):
-        dict_with_attrs = {
-            "Bicycles": {"@attrs": {"xml:lang": "nl"}, "@val": "Wheels & Steers"}
-        }
+        dict_with_attrs = {"Bicycles": {"@attrs": {"xml:lang": "nl"}, "@val": "Wheels & Steers"}}
         root = False
-        assert (
-            '<Bicycles xml:lang="nl">Wheels &amp; Steers</Bicycles>'
-            == dicttoxml.dicttoxml(dict_with_attrs, root=root, attr_type=False).decode(
-                "UTF-8"
-            )
-        )
+        assert '<Bicycles xml:lang="nl">Wheels &amp; Steers</Bicycles>' == dicttoxml.dicttoxml(
+            dict_with_attrs, root=root, attr_type=False
+        ).decode("UTF-8")
 
     @pytest.fixture
     def dict_with_attrs(self) -> dict:
         return {
-            'transportation-mode': [
-                {
-                    '@attrs': {'xml:lang': 'nl'},
-                    '@val': 'Fiets'
-                },
-                {
-                    '@attrs': {'xml:lang': 'nl'},
-                    '@val': 'Bus'
-                },
-                {
-                    '@attrs': {'xml:lang': 'en'},
-                    '@val': 'Bike'
-                }
+            "transportation-mode": [
+                {"@attrs": {"xml:lang": "nl"}, "@val": "Fiets"},
+                {"@attrs": {"xml:lang": "nl"}, "@val": "Bus"},
+                {"@attrs": {"xml:lang": "en"}, "@val": "Bike"},
             ]
         }
 
     def test_dict2xml_list_items_with_attrs(self, dict_with_attrs):
-        '''With list headers = True
-        '''
+        """With list headers = True"""
 
-        wanted_xml_result = b'<transportation-mode xml:lang="nl">Fiets</transportation-mode>' \
-                            b'<transportation-mode xml:lang="nl">Bus</transportation-mode>' \
-                            b'<transportation-mode xml:lang="en">Bike</transportation-mode>'
+        wanted_xml_result = (
+            b'<transportation-mode xml:lang="nl">Fiets</transportation-mode>'
+            b'<transportation-mode xml:lang="nl">Bus</transportation-mode>'
+            b'<transportation-mode xml:lang="en">Bike</transportation-mode>'
+        )
         xml_result = dicttoxml.dicttoxml(
-            dict_with_attrs,
-            root=False,
-            attr_type=False,
-            item_wrap=False,
-            list_headers=True)
+            dict_with_attrs, root=False, attr_type=False, item_wrap=False, list_headers=True
+        )
 
         assert xml_result == wanted_xml_result
 
@@ -247,10 +219,7 @@ class TestDict2xml:
             list_headers=True,
         )
         print(con_list)
-        assert (
-            "<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>"
-            == con_list
-        )
+        assert "<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>" == con_list
 
     def test_dict2xml_str_list_header(self):
         from json2xml.dicttoxml import dict2xml_str
@@ -275,22 +244,13 @@ class TestDict2xml:
 
     def test_list_headers(self):
         dict = {"Bike": [{"frame_color": "red"}, {"frame_color": "green"}]}
-        result = dicttoxml.dicttoxml(
-            dict, root=False, item_wrap=False, attr_type=False, list_headers=True
-        )
+        result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
         print(result)
-        assert (
-            b"<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>"
-            == result
-        )
+        assert b"<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>" == result
 
     def test_list_headers_nested(self):
-        dict = {
-            "transport": {"Bike": [{"frame_color": "red"}, {"frame_color": "green"}]}
-        }
-        result = dicttoxml.dicttoxml(
-            dict, root=False, item_wrap=False, attr_type=False, list_headers=True
-        )
+        dict = {"transport": {"Bike": [{"frame_color": "red"}, {"frame_color": "green"}]}}
+        result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
         assert (
             b"<transport><Bike><frame_color>red</frame_color></Bike>"
             b"<Bike><frame_color>green</frame_color></Bike></transport>" == result
@@ -298,9 +258,7 @@ class TestDict2xml:
 
     def test_list_headers_root(self):
         dict = {"Bike": [{"frame_color": "red"}, {"frame_color": "green"}]}
-        result = dicttoxml.dicttoxml(
-            dict, root=True, item_wrap=False, attr_type=False, list_headers=True
-        )
+        result = dicttoxml.dicttoxml(dict, root=True, item_wrap=False, attr_type=False, list_headers=True)
         assert (
             b'<?xml version="1.0" encoding="UTF-8" ?><root>'
             b"<Bike><frame_color>red</frame_color></Bike>"
@@ -315,18 +273,12 @@ class TestDict2xml:
     def test_dict2xml_with_root(self):
         payload = {"mock": "payload"}
         result = dicttoxml.dicttoxml(payload, attr_type=False)
-        assert (
-            b'<?xml version="1.0" encoding="UTF-8" ?><root><mock>payload</mock></root>'
-            == result
-        )
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><root><mock>payload</mock></root>' == result
 
     def test_dict2xml_with_custom_root(self):
         payload = {"mock": "payload"}
         result = dicttoxml.dicttoxml(payload, attr_type=False, custom_root="element")
-        assert (
-            b'<?xml version="1.0" encoding="UTF-8" ?><element><mock>payload</mock></element>'
-            == result
-        )
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><element><mock>payload</mock></element>' == result
 
     def test_dict2xml_with_item_func(self):
         data = {"flat_list@flat": [1, 2, 3], "non_flat_list": [4, 5, 6]}
@@ -340,9 +292,7 @@ class TestDict2xml:
 
     def test_dict2xml_with_item_func_issue_151(self):
         data = [{"x": [1]}]
-        result = dicttoxml.dicttoxml(
-            data, root=False, attr_type=False, item_func=lambda y: y + "item"
-        )
+        result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_func=lambda y: y + "item")
         print(result)
         assert b"<item><x><xitem>1</xitem></x></item>" == result
 
@@ -365,31 +315,25 @@ class TestDict2xml:
 
         expected = '<item_name type="datetime">2023-02-15 12:30:45</item_name>'
 
-        assert dicttoxml.convert_kv(
-            key='item_name',
-            val=dt,
-            attr_type='datetime',
-            attr={},
-            cdata=False
-        ) == expected
+        assert dicttoxml.convert_kv(key="item_name", val=dt, attr_type="datetime", attr={}, cdata=False) == expected
 
     # write test for bool test
     def test_basic_conversion(self):
-        xml = dicttoxml.convert_bool('key', True, False)
-        assert xml == '<key>true</key>'
+        xml = dicttoxml.convert_bool("key", True, False)
+        assert xml == "<key>true</key>"
 
     def test_with_type_attribute(self):
-        xml = dicttoxml.convert_bool('key', False, True)
+        xml = dicttoxml.convert_bool("key", False, True)
         assert xml == '<key type="bool">false</key>'
 
     def test_with_custom_attributes(self):
-        xml = dicttoxml.convert_bool('key', True, False, {'id': '1'})
+        xml = dicttoxml.convert_bool("key", True, False, {"id": "1"})
         assert xml == '<key id="1">true</key>'
 
     def test_valid_key(self):
-        xml = dicttoxml.convert_bool('valid_key', False, False)
+        xml = dicttoxml.convert_bool("valid_key", False, False)
         assert xml == '<valid_key type="bool">false</valid_key>'
 
     def test_invalid_key(self):
-        xml = dicttoxml.convert_bool('invalid<key>', True, False)
+        xml = dicttoxml.convert_bool("invalid<key>", True, False)
         assert xml == '<key type="bool" name="invalid&lt;key&gt;">true</key>'

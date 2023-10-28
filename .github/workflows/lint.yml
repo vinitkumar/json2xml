@@ -23,8 +23,8 @@ jobs:
           pip install ruff
       - name: Run Ruff
         run: |
-          ruff json2xml
-          ruff tests
+          ruff json2xml/
+          ruff tests/
 
 
   mypy:
@@ -44,6 +44,6 @@ jobs:
         with:
           linters: mypy
           run: |
-            mypy json2xml
-            mypy tests
+            mypy json2xml/
+            mypy tests/
 

@@ -191,7 +191,7 @@ def default_item_func(parent: str) -> str:
 def convert(
     obj: ELEMENT,
     ids: Any,
-    attr_type: bool,
+    attr_type: str,
     item_func: Callable[[str], str],
     cdata: bool,
     item_wrap: bool,
@@ -241,7 +241,7 @@ def is_primitive_type(val: Any) -> bool:
 
 
 def dict2xml_str(
-    attr_type: bool,
+    attr_type: str,
     attr: dict[str, Any],
     item: dict[str, Any],
     item_func: Callable[[str], str],
@@ -285,7 +285,7 @@ def dict2xml_str(
 
 
 def list2xml_str(
-    attr_type: bool,
+    attr_type: str,
     attr: dict[str, Any],
     item: Sequence[Any],
     item_func: Callable[[str], str],
@@ -323,7 +323,7 @@ def convert_dict(
     obj: dict[str, Any],
     ids: list[str],
     parent: str,
-    attr_type: bool,
+    attr_type: str,
     item_func: Callable[[str], str],
     cdata: bool,
     item_wrap: bool,
@@ -391,7 +391,7 @@ def convert_list(
     items: Sequence[Any],
     ids: list[str] | None,
     parent: str,
-    attr_type: bool,
+    attr_type: str,
     item_func: Callable[[str], str],
     cdata: bool,
     item_wrap: bool,
@@ -487,9 +487,9 @@ def convert_list(
 
 def convert_kv(
     key: str,
-    val: str | numbers.Number,
-    attr_type: bool,
-    attr: dict[str, Any] = {},
+    val: Any,
+    attr_type: str,
+    attr: Dict[str, Any],
     cdata: bool = False,
 ) -> str:
     """Converts a number or string into an XML element"""
@@ -511,7 +511,7 @@ def convert_bool(key: str, val: bool, attr_type: bool, attr: dict[str, Any] = {}
     return f"<{key}{attr_string}>{str(val).lower()}</{key}>"
 
 
-def convert_none(key: str, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False) -> str:
+def convert_none(key: str, attr_type: str, attr: dict[str, Any] = {}, cdata: bool = False) -> str:
     """Converts a null value into an XML element"""
     key, attr = make_valid_xml_name(key, attr)
 
@@ -526,7 +526,7 @@ def dicttoxml(
     root: bool = True,
     custom_root: str = "root",
     ids: list[int] | None = None,
-    attr_type: bool = True,
+    attr_type: str = '',
     item_wrap: bool = True,
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,

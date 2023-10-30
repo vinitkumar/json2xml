@@ -1,14 +1,14 @@
 import datetime
 import numbers
+from typing import Dict, List, Any
 
 import pytest
 
 from json2xml import dicttoxml
-from typing import Dict, List, reveal_type
 
 
 @pytest.fixture
-def dict_with_attrs() -> Dict[str, List[Dict[str, Dict[str, str]]]]:
+def dict_with_attrs() -> Dict[str, List[Dict[str, Any]]]:
     return {
         "transportation-mode": [
             {"@attrs": {"xml:lang": "nl"}, "@val": "Fiets"},
@@ -24,6 +24,11 @@ class MyNumber(numbers.Number):
 
     def __hash__(self) -> int:
         return hash(self.value)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, MyNumber):
+            return self.value == other.value
+        return False
 
 
 class TestDict2xml:
@@ -150,7 +155,7 @@ class TestDict2xml:
             dict_with_attrs, root=root, attr_type=False
         ).decode("UTF-8")
 
-    def test_dict2xml_list_items_with_attrs(self, dict_with_attrs) -> None:
+    def test_dict2xml_list_items_with_attrs(self, dict_with_attrs: dict[str, Any]) -> None:
         """With list headers = True"""
 
         wanted_xml_result = (
@@ -302,13 +307,11 @@ class TestDict2xml:
     def test_dict2xml_with_item_func_issue_151(self) -> None:
         data = [{"x": [1]}]
         result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_func=lambda y: y + "item")
-        print(result)
         assert b"<item><x><xitem>1</xitem></x></item>" == result
 
     def test_dict2xml_issue_151(self) -> None:
         data = [{"x": [1]}]
         result = dicttoxml.dicttoxml(data, root=False, attr_type=False)
-        print(result)
         assert b"<item><x><item>1</item></x></item>" == result
 
     def test_dict2xml_attr_type(self) -> None:

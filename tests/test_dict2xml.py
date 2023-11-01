@@ -1,6 +1,6 @@
 import datetime
 import numbers
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 import pytest
 

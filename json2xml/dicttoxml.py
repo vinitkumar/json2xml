@@ -97,7 +97,18 @@ def get_xml_type(val: ELEMENT) -> str:
     return type(val).__name__
 
 
-def escape_xml(s: str | numbers.Number) -> str:
+def escape_xml(s: str | numbers.Number) -> str:"""
+Escapes a given string to be safe for use in XML. 
+
+Replaces special characters like <, >, &, " and ' with their XML entity equivalents.
+
+Args:
+    s (str | numbers.Number): The string to escape.
+
+Returns:
+    str: The escaped string, safe for use in XML.
+"""
+
     """
     Escape a string for use in XML.
 

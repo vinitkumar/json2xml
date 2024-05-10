@@ -1,6 +1,17 @@
 History
 =======
 
+5.0.0 / 2024-05-11
+==================
+
+  * fix: add python3.12
+  * fix: bye bye py 3.9 👋🏻
+  * feat:try python3.13
+  * chore(deps): bump urllib3 from 1.26.13 to 1.26.18 (#192)
+  * feat: get local working for 3.12 and fix some code quality issue
+  * chore(deps): bump certifi from 2022.12.7 to 2023.7.22 in /docs (#183)
+  * chore(deps): bump pygments from 2.10.0 to 2.15.0 in /docs (#182)
+
 4.1.0 / 2023-11-07
 ==================
 

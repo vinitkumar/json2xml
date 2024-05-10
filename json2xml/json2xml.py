@@ -14,7 +14,7 @@ class Json2xml:
     """
     def __init__(
         self,
-        data: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
         wrapper: str = "all",
         root: bool = True,
         pretty: bool = True,
@@ -28,7 +28,7 @@ class Json2xml:
         self.root = root
         self.item_wrap = item_wrap
 
-    def to_xml(self) -> Optional[Any]:
+    def to_xml(self) -> Any | None:
         """
         Convert to xml using dicttoxml.dicttoxml and then pretty print it.
         """

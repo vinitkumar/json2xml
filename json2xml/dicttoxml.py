@@ -63,7 +63,7 @@ ELEMENT = Union[
     datetime.datetime,
     datetime.date,
     None,
-    Dict[str, Any],
+    dict[str, Any],
 ]
 
 

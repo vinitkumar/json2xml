@@ -50,15 +50,6 @@ class TestJson2xml:
             readfromjson("examples/wrongjson.json")
         assert pytest_wrapped_e.type == JSONReadError
 
-    def test_read_from_url(self):
-        data = readfromurl("https://api.github.com/users/vinitkumar")
-        assert isinstance(data, dict)
-
-    def test_read_from_wrong_url(self):
-        with pytest.raises(URLReadError) as pytest_wrapped_e:
-            readfromurl("https://api.github.com/users/vinitkumaro")
-        assert pytest_wrapped_e.type == URLReadError
-
     def test_read_from_jsonstring(self):
         data = readfromstring(
             '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'

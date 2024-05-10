@@ -59,11 +59,11 @@ ELEMENT = Union[
     float,
     bool,
     numbers.Number,
-    Sequence,
+    Sequence[str],
     datetime.datetime,
     datetime.date,
     None,
-    Dict[str, Any],
+    dict[str, Any],
 ]
 
 

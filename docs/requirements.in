@@ -1,4 +1,4 @@
-furo==2023.09.10
+furo==2024.5.6
 sphinx
 sphinx-autobuild
 
@@ -9,3 +9,4 @@ mock
 autodoc
 
 defusedxml
+tornado==6.4.1

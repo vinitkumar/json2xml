@@ -23,8 +23,8 @@ jobs:
           pip install ruff
       - name: Run Ruff
         run: |
-          ruff json2xml
-          ruff tests
+          ruff check json2xml
+          ruff check tests
 
 
   mypy:

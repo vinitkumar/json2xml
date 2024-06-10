@@ -3,10 +3,10 @@
 """Tests for `json2xml` package."""
 
 import json
+from pyexpat import ExpatError
 
 import pytest
 import xmltodict
-from pyexpat import ExpatError
 
 from json2xml import json2xml
 from json2xml.utils import (

@@ -1,6 +1,38 @@
 History
 =======
 
+5.0.2 / 2024-06-10
+==================
+
+  * fix: try beta1 as beta2 fails to untar and extract
+  * fix: lint and deps issue
+  * fix: resolve issues with python 3.13 version and also encoding
+  * fix: CI build failures
+  * fix: generate changelog
+  * Add Python 3.13 support (#201)
+  * chore(deps): bump jinja2 from 3.0.2 to 3.1.3 in /docs (#197)
+  * fix: bump the version to the latest release number
+  * Merge remote-tracking branch 'origin/master'
+  * fix: update changelog for the docs
+  * fix: update to latest version of urllib3 (#195)
+  * chore(deps): bump urllib3 from 1.26.13 to 1.26.18 (#192)
+  * docs: generate changelog
+  * chore: bump version
+  * feat: get local working for 3.12 and fix some code quality issue
+  * feat: add new python3.12 final (#191)
+  * chore(deps): bump urllib3 from 1.26.7 to 1.26.17 in /docs (#190)
+  * Fix/make docs better (#186)
+  * fix: issue with hardcoded year
+  * fix: remove build files
+  * feat: upgrade sphinx theme
+  * fix: upgrade to latest rc2 package
+  * fix: issues with ruff linting, use isinstance in place of type
+  * fix: make readme better
+  * chore(deps): bump tornado from 6.3.2 to 6.3.3 in /docs (#185)
+  * chore: test python312rc1 (#184)
+  * chore(deps): bump certifi from 2022.12.7 to 2023.7.22 in /docs (#183)
+  * chore(deps): bump pygments from 2.10.0 to 2.15.0 in /docs (#182)
+
 5.0.0 / 2024-05-11
 ==================
 

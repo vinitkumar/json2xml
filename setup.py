@@ -5,13 +5,13 @@
 from setuptools import setup, find_packages
 from json2xml import __version__
 
-with open("README.rst") as readme_file:
+with open("README.rst", encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
-with open("HISTORY.rst") as history_file:
+with open("HISTORY.rst", encoding="utf-8") as history_file:
     history = history_file.read()
 
-with open("requirements.in") as requirements_in:
+with open("requirements.in", encoding="utf-8") as requirements_in:
     requirements = [requirements_in.read()]
 
 setup_requirements = []

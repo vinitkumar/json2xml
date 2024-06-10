@@ -1,7 +1,7 @@
+from pyexpat import ExpatError
 from typing import Any, Dict, Optional
 
 from defusedxml.minidom import parseString
-from pyexpat import ExpatError
 
 from json2xml import dicttoxml
 

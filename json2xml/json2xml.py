@@ -1,5 +1,5 @@
 from pyexpat import ExpatError
-from typing import Any, Dict, Optional
+from typing import Any
 
 from defusedxml.minidom import parseString
 

@@ -505,10 +505,12 @@ def convert_kv(
     key: str,
     val: str | numbers.Number,
     attr_type: bool,
-    attr: dict[str, Any] = {},
+    attr: dict[str, Any] | None = None,
     cdata: bool = False,
 ) -> str:
     """Converts a number or string into an XML element"""
+    if attr is None:
+        attr = {}
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -518,9 +520,11 @@ def convert_kv(
 
 
 def convert_bool(
-    key: str, val: bool, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
+    key: str, val: bool, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
 ) -> str:
     """Converts a boolean into an XML element"""
+    if attr is None:
+        attr = {}
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -530,9 +534,11 @@ def convert_bool(
 
 
 def convert_none(
-    key: str, attr_type: bool, attr: dict[str, Any] = {}, cdata: bool = False
+    key: str, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
 ) -> str:
     """Converts a null value into an XML element"""
+    if attr is None:
+        attr = {}
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -669,6 +675,8 @@ def dicttoxml(
         <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
 
     """
+    if xml_namespaces is None:
+        xml_namespaces = {}
     output = []
     namespace_str = ""
     for prefix in xml_namespaces:

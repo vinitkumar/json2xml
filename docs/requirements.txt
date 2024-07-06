@@ -14,7 +14,7 @@ beautifulsoup4==4.10.0
     # via
     #   furo
     #   webtest
-certifi==2023.7.22
+certifi==2024.7.4
     # via requests
 charset-normalizer==2.0.6
     # via requests

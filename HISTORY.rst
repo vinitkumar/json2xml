@@ -1,6 +1,11 @@
 History
 =======
 
+5.0.4 / 2024-08-08
+==================
+
+  * feat: enforce the version requirements in the correct way
+
 5.0.3 / 2024-08-08
 ==================
 

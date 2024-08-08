@@ -49,4 +49,5 @@ setup(
     url="https://github.com/vinitkumar/json2xml",
     version=__version__,
     zip_safe=False,
+    python_requires=">=3.10",
 )

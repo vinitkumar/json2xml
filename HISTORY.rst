@@ -1,6 +1,40 @@
 History
 =======
 
+5.0.3 / 2024-08-08
+==================
+
+  * feat: remove python 3.9, python 3.8 from setup identifier
+  * feat: update 3.13 to beta3 (#208)
+  * chore(deps): bump urllib3 from 1.26.18 to 1.26.19 (#207)
+  * chore(deps): bump certifi from 2023.7.22 to 2024.7.4 in /docs (#206)
+  * chore(deps): bump urllib3 from 1.26.18 to 1.26.19 in /docs (#205)
+  * feat: update to actions to v20 of node
+  * fix: dependabot security issues and a new release version
+  * fix: try beta1 as beta2 fails to untar and extract
+  * fix: lint and deps issue
+  * fix: resolve issues with python 3.13 version and also encoding
+  * fix: CI build failures
+  * fix: update changelog for the docs
+  * fix: update to latest version of urllib3 (#195)
+  * chore(deps): bump urllib3 from 1.26.13 to 1.26.18 (#192)
+  * docs: generate changelog
+  * chore: bump version
+  * feat: get local working for 3.12 and fix some code quality issue
+  * feat: add new python3.12 final (#191)
+  * chore(deps): bump urllib3 from 1.26.7 to 1.26.17 in /docs (#190)
+  * Fix/make docs better (#186)
+  * fix: issue with hardcoded year
+  * fix: remove build files
+  * feat: upgrade sphinx theme
+  * fix: upgrade to latest rc2 package
+  * fix: issues with ruff linting, use isinstance in place of type
+  * fix: make readme better
+  * chore(deps): bump tornado from 6.3.2 to 6.3.3 in /docs (#185)
+  * chore: test python312rc1 (#184)
+  * chore(deps): bump certifi from 2022.12.7 to 2023.7.22 in /docs (#183)
+  * chore(deps): bump pygments from 2.10.0 to 2.15.0 in /docs (#182)
+
 5.0.2 / 2024-06-10
 ==================
 

@@ -213,3 +213,19 @@ class TestJson2xml:
         dict_from_xml = xmltodict.parse(result)
         assert dict_from_xml["all"]["product"]["@attr_name"] == "attr_value"
         assert dict_from_xml["all"]["product"]["@a"] == "b"
+
+    def test_encoding_pretty_print(self) -> None:
+        data = readfromstring(
+            '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
+        )
+        xmldata = json2xml.Json2xml(data, pretty=True).to_xml()
+        if xmldata:
+            assert 'encoding="UTF-8"' in xmldata
+
+    def test_encoding_without_pretty_print(self) -> None:
+        data = readfromstring(
+            '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
+        )
+        xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
+        if xmldata:
+            assert b'encoding="UTF-8"' in xmldata

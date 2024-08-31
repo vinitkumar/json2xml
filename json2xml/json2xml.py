@@ -42,7 +42,7 @@ class Json2xml:
             )
             if self.pretty:
                 try:
-                    result = parseString(xml_data).toprettyxml()
+                    result = parseString(xml_data).toprettyxml(encoding="UTF-8").decode()
                 except ExpatError:
                     raise InvalidDataError
                 return result

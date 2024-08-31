@@ -1,6 +1,13 @@
 History
 =======
 
+5.0.5 / 2024-08-31
+==================
+
+  * tests (json2xml): add test for encoding
+  * fix missing encoding indication on pretty mode (#213)
+  * chore(deps): bump webob from 1.8.7 to 1.8.8 in /docs (#212)
+
 5.0.4 / 2024-08-08
 ==================
 

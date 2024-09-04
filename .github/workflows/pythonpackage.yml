@@ -18,6 +18,16 @@ jobs:
           windows-latest,
           macos-latest,
         ]
+        include:
+          # Add exact version 3.14.0-alpha.0 for ubuntu-latest only
+          - python-version: '3.14.0-alpha.0'
+            os: ubuntu-latest
+        exclude:
+          # Exclude other OSes with Python 3.14.0-alpha.0
+          - python-version: '3.14.0-alpha.0'
+            os: windows-latest
+          - python-version: '3.14.0-alpha.0'
+            os: macos-latest
 
     steps:
     - uses: actions/checkout@v4.1.7

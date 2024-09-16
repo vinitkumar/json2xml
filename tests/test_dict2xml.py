@@ -439,3 +439,8 @@ class TestDict2xml:
         namespaces = {"xmlns": "http://example.com"}
         result = dicttoxml.dicttoxml(data, xml_namespaces=namespaces)
         assert b'xmlns="http://example.com"' in result
+
+    def test_datetime_conversion(self):
+        data = {"key": datetime.datetime(2023, 2, 15, 12, 30, 45)}
+        result = dicttoxml.dicttoxml(data, attr_type=False)
+        assert b"<key>2023-02-15T12:30:45</key>" in result

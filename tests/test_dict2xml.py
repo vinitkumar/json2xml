@@ -390,6 +390,52 @@ class TestDict2xml:
         xml = dicttoxml.convert_bool('valid_key', False, False)
         assert xml == '<valid_key type="bool">false</valid_key>'
 
-    def test_invalid_key(self):
-        xml = dicttoxml.convert_bool('invalid<key>', True, False)
-        assert xml == '<key type="bool" name="invalid&lt;key&gt;">true</key>'
+    def test_convert_kv_with_cdata(self):
+        result = dicttoxml.convert_kv("key", "value", attr_type=False, cdata=True)
+        assert result == "<key><![CDATA[value]]></key>"
+
+    def test_convert_kv_with_attr_type(self):
+        result = dicttoxml.convert_kv("key", 123, attr_type=True)
+        assert result == '<key type="int">123</key>'
+
+    def test_make_valid_xml_name_with_invalid_key(self):
+        key, attr = dicttoxml.make_valid_xml_name("invalid key", {})
+        assert key == "invalid_key"
+        assert attr == {}
+
+    def test_convert_bool_with_attr_type(self):
+        result = dicttoxml.convert_bool("key", True, attr_type=True)
+        assert result == '<key type="bool">true</key>'
+
+    def test_convert_none_with_attr_type(self):
+        result = dicttoxml.convert_none("key", attr_type=True)
+        assert result == '<key type="null"></key>'
+
+
+    def test_make_valid_xml_name_with_numeric_key(self):
+        key, attr = dicttoxml.make_valid_xml_name("123", {})
+        assert key == "n123"
+        assert attr == {}
+
+    def test_escape_xml_with_special_chars(self):
+        result = dicttoxml.escape_xml('This & that < those > these "quotes" \'single quotes\'')
+        assert result == "This &amp; that &lt; those &gt; these &quot;quotes&quot; &apos;single quotes&apos;"
+
+    def test_get_xml_type_with_sequence(self):
+        result = dicttoxml.get_xml_type(["item1", "item2"])
+        assert result == "list"
+
+    def test_get_xml_type_with_none(self):
+        result = dicttoxml.get_xml_type(None)
+        assert result == "null"
+
+    def dicttoxml_with_custom_root(self):
+        data = {"key": "value"}
+        result = dicttoxml.dicttoxml(data, custom_root="custom")
+        assert b"<custom><key>value</key></custom>" in result
+
+    def test_dicttoxml_with_xml_namespaces(self):
+        data = {"key": "value"}
+        namespaces = {"xmlns": "http://example.com"}
+        result = dicttoxml.dicttoxml(data, xml_namespaces=namespaces)
+        assert b'xmlns="http://example.com"' in result

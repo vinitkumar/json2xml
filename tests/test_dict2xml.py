@@ -444,3 +444,58 @@ class TestDict2xml:
         data = {"key": datetime.datetime(2023, 2, 15, 12, 30, 45)}
         result = dicttoxml.dicttoxml(data, attr_type=False)
         assert b"<key>2023-02-15T12:30:45</key>" in result
+
+    def test_list_to_xml_with_primitive_items(self):
+        data = {"items": [1, 2, 3]}
+        result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_wrap=True)
+        assert result == b"<items><item>1</item><item>2</item><item>3</item></items>"
+
+    def test_list_to_xml_with_dict_items(self):
+        data = {"items": [{"key1": "value1"}, {"key2": "value2"}]}
+        result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_wrap=True)
+        assert result == b"<items><item><key1>value1</key1></item><item><key2>value2</key2></item></items>"
+
+    def test_list_to_xml_with_mixed_items(self):
+        data = {"items": [1, "string", {"key": "value"}]}
+        result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_wrap=True)
+        assert result == b"<items><item>1</item><item>string</item><item><key>value</key></item></items>"
+
+    def test_list_to_xml_with_empty_list(self):
+        data = {"items": []}
+        result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_wrap=True)
+        assert result == b"<items></items>"
+
+    def test_list_to_xml_with_special_characters(self):
+        data = {"items": ["<tag>", "&", '"quote"', "'single quote'"]}
+        result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_wrap=True)
+        assert result == b"<items><item>&lt;tag&gt;</item><item>&amp;</item><item>&quot;quote&quot;</item><item>&apos;single quote&apos;</item></items>"
+
+    def datetime_conversion_with_isoformat(self):
+        data = {"key": datetime.datetime(2023, 2, 15, 12, 30, 45)}
+        result = dicttoxml.dicttoxml(data, attr_type=False)
+        assert b"<key>2023-02-15T12:30:45</key>" in result
+
+    def test_date_conversion_with_isoformat(self):
+        data = {"key": datetime.date(2023, 2, 15)}
+        result = dicttoxml.dicttoxml(data, attr_type=False)
+        assert b"<key>2023-02-15</key>" in result
+
+    def test_datetime_conversion_with_attr_type(self):
+        data = {"key": datetime.datetime(2023, 2, 15, 12, 30, 45)}
+        result = dicttoxml.dicttoxml(data, attr_type=True)
+        assert b'<key type="str">2023-02-15T12:30:45</key>' in result
+
+    def test_date_conversion_with_attr_type(self):
+        data = {"key": datetime.date(2023, 2, 15)}
+        result = dicttoxml.dicttoxml(data, attr_type=True)
+        assert b'<key type="str">2023-02-15</key>' in result
+
+    def test_datetime_conversion_with_custom_attributes(self):
+        data = {"key": datetime.datetime(2023, 2, 15, 12, 30, 45)}
+        result = dicttoxml.dicttoxml(data, attr_type=False, custom_root="custom")
+        assert b"<custom><key>2023-02-15T12:30:45</key></custom>" in result
+
+    def test_date_conversion_with_custom_attributes(self):
+        data = {"key": datetime.date(2023, 2, 15)}
+        result = dicttoxml.dicttoxml(data, attr_type=False, custom_root="custom")
+        assert b"<custom><key>2023-02-15</key></custom>" in result

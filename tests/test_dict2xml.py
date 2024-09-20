@@ -470,7 +470,7 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_wrap=True)
         assert result == b"<items><item>&lt;tag&gt;</item><item>&amp;</item><item>&quot;quote&quot;</item><item>&apos;single quote&apos;</item></items>"
 
-    def datetime_conversion_with_isoformat(self):
+    def test_datetime_conversion_with_isoformat(self):
         data = {"key": datetime.datetime(2023, 2, 15, 12, 30, 45)}
         result = dicttoxml.dicttoxml(data, attr_type=False)
         assert b"<key>2023-02-15T12:30:45</key>" in result

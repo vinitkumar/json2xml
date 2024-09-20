@@ -10,7 +10,6 @@ from typing import Any, Dict, Union
 from defusedxml.minidom import parseString
 
 # Create a safe random number generator
-safe_random = SystemRandom()
 
 # Set up logging
 LOG = logging.getLogger("dicttoxml")
@@ -28,6 +27,7 @@ def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
     Returns:
         str: The generated ID.
     """
+    safe_random = SystemRandom()
     return f"{element}_{safe_random.randint(start, end)}"
 
 

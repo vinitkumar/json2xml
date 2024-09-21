@@ -42,13 +42,14 @@ jobs:
         pip install --upgrade -r requirements-dev.txt
         pip install .
     - name: Unit tests
-      run: |
-        coverage run -m pytest
-        coverage xml
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        fail_ci_if_error: true # optional (default = false)
-        name: codecov-umbrella # optional
-        token: ${{ secrets.CODECOV_TOKEN }} # required
-        verbose: true # optional (default = false)
+        run: |
+          pytest --cov --junitxml=junit.xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

@@ -11,3 +11,4 @@ dist/*
 venv
 .vscode
 tests/*.ipynb
+junit.xml

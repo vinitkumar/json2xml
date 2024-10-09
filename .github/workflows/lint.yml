@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5.2.0
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: 'pip'
       - run: |
           python -m pip install --upgrade pip
@@ -36,7 +36,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5.2.0
         with:
-          python-version: '3.12'
+          python-version: '3.13'
           cache: 'pip'
       - run: pip install --upgrade mypy types-requests types-urllib3
       - name: mypy

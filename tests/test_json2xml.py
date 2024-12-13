@@ -20,6 +20,7 @@ from json2xml.utils import (
 )
 
 
+
 class TestJson2xml:
     """Tests for `json2xml` package."""
 
@@ -229,3 +230,26 @@ class TestJson2xml:
         xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
         if xmldata:
             assert b'encoding="UTF-8"' in xmldata
+
+    def test_escapes_angle_brackets(self):
+        json_data = json.dumps({"root": {"@attrs": {"HelpText": "version <here>"}}})
+        result = json2xml.Json2xml(json_data).to_xml()
+        assert 'HelpText="version &lt;here&gt;"' in result
+
+    def test_escapes_quotes(self):
+        json_data = json.dumps({"root": {"@attrs": {"Text": "\"quoted\""}}})
+        result = json2xml.Json2xml(json_data).to_xml()
+        assert 'Text="&quot;quoted&quot;"' in result
+
+    def test_escapes_ampersands(self):
+        json_data = json.dumps({"root": {"@attrs": {"Text": "this & that"}}})
+        result = json2xml.Json2xml(json_data).to_xml()
+        assert 'Text="this &amp; that"' in result
+
+    def test_escapes_mixed_special_chars(self):
+        json_data = json.dumps({"root": {"@attrs": {"Text": "<tag> & \"quote\""}}})
+        result = json2xml.Json2xml(json_data).to_xml()
+        assert 'Text="&lt;tag&gt; &amp; &quot;quote&quot;"' in result
+
+
+

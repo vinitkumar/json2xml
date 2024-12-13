@@ -1,19 +1,53 @@
-[tool.ruff]
-exclude = [
-    ".env",
-    ".venv",
-    "**/migrations/**",
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "json2xml"
+version = "3.21.0"
+authors = [
+    { name = "Vinit Kumar", email = "mail@vinitkumar.me" },
 ]
-lint.ignore = [
-    "E501",  # line too long
-    "F403",  # 'from module import *' used; unable to detect undefined names
-    "E701",  # multiple statements on one line (colon)
-    "F401",  # module imported but unused
+description = "Simple Python Library to convert JSON to XML"
+readme = "README.rst"
+license = { text = "Apache Software License 2.0" }
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-line-length = 119
-lint.select = [
-    "I",
-    "E",
-    "F",
-    "W",
+keywords = ["json2xml"]
+
+dependencies = [
+    "defusedxml>=0.7.1",
+    "requests>=2.31.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/vinitkumar/json2xml"
+Repository = "https://github.com/vinitkumar/json2xml.git"
+
+[tool.setuptools]
+packages = ["json2xml"]
+include-package-data = true
+zip-safe = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra -q"
+
+[project.optional-dependencies]
+test = [
+    "pytest==7.0.1",
+    "py==1.11.0"
 ]

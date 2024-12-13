@@ -13,10 +13,8 @@ from json2xml.utils import (
     InvalidDataError,
     JSONReadError,
     StringReadError,
-    URLReadError,
     readfromjson,
     readfromstring,
-    readfromurl,
 )
 
 

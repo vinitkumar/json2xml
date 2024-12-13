@@ -5,7 +5,7 @@ import logging
 import numbers
 from collections.abc import Callable, Sequence
 from random import SystemRandom
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 from defusedxml.minidom import parseString
 

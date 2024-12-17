@@ -49,9 +49,14 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }}
       run: tox -e ${{matrix.tox-python-version}}
 
-    - name: Upload coverage data
-      uses: actions/upload-artifact@v4
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
       with:
-        name: coverage-data-${{ matrix.python-version }}
         token: ${{ secrets.CODECOV_TOKEN }}
 

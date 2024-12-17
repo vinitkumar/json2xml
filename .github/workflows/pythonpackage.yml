@@ -13,6 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [pypy-3.10, '3.10', '3.11' , '3.12', '3.13']
+        tox-python-version: ['pypy3.10', 'py310', 'py311' , 'py312', 'py313']
         os: [
           ubuntu-latest,
           windows-latest,
@@ -20,36 +21,48 @@ jobs:
         ]
         include:
           # Add exact version 3.14.0-alpha.0 for ubuntu-latest only
-          - python-version: '3.14.0-alpha.0'
+          - python-version: '3.14.0-alpha.1'
+            tox-python-version: py314-full
             os: ubuntu-latest
         exclude:
           # Exclude other OSes with Python 3.14.0-alpha.0
-          - python-version: '3.14.0-alpha.0'
+          - python-version: '3.14.0-alpha.1'
+            tox-python-version: py314-full
             os: windows-latest
-          - python-version: '3.14.0-alpha.0'
+          - python-version: '3.14.0-alpha.1'
             os: macos-latest
+            tox-python-version: py314-full
 
     steps:
-    - uses: actions/checkout@v4.1.7
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5.2.0
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
+    - name: install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        cache-dependency-glob: requirements-dev.txt
+
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install --upgrade -r requirements-dev.txt
-        pip install .
-    - name: Test with pytest
-      run: |
-        pytest --cov --junitxml=junit.xml
+      run: uv pip install --system tox tox-uv
+
+    - name: Run tox targets for ${{ matrix.python-version }}
+      run: tox -e ${{matrix.tox-python-version}}
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+

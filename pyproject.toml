@@ -1,3 +1,56 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "json2xml"
+version = "5.0.5"  # Replace with the dynamic version if needed
+description = "Simple Python Library to convert JSON to XML"
+readme = "README.rst"
+requires-python = ">=3.10"
+license = { text = "Apache Software License 2.0" }
+keywords = ["json2xml"]
+authors = [
+    { name = "Vinit Kumar", email = "mail@vinitkumar.me" }
+]
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+    "defusedxml",
+    "urllib3",
+    "xmltodict>=0.12.0",
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "py",
+    "setuptools",
+]
+
+[project.urls]
+Homepage = "https://github.com/vinitkumar/json2xml"
+
+[tool.setuptools.packages.find]
+include = ["json2xml"]
+
+[project.optional-dependencies]
+test = [
+    "pytest==7.0.1",
+    "py==1.11.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 [tool.ruff]
 exclude = [
     ".env",

@@ -127,7 +127,7 @@ def make_attrstring(attr: dict[str, Any]) -> str:
     Returns:
         str: The string of XML attributes.
     """
-    attrstring = " ".join([f'{k}="{v}"' for k, v in attr.items()])
+    attrstring = " ".join([f'{k}="{escape_xml(v)}"' for k, v in attr.items()])
     return f'{" " if attrstring != "" else ""}{attrstring}'
 
 

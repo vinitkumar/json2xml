@@ -3,7 +3,7 @@ import numbers
 
 import pytest
 
-from json2xml import dicttoxml
+from json2xml import dicttoxml, json2xml
 
 
 class TestDict2xml:

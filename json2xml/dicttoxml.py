@@ -14,6 +14,7 @@ from defusedxml.minidom import parseString
 # Set up logging
 LOG = logging.getLogger("dicttoxml")
 
+_RANDOM = SystemRandom()
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
     """
@@ -27,8 +28,7 @@ def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
     Returns:
         str: The generated ID.
     """
-    safe_random = SystemRandom()
-    return f"{element}_{safe_random.randint(start, end)}"
+    return f"{element}_{_RANDOM.randint(start, end)}"
 
 
 def get_unique_id(element: str) -> str:

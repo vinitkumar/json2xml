@@ -16,6 +16,10 @@ iniconfig==2.0.0
     # via pytest
 mccabe==0.7.0
     # via flake8
+mypy==1.15.0
+    # via -r requirements-dev.in
+mypy-extensions==1.0.0
+    # via mypy
 packaging==24.2
     # via pytest
 pluggy==1.5.0
@@ -32,6 +36,8 @@ pytest==8.3.4
     #   pytest-cov
 pytest-cov==6.0.0
     # via -r requirements-dev.in
+typing-extensions==4.12.2
+    # via mypy
 urllib3==2.3.0
     # via -r /Users/vinitkumar/projects/python/json2xml/requirements.in
 xmltodict==0.14.2

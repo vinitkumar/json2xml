@@ -1,0 +1,9 @@
+# When installing dev dependencies also install the user dependencies
+-r requirements.in
+xmltodict>=0.12.0
+pytest
+pytest-cov
+coverage
+py
+flake8
+setuptools

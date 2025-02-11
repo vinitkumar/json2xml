@@ -5,7 +5,7 @@ import logging
 import numbers
 from collections.abc import Callable, Sequence
 from random import SystemRandom
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, TypeAlias
 
 from defusedxml.minidom import parseString
 
@@ -13,6 +13,13 @@ from defusedxml.minidom import parseString
 
 # Set up logging
 LOG = logging.getLogger("dicttoxml")
+
+XML_TYPES = {"str", "unicode", "int", "long", "float", "bool", "number", "null"}
+XMLValue: TypeAlias = Union[
+    str, int, float, bool, numbers.Number,
+    Sequence[str], datetime.datetime, datetime.date,
+    None, dict[str, Any]
+]
 
 _RANDOM = SystemRandom()
 
@@ -77,24 +84,18 @@ def get_xml_type(val: ELEMENT) -> str:
     Returns:
         str: The XML type.
     """
-    if val is not None:
-        if type(val).__name__ in ("str", "unicode"):
-            return "str"
-        if type(val).__name__ in ("int", "long"):
-            return "int"
-        if type(val).__name__ == "float":
-            return "float"
-        if type(val).__name__ == "bool":
-            return "bool"
-        if isinstance(val, numbers.Number):
-            return "number"
-        if isinstance(val, dict):
-            return "dict"
-        if isinstance(val, Sequence):
-            return "list"
-    else:
+    if val is None:
         return "null"
-    return type(val).__name__
+    type_name = type(val).__name__
+    if type_name in XML_TYPES:
+        return type_name
+    if isinstance(val, numbers.Number):
+        return "number"
+    if isinstance(val, dict):
+        return "dict"
+    if isinstance(val, Sequence):
+        return "list"
+    return type_name
 
 
 def escape_xml(s: str | numbers.Number) -> str:

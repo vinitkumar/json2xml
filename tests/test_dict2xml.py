@@ -499,3 +499,118 @@ class TestDict2xml:
         data = {"key": datetime.date(2023, 2, 15)}
         result = dicttoxml.dicttoxml(data, attr_type=False, custom_root="custom")
         assert b"<custom><key>2023-02-15</key></custom>" in result
+
+    def test_get_xml_type_unsupported(self):
+        """Test get_xml_type with unsupported type."""
+        class CustomClass:
+            pass
+
+        # Should return the class name for unsupported types
+        result = dicttoxml.get_xml_type(CustomClass())
+        assert result == "CustomClass"
+
+    def test_make_valid_xml_name_invalid_chars(self):
+        """Test make_valid_xml_name with invalid XML characters."""
+        key = "<invalid>key"
+        attr = {}
+        new_key, new_attr = dicttoxml.make_valid_xml_name(key, attr)
+        assert new_key == "key"
+        assert new_attr == {"name": "&lt;invalid&gt;key"}
+
+    def test_dict2xml_str_invalid_type(self):
+        """Test dict2xml_str with invalid type."""
+        class CustomClass:
+            pass
+
+        item = {"key": CustomClass()}
+        with pytest.raises(TypeError, match="Unsupported data type:"):
+            dicttoxml.dict2xml_str(
+                attr_type=False,
+                attr={},
+                item=item,
+                item_func=lambda x: "item",
+                cdata=False,
+                item_name="test",
+                item_wrap=False,
+                parentIsList=False
+            )
+
+    def test_convert_dict_invalid_type(self):
+        """Test convert_dict with invalid type."""
+        class CustomClass:
+            pass
+
+        obj = {"key": CustomClass()}
+        with pytest.raises(TypeError, match="Unsupported data type:"):
+            dicttoxml.convert_dict(
+                obj=obj,
+                ids=[],
+                parent="root",
+                attr_type=False,
+                item_func=lambda x: "item",
+                cdata=False,
+                item_wrap=False
+            )
+
+    def test_convert_list_invalid_type(self):
+        """Test convert_list with invalid type."""
+        class CustomClass:
+            pass
+
+        items = [CustomClass()]
+        with pytest.raises(TypeError, match="Unsupported data type:"):
+            dicttoxml.convert_list(
+                items=items,
+                ids=None,
+                parent="root",
+                attr_type=False,
+                item_func=lambda x: "item",
+                cdata=False,
+                item_wrap=False
+            )
+
+    def test_convert_list_with_none(self):
+        """Test convert_list with None values."""
+        items = [None]
+        result = dicttoxml.convert_list(
+            items=items,
+            ids=None,
+            parent="root",
+            attr_type=True,
+            item_func=lambda x: "item",
+            cdata=False,
+            item_wrap=True
+        )
+        assert result == '<item type="null"></item>'
+
+    def test_convert_list_with_custom_ids(self):
+        """Test convert_list with custom IDs."""
+        items = ["test"]
+        result = dicttoxml.convert_list(
+            items=items,
+            ids=["custom_id"],
+            parent="root",
+            attr_type=False,
+            item_func=lambda x: "item",
+            cdata=False,
+            item_wrap=True
+        )
+        assert 'id="root_' in result
+        assert '>test<' in result
+
+    def test_convert_list_mixed_types(self):
+        """Test convert_list with a mix of valid and invalid types."""
+        class CustomClass:
+            pass
+
+        items = ["valid string", 100, {"a": "b"}, CustomClass()]
+        with pytest.raises(TypeError, match="Unsupported data type:"):
+            dicttoxml.convert_list(
+                items=items,
+                ids=None,
+                parent="root",
+                attr_type=False,
+                item_func=lambda x: "item",
+                cdata=False,
+                item_wrap=False
+            )

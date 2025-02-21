@@ -597,3 +597,20 @@ class TestDict2xml:
         )
         assert 'id="root_' in result
         assert '>test<' in result
+
+    def test_convert_list_mixed_types(self):
+        """Test convert_list with a mix of valid and invalid types."""
+        class CustomClass:
+            pass
+
+        items = ["valid string", 100, {"a": "b"}, CustomClass()]
+        with pytest.raises(TypeError, match="Unsupported data type:"):
+            dicttoxml.convert_list(
+                items=items,
+                ids=None,
+                parent="root",
+                attr_type=False,
+                item_func=lambda x: "item",
+                cdata=False,
+                item_wrap=False
+            )

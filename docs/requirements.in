@@ -1,4 +1,4 @@
-furo==2024.5.6
+furo==2024.8.6
 sphinx
 sphinx-autobuild
 
@@ -9,6 +9,6 @@ mock
 autodoc
 
 defusedxml
-tornado==6.4.2
-jinja2==3.1.5
-idna==3.7
+tornado
+jinja2
+idna

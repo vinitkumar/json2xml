@@ -504,7 +504,7 @@ class TestDict2xml:
         """Test get_xml_type with unsupported type."""
         class CustomClass:
             pass
-        
+
         # Should return the class name for unsupported types
         result = dicttoxml.get_xml_type(CustomClass())
         assert result == "CustomClass"

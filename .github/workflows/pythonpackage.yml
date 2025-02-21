@@ -2,6 +2,11 @@ name: Json2xml
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+  checks: write    # For test results
+  pull-requests: write   # For codecov
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -12,8 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [pypy-3.10, '3.10', '3.11' , '3.12', '3.13']
-        tox-python-version: ['pypy3.10', 'py310', 'py311' , 'py312', 'py313']
+        python-version: [pypy-3.10, 3.10, 3.11, 3.12, 3.13]
+        tox-python-version: [pypy3.10, py310, py311, py312, py313]
         os: [
           ubuntu-latest,
           windows-latest,
@@ -21,15 +26,15 @@ jobs:
         ]
         include:
           # Add exact version 3.14.0-alpha.0 for ubuntu-latest only
-          - python-version: '3.14.0-alpha.5'
+          - python-version: 3.14.0-alpha.5
             tox-python-version: py314-full
             os: ubuntu-latest
         exclude:
           # Exclude other OSes with Python 3.14.0-alpha.0
-          - python-version: '3.14.0-alpha.5'
+          - python-version: 3.14.0-alpha.5
             tox-python-version: py314-full
             os: windows-latest
-          - python-version: '3.14.0-alpha.5'
+          - python-version: 3.14.0-alpha.5
             os: macos-latest
             tox-python-version: py314-full
 
@@ -56,13 +61,14 @@ jobs:
       run: tox -e ${{matrix.tox-python-version}}
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
+        directory: ./coverage/reports/
+        env_vars: OS,PYTHON
+        fail_ci_if_error: true
+        files: ./coverage1.xml,./coverage2.xml,!./cache
+        flags: unittests
         token: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
-      uses: codecov/test-results-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        name: codecov-umbrella
+        verbose: true
 

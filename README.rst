@@ -22,7 +22,7 @@ The library was initially dependent on the `dict2xml` project, but it has now be
 
 
 
-Archictecure Diagram
+Architecture Diagram
 ^^^^^^^^^^^^^^^^^^^^
 
 .. image:: ./diagram.png

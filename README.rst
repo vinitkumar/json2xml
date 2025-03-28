@@ -20,6 +20,14 @@ Documentation: https://json2xml.readthedocs.io.
 
 The library was initially dependent on the `dict2xml` project, but it has now been integrated into json2xml itself. This has led to cleaner code, the addition of types and tests, and overall improved performance.
 
+
+
+Archictecure Diagram
+^^^^^^^^^^^^^^^^^^^^
+
+.. image: ./diagram.png
+
+
 Features
 ^^^^^^^^
 

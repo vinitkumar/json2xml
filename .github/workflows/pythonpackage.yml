@@ -26,15 +26,15 @@ jobs:
         ]
         include:
           # Add exact version 3.14.0-alpha.0 for ubuntu-latest only
-          - python-version: 3.14.0-alpha.6
+          - python-version: 3.14.0-alpha.7
             tox-python-version: py314-full
             os: ubuntu-latest
         exclude:
           # Exclude other OSes with Python 3.14.0-alpha.0
-          - python-version: 3.14.0-alpha.6
+          - python-version: 3.14.0-alpha.7
             tox-python-version: py314-full
             os: windows-latest
-          - python-version: 3.14.0-alpha.6
+          - python-version: 3.14.0-alpha.7
             os: macos-latest
             tox-python-version: py314-full
 

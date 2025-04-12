@@ -17,8 +17,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [pypy-3.10, pypy-3.11, '3.10', '3.11', '3.12', '3.13']
-        tox-python-version: [pypy3.10, pypy3.11, py310, py311, py312, py313]
+        python-version: [pypy-3.10, pypy-3.11, '3.10', '3.11', '3.12', '3.13', '3.13t']
+        tox-python-version: [pypy3.10, pypy3.11, py310, py311, py312, py313, py313t]
         os: [
           ubuntu-latest,
           windows-latest,

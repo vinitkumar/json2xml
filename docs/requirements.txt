@@ -34,7 +34,7 @@ docutils==0.21.2
     # via sphinx
 furo==2024.8.6
     # via -r requirements.in
-h11==0.14.0
+h11==0.16.0
     # via uvicorn
 idna==3.10
     # via

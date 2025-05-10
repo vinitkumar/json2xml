@@ -263,6 +263,7 @@ def dict2xml_str(
     """
     ids: list[str] = []  # initialize list of unique ids
     ", ".join(str(key) for key in item)
+    subtree = ""  # Initialize subtree with default empty string
 
     if attr_type:
         attr["type"] = get_xml_type(item)
@@ -306,6 +307,7 @@ def list2xml_str(
     if attr_type:
         attr["type"] = get_xml_type(item)
     flat = False
+    subtree = ""  # Initialize subtree with default empty string
     if item_name.endswith("@flat"):
         item_name = item_name[0:-5]
         flat = True

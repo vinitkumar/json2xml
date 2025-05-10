@@ -388,7 +388,7 @@ class TestDict2xml:
 
     def test_valid_key(self):
         xml = dicttoxml.convert_bool('valid_key', False, False)
-        assert xml == '<valid_key type="bool">false</valid_key>'
+        assert xml == '<valid_key>false</valid_key>'
 
     def test_convert_kv_with_cdata(self):
         result = dicttoxml.convert_kv("key", "value", attr_type=False, cdata=True)

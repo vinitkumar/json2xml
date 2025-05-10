@@ -1,6 +1,17 @@
 name: Json2xml
 
-on: [push, pull_request]
+on: 
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '*.rst'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '*.rst'
 
 permissions:
   contents: read
@@ -25,12 +36,19 @@ jobs:
           macos-latest,
         ]
         include:
-          # Add exact version 3.14.0-alpha.0 for ubuntu-latest only
+          # Add exact version 3.14.0-beta.1 for ubuntu-latest only
           - python-version: 3.14.0-beta.1
             tox-python-version: py314-full
             os: ubuntu-latest
+          # Add special linting and type-checking jobs
+          - python-version: '3.12'
+            tox-python-version: lint
+            os: ubuntu-latest
+          - python-version: '3.12'
+            tox-python-version: typecheck
+            os: ubuntu-latest
         exclude:
-          # Exclude other OSes with Python 3.14.0-alpha.0
+          # Exclude other OSes with Python 3.14.0-beta.1
           - python-version: 3.14.0-beta.1
             tox-python-version: py314-full
             os: windows-latest
@@ -48,25 +66,35 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements*.txt
+          requirements-dev.in
+    
     - name: install uv
       uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
-        cache-dependency-glob: requirements-dev.txt
+        cache-dependency-glob: requirements*.txt
 
     - name: Install dependencies
-      run: uv pip install --system tox tox-uv
+      run: |
+        uv pip install --system tox tox-uv
+        uv pip install --system pytest pytest-xdist pytest-cov
 
     - name: Run tox targets for ${{ matrix.python-version }}
-      run: tox -e ${{matrix.tox-python-version}}
+      run: tox -e ${{matrix.tox-python-version}} --parallel auto
+      env:
+        PYTHONPATH: ${{ github.workspace }}
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
+      if: success() && matrix.tox-python-version != 'lint' && matrix.tox-python-version != 'typecheck'
       with:
         directory: ./coverage/reports/
         env_vars: OS,PYTHON
         fail_ci_if_error: true
-        files: ./coverage.xml,./coverage2.xml,!./cache
+        files: ./coverage.xml
         flags: unittests
         token: ${{ secrets.CODECOV_TOKEN }}
         name: codecov-umbrella

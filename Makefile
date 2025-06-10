@@ -45,19 +45,27 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean-test: ## remove test and coverage artifacts
-	rm -fr .tox/
 	rm -f .coverage
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
+	rm -fr coverage/
 
-lint: ## check style with flake8
-	flake8 json2xml tests
+lint: ## check style with ruff
+	ruff check json2xml tests
+
+lint-fix: ## automatically fix ruff issues
+	ruff check --fix json2xml tests
+
+typecheck: ## check types with mypy
+	mypy json2xml tests
 
 test: ## run tests quickly with the default Python
-	pytest -vv
+	pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests -n auto
 
-test-all: ## run tests on every Python version with tox
-	tox
+test-simple: ## run tests without coverage
+	pytest -vv tests
+
+check-all: lint typecheck test ## run all checks (lint, typecheck, test)
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run -m pytest -vv --disable-warnings

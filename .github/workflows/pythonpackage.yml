@@ -23,13 +23,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         python-version: [pypy-3.10, pypy-3.11, '3.10', '3.11', '3.12', '3.13']
-        tox-python-version: [pypy310, pypy311, py310, py311, py312, py313]
         os: [
           ubuntu-latest,
           windows-latest,
@@ -38,23 +37,13 @@ jobs:
         include:
           # Add exact version 3.14.0-beta.1 for ubuntu-latest only
           - python-version: 3.14.0-beta.1
-            tox-python-version: py314-full
-            os: ubuntu-latest
-          # Add special linting and type-checking jobs
-          - python-version: '3.12'
-            tox-python-version: lint
-            os: ubuntu-latest
-          - python-version: '3.12'
-            tox-python-version: typecheck
             os: ubuntu-latest
         exclude:
           # Exclude other OSes with Python 3.14.0-beta.1
           - python-version: 3.14.0-beta.1
-            tox-python-version: py314-full
             os: windows-latest
           - python-version: 3.14.0-beta.1
             os: macos-latest
-            tox-python-version: py314-full
 
     steps:
     - uses: actions/checkout@v4
@@ -71,7 +60,7 @@ jobs:
           requirements*.txt
           requirements-dev.in
     
-    - name: install uv
+    - name: Install uv
       uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
@@ -79,17 +68,18 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install --system tox tox-uv
+        uv pip install --system -e .
         uv pip install --system pytest pytest-xdist pytest-cov
 
-    - name: Run tox targets for ${{ matrix.python-version }}
-      run: tox -e ${{matrix.tox-python-version}} --parallel auto
+    - name: Run tests
+      run: |
+        pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests -n auto
       env:
         PYTHONPATH: ${{ github.workspace }}
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
-      if: success() && matrix.tox-python-version != 'lint' && matrix.tox-python-version != 'typecheck'
+      if: success()
       with:
         directory: ./coverage/reports/
         env_vars: OS,PYTHON
@@ -99,4 +89,64 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         name: codecov-umbrella
         verbose: true
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5.2.0
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements*.txt
+          requirements-dev.in
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+        cache-dependency-glob: requirements*.txt
+
+    - name: Install dependencies
+      run: |
+        uv pip install --system -e .
+        uv pip install --system ruff>=0.3.0
+
+    - name: Run ruff
+      run: ruff check json2xml tests
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5.2.0
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements*.txt
+          requirements-dev.in
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+        cache-dependency-glob: requirements*.txt
+
+    - name: Install dependencies
+      run: |
+        uv pip install --system -e .
+        uv pip install --system mypy>=1.0.0 types-setuptools
+
+    - name: Run mypy
+      run: mypy json2xml tests
 

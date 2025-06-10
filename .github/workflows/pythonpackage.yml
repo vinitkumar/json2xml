@@ -1,6 +1,17 @@
 name: Json2xml
 
-on: [push, pull_request]
+on: 
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '*.rst'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '*.rst'
 
 permissions:
   contents: read
@@ -12,31 +23,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         python-version: [pypy-3.10, pypy-3.11, '3.10', '3.11', '3.12', '3.13']
-        tox-python-version: [pypy3.10, pypy3.11, py310, py311, py312, py313]
         os: [
           ubuntu-latest,
           windows-latest,
           macos-latest,
         ]
         include:
-          # Add exact version 3.14.0-alpha.0 for ubuntu-latest only
-          - python-version: 3.14.0-alpha.7
-            tox-python-version: py314-full
+          # Add exact version 3.14.0-beta.1 for ubuntu-latest only
+          - python-version: 3.14.0-beta.1
             os: ubuntu-latest
         exclude:
-          # Exclude other OSes with Python 3.14.0-alpha.0
-          - python-version: 3.14.0-alpha.7
-            tox-python-version: py314-full
+          # Exclude other OSes with Python 3.14.0-beta.1
+          - python-version: 3.14.0-beta.1
             os: windows-latest
-          - python-version: 3.14.0-alpha.7
+          - python-version: 3.14.0-beta.1
             os: macos-latest
-            tox-python-version: py314-full
 
     steps:
     - uses: actions/checkout@v4
@@ -48,27 +55,101 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
-    - name: install uv
-      uses: astral-sh/setup-uv@v3
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
-        cache-dependency-glob: requirements-dev.txt
+        cache-dependency-glob: |
+          requirements*.txt
+          requirements-dev.in
+          pyproject.toml
 
     - name: Install dependencies
-      run: uv pip install --system tox tox-uv
+      run: |
+        uv pip install --system -e .
+        uv pip install --system pytest pytest-xdist pytest-cov
 
-    - name: Run tox targets for ${{ matrix.python-version }}
-      run: tox -e ${{matrix.tox-python-version}}
+    - name: Create coverage directory
+      run: mkdir -p coverage/reports
+
+    - name: Run tests
+      run: |
+        pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests -n auto
+      env:
+        PYTHONPATH: ${{ github.workspace }}
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
+      if: success()
       with:
         directory: ./coverage/reports/
         env_vars: OS,PYTHON
-        fail_ci_if_error: true
-        files: ./coverage.xml,./coverage2.xml,!./cache
+        fail_ci_if_error: false  # Don't fail CI if codecov upload fails
+        files: ./coverage/reports/coverage.xml
         flags: unittests
         token: ${{ secrets.CODECOV_TOKEN }}
         name: codecov-umbrella
         verbose: true
+      env:
+        OS: ${{ matrix.os }}
+        PYTHON: ${{ matrix.python-version }}
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5.2.0
+      with:
+        python-version: '3.12'
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+        cache-dependency-glob: |
+          requirements*.txt
+          requirements-dev.in
+          pyproject.toml
+
+    - name: Install dependencies
+      run: |
+        uv pip install --system -e .
+        uv pip install --system ruff>=0.3.0
+
+    - name: Run ruff
+      run: ruff check json2xml tests
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5.2.0
+      with:
+        python-version: '3.12'
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+        cache-dependency-glob: |
+          requirements*.txt
+          requirements-dev.in
+          pyproject.toml
+
+    - name: Install dependencies
+      run: |
+        uv pip install --system -e .
+        uv pip install --system mypy>=1.0.0 types-setuptools
+
+    - name: Run mypy
+      run: mypy json2xml tests
 

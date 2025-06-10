@@ -55,21 +55,23 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
-        cache: 'pip'
-        cache-dependency-path: |
-          requirements*.txt
-          requirements-dev.in
     
     - name: Install uv
       uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
-        cache-dependency-glob: requirements*.txt
+        cache-dependency-glob: |
+          requirements*.txt
+          requirements-dev.in
+          pyproject.toml
 
     - name: Install dependencies
       run: |
         uv pip install --system -e .
         uv pip install --system pytest pytest-xdist pytest-cov
+
+    - name: Create coverage directory
+      run: mkdir -p coverage/reports
 
     - name: Run tests
       run: |
@@ -83,12 +85,15 @@ jobs:
       with:
         directory: ./coverage/reports/
         env_vars: OS,PYTHON
-        fail_ci_if_error: true
+        fail_ci_if_error: false  # Don't fail CI if codecov upload fails
         files: ./coverage/reports/coverage.xml
         flags: unittests
         token: ${{ secrets.CODECOV_TOKEN }}
         name: codecov-umbrella
         verbose: true
+      env:
+        OS: ${{ matrix.os }}
+        PYTHON: ${{ matrix.python-version }}
 
   lint:
     runs-on: ubuntu-latest
@@ -101,16 +106,15 @@ jobs:
       uses: actions/setup-python@v5.2.0
       with:
         python-version: '3.12'
-        cache: 'pip'
-        cache-dependency-path: |
-          requirements*.txt
-          requirements-dev.in
     
     - name: Install uv
       uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
-        cache-dependency-glob: requirements*.txt
+        cache-dependency-glob: |
+          requirements*.txt
+          requirements-dev.in
+          pyproject.toml
 
     - name: Install dependencies
       run: |
@@ -131,16 +135,15 @@ jobs:
       uses: actions/setup-python@v5.2.0
       with:
         python-version: '3.12'
-        cache: 'pip'
-        cache-dependency-path: |
-          requirements*.txt
-          requirements-dev.in
     
     - name: Install uv
       uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
-        cache-dependency-glob: requirements*.txt
+        cache-dependency-glob: |
+          requirements*.txt
+          requirements-dev.in
+          pyproject.toml
 
     - name: Install dependencies
       run: |

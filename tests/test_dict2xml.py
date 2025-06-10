@@ -7,7 +7,11 @@ import pytest
 from json2xml import dicttoxml
 
 if TYPE_CHECKING:
-    pass
+    from _pytest.capture import CaptureFixture
+    from _pytest.fixtures import FixtureRequest
+    from _pytest.logging import LogCaptureFixture
+    from _pytest.monkeypatch import MonkeyPatch
+    from pytest_mock.plugin import MockerFixture
 
 
 class TestDict2xml:
@@ -522,7 +526,7 @@ class TestDict2xml:
 
     def test_list_to_xml_with_empty_list(self) -> None:
         """Test list to XML with empty list."""
-        data = {"items": []}
+        data: dict[str, list[Any]] = {"items": []}
         result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_wrap=True)
         assert result == b"<items></items>"
 
@@ -574,13 +578,14 @@ class TestDict2xml:
             pass
 
         # Should return the class name for unsupported types
-        result = dicttoxml.get_xml_type(CustomClass())
+        # Using type: ignore for intentional test of unsupported type
+        result = dicttoxml.get_xml_type(CustomClass())  # type: ignore[arg-type]
         assert result == "CustomClass"
 
     def test_make_valid_xml_name_invalid_chars(self) -> None:
         """Test make_valid_xml_name with invalid XML characters."""
         key = "<invalid>key"
-        attr = {}
+        attr: dict[str, Any] = {}
         new_key, new_attr = dicttoxml.make_valid_xml_name(key, attr)
         assert new_key == "key"
         assert new_attr == {"name": "&lt;invalid&gt;key"}
@@ -781,7 +786,7 @@ class TestDict2xml:
         call_count = 0
         original_make_id = module.make_id
 
-        def mock_make_id(element, start=100000, end=999999):
+        def mock_make_id(element: str, start: int = 100000, end: int = 999999) -> str:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
@@ -870,7 +875,7 @@ class TestDict2xml:
 
         with pytest.raises(TypeError, match="Unsupported data type:"):
             dicttoxml.convert(
-                obj=CustomClass(),
+                obj=CustomClass(),  # type: ignore[arg-type]
                 ids=None,
                 attr_type=False,
                 item_func=lambda x: "item",
@@ -1015,7 +1020,7 @@ class TestDict2xml:
         import json2xml.dicttoxml as module
         original_is_primitive = module.is_primitive_type
 
-        def mock_is_primitive(val):
+        def mock_is_primitive(val: Any) -> bool:
             if isinstance(val, dict) and val == {"test": "data"}:
                 return True
             return original_is_primitive(val)

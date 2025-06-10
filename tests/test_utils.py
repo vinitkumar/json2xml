@@ -88,28 +88,23 @@ class TestReadFromJson:
         with pytest.raises(JSONReadError, match="Invalid JSON File"):
             readfromjson("non_existent_file.json")
 
-    def test_readfromjson_permission_error(self) -> None:
+    @patch('builtins.open')
+    def test_readfromjson_permission_error(self, mock_open: Mock) -> None:
         """Test reading a file with permission issues."""
-        # Create a temporary file and then make it unreadable
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            json.dump({"test": "data"}, f)
-            temp_filename = f.name
+        # Mock open to raise PermissionError
+        mock_open.side_effect = PermissionError("Permission denied")
 
-        try:
-            import os
-            # Make file unreadable (this might not work on all systems)
-            os.chmod(temp_filename, 0o000)
+        with pytest.raises(JSONReadError, match="Invalid JSON File"):
+            readfromjson("some_file.json")
 
-            with pytest.raises(JSONReadError, match="Invalid JSON File"):
-                readfromjson(temp_filename)
-        finally:
-            # Restore permissions and cleanup
-            import os
-            try:
-                os.chmod(temp_filename, 0o644)
-                os.unlink(temp_filename)
-            except (OSError, PermissionError):
-                pass  # Best effort cleanup
+    @patch('builtins.open')
+    def test_readfromjson_os_error(self, mock_open: Mock) -> None:
+        """Test reading a file with OS error."""
+        # Mock open to raise OSError (covers line 34-35 in utils.py)
+        mock_open.side_effect = OSError("Device not ready")
+
+        with pytest.raises(JSONReadError, match="Invalid JSON File"):
+            readfromjson("some_file.json")
 
 
 class TestReadFromUrl:

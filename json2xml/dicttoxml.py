@@ -70,6 +70,7 @@ ELEMENT = Union[
 def get_xml_type(val: ELEMENT) -> str:
     """
     Get the XML type of a given value.
+    This function determines the type of the value and returns a string
 
     Args:
         val (ELEMENT): The value to get the type of.

@@ -191,17 +191,50 @@ Outputs this:
 The methods are simple and easy to use and there are also checks inside of code to exit cleanly
 in case any of the input(file, string or API URL) returns invalid JSON.
 
-How to run tests
-^^^^^^^^^^^^^^^^
+Development
+^^^^^^^^^^^
 
-This is provided by pytest, which is straight forward.
+This project uses modern Python development practices. Here's how to set up a development environment:
 
  .. code-block:: console
 
-    virtualenv venv -p $(which python3.9)
-    pip install -r requirements-dev.txt
-    python setup.py install
-    pytest -vv
+    # Create and activate virtual environment (using uv - recommended)
+    uv venv
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+    
+    # Install dependencies
+    uv pip install -r requirements-dev.txt
+    uv pip install -e .
+
+**Running Tests and Checks**
+
+We provide several ways to run tests and quality checks:
+
+Using Make (recommended):
+
+ .. code-block:: console
+
+    make test          # Run tests with coverage
+    make lint          # Run linting with ruff
+    make typecheck     # Run type checking with mypy
+    make check-all     # Run all checks (lint, typecheck, test)
+
+Using the development script:
+
+ .. code-block:: console
+
+    python dev.py          # Run all checks
+    python dev.py test     # Run tests only
+    python dev.py lint     # Run linting only
+    python dev.py typecheck # Run type checking only
+
+Using tools directly:
+
+ .. code-block:: console
+
+    pytest --cov=json2xml --cov-report=term -xvs tests -n auto
+    ruff check json2xml tests
+    mypy json2xml tests
 
 
 Help and Support to maintain this project

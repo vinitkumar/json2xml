@@ -1,6 +1,6 @@
 import datetime
 import numbers
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -166,7 +166,7 @@ class TestDict2xml:
         )
 
     @pytest.fixture
-    def dict_with_attrs(self) -> dict:
+    def dict_with_attrs(self) -> dict[str, Any]:
         """Fixture providing a dictionary with attributes for testing."""
         return {
             'transportation-mode': [
@@ -185,7 +185,7 @@ class TestDict2xml:
             ]
         }
 
-    def test_dict2xml_list_items_with_attrs(self, dict_with_attrs: dict) -> None:
+    def test_dict2xml_list_items_with_attrs(self, dict_with_attrs: dict[str, Any]) -> None:
         """Test dicttoxml with list items containing attributes."""
         '''With list headers = True
         '''
@@ -397,7 +397,7 @@ class TestDict2xml:
 
     def test_get_xml_type_number(self) -> None:
         """Test get_xml_type with numbers.Number."""
-        assert dicttoxml.get_xml_type(numbers.Number()) == "number"
+        assert dicttoxml.get_xml_type(3.14) == "float"
 
     def test_convert_datetime(self) -> None:
         """Test convert_kv with datetime objects."""

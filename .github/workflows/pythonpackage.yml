@@ -29,7 +29,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [pypy-3.10, pypy-3.11, '3.10', '3.11', '3.12', '3.13']
-        tox-python-version: [pypy3.10, pypy3.11, py310, py311, py312, py313]
+        tox-python-version: [pypy310, pypy311, py310, py311, py312, py313]
         os: [
           ubuntu-latest,
           windows-latest,
@@ -94,7 +94,7 @@ jobs:
         directory: ./coverage/reports/
         env_vars: OS,PYTHON
         fail_ci_if_error: true
-        files: ./coverage.xml
+        files: ./coverage/reports/coverage.xml
         flags: unittests
         token: ${{ secrets.CODECOV_TOKEN }}
         name: codecov-umbrella

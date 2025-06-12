@@ -57,7 +57,7 @@ pygments==2.19.1
     # via
     #   furo
     #   sphinx
-requests==2.32.3
+requests==2.32.4
     # via sphinx
 roman-numerals-py==3.0.0
     # via sphinx

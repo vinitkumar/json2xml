@@ -10,7 +10,7 @@ def run_command(cmd: list[str], description: str) -> bool:
     """Run a command and return True if successful."""
     print(f"\n🔍 {description}...")
     try:
-        result = subprocess.run(cmd, check=True, cwd=Path(__file__).parent)
+        subprocess.run(cmd, check=True, cwd=Path(__file__).parent)
         print(f"✅ {description} passed!")
         return True
     except subprocess.CalledProcessError as e:
@@ -32,7 +32,7 @@ def main() -> None:
 
     if command in ("test", "all"):
         success &= run_command([
-            "pytest", "--cov=json2xml", "--cov-report=term", 
+            "pytest", "--cov=json2xml", "--cov-report=term",
             "-xvs", "tests", "-n", "auto"
         ], "Tests")
 
@@ -50,11 +50,11 @@ def main() -> None:
         return
 
     if not success:
-        print(f"\n❌ Some checks failed!")
+        print("\n❌ Some checks failed!")
         sys.exit(1)
     else:
-        print(f"\n🎉 All checks passed!")
+        print("\n🎉 All checks passed!")
 
 
 if __name__ == "__main__":
-    main() 
+    main()

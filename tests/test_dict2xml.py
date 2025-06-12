@@ -1062,3 +1062,84 @@ class TestDict2xml:
 
         # None should trigger the "elif not val:" branch and result in an empty element
         assert "<none_key></none_key>" == result
+
+    def test_attrs_xml_escaping(self) -> None:
+        """Test that @attrs values are properly XML-escaped."""
+        # Test the specific case from the user's bug report
+        info_dict = {
+            'Info': {
+                "@attrs": {
+                    "Name": "systemSpec",
+                    "HelpText": "spec version <here>"
+                }
+            }
+        }
+        result = dicttoxml.dicttoxml(info_dict, attr_type=False, item_wrap=False, root=False).decode('utf-8')
+        expected = '<Info Name="systemSpec" HelpText="spec version &lt;here&gt;"></Info>'
+        assert expected == result
+
+    def test_attrs_comprehensive_xml_escaping(self) -> None:
+        """Test comprehensive XML escaping in attributes."""
+        data = {
+            'Element': {
+                "@attrs": {
+                    "ampersand": "Tom & Jerry",
+                    "less_than": "value < 10", 
+                    "greater_than": "value > 5",
+                    "quotes": 'He said "Hello"',
+                    "single_quotes": "It's working",
+                    "mixed": "Tom & Jerry < 10 > 5 \"quoted\" 'apostrophe'"
+                },
+                "@val": "content"
+            }
+        }
+        result = dicttoxml.dicttoxml(data, attr_type=False, item_wrap=False, root=False).decode('utf-8')
+        
+        # Check that all special characters are properly escaped in attributes
+        assert 'ampersand="Tom &amp; Jerry"' in result
+        assert 'less_than="value &lt; 10"' in result
+        assert 'greater_than="value &gt; 5"' in result
+        assert 'quotes="He said &quot;Hello&quot;"' in result
+        assert 'single_quotes="It&apos;s working"' in result
+        assert 'mixed="Tom &amp; Jerry &lt; 10 &gt; 5 &quot;quoted&quot; &apos;apostrophe&apos;"' in result
+        
+        # Verify the element content is also properly escaped
+        assert ">content<" in result
+
+    def test_attrs_empty_and_none_values(self) -> None:
+        """Test attribute handling with empty and None values."""
+        data = {
+            'Element': {
+                "@attrs": {
+                    "empty": "",
+                    "zero": 0,
+                    "false": False
+                }
+            }
+        }
+        result = dicttoxml.dicttoxml(data, attr_type=False, item_wrap=False, root=False).decode('utf-8')
+        
+        assert 'empty=""' in result
+        assert 'zero="0"' in result  
+        assert 'false="False"' in result
+
+    def test_make_attrstring_function_directly(self) -> None:
+        """Test the make_attrstring function directly."""
+        from json2xml.dicttoxml import make_attrstring
+        
+        # Test basic escaping
+        attrs = {
+            "test": "value <here>",
+            "ampersand": "Tom & Jerry", 
+            "quotes": 'Say "hello"'
+        }
+        result = make_attrstring(attrs)
+        
+        assert 'test="value &lt;here&gt;"' in result
+        assert 'ampersand="Tom &amp; Jerry"' in result
+        assert 'quotes="Say &quot;hello&quot;"' in result
+        
+        # Test empty attributes
+        empty_attrs = {}
+        result = make_attrstring(empty_attrs)
+        assert result == ""

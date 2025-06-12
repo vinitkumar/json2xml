@@ -1084,7 +1084,7 @@ class TestDict2xml:
             'Element': {
                 "@attrs": {
                     "ampersand": "Tom & Jerry",
-                    "less_than": "value < 10", 
+                    "less_than": "value < 10",
                     "greater_than": "value > 5",
                     "quotes": 'He said "Hello"',
                     "single_quotes": "It's working",
@@ -1094,7 +1094,7 @@ class TestDict2xml:
             }
         }
         result = dicttoxml.dicttoxml(data, attr_type=False, item_wrap=False, root=False).decode('utf-8')
-        
+
         # Check that all special characters are properly escaped in attributes
         assert 'ampersand="Tom &amp; Jerry"' in result
         assert 'less_than="value &lt; 10"' in result
@@ -1102,7 +1102,7 @@ class TestDict2xml:
         assert 'quotes="He said &quot;Hello&quot;"' in result
         assert 'single_quotes="It&apos;s working"' in result
         assert 'mixed="Tom &amp; Jerry &lt; 10 &gt; 5 &quot;quoted&quot; &apos;apostrophe&apos;"' in result
-        
+
         # Verify the element content is also properly escaped
         assert ">content<" in result
 
@@ -1118,28 +1118,28 @@ class TestDict2xml:
             }
         }
         result = dicttoxml.dicttoxml(data, attr_type=False, item_wrap=False, root=False).decode('utf-8')
-        
+
         assert 'empty=""' in result
-        assert 'zero="0"' in result  
+        assert 'zero="0"' in result
         assert 'false="False"' in result
 
     def test_make_attrstring_function_directly(self) -> None:
         """Test the make_attrstring function directly."""
         from json2xml.dicttoxml import make_attrstring
-        
+
         # Test basic escaping
         attrs = {
             "test": "value <here>",
-            "ampersand": "Tom & Jerry", 
+            "ampersand": "Tom & Jerry",
             "quotes": 'Say "hello"'
         }
         result = make_attrstring(attrs)
-        
+
         assert 'test="value &lt;here&gt;"' in result
         assert 'ampersand="Tom &amp; Jerry"' in result
         assert 'quotes="Say &quot;hello&quot;"' in result
-        
+
         # Test empty attributes
-        empty_attrs = {}
+        empty_attrs: dict[str, Any] = {}
         result = make_attrstring(empty_attrs)
         assert result == ""

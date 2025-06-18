@@ -5,7 +5,6 @@ pytest
 pytest-cov
 pytest-xdist>=3.5.0
 coverage
-py
 ruff>=0.3.0
 setuptools
 mypy>=1.0.0

@@ -1,6 +1,14 @@
 History
 =======
 
+5.2.0 / 2025-07-21
+==================
+
+  * chore: version bump to 5.2.0
+  * chore(deps): bump urllib3 from 2.3.0 to 2.5.0 (#244)
+  * security: Fix Jinja2 and py library vulnerabilities (#243)
+  * Update LICENSE
+
 5.0.5 / 2024-08-31
 ==================
 

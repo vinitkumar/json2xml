@@ -1,6 +1,7 @@
 import datetime
 import numbers
 from typing import TYPE_CHECKING, Any
+from unittest.mock import Mock
 
 import pytest
 
@@ -774,50 +775,16 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, cdata=True, attr_type=False, root=False)
         assert b"<key><![CDATA[value]]></key>" == result
 
-    def test_get_unique_id_with_duplicates(self) -> None:
+    def test_get_unique_id_with_duplicates(self, monkeypatch: "MonkeyPatch") -> None:
         """Test get_unique_id when duplicates are generated."""
-        # We need to modify the original get_unique_id to simulate a pre-existing ID list
-        import json2xml.dicttoxml as module
+        ids = ["existing_id"]
+        make_id_mock = Mock(side_effect=["existing_id", "new_id"])
+        monkeypatch.setattr(dicttoxml, "make_id", make_id_mock)
 
-        # Save original function
-        original_get_unique_id = module.get_unique_id
+        unique_id = dicttoxml.get_unique_id("some_element", ids=ids)
 
-        # Track make_id calls
-        call_count = 0
-        original_make_id = module.make_id
-
-        def mock_make_id(element: str, start: int = 100000, end: int = 999999) -> str:
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                return "test_123456"  # First call - will collide
-            else:
-                return "test_789012"  # Second call - unique
-
-        # Patch get_unique_id to use a pre-populated ids list
-        def patched_get_unique_id(element: str) -> str:
-            # Start with a pre-existing ID to force collision
-            ids = ["test_123456"]
-            this_id = module.make_id(element)
-            dup = True
-            while dup:
-                if this_id not in ids:
-                    dup = False
-                    ids.append(this_id)
-                else:
-                    this_id = module.make_id(element)  # This exercises line 52
-            return ids[-1]
-
-        module.make_id = mock_make_id
-        module.get_unique_id = patched_get_unique_id
-
-        try:
-            result = dicttoxml.get_unique_id("test")
-            assert result == "test_789012"
-            assert call_count == 2
-        finally:
-            module.make_id = original_make_id
-            module.get_unique_id = original_get_unique_id
+        assert unique_id == "new_id"
+        assert make_id_mock.call_count == 2
 
     def test_convert_with_bool_direct(self) -> None:
         """Test convert function with boolean input directly."""

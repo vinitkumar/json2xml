@@ -1,5 +1,5 @@
 import decimal
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -76,9 +76,9 @@ class TestAdditionalCoverage:
     def test_get_xml_type_with_decimal_number(self) -> None:
         # Decimal is a numbers.Number but not int/float
         value = decimal.Decimal("5")
-        assert dicttoxml.get_xml_type(value) == "number"
+        assert dicttoxml.get_xml_type(cast(Any, value)) == "number"
         # And convert_kv should mark it as type="number"
-        out = dicttoxml.convert_kv("key", value, attr_type=True)
+        out = dicttoxml.convert_kv("key", cast(Any, value), attr_type=True)
         assert out == '<key type="number">5</key>'
 
     def test_dicttoxml_cdata_with_cdata_end_sequence(self) -> None:

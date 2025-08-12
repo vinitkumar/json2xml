@@ -110,7 +110,7 @@ wheels = [
 
 [[package]]
 name = "json2xml"
-version = "5.2.0"
+version = "5.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "coverage" },
@@ -124,7 +124,6 @@ dependencies = [
 
 [package.optional-dependencies]
 test = [
-    { name = "py" },
     { name = "pytest" },
 ]
 
@@ -132,7 +131,6 @@ test = [
 requires-dist = [
     { name = "coverage" },
     { name = "defusedxml" },
-    { name = "py", marker = "extra == 'test'", specifier = "==1.11.0" },
     { name = "pytest" },
     { name = "pytest", marker = "extra == 'test'", specifier = "==7.0.1" },
     { name = "pytest-cov" },

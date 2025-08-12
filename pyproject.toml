@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "json2xml"
-version = "5.2.0"  # Replace with the dynamic version if needed
+version = "5.2.1"  # Replace with the dynamic version if needed
 description = "Simple Python Library to convert JSON to XML"
 readme = "README.rst"
 requires-python = ">=3.10"
@@ -46,7 +46,6 @@ include = ["json2xml"]
 [project.optional-dependencies]
 test = [
     "pytest==7.0.1",
-    "py==1.11.0"
 ]
 
 [tool.pytest.ini_options]

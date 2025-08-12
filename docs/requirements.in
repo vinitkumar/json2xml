@@ -1,14 +1,15 @@
-furo==2024.8.6
-sphinx
-sphinx-autobuild
+furo==2025.7.19
+sphinx==8.2.3
+sphinx-autobuild==2024.10.3
 
 # if using typehints
-sphinx-autodoc-typehints
+sphinx-autodoc-typehints==3.2.0
 
-mock
-autodoc
+mock==5.2.0
+autodoc==0.5.0
 
-defusedxml
-tornado
+defusedxml==0.7.1
+tornado==6.5.2
 jinja2>=3.1.6
-idna
+idna==3.10
+starlette>=0.47.2

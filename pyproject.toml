@@ -34,7 +34,6 @@ dependencies = [
     "pytest",
     "pytest-cov",
     "coverage",
-    "py",
     "setuptools",
 ]
 

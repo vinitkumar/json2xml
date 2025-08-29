@@ -16,9 +16,6 @@ from json2xml.utils import (
     readfromurl,
 )
 
-if TYPE_CHECKING:
-    pass
-
 
 class TestExceptions:
     """Test custom exception classes."""

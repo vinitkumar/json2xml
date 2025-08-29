@@ -5,9 +5,6 @@ import pytest
 
 from json2xml import dicttoxml
 
-if TYPE_CHECKING:
-    pass
-
 
 class TestDict2xml:
     """Test class for dicttoxml functionality."""

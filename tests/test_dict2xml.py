@@ -1135,3 +1135,59 @@ class TestDict2xml:
         empty_attrs: dict[str, Any] = {}
         result = make_attrstring(empty_attrs)
         assert result == ""
+
+    def test_get_unique_id_collision_coverage(self) -> None:
+        """Test get_unique_id to cover line 50 - the collision case."""
+        import json2xml.dicttoxml as module
+
+        # Clear the global _used_ids set to start fresh
+        original_used_ids = module._used_ids.copy()
+        module._used_ids.clear()
+
+        # Mock make_id to return the same ID twice, then a different one
+        original_make_id = module.make_id
+        call_count = 0
+
+        def mock_make_id(element: str, start: int = 100000, end: int = 999999) -> str:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return "test_123456"  # First call - will be added to _used_ids
+            elif call_count == 2:
+                return "test_123456"  # Second call - will collide, triggering line 50
+            else:
+                return "test_789012"  # Third call - unique
+
+        module.make_id = mock_make_id
+
+        try:
+            # First call - adds "test_123456" to _used_ids
+            result1 = dicttoxml.get_unique_id("test")
+            assert result1 == "test_123456"
+
+            # Reset call count for second test
+            call_count = 0
+
+            # Second call - should trigger collision and regenerate
+            result2 = dicttoxml.get_unique_id("test")
+            assert result2 == "test_789012"
+            assert call_count == 3  # Should have called make_id 3 times
+        finally:
+            module.make_id = original_make_id
+            module._used_ids.clear()
+            module._used_ids.update(original_used_ids)
+
+    def test_get_xml_type_numbers_number_coverage(self) -> None:
+        """Test get_xml_type to cover line 90 - numbers.Number that's not int/float."""
+        import decimal
+        import fractions
+
+        # Test with Decimal (numbers.Number but not int/float)
+        decimal_val = decimal.Decimal('3.14159')
+        result = dicttoxml.get_xml_type(decimal_val)
+        assert result == "number"
+
+        # Test with Fraction (numbers.Number but not int/float)
+        fraction_val = fractions.Fraction(22, 7)
+        result = dicttoxml.get_xml_type(fraction_val)
+        assert result == "number"

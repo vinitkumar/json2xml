@@ -6,9 +6,9 @@ import numbers
 from collections.abc import Callable, Sequence
 from random import SystemRandom
 from typing import Any, Union
+from xml.parsers.expat import ExpatError
 
 from defusedxml.minidom import parseString
-from xml.parsers.expat import ExpatError
 
 # Create a safe random number generator
 
@@ -191,7 +191,7 @@ def default_item_func(parent: str) -> str:
 def _build_namespace_string(xml_namespaces: dict[str, Any]) -> str:
     """Build XML namespace string from namespace dictionary."""
     parts = []
-    
+
     for prefix, value in xml_namespaces.items():
         if prefix == 'xsi' and isinstance(value, dict):
             for schema_att, ns in value.items():
@@ -203,7 +203,7 @@ def _build_namespace_string(xml_namespaces: dict[str, Any]) -> str:
             parts.append(f'xmlns="{value}"')
         else:
             parts.append(f'xmlns:{prefix}="{value}"')
-    
+
     return ' ' + ' '.join(parts) if parts else ''
 
 
@@ -701,7 +701,7 @@ def dicttoxml(
     """
     if xml_namespaces is None:
         xml_namespaces = {}
-    
+
     output = []
     namespace_str = _build_namespace_string(xml_namespaces)
     if root:

@@ -1,7 +1,6 @@
 """Test module for json2xml.utils functionality."""
 import json
 import tempfile
-from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest

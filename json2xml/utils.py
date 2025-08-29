@@ -1,4 +1,5 @@
 """Utility methods for converting XML data to dictionary from various sources."""
+
 import json
 
 import urllib3
@@ -6,21 +7,25 @@ import urllib3
 
 class JSONReadError(Exception):
     """Raised when there is an error reading JSON data."""
+
     pass
 
 
 class InvalidDataError(Exception):
     """Raised when the data is invalid."""
+
     pass
 
 
 class URLReadError(Exception):
     """Raised when there is an error reading from a URL."""
+
     pass
 
 
 class StringReadError(Exception):
     """Raised when there is an error reading from a string."""
+
     pass
 
 
@@ -40,7 +45,7 @@ def readfromurl(url: str, params: dict[str, str] | None = None) -> dict[str, str
     http = urllib3.PoolManager()
     response = http.request("GET", url, fields=params)
     if response.status == 200:
-        return json.loads(response.data.decode('utf-8'))
+        return json.loads(response.data.decode("utf-8"))
     raise URLReadError("URL is not returning correct response")
 
 

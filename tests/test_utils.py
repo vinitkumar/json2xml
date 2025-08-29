@@ -1,19 +1,14 @@
 """Test module for json2xml.utils functionality."""
+
 import json
 import tempfile
 from unittest.mock import Mock, patch
 
 import pytest
 
-from json2xml.utils import (
-    InvalidDataError,
-    JSONReadError,
-    StringReadError,
-    URLReadError,
-    readfromjson,
-    readfromstring,
-    readfromurl,
-)
+from json2xml.utils import (InvalidDataError, JSONReadError, StringReadError,
+                            URLReadError, readfromjson, readfromstring,
+                            readfromurl)
 
 
 class TestExceptions:
@@ -51,7 +46,7 @@ class TestReadFromJson:
         """Test reading a valid JSON file."""
         test_data = {"key": "value", "number": 42}
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(test_data, f)
             temp_filename = f.name
 
@@ -60,11 +55,12 @@ class TestReadFromJson:
             assert result == test_data
         finally:
             import os
+
             os.unlink(temp_filename)
 
     def test_readfromjson_invalid_json_content(self) -> None:
         """Test reading a file with invalid JSON content."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write('{"invalid": json content}')  # Invalid JSON
             temp_filename = f.name
 
@@ -73,6 +69,7 @@ class TestReadFromJson:
                 readfromjson(temp_filename)
         finally:
             import os
+
             os.unlink(temp_filename)
 
     def test_readfromjson_file_not_found(self) -> None:
@@ -80,7 +77,7 @@ class TestReadFromJson:
         with pytest.raises(JSONReadError, match="Invalid JSON File"):
             readfromjson("non_existent_file.json")
 
-    @patch('builtins.open')
+    @patch("builtins.open")
     def test_readfromjson_permission_error(self, mock_open: Mock) -> None:
         """Test reading a file with permission issues."""
         # Mock open to raise PermissionError
@@ -89,7 +86,7 @@ class TestReadFromJson:
         with pytest.raises(JSONReadError, match="Invalid JSON File"):
             readfromjson("some_file.json")
 
-    @patch('builtins.open')
+    @patch("builtins.open")
     def test_readfromjson_os_error(self, mock_open: Mock) -> None:
         """Test reading a file with OS error."""
         # Mock open to raise OSError (covers line 34-35 in utils.py)
@@ -102,7 +99,7 @@ class TestReadFromJson:
 class TestReadFromUrl:
     """Test readfromurl function."""
 
-    @patch('json2xml.utils.urllib3.PoolManager')
+    @patch("json2xml.utils.urllib3.PoolManager")
     def test_readfromurl_success(self, mock_pool_manager: Mock) -> None:
         """Test successful URL reading."""
         # Mock response
@@ -119,9 +116,11 @@ class TestReadFromUrl:
 
         assert result == {"key": "value", "number": 42}
         mock_pool_manager.assert_called_once()
-        mock_http.request.assert_called_once_with("GET", "http://example.com/data.json", fields=None)
+        mock_http.request.assert_called_once_with(
+            "GET", "http://example.com/data.json", fields=None
+        )
 
-    @patch('json2xml.utils.urllib3.PoolManager')
+    @patch("json2xml.utils.urllib3.PoolManager")
     def test_readfromurl_success_with_params(self, mock_pool_manager: Mock) -> None:
         """Test successful URL reading with parameters."""
         # Mock response
@@ -138,9 +137,11 @@ class TestReadFromUrl:
         result = readfromurl("http://example.com/api", params=params)
 
         assert result == {"result": "success"}
-        mock_http.request.assert_called_once_with("GET", "http://example.com/api", fields=params)
+        mock_http.request.assert_called_once_with(
+            "GET", "http://example.com/api", fields=params
+        )
 
-    @patch('json2xml.utils.urllib3.PoolManager')
+    @patch("json2xml.utils.urllib3.PoolManager")
     def test_readfromurl_http_error(self, mock_pool_manager: Mock) -> None:
         """Test URL reading with HTTP error status."""
         # Mock response with error status
@@ -155,7 +156,7 @@ class TestReadFromUrl:
         with pytest.raises(URLReadError, match="URL is not returning correct response"):
             readfromurl("http://example.com/nonexistent.json")
 
-    @patch('json2xml.utils.urllib3.PoolManager')
+    @patch("json2xml.utils.urllib3.PoolManager")
     def test_readfromurl_server_error(self, mock_pool_manager: Mock) -> None:
         """Test URL reading with server error status."""
         # Mock response with server error status
@@ -170,13 +171,13 @@ class TestReadFromUrl:
         with pytest.raises(URLReadError, match="URL is not returning correct response"):
             readfromurl("http://example.com/error.json")
 
-    @patch('json2xml.utils.urllib3.PoolManager')
+    @patch("json2xml.utils.urllib3.PoolManager")
     def test_readfromurl_invalid_json_response(self, mock_pool_manager: Mock) -> None:
         """Test URL reading with invalid JSON response."""
         # Mock response with invalid JSON
         mock_response = Mock()
         mock_response.status = 200
-        mock_response.data = b'invalid json content'
+        mock_response.data = b"invalid json content"
 
         # Mock PoolManager
         mock_http = Mock()
@@ -198,7 +199,7 @@ class TestReadFromString:
 
     def test_readfromstring_empty_object(self) -> None:
         """Test reading empty JSON object."""
-        json_string = '{}'
+        json_string = "{}"
         result = readfromstring(json_string)
         assert result == {}
 
@@ -207,11 +208,8 @@ class TestReadFromString:
         json_string = '{"users": [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}], "total": 2}'
         result = readfromstring(json_string)
         expected = {
-            "users": [
-                {"name": "John", "age": 30},
-                {"name": "Jane", "age": 25}
-            ],
-            "total": 2
+            "users": [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}],
+            "total": 2,
         }
         assert result == expected
 
@@ -280,7 +278,7 @@ class TestIntegration:
         assert b"<name>test</name>" in xml_result
         assert b"<value>123</value>" in xml_result
 
-    @patch('json2xml.utils.urllib3.PoolManager')
+    @patch("json2xml.utils.urllib3.PoolManager")
     def test_readfromurl_then_convert_to_xml(self, mock_pool_manager: Mock) -> None:
         """Test reading from URL and converting to XML."""
         from json2xml import dicttoxml

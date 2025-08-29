@@ -450,4 +450,3 @@ v3.0.0 / 2019-02-26
   * Cleanup Readme.md
   * Update issue templates
   * fix vulnerabilities in requests
-

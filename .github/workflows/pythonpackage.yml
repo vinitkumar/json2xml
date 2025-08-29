@@ -152,4 +152,3 @@ jobs:
 
     - name: Run mypy
       run: mypy json2xml tests
-

@@ -3,4 +3,3 @@
 __author__ = """Vinit Kumar"""
 __email__ = "mail@vinitkumar.me"
 __version__ = "5.2.1"
-

@@ -35,14 +35,14 @@ jobs:
           macos-latest,
         ]
         include:
-          # Add exact version 3.14.0-rc.2 for ubuntu-latest only
-          - python-version: 3.14.0-rc.2
+          # Add exact version 3.14.0-rc.3 for ubuntu-latest only
+          - python-version: 3.14.0-rc.3
             os: ubuntu-latest
         exclude:
-          # Exclude other OSes with Python 3.14.0-rc.2
-          - python-version: 3.14.0-rc.2
+          # Exclude other OSes with Python 3.14.0-rc.3
+          - python-version: 3.14.0-rc.3
             os: windows-latest
-          - python-version: 3.14.0-rc.2
+          - python-version: 3.14.0-rc.3
             os: macos-latest
 
     steps:

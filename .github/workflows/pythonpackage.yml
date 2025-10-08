@@ -45,6 +45,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
 
+    - name: Verify freethreaded Python
+      if: endsWith(matrix.python-version, 't')
+      run: |
+        python --version --version
+        python -c "import sys; print('Free-threading enabled:', not sys._is_gil_enabled() if hasattr(sys, '_is_gil_enabled') else False)"
+
     - name: Install uv
       uses: astral-sh/setup-uv@v6
       with:

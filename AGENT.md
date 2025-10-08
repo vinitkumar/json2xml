@@ -18,5 +18,5 @@
 - Use pytest (no unittest), all tests in `./tests/` with typing annotations
 - Import typing fixtures when TYPE_CHECKING: `CaptureFixture`, `FixtureRequest`, `LogCaptureFixture`, `MonkeyPatch`, `MockerFixture`
 - Ruff formatting: line length 119, ignores E501, F403, E701, F401
-- Python 3.10+ required, supports up to 3.14
+- Python 3.10+ required, supports up to 3.14 (including 3.14t freethreaded)
 - Dependencies: defusedxml, urllib3, xmltodict, pytest, pytest-cov

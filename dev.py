@@ -31,10 +31,18 @@ def main() -> None:
         success &= run_command(["ruff", "check", "json2xml", "tests"], "Linting")
 
     if command in ("test", "all"):
-        success &= run_command([
-            "pytest", "--cov=json2xml", "--cov-report=term",
-            "-xvs", "tests", "-n", "auto"
-        ], "Tests")
+        success &= run_command(
+            [
+                "pytest",
+                "--cov=json2xml",
+                "--cov-report=term",
+                "-xvs",
+                "tests",
+                "-n",
+                "auto",
+            ],
+            "Tests",
+        )
 
     if command in ("typecheck", "all"):
         success &= run_command(["mypy", "json2xml", "tests"], "Type checking")

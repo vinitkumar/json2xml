@@ -1,7 +1,7 @@
-from pyexpat import ExpatError
 from typing import Any
 
 from defusedxml.minidom import parseString
+from pyexpat import ExpatError
 
 from json2xml import dicttoxml
 
@@ -12,6 +12,7 @@ class Json2xml:
     """
     Wrapper class to convert the data to xml
     """
+
     def __init__(
         self,
         data: dict[str, Any] | None = None,
@@ -42,7 +43,9 @@ class Json2xml:
             )
             if self.pretty:
                 try:
-                    result = parseString(xml_data).toprettyxml(encoding="UTF-8").decode()
+                    result = (
+                        parseString(xml_data).toprettyxml(encoding="UTF-8").decode()
+                    )
                 except ExpatError:
                     raise InvalidDataError
                 return result

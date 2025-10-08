@@ -5,7 +5,8 @@ import logging
 import numbers
 from collections.abc import Callable, Sequence
 from random import SystemRandom
-from typing import Any, Union
+from typing import Any, SupportsFloat, Union
+from xml.parsers.expat import ExpatError
 
 from defusedxml.minidom import parseString
 
@@ -13,6 +14,9 @@ from defusedxml.minidom import parseString
 
 # Set up logging
 LOG = logging.getLogger("dicttoxml")
+
+# Module-level set for true uniqueness tracking
+_used_ids: set[str] = set()
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -41,16 +45,11 @@ def get_unique_id(element: str) -> str:
     Returns:
         str: The unique ID.
     """
-    ids: list[str] = []  # initialize list of unique ids
     this_id = make_id(element)
-    dup = True
-    while dup:
-        if this_id not in ids:
-            dup = False
-            ids.append(this_id)
-        else:
-            this_id = make_id(element)
-    return ids[-1]
+    while this_id in _used_ids:
+        this_id = make_id(element)
+    _used_ids.add(this_id)
+    return this_id
 
 
 ELEMENT = Union[
@@ -58,7 +57,7 @@ ELEMENT = Union[
     int,
     float,
     bool,
-    numbers.Number,
+    SupportsFloat,
     Sequence[Any],
     datetime.datetime,
     datetime.date,
@@ -77,44 +76,43 @@ def get_xml_type(val: ELEMENT) -> str:
     Returns:
         str: The XML type.
     """
-    if val is not None:
-        if type(val).__name__ in ("str", "unicode"):
-            return "str"
-        if type(val).__name__ in ("int", "long"):
-            return "int"
-        if type(val).__name__ == "float":
-            return "float"
-        if type(val).__name__ == "bool":
-            return "bool"
-        if isinstance(val, numbers.Number):
-            return "number"
-        if isinstance(val, dict):
-            return "dict"
-        if isinstance(val, Sequence):
-            return "list"
-    else:
+    if val is None:
         return "null"
+    if isinstance(val, bool):  # Check bool before int (bool is subclass of int)
+        return "bool"
+    if isinstance(val, int):
+        return "int"
+    if isinstance(val, float):
+        return "float"
+    if isinstance(val, str):
+        return "str"
+    if isinstance(val, SupportsFloat):
+        return "number"
+    if isinstance(val, dict):
+        return "dict"
+    if isinstance(val, Sequence):
+        return "list"
     return type(val).__name__
 
 
-def escape_xml(s: str | int | float | numbers.Number) -> str:
+def escape_xml(s: str | int | float | SupportsFloat) -> str:
     """
     Escape a string for use in XML.
 
     Args:
-        s (str | numbers.Number): The string to escape.
+        s (str | int | float | SupportsFloat): The string to escape.
 
     Returns:
         str: The escaped string.
     """
+    s_str = str(s)  # Convert to string once
     if isinstance(s, str):
-        s = str(s)  # avoid UnicodeDecodeError
-        s = s.replace("&", "&amp;")
-        s = s.replace('"', "&quot;")
-        s = s.replace("'", "&apos;")
-        s = s.replace("<", "&lt;")
-        s = s.replace(">", "&gt;")
-    return str(s)
+        s_str = s_str.replace("&", "&amp;")
+        s_str = s_str.replace('"', "&quot;")
+        s_str = s_str.replace("'", "&apos;")
+        s_str = s_str.replace("<", "&lt;")
+        s_str = s_str.replace(">", "&gt;")
+    return s_str
 
 
 def make_attrstring(attr: dict[str, Any]) -> str:
@@ -145,40 +143,44 @@ def key_is_valid_xml(key: str) -> bool:
     try:
         parseString(test_xml)
         return True
-    except Exception:  # minidom does not implement exceptions well
+    except (ExpatError, ValueError) as e:
+        LOG.debug(f"Invalid XML name '{key}': {e}")
         return False
 
 
-def make_valid_xml_name(key: str, attr: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+def make_valid_xml_name(
+    key: str | int, attr: dict[str, Any]
+) -> tuple[str, dict[str, Any]]:
     """Tests an XML name and fixes it if invalid"""
-    key = escape_xml(key)
+    key_str = str(key)  # Ensure we're working with strings
+    key_str = escape_xml(key_str)
     # nothing happens at escape_xml if attr is not a string, we don't
     # need to pass it to the method at all.
     # attr = escape_xml(attr)
 
     # pass through if key is already valid
-    if key_is_valid_xml(key):
-        return key, attr
+    if key_is_valid_xml(key_str):
+        return key_str, attr
 
     # prepend a lowercase n if the key is numeric
-    if isinstance(key, int) or key.isdigit():
-        return f"n{key}", attr
+    if key_str.isdigit():
+        return f"n{key_str}", attr
 
     # replace spaces with underscores if that fixes the problem
-    if key_is_valid_xml(key.replace(" ", "_")):
-        return key.replace(" ", "_"), attr
+    if key_is_valid_xml(key_str.replace(" ", "_")):
+        return key_str.replace(" ", "_"), attr
 
     # allow namespace prefixes + ignore @flat in key
-    if key_is_valid_xml(key.replace(":", "").replace("@flat", "")):
-        return key, attr
+    if key_is_valid_xml(key_str.replace(":", "").replace("@flat", "")):
+        return key_str, attr
 
     # key is still invalid - move it into a name attribute
-    attr["name"] = key
-    key = "key"
-    return key, attr
+    attr["name"] = key_str
+    key_str = "key"
+    return key_str, attr
 
 
-def wrap_cdata(s: str | int | float | numbers.Number) -> str:
+def wrap_cdata(s: str | int | float | SupportsFloat) -> str:
     """Wraps a string into CDATA sections"""
     s = str(s).replace("]]>", "]]]]><![CDATA[>")
     return "<![CDATA[" + s + "]]>"
@@ -186,6 +188,25 @@ def wrap_cdata(s: str | int | float | numbers.Number) -> str:
 
 def default_item_func(parent: str) -> str:
     return "item"
+
+
+def _build_namespace_string(xml_namespaces: dict[str, Any]) -> str:
+    """Build XML namespace string from namespace dictionary."""
+    parts = []
+
+    for prefix, value in xml_namespaces.items():
+        if prefix == "xsi" and isinstance(value, dict):
+            for schema_att, ns in value.items():
+                if schema_att == "schemaInstance":
+                    parts.append(f'xmlns:{prefix}="{ns}"')
+                elif schema_att == "schemaLocation":
+                    parts.append(f'xsi:{schema_att}="{ns}"')
+        elif prefix == "xmlns":
+            parts.append(f'xmlns="{value}"')
+        else:
+            parts.append(f'xmlns:{prefix}="{value}"')
+
+    return " " + " ".join(parts) if parts else ""
 
 
 def convert(
@@ -208,7 +229,7 @@ def convert(
     if isinstance(obj, bool):
         return convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata)
 
-    if isinstance(obj, numbers.Number):
+    if isinstance(obj, SupportsFloat):
         return convert_kv(
             key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
         )
@@ -233,10 +254,28 @@ def convert(
         return convert_none(key=item_name, attr_type=attr_type, cdata=cdata)
 
     if isinstance(obj, dict):
-        return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
+        return convert_dict(
+            obj,
+            ids,
+            parent,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            list_headers=list_headers,
+        )
 
     if isinstance(obj, Sequence):
-        return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
+        return convert_list(
+            obj,
+            ids,
+            parent,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            list_headers=list_headers,
+        )
 
     raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
 
@@ -262,12 +301,13 @@ def dict2xml_str(
     parse dict2xml
     """
     ids: list[str] = []  # initialize list of unique ids
-    ", ".join(str(key) for key in item)
     subtree = ""  # Initialize subtree with default empty string
 
     if attr_type:
         attr["type"] = get_xml_type(item)
-    val_attr: dict[str, str] = item.pop("@attrs", attr)  # update attr with custom @attr if exists
+    val_attr: dict[str, str] = item.pop(
+        "@attrs", attr
+    )  # update attr with custom @attr if exists
     rawitem = item["@val"] if "@val" in item else item
     if is_primitive_type(rawitem):
         if isinstance(rawitem, dict):
@@ -277,7 +317,14 @@ def dict2xml_str(
     else:
         # we can not use convert_dict, because rawitem could be non-dict
         subtree = convert(
-            rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers=list_headers
+            rawitem,
+            ids,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            item_name,
+            list_headers=list_headers,
         )
 
     if parentIsList and list_headers:
@@ -319,7 +366,7 @@ def list2xml_str(
         item_func=item_func,
         cdata=cdata,
         item_wrap=item_wrap,
-        list_headers=list_headers
+        list_headers=list_headers,
     )
     if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap):
         return subtree
@@ -337,7 +384,7 @@ def convert_dict(
     item_func: Callable[[str], str],
     cdata: bool,
     item_wrap: bool,
-    list_headers: bool = False
+    list_headers: bool = False,
 ) -> str:
     """Converts a dict into an XML string."""
     output: list[str] = []
@@ -355,7 +402,7 @@ def convert_dict(
         if isinstance(val, bool):
             addline(convert_bool(key, val, attr_type, attr, cdata))
 
-        elif isinstance(val, (numbers.Number, str)):
+        elif isinstance(val, (SupportsFloat, str)):
             addline(
                 convert_kv(
                     key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
@@ -376,9 +423,15 @@ def convert_dict(
         elif isinstance(val, dict):
             addline(
                 dict2xml_str(
-                    attr_type, attr, val, item_func, cdata, key, item_wrap,
+                    attr_type,
+                    attr,
+                    val,
+                    item_func,
+                    cdata,
+                    key,
+                    item_wrap,
                     False,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -392,7 +445,7 @@ def convert_dict(
                     cdata=cdata,
                     item_name=key,
                     item_wrap=item_wrap,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -432,7 +485,7 @@ def convert_list(
         if isinstance(item, bool):
             addline(convert_bool(item_name, item, attr_type, attr, cdata))
 
-        elif isinstance(item, (numbers.Number, str)):
+        elif isinstance(item, (SupportsFloat, str)):
             if item_wrap:
                 addline(
                     convert_kv(
@@ -477,7 +530,7 @@ def convert_list(
                     item_wrap=item_wrap,
                     parentIsList=True,
                     parent=parent,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -491,7 +544,7 @@ def convert_list(
                     cdata=cdata,
                     item_name=item_name,
                     item_wrap=item_wrap,
-                    list_headers=list_headers
+                    list_headers=list_headers,
                 )
             )
 
@@ -505,7 +558,7 @@ def convert_list(
 
 def convert_kv(
     key: str,
-    val: str | int | float | numbers.Number | datetime.datetime | datetime.date,
+    val: str | int | float | SupportsFloat | datetime.datetime | datetime.date,
     attr_type: bool,
     attr: dict[str, Any] | None = None,
     cdata: bool = False,
@@ -516,17 +569,25 @@ def convert_kv(
     key, attr = make_valid_xml_name(key, attr)
 
     # Convert datetime to isoformat string
-    if hasattr(val, "isoformat") and isinstance(val, (datetime.datetime, datetime.date)):
+    if hasattr(val, "isoformat") and isinstance(
+        val, (datetime.datetime, datetime.date)
+    ):
         val = val.isoformat()
 
     if attr_type:
         attr["type"] = get_xml_type(val)
     attr_string = make_attrstring(attr)
-    return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    return (
+        f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    )
 
 
 def convert_bool(
-    key: str, val: bool, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
+    key: str,
+    val: bool,
+    attr_type: bool,
+    attr: dict[str, Any] | None = None,
+    cdata: bool = False,
 ) -> str:
     """Converts a boolean into an XML element"""
     if attr is None:
@@ -562,8 +623,8 @@ def dicttoxml(
     item_wrap: bool = True,
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,
-    xml_namespaces: dict[str, Any] = {},
-    list_headers: bool = False
+    xml_namespaces: dict[str, Any] | None = None,
+    list_headers: bool = False,
 ) -> bytes:
     """
     Converts a python object into XML.
@@ -681,35 +742,36 @@ def dicttoxml(
         <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
 
     """
+    if xml_namespaces is None:
+        xml_namespaces = {}
+
     output = []
-    namespace_str = ""
-    for prefix in xml_namespaces:
-        if prefix == 'xsi':
-            for schema_att in xml_namespaces[prefix]:
-                if schema_att == 'schemaInstance':
-                    ns = xml_namespaces[prefix]['schemaInstance']
-                    namespace_str += f' xmlns:{prefix}="{ns}"'
-                elif schema_att == 'schemaLocation':
-                    ns = xml_namespaces[prefix][schema_att]
-                    namespace_str += f' xsi:{schema_att}="{ns}"'
-
-        elif prefix == 'xmlns':
-            # xmns needs no prefix
-            ns = xml_namespaces[prefix]
-            namespace_str += f' xmlns="{ns}"'
-
-        else:
-            ns = xml_namespaces[prefix]
-            namespace_str += f' xmlns:{prefix}="{ns}"'
+    namespace_str = _build_namespace_string(xml_namespaces)
     if root:
         output.append('<?xml version="1.0" encoding="UTF-8" ?>')
         output_elem = convert(
-            obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
+            obj,
+            ids,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            parent=custom_root,
+            list_headers=list_headers,
         )
         output.append(f"<{custom_root}{namespace_str}>{output_elem}</{custom_root}>")
     else:
         output.append(
-            convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
+            convert(
+                obj,
+                ids,
+                attr_type,
+                item_func,
+                cdata,
+                item_wrap,
+                parent="",
+                list_headers=list_headers,
+            )
         )
 
     return "".join(output).encode("utf-8")

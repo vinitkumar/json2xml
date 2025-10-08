@@ -139,7 +139,9 @@ However, you can change this behavior using the item_wrap property like this:
     from json2xml import json2xml
     from json2xml.utils import readfromurl, readfromstring, readfromjson
 
-    data = readfromstring('{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}')
+    data = readfromstring(
+        '{"my_items":[{"my_item":{"id":1} },{"my_item":{"id":2} }],"my_str_items":["a","b"]}'
+    )
     print(json2xml.Json2xml(data, item_wrap=False).to_xml())
 
 Outputs this:
@@ -201,7 +203,7 @@ This project uses modern Python development practices. Here's how to set up a de
     # Create and activate virtual environment (using uv - recommended)
     uv venv
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    
+
     # Install dependencies
     uv pip install -r requirements-dev.txt
     uv pip install -e .
@@ -241,4 +243,3 @@ Help and Support to maintain this project
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - You can sponsor my work for this plugin here: https://github.com/sponsors/vinitkumar/
-

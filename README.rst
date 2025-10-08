@@ -8,6 +8,7 @@ json2xml
 
 .. image:: https://github.com/vinitkumar/json2xml/actions/workflows/pythonpackage.yml/badge.svg
 .. image:: https://img.shields.io/pypi/pyversions/json2xml.svg
+.. image:: https://img.shields.io/badge/python-3.14%20freethreaded-blue
 .. image:: https://readthedocs.org/projects/json2xml/badge/?version=latest
         :target: https://json2xml.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
@@ -36,6 +37,7 @@ json2xml supports the following features:
 * Conversion from a `json` string to XML
 * Conversion from a `json` file to XML
 * Conversion from an API that emits `json` data to XML
+* Full compatibility with Python 3.14 freethreaded (GIL-free) builds
 
 Usage
 ^^^^^
@@ -194,7 +196,7 @@ in case any of the input(file, string or API URL) returns invalid JSON.
 Development
 ^^^^^^^^^^^
 
-This project uses modern Python development practices. Here's how to set up a development environment:
+This project uses modern Python development practices and supports both regular and freethreaded Python 3.14. Here's how to set up a development environment:
 
  .. code-block:: console
 

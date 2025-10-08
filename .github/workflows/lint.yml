@@ -27,8 +27,8 @@ jobs:
           ruff check tests
 
 
-  mypy:
-    name: mypy
+  typecheck:
+    name: ty typecheck
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,11 +37,15 @@ jobs:
         uses: actions/setup-python@v5.2.0
         with:
           python-version: '3.13'
-          cache: 'pip'
-      - run: pip install --upgrade mypy types-requests types-urllib3
-      - name: mypy
-        uses: liskin/gh-problem-matcher-wrap@v2
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
         with:
-          linters: mypy
-          run: |
-            mypy json2xml
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install -e .
+      - name: Run ty
+        run: |
+          source .venv/bin/activate
+          uvx ty check json2xml tests

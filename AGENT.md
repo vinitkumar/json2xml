@@ -4,7 +4,7 @@
 - Test: `pytest -vv` (all tests) or `pytest tests/test_<name>.py -vv` (single test file)
 - Test with coverage: `pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs`
 - Lint: `ruff check json2xml tests`
-- Type check: `mypy json2xml tests`
+- Type check: `uvx ty check json2xml tests`
 - Test all Python versions: `tox`
 - Clean artifacts: `make clean`
 

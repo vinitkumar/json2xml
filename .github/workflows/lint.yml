@@ -24,7 +24,7 @@ jobs:
           enable-cache: true
       
       - name: Install ruff
-        run: uv pip install --system ruff
+        run: uv pip install ruff
       - name: Run Ruff
         run: |
           ruff check json2xml
@@ -48,7 +48,7 @@ jobs:
           enable-cache: true
       
       - name: Install mypy and types
-        run: uv pip install --system mypy types-requests types-urllib3
+        run: uv pip install mypy types-requests types-urllib3
       - name: mypy
         uses: liskin/gh-problem-matcher-wrap@v2
         with:

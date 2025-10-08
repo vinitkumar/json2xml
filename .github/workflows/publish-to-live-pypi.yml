@@ -22,7 +22,7 @@ jobs:
         enable-cache: true
 
     - name: Install build dependencies
-      run: uv pip install --system build
+      run: uv pip install build
     - name: Build a binary wheel and a source tarball
       run: >-
         python -m

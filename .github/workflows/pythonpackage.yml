@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [pypy-3.10, pypy-3.11, '3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: [pypy-3.10, pypy-3.11, '3.10', '3.11', '3.12', '3.13', '3.14', '3.14t']
         os: [
           ubuntu-latest,
           windows-latest,
@@ -40,10 +40,16 @@ jobs:
         persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5.2.0
+      uses: actions/setup-python@v5.5.0
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
+
+    - name: Verify freethreaded Python
+      if: endsWith(matrix.python-version, 't')
+      run: |
+        python --version --version
+        python -c "import sys; print('Free-threading enabled:', not sys._is_gil_enabled() if hasattr(sys, '_is_gil_enabled') else False)"
 
     - name: Install uv
       uses: astral-sh/setup-uv@v6

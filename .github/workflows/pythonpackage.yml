@@ -56,8 +56,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install -e .
-        uv pip install pytest pytest-xdist pytest-cov
+        uv pip install --system -e .
+        uv pip install --system pytest pytest-xdist pytest-cov
 
     - name: Create coverage directory
       run: mkdir -p coverage/reports
@@ -107,8 +107,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install -e .
-        uv pip install ruff>=0.3.0
+        uv pip install --system -e .
+        uv pip install --system ruff>=0.3.0
 
     - name: Run ruff
       run: ruff check json2xml tests
@@ -136,8 +136,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install -e .
-        uv pip install mypy>=1.0.0 types-setuptools
+        uv pip install --system -e .
+        uv pip install --system mypy>=1.0.0 types-setuptools
 
     - name: Run mypy
       run: mypy json2xml tests
@@ -181,8 +181,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install -e .
-        uv pip install pytest pytest-xdist pytest-cov
+        uv pip install --system -e .
+        uv pip install --system pytest pytest-xdist pytest-cov
 
     - name: Create coverage directory
       shell: bash

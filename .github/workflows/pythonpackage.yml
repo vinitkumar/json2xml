@@ -28,11 +28,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [pypy-3.10, pypy-3.11, '3.10', '3.11', '3.12', '3.13', '3.14', '3.14-freethreaded']
+        python-version: [pypy-3.10, pypy-3.11, '3.10.18', '3.11.13', '3.12.11', '3.13.8', '3.14.0', '3.14.0-freethreaded']
         os: [
-          ubuntu-latest,
-          windows-latest,
-          macos-latest,
+          ubuntu-22.04,
+          windows-2022,
+          macos-13,
         ]
     steps:
     - uses: actions/checkout@v4

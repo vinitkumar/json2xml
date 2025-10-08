@@ -150,36 +150,25 @@ jobs:
         include:
           - os: ubuntu-22.04
             python-version: '3.14.0'
-            arch: x64
-            platform: linux
           - os: windows-2022
             python-version: '3.14.0'
-            arch: x64
-            platform: win32
           - os: macos-14
             python-version: '3.14.0'
-            arch: x64
-            platform: darwin
     steps:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
 
-    - name: Download and setup Python ${{ matrix.python-version }} (freethreaded)
+    - name: Set up Python ${{ matrix.python-version }} (freethreaded)
+      uses: actions/setup-python@v5.2.0
+      with:
+        python-version: '3.14t'
+        allow-prereleases: true
+
+    - name: Verify freethreaded Python
+      shell: bash
       run: |
-        if [ "${{ matrix.platform }}" = "linux" ]; then
-          wget -O python.tar.gz "https://github.com/actions/python-versions/releases/download/3.14.0-18313368925/python-3.14.0-linux-22.04-${{ matrix.arch }}-freethreaded.tar.gz"
-          tar -xzf python.tar.gz
-          echo "$PWD/python-3.14.0-linux-22.04-${{ matrix.arch }}-freethreaded/bin" >> $GITHUB_PATH
-        elif [ "${{ matrix.platform }}" = "win32" ]; then
-          curl -L -o python.zip "https://github.com/actions/python-versions/releases/download/3.14.0-18313368925/python-3.14.0-win32-${{ matrix.arch }}-freethreaded.zip"
-          Expand-Archive python.zip -DestinationPath .
-          echo "$PWD/python-3.14.0-win32-${{ matrix.arch }}-freethreaded" >> $env:GITHUB_PATH
-        elif [ "${{ matrix.platform }}" = "darwin" ]; then
-          curl -L -o python.tar.gz "https://github.com/actions/python-versions/releases/download/3.14.0-18313368925/python-3.14.0-darwin-${{ matrix.arch }}-freethreaded.tar.gz"
-          tar -xzf python.tar.gz
-          echo "$PWD/python-3.14.0-darwin-${{ matrix.arch }}-freethreaded/bin" >> $GITHUB_PATH
-        fi
+        python -c "import sys; print(f'Python {sys.version}'); print(f'GIL enabled: {sys._is_gil_enabled()}' if hasattr(sys, '_is_gil_enabled') else 'GIL check not available')"
 
     - name: Install uv
       uses: astral-sh/setup-uv@v6
@@ -196,6 +185,7 @@ jobs:
         uv pip install pytest pytest-xdist pytest-cov
 
     - name: Create coverage directory
+      shell: bash
       run: mkdir -p coverage/reports
 
     - name: Run tests with freethreaded Python
@@ -211,7 +201,7 @@ jobs:
       with:
         directory: ./coverage/reports/
         env_vars: OS,PYTHON
-        fail_ci_if_error: false  # Don't fail CI if codecov upload fails
+        fail_ci_if_error: false
         files: ./coverage/reports/coverage.xml
         flags: freethreaded
         token: ${{ secrets.CODECOV_TOKEN }}

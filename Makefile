@@ -56,8 +56,8 @@ lint: ## check style with ruff
 lint-fix: ## automatically fix ruff issues
 	ruff check --fix json2xml tests
 
-typecheck: ## check types with mypy
-	mypy json2xml tests
+typecheck: ## check types with ty
+	uvx ty check json2xml tests
 
 test: ## run tests quickly with the default Python
 	pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests -n auto

@@ -37,7 +37,7 @@ def main() -> None:
         ], "Tests")
 
     if command in ("typecheck", "all"):
-        success &= run_command(["mypy", "json2xml", "tests"], "Type checking")
+        success &= run_command(["uvx", "ty", "check", "json2xml", "tests"], "Type checking")
 
     if command == "help":
         print("Usage: python dev.py [command]")

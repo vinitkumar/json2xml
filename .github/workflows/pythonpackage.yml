@@ -143,8 +143,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv pip install --system -e .
-        uv pip install --system mypy>=1.0.0 types-setuptools
 
-    - name: Run mypy
-      run: mypy json2xml tests
+    - name: Run ty
+      run: uvx ty check json2xml tests
 

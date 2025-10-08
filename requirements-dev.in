@@ -7,5 +7,4 @@ pytest-xdist==3.8.0
 coverage==7.10.3
 ruff==0.12.8
 setuptools==80.9.0
-mypy==1.17.1
-types-setuptools==80.9.0.20250809
+# Note: ty is run via uvx, not installed as a dependency

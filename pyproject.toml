@@ -72,3 +72,6 @@ lint.select = [
     "F",
     "W",
 ]
+
+[tool.ty]
+# Type checking configuration with ty

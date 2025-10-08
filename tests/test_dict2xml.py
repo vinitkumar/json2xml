@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from _pytest.fixtures import FixtureRequest
     from _pytest.logging import LogCaptureFixture
     from _pytest.monkeypatch import MonkeyPatch
-    from pytest_mock.plugin import MockerFixture
 
 
 class TestDict2xml:
@@ -808,8 +807,8 @@ class TestDict2xml:
                     this_id = module.make_id(element)  # This exercises line 52
             return ids[-1]
 
-        module.make_id = mock_make_id
-        module.get_unique_id = patched_get_unique_id
+        module.make_id = mock_make_id  # type: ignore[assignment]
+        module.get_unique_id = patched_get_unique_id  # type: ignore[assignment]
 
         try:
             result = dicttoxml.get_unique_id("test")
@@ -1025,7 +1024,7 @@ class TestDict2xml:
                 return True
             return original_is_primitive(val)
 
-        module.is_primitive_type = mock_is_primitive
+        module.is_primitive_type = mock_is_primitive  # type: ignore[assignment]
         try:
             item = {"@val": {"test": "data"}}
             result = dicttoxml.dict2xml_str(

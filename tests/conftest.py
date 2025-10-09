@@ -22,7 +22,7 @@ def sample_json_string() -> str:
 
 
 @pytest.fixture
-def sample_json_dict() -> Dict[str, Any]:
+def sample_json_dict() -> dict[str, Any]:
     """Return a sample JSON dictionary for testing.
 
     Returns:
@@ -36,7 +36,7 @@ def sample_json_dict() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_json_list() -> List[Dict[str, Any]]:
+def sample_json_list() -> list[dict[str, Any]]:
     """Return a sample JSON list for testing.
 
     Returns:

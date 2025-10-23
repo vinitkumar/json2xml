@@ -159,7 +159,8 @@ class TestParallelProcessing:
         result_serial = converter_serial.to_xml()
 
         assert result_parallel == result_serial
-        result_bytes = result_parallel.encode() if isinstance(result_parallel, str) else result_parallel
+        assert result_parallel is not None
+        result_bytes: bytes = result_parallel.encode() if isinstance(result_parallel, str) else result_parallel
         assert b"<users" in result_bytes
         assert b"<total" in result_bytes
 

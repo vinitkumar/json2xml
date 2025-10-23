@@ -331,7 +331,7 @@ def list2xml_str(
 
 def convert_dict(
     obj: dict[str, Any],
-    ids: list[str],
+    ids: list[str] | None,
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -557,7 +557,7 @@ def dicttoxml(
     obj: ELEMENT,
     root: bool = True,
     custom_root: str = "root",
-    ids: list[int] | None = None,
+    ids: list[str] | None = None,
     attr_type: bool = True,
     item_wrap: bool = True,
     item_func: Callable[[str], str] = default_item_func,

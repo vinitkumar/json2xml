@@ -177,7 +177,7 @@ def _convert_dict_item(
 
 def convert_dict_parallel(
     obj: dict[str, Any],
-    ids: list[str],
+    ids: list[str] | None,
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],

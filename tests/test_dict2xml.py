@@ -763,7 +763,7 @@ class TestDict2xml:
     def test_dicttoxml_with_ids(self) -> None:
         """Test dicttoxml with IDs parameter."""
         data = {"key": "value"}
-        result = dicttoxml.dicttoxml(data, ids=[1, 2, 3], attr_type=False)
+        result = dicttoxml.dicttoxml(data, ids=["1", "2", "3"], attr_type=False)
         assert b'<key id="root_' in result
         assert b'">value</key>' in result
 

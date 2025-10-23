@@ -20,6 +20,8 @@ Documentation: https://json2xml.readthedocs.io.
 
 The library was initially dependent on the `dict2xml` project, but it has now been integrated into json2xml itself. This has led to cleaner code, the addition of types and tests, and overall improved performance.
 
+**NEW in 5.2.1**: 🚀 **Free-threaded Python 3.14t support** with up to **1.55x speedup** for parallel processing! See `Performance`_ section below.
+
 
 
 Architecture Diagram
@@ -36,6 +38,8 @@ json2xml supports the following features:
 * Conversion from a `json` string to XML
 * Conversion from a `json` file to XML
 * Conversion from an API that emits `json` data to XML
+* **Parallel processing** for improved performance on Python 3.14t (free-threaded)
+* Automatic fallback to serial processing for small datasets
 
 Usage
 ^^^^^
@@ -235,6 +239,81 @@ Using tools directly:
     pytest --cov=json2xml --cov-report=term -xvs tests -n auto
     ruff check json2xml tests
     mypy json2xml tests
+
+
+Performance
+^^^^^^^^^^^
+
+json2xml now supports **parallel processing** on Python 3.14t (free-threaded build), providing significant performance improvements for medium to large datasets.
+
+Parallel Processing Usage
+""""""""""""""""""""""""""
+
+Enable parallel processing for improved performance:
+
+.. code-block:: python
+
+    from json2xml.json2xml import Json2xml
+
+    # Basic parallel processing (auto-detects optimal workers)
+    data = {"users": [{"id": i, "name": f"User {i}"} for i in range(1000)]}
+    converter = Json2xml(data, parallel=True)
+    xml = converter.to_xml()
+
+    # Advanced: specify workers and chunk size
+    converter = Json2xml(data, parallel=True, workers=4, chunk_size=100)
+    xml = converter.to_xml()
+
+Benchmark Results
+"""""""""""""""""
+
+Tested on macOS ARM64 with Python 3.14.0 and Python 3.14.0t (free-threaded):
+
+**Medium Dataset (100 items) - Best Case**
+
++-------------------+-------------+-----------------+----------+
+| Python Version    | Serial Time | Parallel (4w)   | Speedup  |
++===================+=============+=================+==========+
+| 3.14 (GIL)        | 7.56 ms     | 7.86 ms         | 0.96x    |
++-------------------+-------------+-----------------+----------+
+| 3.14t (no-GIL)    | 8.59 ms     | **5.55 ms**     | **1.55x**|
++-------------------+-------------+-----------------+----------+
+
+**Key Findings:**
+
+* ✅ Up to **1.55x speedup** on Python 3.14t (free-threaded) for medium datasets
+* ✅ Automatic fallback to serial processing for small datasets (avoids overhead)
+* ✅ Best performance with 4 worker threads
+* ⚠️ No benefit on standard Python with GIL (as expected)
+
+**Performance by Dataset Size:**
+
+* **Small** (< 100 items): Serial processing (automatic fallback)
+* **Medium** (100-1K items): **1.5x faster** with parallel processing on 3.14t
+* **Large** (1K-10K items): Comparable performance (string concatenation bottleneck)
+
+For detailed benchmark results, see `BENCHMARK_RESULTS.md <BENCHMARK_RESULTS.md>`_.
+
+Running Benchmarks
+""""""""""""""""""
+
+You can run benchmarks on your system:
+
+.. code-block:: console
+
+    # Standard Python
+    uv run --python 3.14 python benchmark.py
+
+    # Free-threaded Python
+    uv run --python 3.14t python benchmark.py
+
+Recommendations
+"""""""""""""""
+
+* **Use Python 3.14t** for best parallel processing performance
+* **Enable parallel=True** for medium-sized datasets (100-1K items)
+* **Keep default serial** for small datasets (automatic)
+* **Benchmark your use case** - results vary by data structure
 
 
 Help and Support to maintain this project

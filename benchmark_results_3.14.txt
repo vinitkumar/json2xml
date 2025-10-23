@@ -1,0 +1,56 @@
+   Building json2xml @ file:///Users/vinitkumar/projects/python/json2xml
+Downloading setuptools (1.2MiB)
+      Built json2xml @ file:///Users/vinitkumar/projects/python/json2xml
+   Building coverage==7.6.10
+ Downloading setuptools
+      Built coverage==7.6.10
+Uninstalled 10 packages in 66ms
+Installed 13 packages in 38ms
+================================================================================
+json2xml Performance Benchmark
+================================================================================
+Python Version: 3.14.0 (main, Oct  7 2025, 16:07:00) [Clang 20.1.4 ]
+Python Executable: /Users/vinitkumar/projects/python/json2xml/.venv/bin/python3
+Free-threaded: No
+GIL Status: Enabled (Standard GIL)
+================================================================================
+
+
+SMALL Dataset:
+--------------------------------------------------------------------------------
+Items: 10
+Serial:     0.25 ms
+Parallel (2w): 0.40 ms (speedup: 0.63x)
+Parallel (4w): 0.51 ms (speedup: 0.49x)
+Parallel (8w): 0.44 ms (speedup: 0.56x)
+
+
+MEDIUM Dataset:
+--------------------------------------------------------------------------------
+Items: 100
+Serial:     7.56 ms
+Parallel (2w): 7.35 ms (speedup: 1.03x)
+Parallel (4w): 7.86 ms (speedup: 0.96x)
+Parallel (8w): 8.76 ms (speedup: 0.86x)
+
+
+LARGE Dataset:
+--------------------------------------------------------------------------------
+Items: 1000
+Serial:     240.54 ms
+Parallel (2w): 244.17 ms (speedup: 0.99x)
+Parallel (4w): 244.30 ms (speedup: 0.98x)
+Parallel (8w): 246.58 ms (speedup: 0.98x)
+
+
+XLARGE Dataset:
+--------------------------------------------------------------------------------
+Items: 5000
+Serial:     2354.32 ms
+Parallel (2w): 2629.16 ms (speedup: 0.90x)
+Parallel (4w): 2508.42 ms (speedup: 0.94x)
+Parallel (8w): 2522.19 ms (speedup: 0.93x)
+
+================================================================================
+Benchmark complete!
+================================================================================

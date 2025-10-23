@@ -323,3 +323,23 @@ class TestParallelProcessing:
         result_parallel = dicttoxml.dicttoxml(data, parallel=True, workers=4)
         result_serial = dicttoxml.dicttoxml(data, parallel=False)
         assert result_parallel == result_serial
+
+    def test_parallel_with_root_and_primitive(self) -> None:
+        """Test parallel processing with root element and primitive value."""
+        data = 123
+        result = dicttoxml.dicttoxml(data, root=True, parallel=True, workers=4)
+        assert b"<?xml version" in result
+        assert b"123" in result
+        assert b"<root" in result
+
+    def test_get_optimal_workers_in_non_free_threaded(self) -> None:
+        """Test get_optimal_workers returns min(4, cpu_count) in non-free-threaded mode."""
+        import os
+        from unittest.mock import patch
+
+        cpu_count = os.cpu_count() or 4
+        expected = min(4, cpu_count)
+
+        with patch('json2xml.parallel.is_free_threaded', return_value=False):
+            result = get_optimal_workers(None)
+            assert result == expected

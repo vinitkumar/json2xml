@@ -1142,3 +1142,26 @@ class TestDict2xml:
         empty_attrs: dict[str, Any] = {}
         result = make_attrstring(empty_attrs)
         assert result == ""
+
+    def test_get_xml_type_with_decimal(self) -> None:
+        """Test get_xml_type with Decimal (numbers.Number subclass)."""
+        from decimal import Decimal
+
+        result = dicttoxml.get_xml_type(Decimal("3.14"))
+        assert result == "number"
+
+    def test_get_xml_type_with_fraction(self) -> None:
+        """Test get_xml_type with Fraction (numbers.Number subclass)."""
+        from fractions import Fraction
+
+        result = dicttoxml.get_xml_type(Fraction(1, 2))
+        assert result == "number"
+
+    def test_convert_with_decimal(self) -> None:
+        """Test converting Decimal values."""
+        from decimal import Decimal
+
+        data = {"value": Decimal("123.456")}
+        result = dicttoxml.dicttoxml(data, attr_type=True)
+        assert b"123.456" in result
+        assert b'type="number"' in result

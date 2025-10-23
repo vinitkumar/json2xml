@@ -11,6 +11,7 @@ from json2xml.parallel import (
     get_optimal_workers,
     is_free_threaded,
     key_is_valid_xml_cached,
+    make_valid_xml_name_cached,
 )
 
 if TYPE_CHECKING:
@@ -239,4 +240,86 @@ class TestParallelProcessing:
             data, [], "root", False, dicttoxml.default_item_func, False, True, False
         )
 
+        assert result_parallel == result_serial
+
+    def test_parallel_no_root(self) -> None:
+        """Test parallel processing without root element."""
+        data = {f"item{i}": i for i in range(20)}
+        result = dicttoxml.dicttoxml(data, root=False, parallel=True, workers=4)
+        assert b"<?xml version" not in result
+
+    def test_parallel_list_no_root(self) -> None:
+        """Test parallel processing of list without root element."""
+        data = [{"id": i, "name": f"item{i}"} for i in range(20)]
+        result = dicttoxml.dicttoxml(data, root=False, parallel=True, workers=4)
+        assert b"<?xml version" not in result
+
+    def test_parallel_primitive_no_root(self) -> None:
+        """Test parallel processing of primitive value without root element."""
+        data = 42
+        result = dicttoxml.dicttoxml(data, root=False, parallel=True, workers=4)
+        assert b"<?xml version" not in result
+        assert b"42" in result
+
+    def test_make_valid_xml_name_cached_with_digit_string(self) -> None:
+        """Test make_valid_xml_name_cached with digit string."""
+        key, attr = make_valid_xml_name_cached("456", {})
+        assert key == "n456"
+        assert attr == {}
+
+    def test_make_valid_xml_name_cached_with_space(self) -> None:
+        """Test make_valid_xml_name_cached with space in key."""
+        key, attr = make_valid_xml_name_cached("my key", {})
+        assert key == "my_key"
+        assert attr == {}
+
+    def test_make_valid_xml_name_cached_with_colon(self) -> None:
+        """Test make_valid_xml_name_cached with colon in key."""
+        key, attr = make_valid_xml_name_cached("ns:element", {})
+        assert key == "ns:element"
+        assert attr == {}
+
+    def test_make_valid_xml_name_cached_with_invalid_chars(self) -> None:
+        """Test make_valid_xml_name_cached with invalid XML characters."""
+        key, attr = make_valid_xml_name_cached("in<valid>key", {})
+        assert key == "key"
+        assert attr["name"] == "in&lt;valid&gt;key"
+
+    def test_parallel_with_sequence_value(self) -> None:
+        """Test parallel processing with sequence values in dict."""
+        data = {f"key{i}": [f"val{j}" for j in range(3)] for i in range(15)}
+        result_parallel = dicttoxml.dicttoxml(data, parallel=True, workers=4)
+        result_serial = dicttoxml.dicttoxml(data, parallel=False)
+        assert result_parallel == result_serial
+
+    def test_parallel_with_none_values(self) -> None:
+        """Test parallel processing with None values."""
+        data = {f"key{i}": None for i in range(15)}
+        result_parallel = dicttoxml.dicttoxml(data, parallel=True, workers=4)
+        result_serial = dicttoxml.dicttoxml(data, parallel=False)
+        assert result_parallel == result_serial
+
+    def test_parallel_unsupported_type_error(self) -> None:
+        """Test that unsupported types raise TypeError in parallel mode."""
+        class CustomType:
+            pass
+        
+        data = {f"key{i}": CustomType() for i in range(15)}
+        with pytest.raises(TypeError, match="Unsupported data type"):
+            dicttoxml.dicttoxml(data, parallel=True, workers=4)
+
+    def test_parallel_with_bool_values(self) -> None:
+        """Test parallel processing with boolean values."""
+        data = {f"key{i}": i % 2 == 0 for i in range(15)}
+        result_parallel = dicttoxml.dicttoxml(data, parallel=True, workers=4)
+        result_serial = dicttoxml.dicttoxml(data, parallel=False)
+        assert result_parallel == result_serial
+
+    def test_parallel_with_datetime_values(self) -> None:
+        """Test parallel processing with datetime values."""
+        from datetime import datetime
+        
+        data = {f"key{i}": datetime(2024, 1, i + 1) for i in range(15)}
+        result_parallel = dicttoxml.dicttoxml(data, parallel=True, workers=4)
+        result_serial = dicttoxml.dicttoxml(data, parallel=False)
         assert result_parallel == result_serial

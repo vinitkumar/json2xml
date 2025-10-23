@@ -14,7 +14,7 @@ from json2xml import dicttoxml
 def is_free_threaded() -> bool:
     """
     Check if running on free-threaded Python build (Python 3.13t).
-    
+
     Returns:
         bool: True if running on free-threaded build, False otherwise.
     """
@@ -24,10 +24,10 @@ def is_free_threaded() -> bool:
 def get_optimal_workers(workers: int | None = None) -> int:
     """
     Get the optimal number of worker threads.
-    
+
     Args:
         workers: Explicitly specified worker count. If None, auto-detect.
-    
+
     Returns:
         int: Number of worker threads to use.
     """
@@ -49,10 +49,10 @@ _validation_cache_lock = threading.Lock()
 def key_is_valid_xml_cached(key: str) -> bool:
     """
     Thread-safe cached version of key_is_valid_xml.
-    
+
     Args:
         key: The XML key to validate.
-    
+
     Returns:
         bool: True if the key is valid XML, False otherwise.
     """
@@ -71,11 +71,11 @@ def key_is_valid_xml_cached(key: str) -> bool:
 def make_valid_xml_name_cached(key: str, attr: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     """
     Thread-safe cached version of make_valid_xml_name.
-    
+
     Args:
         key: The key to validate.
         attr: The attributes dictionary.
-    
+
     Returns:
         tuple: Valid XML key and updated attributes.
     """
@@ -111,7 +111,7 @@ def _convert_dict_item(
 ) -> str:
     """
     Convert a single dictionary item to XML (for parallel processing).
-    
+
     Args:
         key: Dictionary key.
         val: Dictionary value.
@@ -122,7 +122,7 @@ def _convert_dict_item(
         cdata: Whether to wrap strings in CDATA.
         item_wrap: Whether to wrap list items.
         list_headers: Whether to repeat headers for lists.
-    
+
     Returns:
         str: XML string for this item.
     """
@@ -189,7 +189,7 @@ def convert_dict_parallel(
 ) -> str:
     """
     Parallel version of convert_dict that processes dictionary items concurrently.
-    
+
     Args:
         obj: Dictionary to convert.
         ids: List of unique IDs.
@@ -201,7 +201,7 @@ def convert_dict_parallel(
         list_headers: Whether to repeat headers for lists.
         workers: Number of worker threads (None for auto-detect).
         min_items_for_parallel: Minimum items to enable parallelization.
-    
+
     Returns:
         str: XML string.
     """
@@ -243,7 +243,7 @@ def _convert_list_chunk(
 ) -> str:
     """
     Convert a chunk of list items to XML (for parallel processing).
-    
+
     Args:
         items: List chunk to convert.
         ids: List of unique IDs.
@@ -254,7 +254,7 @@ def _convert_list_chunk(
         item_wrap: Whether to wrap list items.
         list_headers: Whether to repeat headers for lists.
         start_offset: Starting index for this chunk.
-    
+
     Returns:
         str: XML string for this chunk.
     """
@@ -277,7 +277,7 @@ def convert_list_parallel(
 ) -> str:
     """
     Parallel version of convert_list that processes list chunks concurrently.
-    
+
     Args:
         items: List to convert.
         ids: List of unique IDs.
@@ -289,7 +289,7 @@ def convert_list_parallel(
         list_headers: Whether to repeat headers for lists.
         workers: Number of worker threads (None for auto-detect).
         chunk_size: Number of items per chunk.
-    
+
     Returns:
         str: XML string.
     """

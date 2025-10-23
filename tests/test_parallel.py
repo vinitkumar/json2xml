@@ -303,7 +303,7 @@ class TestParallelProcessing:
         """Test that unsupported types raise TypeError in parallel mode."""
         class CustomType:
             pass
-        
+
         data = {f"key{i}": CustomType() for i in range(15)}
         with pytest.raises(TypeError, match="Unsupported data type"):
             dicttoxml.dicttoxml(data, parallel=True, workers=4)
@@ -318,7 +318,7 @@ class TestParallelProcessing:
     def test_parallel_with_datetime_values(self) -> None:
         """Test parallel processing with datetime values."""
         from datetime import datetime
-        
+
         data = {f"key{i}": datetime(2024, 1, i + 1) for i in range(15)}
         result_parallel = dicttoxml.dicttoxml(data, parallel=True, workers=4)
         result_serial = dicttoxml.dicttoxml(data, parallel=False)

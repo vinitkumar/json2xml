@@ -563,7 +563,10 @@ def dicttoxml(
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,
     xml_namespaces: dict[str, Any] = {},
-    list_headers: bool = False
+    list_headers: bool = False,
+    parallel: bool = False,
+    workers: int | None = None,
+    chunk_size: int = 100
 ) -> bytes:
     """
     Converts a python object into XML.
@@ -652,6 +655,19 @@ def dicttoxml(
             <Bike><frame_color>red</frame_color></Bike>
             <Bike><frame_color>green</frame_color></Bike>
 
+    :param bool parallel:
+        Default is False
+        Enable parallel processing for large dictionaries and lists.
+        Best used with Python 3.13t (free-threaded) for optimal performance.
+
+    :param int workers:
+        Default is None (auto-detect)
+        Number of worker threads to use for parallel processing.
+
+    :param int chunk_size:
+        Default is 100
+        Number of list items to process per chunk in parallel mode.
+
     Dictionaries-keys with special char '@' has special meaning:
     @attrs: This allows custom xml attributes:
 
@@ -701,15 +717,56 @@ def dicttoxml(
         else:
             ns = xml_namespaces[prefix]
             namespace_str += f' xmlns:{prefix}="{ns}"'
-    if root:
-        output.append('<?xml version="1.0" encoding="UTF-8" ?>')
-        output_elem = convert(
-            obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
-        )
-        output.append(f"<{custom_root}{namespace_str}>{output_elem}</{custom_root}>")
+
+    if parallel:
+        from json2xml.parallel import convert_dict_parallel, convert_list_parallel
+
+        if root:
+            output.append('<?xml version="1.0" encoding="UTF-8" ?>')
+            if isinstance(obj, dict):
+                output_elem = convert_dict_parallel(
+                    obj, ids, custom_root, attr_type, item_func, cdata, item_wrap,
+                    list_headers=list_headers, workers=workers, min_items_for_parallel=10
+                )
+            elif isinstance(obj, Sequence):
+                output_elem = convert_list_parallel(
+                    obj, ids, custom_root, attr_type, item_func, cdata, item_wrap,
+                    list_headers=list_headers, workers=workers, chunk_size=chunk_size
+                )
+            else:
+                output_elem = convert(
+                    obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
+                )
+            output.append(f"<{custom_root}{namespace_str}>{output_elem}</{custom_root}>")
+        else:
+            if isinstance(obj, dict):
+                output.append(
+                    convert_dict_parallel(
+                        obj, ids, "", attr_type, item_func, cdata, item_wrap,
+                        list_headers=list_headers, workers=workers, min_items_for_parallel=10
+                    )
+                )
+            elif isinstance(obj, Sequence):
+                output.append(
+                    convert_list_parallel(
+                        obj, ids, "", attr_type, item_func, cdata, item_wrap,
+                        list_headers=list_headers, workers=workers, chunk_size=chunk_size
+                    )
+                )
+            else:
+                output.append(
+                    convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
+                )
     else:
-        output.append(
-            convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
-        )
+        if root:
+            output.append('<?xml version="1.0" encoding="UTF-8" ?>')
+            output_elem = convert(
+                obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
+            )
+            output.append(f"<{custom_root}{namespace_str}>{output_elem}</{custom_root}>")
+        else:
+            output.append(
+                convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
+            )
 
     return "".join(output).encode("utf-8")

@@ -20,6 +20,9 @@ class Json2xml:
         pretty: bool = True,
         attr_type: bool = True,
         item_wrap: bool = True,
+        parallel: bool = False,
+        workers: int | None = None,
+        chunk_size: int = 100,
     ):
         self.data = data
         self.pretty = pretty
@@ -27,6 +30,9 @@ class Json2xml:
         self.attr_type = attr_type
         self.root = root
         self.item_wrap = item_wrap
+        self.parallel = parallel
+        self.workers = workers
+        self.chunk_size = chunk_size
 
     def to_xml(self) -> Any | None:
         """
@@ -39,6 +45,9 @@ class Json2xml:
                 custom_root=self.wrapper,
                 attr_type=self.attr_type,
                 item_wrap=self.item_wrap,
+                parallel=self.parallel,
+                workers=self.workers,
+                chunk_size=self.chunk_size,
             )
             if self.pretty:
                 try:

@@ -7,7 +7,7 @@ name = "json2xml"
 version = "5.2.1"  # Replace with the dynamic version if needed
 description = "Simple Python Library to convert JSON to XML"
 readme = "README.rst"
-requires-python = ">=3.10"
+requires-python = ">=3.13"
 license = { text = "Apache Software License 2.0" }
 keywords = ["json2xml"]
 authors = [
@@ -18,13 +18,9 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [

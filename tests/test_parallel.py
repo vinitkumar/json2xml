@@ -1,5 +1,6 @@
 """Tests for parallel processing functionality."""
-from typing import TYPE_CHECKING, Any, Sequence, cast
+from typing import TYPE_CHECKING, Any, cast
+from collections.abc import Sequence
 
 import pytest
 

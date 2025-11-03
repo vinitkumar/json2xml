@@ -72,7 +72,7 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests -n auto
+        uv run pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests -n auto
       env:
         PYTHONPATH: ${{ github.workspace }}
 

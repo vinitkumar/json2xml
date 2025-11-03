@@ -27,9 +27,10 @@ dependencies = [
     "defusedxml",
     "urllib3",
     "xmltodict>=0.12.0",
-    "pytest",
-    "pytest-cov",
-    "coverage",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-xdist>=3.8.0",
+    "coverage>=7.10.3",
     "setuptools",
 ]
 
@@ -41,7 +42,10 @@ include = ["json2xml"]
 
 [project.optional-dependencies]
 test = [
-    "pytest==7.0.1",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-xdist>=3.8.0",
+    "coverage>=7.10.3",
 ]
 
 [tool.pytest.ini_options]

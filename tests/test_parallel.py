@@ -72,13 +72,13 @@ class TestParallelProcessing:
         invalid_data = ["not", "a", "dict"]
         with pytest.raises(TypeError):
             convert_dict_parallel(
-                invalid_data, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2
+                invalid_data, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2  # type: ignore
             )
 
         # Passing None
         with pytest.raises(TypeError):
             convert_dict_parallel(
-                None, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2
+                None, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2  # type: ignore
             )
 
     def test_parallel_list_invalid_input(self) -> None:
@@ -87,13 +87,13 @@ class TestParallelProcessing:
         invalid_data = {"not": "a list"}
         with pytest.raises(TypeError):
             convert_list_parallel(
-                invalid_data, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2, chunk_size=100
+                invalid_data, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2, chunk_size=100  # type: ignore
             )
 
         # Passing None
         with pytest.raises(TypeError):
             convert_list_parallel(
-                None, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2, chunk_size=100
+                None, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2, chunk_size=100  # type: ignore
             )
 
     def test_parallel_list_small(self) -> None:

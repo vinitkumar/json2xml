@@ -32,13 +32,13 @@ class TestParallelProcessing:
         original = getattr(sys, '_is_gil_enabled', None)
         def mock_is_gil_enabled():
             raise Exception("test")
-        sys._is_gil_enabled = mock_is_gil_enabled
+        sys._is_gil_enabled = mock_is_gil_enabled  # type: ignore
         try:
             result = is_free_threaded()
             assert result is False  # defaults to False on exception
         finally:
             if original is not None:
-                sys._is_gil_enabled = original
+                sys._is_gil_enabled = original  # type: ignore
             else:
                 delattr(sys, '_is_gil_enabled')
 

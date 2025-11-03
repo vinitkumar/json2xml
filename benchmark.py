@@ -49,7 +49,7 @@ def benchmark_conversion(data: dict, parallel: bool, workers: int = 4, chunk_siz
     for _ in range(iterations):
         converter = Json2xml(data, parallel=parallel, workers=workers, chunk_size=chunk_size)
         start = time.perf_counter()
-        result = converter.to_xml()
+        converter.to_xml()
         end = time.perf_counter()
         times.append(end - start)
     

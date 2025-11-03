@@ -6,27 +6,41 @@ import sys
 import threading
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import lru_cache
 from typing import Any
-
-from json2xml import dicttoxml
 
 
 def is_free_threaded() -> bool:
     """
     Check if running on free-threaded Python build (Python 3.13t).
 
+    Note:
+        This function relies on the private attribute `sys._is_gil_enabled`, which may change or be removed in future Python versions.
+        If the attribute is not present, or its semantics change, this function will fall back to assuming GIL is enabled.
+
     Returns:
         bool: True if running on free-threaded build, False otherwise.
     """
-    return hasattr(sys, '_is_gil_enabled') and not sys._is_gil_enabled()
+    # Fallback: If attribute is missing or not callable, assume GIL is enabled.
+    gil_enabled = True
+    if hasattr(sys, '_is_gil_enabled'):
+        try:
+            gil_enabled = sys._is_gil_enabled()
+        except Exception:
+            pass
+    return not gil_enabled
 
 
-def get_optimal_workers(workers: int | None = None) -> int:
+def get_optimal_workers(
+    workers: int | None = None,
+    max_workers_limit: int | None = None
+) -> int:
     """
     Get the optimal number of worker threads.
 
     Args:
         workers: Explicitly specified worker count. If None, auto-detect.
+        max_workers_limit: Optional cap for worker count on non-free-threaded Python.
 
     Returns:
         int: Number of worker threads to use.
@@ -34,18 +48,19 @@ def get_optimal_workers(workers: int | None = None) -> int:
     if workers is not None:
         return max(1, workers)
 
-    cpu_count = os.cpu_count() or 4
+    cpu_count = os.cpu_count() or 1
 
     if is_free_threaded():
-        return cpu_count
+        optimal = cpu_count
     else:
-        return min(4, cpu_count)
+        # Use configurable limit or default to 4
+        limit = max_workers_limit if max_workers_limit is not None else 4
+        optimal = min(limit, cpu_count)
+
+    return max(1, optimal)
 
 
-_validation_cache: dict[str, bool] = {}
-_validation_cache_lock = threading.Lock()
-
-
+@lru_cache(maxsize=None)
 def key_is_valid_xml_cached(key: str) -> bool:
     """
     Thread-safe cached version of key_is_valid_xml.
@@ -56,16 +71,8 @@ def key_is_valid_xml_cached(key: str) -> bool:
     Returns:
         bool: True if the key is valid XML, False otherwise.
     """
-    with _validation_cache_lock:
-        if key in _validation_cache:
-            return _validation_cache[key]
-
-    result = dicttoxml.key_is_valid_xml(key)
-
-    with _validation_cache_lock:
-        _validation_cache[key] = result
-
-    return result
+    from json2xml import dicttoxml
+    return dicttoxml.key_is_valid_xml(key)
 
 
 def make_valid_xml_name_cached(key: str, attr: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -79,6 +86,7 @@ def make_valid_xml_name_cached(key: str, attr: dict[str, Any]) -> tuple[str, dic
     Returns:
         tuple: Valid XML key and updated attributes.
     """
+    from json2xml import dicttoxml
     key = dicttoxml.escape_xml(key)
 
     if key_is_valid_xml_cached(key):
@@ -129,7 +137,9 @@ def _convert_dict_item(
     import datetime
     import numbers
 
-    attr = {} if not ids else {"id": f"{dicttoxml.get_unique_id(parent)}"}
+    from json2xml import dicttoxml
+
+    attr = {"id": f"{dicttoxml.get_unique_id(parent)}"} if ids else {}
     key, attr = make_valid_xml_name_cached(key, attr)
 
     if isinstance(val, bool):
@@ -203,8 +213,11 @@ def convert_dict_parallel(
         min_items_for_parallel: Minimum items to enable parallelization.
 
     Returns:
-        str: XML string.
+    str: XML string.
     """
+    if not isinstance(obj, dict):
+        raise TypeError("obj must be a dict")
+    from json2xml import dicttoxml
     if len(obj) < min_items_for_parallel:
         return dicttoxml.convert_dict(
             obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers
@@ -225,7 +238,14 @@ def convert_dict_parallel(
 
         for future in as_completed(future_to_idx):
             idx = future_to_idx[future]
-            results[idx] = future.result()
+            try:
+                results[idx] = future.result()
+            except Exception as e:
+                # Cancel remaining futures
+                for f in future_to_idx:
+                    if not f.done():
+                        f.cancel()
+                raise e
 
     return "".join(results[idx] for idx in range(len(items)))
 
@@ -256,8 +276,9 @@ def _convert_list_chunk(
         start_offset: Starting index for this chunk.
 
     Returns:
-        str: XML string for this chunk.
+    str: XML string for this chunk.
     """
+    from json2xml import dicttoxml
     return dicttoxml.convert_list(
         items, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers
     )
@@ -291,8 +312,11 @@ def convert_list_parallel(
         chunk_size: Number of items per chunk.
 
     Returns:
-        str: XML string.
+    str: XML string.
     """
+    if not isinstance(items, Sequence) or isinstance(items, (str, bytes)):
+        raise TypeError("items must be a sequence (not str or bytes)")
+    from json2xml import dicttoxml
     if len(items) < chunk_size:
         return dicttoxml.convert_list(
             items, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers
@@ -313,6 +337,13 @@ def convert_list_parallel(
 
         for future in as_completed(future_to_idx):
             idx = future_to_idx[future]
-            results[idx] = future.result()
+            try:
+                results[idx] = future.result()
+            except Exception as e:
+                # Cancel remaining futures
+                for f in future_to_idx:
+                    if not f.done():
+                        f.cancel()
+                raise e
 
     return "".join(results[idx] for idx in range(len(chunks)))

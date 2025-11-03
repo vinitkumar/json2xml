@@ -15,10 +15,7 @@ from json2xml.parallel import (
 )
 
 if TYPE_CHECKING:
-    from _pytest.capture import CaptureFixture
-    from _pytest.fixtures import FixtureRequest
-    from _pytest.logging import LogCaptureFixture
-    from _pytest.monkeypatch import MonkeyPatch
+    pass
 
 
 class TestParallelProcessing:
@@ -68,6 +65,36 @@ class TestParallelProcessing:
             data, [], "root", True, dicttoxml.default_item_func, False, True, False
         )
         assert result_parallel == result_serial
+
+    def test_parallel_dict_invalid_input(self) -> None:
+        """Test parallel dict conversion with invalid input types."""
+        # Passing a list instead of a dict
+        invalid_data = ["not", "a", "dict"]
+        with pytest.raises(TypeError):
+            convert_dict_parallel(
+                invalid_data, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2
+            )
+
+        # Passing None
+        with pytest.raises(TypeError):
+            convert_dict_parallel(
+                None, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2
+            )
+
+    def test_parallel_list_invalid_input(self) -> None:
+        """Test parallel list conversion with invalid input types."""
+        # Passing a dict instead of a list
+        invalid_data = {"not": "a list"}
+        with pytest.raises(TypeError):
+            convert_list_parallel(
+                invalid_data, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2, chunk_size=100
+            )
+
+        # Passing None
+        with pytest.raises(TypeError):
+            convert_list_parallel(
+                None, [], "root", True, dicttoxml.default_item_func, False, True, False, workers=2, chunk_size=100
+            )
 
     def test_parallel_list_small(self) -> None:
         """Test parallel list conversion with small data (should fallback to serial)."""
@@ -214,6 +241,44 @@ class TestParallelProcessing:
         assert result_parallel == result_serial
         assert b"&lt;special&gt;" in result_parallel
         assert b"&amp;" in result_parallel
+
+    def test_parallel_with_attributes(self) -> None:
+        """Test parallel processing with XML attributes."""
+        # Simulate attribute handling using dicttoxml's attr_type feature
+        data = {
+            "person": {
+                "@id": "123",
+                "name": "Alice"
+            }
+        }
+        result_parallel = dicttoxml.dicttoxml(data, parallel=True, workers=2, attr_type=True)
+        result_serial = dicttoxml.dicttoxml(data, parallel=False, attr_type=True)
+        assert result_parallel == result_serial
+        assert b'id="123"' in result_parallel
+
+    def test_parallel_with_namespaces(self) -> None:
+        """Test parallel processing with XML namespaces."""
+        # Simulate namespace handling by including a namespace in the tag
+        data = {
+            "ns:person": {
+                "name": "Bob"
+            }
+        }
+        result_parallel = dicttoxml.dicttoxml(data, parallel=True, workers=2)
+        result_serial = dicttoxml.dicttoxml(data, parallel=False)
+        assert result_parallel == result_serial
+        assert b"<ns:person" in result_parallel
+
+    def test_parallel_with_cdata(self) -> None:
+        """Test parallel processing with CDATA sections."""
+        # Simulate CDATA by including a value that should be wrapped in CDATA
+        data = {
+            "note": "<![CDATA[Some <cdata> content & more]]>"
+        }
+        result_parallel = dicttoxml.dicttoxml(data, parallel=True, workers=2, cdata=True)
+        result_serial = dicttoxml.dicttoxml(data, parallel=False, cdata=True)
+        assert result_parallel == result_serial
+        assert b"<![CDATA[Some <cdata> content & more]]>" in result_parallel
 
     def test_parallel_empty_data(self) -> None:
         """Test parallel processing with empty data."""

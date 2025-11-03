@@ -1,0 +1,54 @@
+Using CPython 3.14.0
+Removed virtual environment at: .venv
+Creating virtual environment at: .venv
+   Building coverage==7.6.10
+      Built coverage==7.6.10
+Installed 14 packages in 14ms
+================================================================================
+json2xml Performance Benchmark
+================================================================================
+Python Version: 3.14.0 free-threading build (main, Oct  7 2025, 15:52:23) [Clang 20.1.4 ]
+Python Executable: /Users/vinitkumar/projects/python/json2xml/.venv/bin/python
+Free-threaded: Yes
+GIL Status: Disabled (Free-threaded)
+================================================================================
+
+
+SMALL Dataset:
+--------------------------------------------------------------------------------
+Items: 10
+Serial:     0.25 ms
+Parallel (2w): 0.51 ms (speedup: 0.49x)
+Parallel (4w): 0.69 ms (speedup: 0.37x)
+Parallel (8w): 0.63 ms (speedup: 0.40x)
+
+
+MEDIUM Dataset:
+--------------------------------------------------------------------------------
+Items: 100
+Serial:     8.59 ms
+Parallel (2w): 5.77 ms (speedup: 1.49x)
+Parallel (4w): 5.55 ms (speedup: 1.55x)
+Parallel (8w): 7.13 ms (speedup: 1.21x)
+
+
+LARGE Dataset:
+--------------------------------------------------------------------------------
+Items: 1000
+Serial:     231.96 ms
+Parallel (2w): 232.84 ms (speedup: 1.00x)
+Parallel (4w): 232.79 ms (speedup: 1.00x)
+Parallel (8w): 244.08 ms (speedup: 0.95x)
+
+
+XLARGE Dataset:
+--------------------------------------------------------------------------------
+Items: 5000
+Serial:     1934.75 ms
+Parallel (2w): 2022.40 ms (speedup: 0.96x)
+Parallel (4w): 1926.55 ms (speedup: 1.00x)
+Parallel (8w): 1975.37 ms (speedup: 0.98x)
+
+================================================================================
+Benchmark complete!
+================================================================================

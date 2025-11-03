@@ -262,12 +262,17 @@ def dict2xml_str(
     parse dict2xml
     """
     ids: list[str] = []  # initialize list of unique ids
+    item = dict(item)  # copy to avoid modifying the original dict
     ", ".join(str(key) for key in item)
     subtree = ""  # Initialize subtree with default empty string
 
     if attr_type:
         attr["type"] = get_xml_type(item)
     val_attr: dict[str, str] = item.pop("@attrs", attr)  # update attr with custom @attr if exists
+    # Handle other @ keys as attributes
+    for key in list(item.keys()):
+        if key.startswith('@') and key not in ('@val', '@flat', '@attrs'):
+            val_attr[key[1:]] = item.pop(key)
     rawitem = item["@val"] if "@val" in item else item
     if is_primitive_type(rawitem):
         if isinstance(rawitem, dict):
@@ -331,7 +336,7 @@ def list2xml_str(
 
 def convert_dict(
     obj: dict[str, Any],
-    ids: list[str],
+    ids: list[str] | None,
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -522,7 +527,15 @@ def convert_kv(
     if attr_type:
         attr["type"] = get_xml_type(val)
     attr_string = make_attrstring(attr)
-    return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    val_str = str(val)
+    if cdata:
+        if '<![CDATA[' in val_str:
+            content = val_str
+        else:
+            content = wrap_cdata(val)
+    else:
+        content = escape_xml(val)
+    return f"<{key}{attr_string}>{content}</{key}>"
 
 
 def convert_bool(
@@ -557,13 +570,17 @@ def dicttoxml(
     obj: ELEMENT,
     root: bool = True,
     custom_root: str = "root",
-    ids: list[int] | None = None,
+    ids: list[str] | None = None,
     attr_type: bool = True,
     item_wrap: bool = True,
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,
     xml_namespaces: dict[str, Any] = {},
-    list_headers: bool = False
+    list_headers: bool = False,
+    parallel: bool = False,
+    workers: int | None = None,
+    chunk_size: int = 100,
+    min_items_for_parallel: int = 10
 ) -> bytes:
     """
     Converts a python object into XML.
@@ -652,6 +669,23 @@ def dicttoxml(
             <Bike><frame_color>red</frame_color></Bike>
             <Bike><frame_color>green</frame_color></Bike>
 
+    :param bool parallel:
+        Default is False
+        Enable parallel processing for large dictionaries and lists.
+        Best used with Python 3.13t (free-threaded) for optimal performance.
+
+    :param int workers:
+        Default is None (auto-detect)
+        Number of worker threads to use for parallel processing.
+
+    :param int chunk_size:
+        Default is 100
+        Number of list items to process per chunk in parallel mode.
+
+    :param int min_items_for_parallel:
+        Default is 10
+        Minimum number of items in a dictionary to enable parallel processing.
+
     Dictionaries-keys with special char '@' has special meaning:
     @attrs: This allows custom xml attributes:
 
@@ -701,15 +735,65 @@ def dicttoxml(
         else:
             ns = xml_namespaces[prefix]
             namespace_str += f' xmlns:{prefix}="{ns}"'
-    if root:
-        output.append('<?xml version="1.0" encoding="UTF-8" ?>')
-        output_elem = convert(
-            obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
-        )
-        output.append(f"<{custom_root}{namespace_str}>{output_elem}</{custom_root}>")
+
+    should_use_parallel = parallel
+    if parallel:
+        if cdata:
+            should_use_parallel = False
+        if isinstance(obj, dict) and any(isinstance(k, str) and k.startswith('@') for k in obj.keys()):
+            should_use_parallel = False
+        if xml_namespaces:
+            should_use_parallel = False
+
+    if should_use_parallel:
+        from json2xml.parallel import convert_dict_parallel, convert_list_parallel
+
+        if root:
+            output.append('<?xml version="1.0" encoding="UTF-8" ?>')
+            if isinstance(obj, dict):
+                output_elem = convert_dict_parallel(
+                    obj, ids, custom_root, attr_type, item_func, cdata, item_wrap,
+                    list_headers=list_headers, workers=workers, min_items_for_parallel=min_items_for_parallel
+                )
+            elif isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
+                output_elem = convert_list_parallel(
+                    obj, ids, custom_root, attr_type, item_func, cdata, item_wrap,
+                    list_headers=list_headers, workers=workers, chunk_size=chunk_size
+                )
+            else:
+                output_elem = convert(
+                    obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
+                )
+            output.append(f"<{custom_root}{namespace_str}>{output_elem}</{custom_root}>")
+        else:
+            if isinstance(obj, dict):
+                output.append(
+                    convert_dict_parallel(
+                    obj, ids, "", attr_type, item_func, cdata, item_wrap,
+                    list_headers=list_headers, workers=workers, min_items_for_parallel=min_items_for_parallel
+                    )
+                )
+            elif isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
+                output.append(
+                    convert_list_parallel(
+                        obj, ids, "", attr_type, item_func, cdata, item_wrap,
+                        list_headers=list_headers, workers=workers, chunk_size=chunk_size
+                    )
+                )
+            else:
+                output.append(
+                    convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
+                )
     else:
-        output.append(
-            convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
-        )
+        if root:
+            output.append('<?xml version="1.0" encoding="UTF-8" ?>')
+            output_elem = convert(
+                obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
+            )
+            output.append(f"<{custom_root}{namespace_str}>{output_elem}</{custom_root}>")
+        else:
+            output.append(
+                convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
+            )
 
     return "".join(output).encode("utf-8")

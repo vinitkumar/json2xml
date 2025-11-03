@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [pypy-3.10, pypy-3.11, '3.10', '3.11', '3.12', '3.13', '3.14', '3.14t', '3.15.0-alpha.1']
+        python-version: ['3.13t', '3.14', '3.14t', '3.15.0-alpha.1']
         os: [
           ubuntu-latest,
           windows-latest,
@@ -63,15 +63,16 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install --system -e .
-        uv pip install --system pytest pytest-xdist pytest-cov
+        uv venv
+        uv pip install -e .
+        uv pip install pytest pytest-xdist pytest-cov
 
     - name: Create coverage directory
       run: mkdir -p coverage/reports
 
     - name: Run tests
       run: |
-        pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests -n auto
+        uv run pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests -n auto
       env:
         PYTHONPATH: ${{ github.workspace }}
 
@@ -98,10 +99,10 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5.2.0
       with:
-        python-version: '3.12'
+        python-version: '3.13'
 
     - name: Install uv
       uses: astral-sh/setup-uv@v6
@@ -114,8 +115,12 @@ jobs:
 
     - name: Install dependencies
       run: |
-        uv pip install --system -e .
+        uv venv
+        uv pip install -e .
 
     - name: Run ruff
       run: uvx ruff check json2xml tests
+
+    - name: Run ty typecheck
+      run: uvx ty check json2xml tests
 

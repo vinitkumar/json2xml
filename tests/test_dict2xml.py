@@ -763,7 +763,7 @@ class TestDict2xml:
     def test_dicttoxml_with_ids(self) -> None:
         """Test dicttoxml with IDs parameter."""
         data = {"key": "value"}
-        result = dicttoxml.dicttoxml(data, ids=[1, 2, 3], attr_type=False)
+        result = dicttoxml.dicttoxml(data, ids=["1", "2", "3"], attr_type=False)
         assert b'<key id="root_' in result
         assert b'">value</key>' in result
 
@@ -773,17 +773,27 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, cdata=True, attr_type=False, root=False)
         assert b"<key><![CDATA[value]]></key>" == result
 
+    def test_dicttoxml_parallel_with_cdata(self) -> None:
+        """Test dicttoxml with parallel=True and cdata=True."""
+        data = {"key": "value"}
+        result = dicttoxml.dicttoxml(data, parallel=True, cdata=True, attr_type=False, root=False)
+        assert b"<key><![CDATA[value]]></key>" == result
+
+    def test_dicttoxml_parallel_with_xml_namespaces(self) -> None:
+        """Test dicttoxml with parallel=True and xml_namespaces."""
+        data = {"key": "value"}
+        result = dicttoxml.dicttoxml(data, parallel=True, xml_namespaces={'test': 'urn:test'}, attr_type=False, root=False)
+        assert b"<key>value</key>" in result
+
     def test_get_unique_id_with_duplicates(self) -> None:
         """Test get_unique_id when duplicates are generated."""
-        # We need to modify the original get_unique_id to simulate a pre-existing ID list
         import json2xml.dicttoxml as module
 
         # Save original function
-        original_get_unique_id = module.get_unique_id
+        original_make_id = module.make_id
 
         # Track make_id calls
         call_count = 0
-        original_make_id = module.make_id
 
         def mock_make_id(element: str, start: int = 100000, end: int = 999999) -> str:
             nonlocal call_count
@@ -793,10 +803,14 @@ class TestDict2xml:
             else:
                 return "test_789012"  # Second call - unique
 
-        # Patch get_unique_id to use a pre-populated ids list
+        # Patch make_id to return duplicate first time
+        module.make_id = mock_make_id  # type: ignore[assignment]
+
+        # Patch get_unique_id to use a pre-populated ids
+        original_get_unique_id = module.get_unique_id
+
         def patched_get_unique_id(element: str) -> str:
-            # Start with a pre-existing ID to force collision
-            ids = ["test_123456"]
+            ids: list[str] = ["test_123456"]  # Pre-populate with the first make_id result
             this_id = module.make_id(element)
             dup = True
             while dup:
@@ -804,10 +818,9 @@ class TestDict2xml:
                     dup = False
                     ids.append(this_id)
                 else:
-                    this_id = module.make_id(element)  # This exercises line 52
+                    this_id = module.make_id(element)
             return ids[-1]
 
-        module.make_id = mock_make_id  # type: ignore[assignment]
         module.get_unique_id = patched_get_unique_id  # type: ignore[assignment]
 
         try:
@@ -1142,3 +1155,26 @@ class TestDict2xml:
         empty_attrs: dict[str, Any] = {}
         result = make_attrstring(empty_attrs)
         assert result == ""
+
+    def test_get_xml_type_with_decimal(self) -> None:
+        """Test get_xml_type with Decimal (numbers.Number subclass)."""
+        from decimal import Decimal
+
+        result = dicttoxml.get_xml_type(Decimal("3.14"))
+        assert result == "number"
+
+    def test_get_xml_type_with_fraction(self) -> None:
+        """Test get_xml_type with Fraction (numbers.Number subclass)."""
+        from fractions import Fraction
+
+        result = dicttoxml.get_xml_type(Fraction(1, 2))
+        assert result == "number"
+
+    def test_convert_with_decimal(self) -> None:
+        """Test converting Decimal values."""
+        from decimal import Decimal
+
+        data = {"value": Decimal("123.456")}
+        result = dicttoxml.dicttoxml(data, attr_type=True)
+        assert b"123.456" in result
+        assert b'type="number"' in result

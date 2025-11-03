@@ -26,6 +26,22 @@ class TestParallelProcessing:
         result = is_free_threaded()
         assert isinstance(result, bool)
 
+    def test_is_free_threaded_exception(self) -> None:
+        """Test free-threaded detection when _is_gil_enabled raises exception."""
+        import sys
+        original = getattr(sys, '_is_gil_enabled', None)
+        def mock_is_gil_enabled():
+            raise Exception("test")
+        sys._is_gil_enabled = mock_is_gil_enabled
+        try:
+            result = is_free_threaded()
+            assert result is False  # defaults to False on exception
+        finally:
+            if original is not None:
+                sys._is_gil_enabled = original
+            else:
+                delattr(sys, '_is_gil_enabled')
+
     def test_get_optimal_workers_explicit(self) -> None:
         """Test explicit worker count."""
         assert get_optimal_workers(4) == 4
@@ -372,6 +388,15 @@ class TestParallelProcessing:
         data = {f"key{i}": CustomType() for i in range(15)}
         with pytest.raises(TypeError, match="Unsupported data type"):
             dicttoxml.dicttoxml(data, parallel=True, workers=4)
+
+    def test_parallel_list_unsupported_type_error(self) -> None:
+        """Test that unsupported types in list raise TypeError in parallel mode."""
+        class CustomType:
+            pass
+
+        data = [CustomType() for _ in range(200)]
+        with pytest.raises(TypeError, match="Unsupported data type"):
+            dicttoxml.dicttoxml(data, parallel=True, workers=4, chunk_size=50)
 
     def test_parallel_with_bool_values(self) -> None:
         """Test parallel processing with boolean values."""

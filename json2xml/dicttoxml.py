@@ -736,41 +736,6 @@ def dicttoxml(
             ns = xml_namespaces[prefix]
             namespace_str += f' xmlns:{prefix}="{ns}"'
 
-    def _dispatch_convert(
-        obj, ids, parent,
-        attr_type, item_func, cdata, item_wrap, list_headers,
-        parallel, workers, chunk_size, min_items_for_parallel, xml_namespaces
-    ):
-        should_use_parallel = parallel
-        if parallel:
-            if cdata:
-                should_use_parallel = False
-            if isinstance(obj, dict) and any(isinstance(k, str) and k.startswith('@') for k in obj.keys()):
-                should_use_parallel = False
-            if xml_namespaces:
-                should_use_parallel = False
-        if should_use_parallel:
-            if isinstance(obj, dict):
-                return convert_dict_parallel(
-                    obj, ids, parent,
-                    attr_type=attr_type, item_func=item_func, cdata=cdata,
-                    item_wrap=item_wrap, list_headers=list_headers,
-                    workers=workers, min_items_for_parallel=min_items_for_parallel
-                )
-            if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
-                return convert_list_parallel(
-                    obj, ids, parent,
-                    attr_type=attr_type, item_func=item_func, cdata=cdata,
-                    item_wrap=item_wrap, list_headers=list_headers,
-                    workers=workers, chunk_size=chunk_size
-                )
-        # fallback to serial
-        return convert(
-            obj, ids,
-            attr_type, item_func, cdata, item_wrap,
-            parent=parent, list_headers=list_headers
-        )
-
     should_use_parallel = parallel
     if parallel:
         if cdata:

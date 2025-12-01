@@ -5,7 +5,7 @@ import logging
 import numbers
 from collections.abc import Callable, Sequence
 from random import SystemRandom
-from typing import Any, Union
+from typing import Any, Union, cast
 
 from defusedxml.minidom import parseString
 
@@ -213,10 +213,12 @@ def get_xpath31_tag_name(val: Any) -> str:
         return "map"
     if isinstance(val, (int, float, numbers.Number)):
         return "number"
-    if isinstance(val, Sequence) and not isinstance(val, str):
-        return "array"
     if isinstance(val, str):
         return "string"
+    if isinstance(val, (bytes, bytearray)):
+        return "string"
+    if isinstance(val, Sequence):
+        return "array"
     return "string"
 
 
@@ -234,24 +236,25 @@ def convert_to_xpath31(obj: Any, parent_key: str | None = None) -> str:
         str: XML string in XPath 3.1 format.
     """
     key_attr = f' key="{escape_xml(parent_key)}"' if parent_key is not None else ""
+    tag_name = get_xpath31_tag_name(obj)
 
-    if obj is None:
+    if tag_name == "null":
         return f"<null{key_attr}/>"
 
-    if isinstance(obj, bool):
+    if tag_name == "boolean":
         return f"<boolean{key_attr}>{str(obj).lower()}</boolean>"
 
-    if isinstance(obj, (int, float, numbers.Number)):
+    if tag_name == "number":
         return f"<number{key_attr}>{obj}</number>"
 
-    if isinstance(obj, str):
-        return f"<string{key_attr}>{escape_xml(obj)}</string>"
+    if tag_name == "string":
+        return f"<string{key_attr}>{escape_xml(str(obj))}</string>"
 
-    if isinstance(obj, dict):
+    if tag_name == "map":
         children = "".join(convert_to_xpath31(v, k) for k, v in obj.items())
         return f"<map{key_attr}>{children}</map>"
 
-    if isinstance(obj, Sequence):
+    if tag_name == "array":
         children = "".join(convert_to_xpath31(item) for item in obj)
         return f"<array{key_attr}>{children}</array>"
 
@@ -303,7 +306,7 @@ def convert(
         return convert_none(key=item_name, attr_type=attr_type, cdata=cdata)
 
     if isinstance(obj, dict):
-        return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
+        return convert_dict(cast("dict[str, Any]", obj), ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
 
     if isinstance(obj, Sequence):
         return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)

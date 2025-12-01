@@ -45,7 +45,7 @@ include = ["json2xml"]
 
 [project.optional-dependencies]
 test = [
-    "pytest==7.0.1",
+    "pytest>=8.4.1",
 ]
 
 [tool.pytest.ini_options]

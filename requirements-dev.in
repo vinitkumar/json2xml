@@ -1,10 +1,10 @@
 # When installing dev dependencies also install the user dependencies
 -r requirements.in
 xmltodict>=0.14.2
-pytest==8.4.1
-pytest-cov==6.2.1
-pytest-xdist==3.8.0
-coverage==7.10.3
-ruff==0.12.8
-setuptools==80.9.0
+pytest>=8.4.1
+pytest-cov>=7.0.0
+pytest-xdist>=3.8.0
+coverage>=7.10.3
+ruff>=0.12.8
+setuptools>=80.9.0
 # Note: ty is run via uvx, not installed as a dependency

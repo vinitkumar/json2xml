@@ -4,6 +4,8 @@ import datetime
 import logging
 import numbers
 from collections.abc import Callable, Sequence
+from decimal import Decimal
+from fractions import Fraction
 from random import SystemRandom
 from typing import Any, Union, cast
 
@@ -58,6 +60,9 @@ ELEMENT = Union[
     int,
     float,
     bool,
+    complex,
+    Decimal,
+    Fraction,
     numbers.Number,
     Sequence[Any],
     datetime.datetime,

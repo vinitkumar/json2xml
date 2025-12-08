@@ -14,12 +14,13 @@ class Json2xml:
     """
     def __init__(
         self,
-        data: dict[str, Any] | None = None,
+        data: dict[str, Any] | list[Any] | None = None,
         wrapper: str = "all",
         root: bool = True,
         pretty: bool = True,
         attr_type: bool = True,
         item_wrap: bool = True,
+        xpath_format: bool = False,
     ):
         self.data = data
         self.pretty = pretty
@@ -27,6 +28,7 @@ class Json2xml:
         self.attr_type = attr_type
         self.root = root
         self.item_wrap = item_wrap
+        self.xpath_format = xpath_format
 
     def to_xml(self) -> Any | None:
         """
@@ -39,6 +41,7 @@ class Json2xml:
                 custom_root=self.wrapper,
                 attr_type=self.attr_type,
                 item_wrap=self.item_wrap,
+                xpath_format=self.xpath_format,
             )
             if self.pretty:
                 try:

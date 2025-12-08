@@ -36,6 +36,7 @@ json2xml supports the following features:
 * Conversion from a `json` string to XML
 * Conversion from a `json` file to XML
 * Conversion from an API that emits `json` data to XML
+* Compliant with the `json-to-xml` function specification from `XPath 3.1 <https://www.w3.org/TR/xpath-functions-31/#func-json-to-xml>`_
 
 Usage
 ^^^^^
@@ -167,25 +168,42 @@ You can also specify if the output XML needs to have type specified or not. Here
 
  .. code-block:: python
 
-    from json2xml import json2xml
-    from json2xml.utils import readfromurl, readfromstring, readfromjson
+     from json2xml import json2xml
+     from json2xml.utils import readfromurl, readfromstring, readfromjson
 
-    data = readfromstring(
-        '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
-    )
-    print(json2xml.Json2xml(data, wrapper="all", pretty=True, attr_type=False).to_xml())
+     data = readfromstring(
+         '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
+     )
+     print(json2xml.Json2xml(data, wrapper="all", pretty=True, attr_type=False).to_xml())
 
 
 Outputs this:
 
 .. code-block:: xml
 
-    <?xml version="1.0" ?>
-    <all>
-      <login>mojombo</login>
-      <id>1</id>
-      <avatar_url>https://avatars0.githubusercontent.com/u/1?v=4</avatar_url>
-    </all>
+     <?xml version="1.0" ?>
+     <all>
+       <login>mojombo</login>
+       <id>1</id>
+       <avatar_url>https://avatars0.githubusercontent.com/u/1?v=4</avatar_url>
+     </all>
+
+
+XPath 3.1 Compliance Options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The library supports the optional `xpath_format` parameter which makes the output compliant with the `json-to-xml` function specification from `XPath 3.1 <https://www.w3.org/TR/xpath-functions-31/#func-json-to-xml>`_. When enabled, the XML output follows the standardized format defined by the W3C specification.
+
+.. code-block:: python
+
+     from json2xml import json2xml
+     from json2xml.utils import readfromstring
+
+     data = readfromstring(
+         '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'
+     )
+     # Use xpath_format=True for XPath 3.1 compliant output
+     print(json2xml.Json2xml(data, xpath_format=True).to_xml())
 
 
 The methods are simple and easy to use and there are also checks inside of code to exit cleanly

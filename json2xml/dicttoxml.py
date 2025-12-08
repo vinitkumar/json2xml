@@ -4,8 +4,10 @@ import datetime
 import logging
 import numbers
 from collections.abc import Callable, Sequence
+from decimal import Decimal
+from fractions import Fraction
 from random import SystemRandom
-from typing import Any, Union
+from typing import Any, Union, cast
 
 from defusedxml.minidom import parseString
 
@@ -58,6 +60,9 @@ ELEMENT = Union[
     int,
     float,
     bool,
+    complex,
+    Decimal,
+    Fraction,
     numbers.Number,
     Sequence[Any],
     datetime.datetime,
@@ -188,6 +193,79 @@ def default_item_func(parent: str) -> str:
     return "item"
 
 
+# XPath 3.1 json-to-xml conversion
+# Spec: https://www.w3.org/TR/xpath-functions-31/#json-to-xml-mapping
+XPATH_FUNCTIONS_NS = "http://www.w3.org/2005/xpath-functions"
+
+
+def get_xpath31_tag_name(val: Any) -> str:
+    """
+    Determine XPath 3.1 tag name by Python type.
+
+    See: https://www.w3.org/TR/xpath-functions-31/#func-json-to-xml
+
+    Args:
+        val: The value to get the tag name for.
+
+    Returns:
+        str: The XPath 3.1 tag name (map, array, string, number, boolean, null).
+    """
+    if val is None:
+        return "null"
+    if isinstance(val, bool):
+        return "boolean"
+    if isinstance(val, dict):
+        return "map"
+    if isinstance(val, (int, float, numbers.Number)):
+        return "number"
+    if isinstance(val, str):
+        return "string"
+    if isinstance(val, (bytes, bytearray)):
+        return "string"
+    if isinstance(val, Sequence):
+        return "array"
+    return "string"
+
+
+def convert_to_xpath31(obj: Any, parent_key: str | None = None) -> str:
+    """
+    Convert a Python object to XPath 3.1 json-to-xml format.
+
+    See: https://www.w3.org/TR/xpath-functions-31/#json-to-xml-mapping
+
+    Args:
+        obj: The object to convert.
+        parent_key: The key from the parent dict (used for key attribute).
+
+    Returns:
+        str: XML string in XPath 3.1 format.
+    """
+    key_attr = f' key="{escape_xml(parent_key)}"' if parent_key is not None else ""
+    tag_name = get_xpath31_tag_name(obj)
+
+    if tag_name == "null":
+        return f"<null{key_attr}/>"
+
+    if tag_name == "boolean":
+        return f"<boolean{key_attr}>{str(obj).lower()}</boolean>"
+
+    if tag_name == "number":
+        return f"<number{key_attr}>{obj}</number>"
+
+    if tag_name == "string":
+        return f"<string{key_attr}>{escape_xml(str(obj))}</string>"
+
+    if tag_name == "map":
+        children = "".join(convert_to_xpath31(v, k) for k, v in obj.items())
+        return f"<map{key_attr}>{children}</map>"
+
+    if tag_name == "array":
+        children = "".join(convert_to_xpath31(item) for item in obj)
+        return f"<array{key_attr}>{children}</array>"
+
+    return f"<string{key_attr}>{escape_xml(str(obj))}</string>"
+
+
 def convert(
     obj: ELEMENT,
     ids: Any,
@@ -233,7 +311,7 @@ def convert(
         return convert_none(key=item_name, attr_type=attr_type, cdata=cdata)
 
     if isinstance(obj, dict):
-        return convert_dict(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
+        return convert_dict(cast("dict[str, Any]", obj), ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
 
     if isinstance(obj, Sequence):
         return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
@@ -563,7 +641,8 @@ def dicttoxml(
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,
     xml_namespaces: dict[str, Any] = {},
-    list_headers: bool = False
+    list_headers: bool = False,
+    xpath_format: bool = False,
 ) -> bytes:
     """
     Converts a python object into XML.
@@ -652,6 +731,28 @@ def dicttoxml(
             <Bike><frame_color>red</frame_color></Bike>
             <Bike><frame_color>green</frame_color></Bike>
 
+    :param bool xpath_format:
+        Default is False
+        When True, produces XPath 3.1 json-to-xml compliant output as specified
+        by W3C (https://www.w3.org/TR/xpath-functions-31/#func-json-to-xml).
+        Uses type-based element names (map, array, string, number, boolean, null)
+        with key attributes and the http://www.w3.org/2005/xpath-functions namespace.
+
+        Example:
+
+        .. code-block:: python
+
+            {"name": "John", "age": 30}
+
+        results in
+
+        .. code-block:: xml
+
+            <map xmlns="http://www.w3.org/2005/xpath-functions">
+              <string key="name">John</string>
+              <number key="age">30</number>
+            </map>
+
     Dictionaries-keys with special char '@' has special meaning:
     @attrs: This allows custom xml attributes:
 
@@ -681,6 +782,18 @@ def dicttoxml(
         <list a="b" c="d"><item>4</item><item>5</item><item>6</item></list>
 
     """
+    if xpath_format:
+        xml_content = convert_to_xpath31(obj)
+        output = [
+            '<?xml version="1.0" encoding="UTF-8" ?>',
+            xml_content.replace("<map", f'<map xmlns="{XPATH_FUNCTIONS_NS}"', 1)
+            if xml_content.startswith("<map")
+            else xml_content.replace("<array", f'<array xmlns="{XPATH_FUNCTIONS_NS}"', 1)
+            if xml_content.startswith("<array")
+            else f'<map xmlns="{XPATH_FUNCTIONS_NS}">{xml_content}</map>',
+        ]
+        return "".join(output).encode("utf-8")
+
     output = []
     namespace_str = ""
     for prefix in xml_namespaces:

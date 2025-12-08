@@ -1,6 +1,26 @@
 History
 =======
 
+5.3.0 / 2025-12-08
+==================
+
+  * chore: bump version
+  * fix: bump version
+  * fix: should be all green now
+  * lint: fix ossues with lines
+  * feat: add missing tests
+  * feat: add xPath support
+  * chore(deps): bump starlette from 0.47.2 to 0.49.1 in /docs (#257)
+  * feat: improvements to ruff and new python 3.15 (#255)
+  * Modernize Python code to 3.10+ with pyupgrade (#254)
+  * check arm build ubuntu (#253)
+  * Remove duplicate typecheck job from pythonpackage workflow
+  * Migrate from mypy to ty for type checking (#252)
+  * Add Python 3.14t (freethreaded) to testing matrix (#251)
+  * prod release (#249)
+  * bump python to latest rc2
+  * fix: switch to release candidate 2 of Python 3.14
+
 5.2.0 / 2025-07-21
 ==================
 

@@ -101,7 +101,7 @@ tornado==6.5.2
     # via -r requirements.in
 typing-extensions==4.12.2
     # via beautifulsoup4
-urllib3==2.5.0
+urllib3==2.6.0
     # via requests
 uvicorn==0.34.0
     # via sphinx-autobuild

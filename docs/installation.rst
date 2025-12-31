@@ -23,6 +23,18 @@ you through the process.
 .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
 
 
+Using uv (recommended)
+----------------------
+
+`uv`_ is a fast Python package installer. You can install json2xml using:
+
+.. code-block:: console
+
+    $ uv pip install json2xml
+
+.. _uv: https://github.com/astral-sh/uv
+
+
 From sources
 ------------
 
@@ -38,13 +50,44 @@ Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/vinitkumar/json2xml/tarball/master
+    $ curl -OL https://github.com/vinitkumar/json2xml/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
 .. code-block:: console
 
-    $ python setup.py install
+    $ pip install .
+
+Or for development (editable install):
+
+.. code-block:: console
+
+    $ pip install -e .
+
+
+Development Setup
+-----------------
+
+For contributing to json2xml, set up a development environment:
+
+.. code-block:: console
+
+    # Create and activate virtual environment (using uv - recommended)
+    $ uv venv
+    $ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+    # Install dependencies
+    $ uv pip install -r requirements-dev.txt
+    $ uv pip install -e .
+
+
+Requirements
+------------
+
+json2xml requires Python 3.10 or later and depends on:
+
+* ``defusedxml`` - For secure XML parsing
+* ``urllib3`` - For fetching JSON from URLs
 
 
 .. _Github repo: https://github.com/vinitkumar/json2xml

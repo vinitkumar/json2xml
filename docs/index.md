@@ -1,17 +1,31 @@
-# Welcome to MkDocs
+# json2xml Documentation
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+**json2xml** is a Python library that allows you to convert JSON data into XML format. It's simple, efficient, and easy to use.
 
-## Commands
+## Quick Start
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+```python
+from json2xml import json2xml
+from json2xml.utils import readfromstring
 
-## Project layout
+data = readfromstring('{"name": "John", "age": 30}')
+print(json2xml.Json2xml(data).to_xml())
+```
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+## Features
+
+- Conversion from a JSON string to XML
+- Conversion from a JSON file to XML
+- Conversion from an API that emits JSON data to XML
+- XPath 3.1 compliant output format (optional)
+- Customizable root element wrapper
+- Optional type attributes on elements
+- Configurable list item wrapping
+
+## Documentation
+
+For detailed documentation, visit [json2xml.readthedocs.io](https://json2xml.readthedocs.io).
+
+## Source Code
+
+The source code is available on [GitHub](https://github.com/vinitkumar/json2xml).

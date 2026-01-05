@@ -30,9 +30,14 @@ class Json2xml:
         self.item_wrap = item_wrap
         self.xpath_format = xpath_format
 
-    def to_xml(self) -> Any | None:
+    def to_xml(self) -> str | bytes | None:
         """
         Convert to xml using dicttoxml.dicttoxml and then pretty print it.
+
+        Returns:
+            str: Pretty-printed XML string when pretty=True.
+            bytes: Raw XML bytes when pretty=False.
+            None: When data is empty or None.
         """
         if self.data:
             xml_data = dicttoxml.dicttoxml(

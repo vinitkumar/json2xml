@@ -7,7 +7,7 @@ from collections.abc import Callable, Sequence
 from decimal import Decimal
 from fractions import Fraction
 from random import SystemRandom
-from typing import Any, Union, cast
+from typing import Any, cast
 
 from defusedxml.minidom import parseString
 
@@ -43,33 +43,24 @@ def get_unique_id(element: str) -> str:
     Returns:
         str: The unique ID.
     """
-    ids: list[str] = []  # initialize list of unique ids
-    this_id = make_id(element)
-    dup = True
-    while dup:
-        if this_id not in ids:
-            dup = False
-            ids.append(this_id)
-        else:
-            this_id = make_id(element)
-    return ids[-1]
+    return make_id(element)
 
 
-ELEMENT = Union[
-    str,
-    int,
-    float,
-    bool,
-    complex,
-    Decimal,
-    Fraction,
-    numbers.Number,
-    Sequence[Any],
-    datetime.datetime,
-    datetime.date,
-    None,
-    dict[str, Any],
-]
+ELEMENT = (
+    str
+    | int
+    | float
+    | bool
+    | complex
+    | Decimal
+    | Fraction
+    | numbers.Number
+    | Sequence[Any]
+    | datetime.datetime
+    | datetime.date
+    | None
+    | dict[str, Any]
+)
 
 
 def get_xml_type(val: ELEMENT) -> str:
@@ -332,7 +323,7 @@ def dict2xml_str(
     cdata: bool,
     item_name: str,
     item_wrap: bool,
-    parentIsList: bool,
+    parent_is_list: bool,
     parent: str = "",
     list_headers: bool = False,
 ) -> str:
@@ -340,7 +331,6 @@ def dict2xml_str(
     parse dict2xml
     """
     ids: list[str] = []  # initialize list of unique ids
-    ", ".join(str(key) for key in item)
     subtree = ""  # Initialize subtree with default empty string
 
     if attr_type:
@@ -358,12 +348,12 @@ def dict2xml_str(
             rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers=list_headers
         )
 
-    if parentIsList and list_headers:
+    if parent_is_list and list_headers:
         if len(val_attr) > 0 and not item_wrap:
             attrstring = make_attrstring(val_attr)
             return f"<{parent}{attrstring}>{subtree}</{parent}>"
         return f"<{parent}>{subtree}</{parent}>"
-    elif item.get("@flat", False) or (parentIsList and not item_wrap):
+    elif item.get("@flat", False) or (parent_is_list and not item_wrap):
         return subtree
 
     attrstring = make_attrstring(val_attr)
@@ -553,7 +543,7 @@ def convert_list(
                     cdata=cdata,
                     item_name=item_name,
                     item_wrap=item_wrap,
-                    parentIsList=True,
+                    parent_is_list=True,
                     parent=parent,
                     list_headers=list_headers
                 )
@@ -640,7 +630,7 @@ def dicttoxml(
     item_wrap: bool = True,
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,
-    xml_namespaces: dict[str, Any] = {},
+    xml_namespaces: dict[str, Any] | None = None,
     list_headers: bool = False,
     xpath_format: bool = False,
 ) -> bytes:
@@ -793,6 +783,9 @@ def dicttoxml(
             else f'<map xmlns="{XPATH_FUNCTIONS_NS}">{xml_content}</map>',
         ]
         return "".join(output).encode("utf-8")
+
+    if xml_namespaces is None:
+        xml_namespaces = {}
 
     output = []
     namespace_str = ""

@@ -297,7 +297,7 @@ class TestDict2xml:
             cdata=False,
             item_name="item",
             item_wrap=False,
-            parentIsList=True,
+            parent_is_list=True,
             parent=parent,
             list_headers=True,
         )
@@ -604,7 +604,7 @@ class TestDict2xml:
                 cdata=False,
                 item_name="test",
                 item_wrap=False,
-                parentIsList=False
+                parent_is_list=False
             )
 
     def test_convert_dict_invalid_type(self) -> None:
@@ -773,50 +773,16 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, cdata=True, attr_type=False, root=False)
         assert b"<key><![CDATA[value]]></key>" == result
 
-    def test_get_unique_id_with_duplicates(self) -> None:
-        """Test get_unique_id when duplicates are generated."""
-        # We need to modify the original get_unique_id to simulate a pre-existing ID list
-        import json2xml.dicttoxml as module
+    def test_get_unique_id_returns_valid_format(self) -> None:
+        """Test get_unique_id returns properly formatted ID."""
+        result = dicttoxml.get_unique_id("test_element")
 
-        # Save original function
-        original_get_unique_id = module.get_unique_id
-
-        # Track make_id calls
-        call_count = 0
-        original_make_id = module.make_id
-
-        def mock_make_id(element: str, start: int = 100000, end: int = 999999) -> str:
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                return "test_123456"  # First call - will collide
-            else:
-                return "test_789012"  # Second call - unique
-
-        # Patch get_unique_id to use a pre-populated ids list
-        def patched_get_unique_id(element: str) -> str:
-            # Start with a pre-existing ID to force collision
-            ids = ["test_123456"]
-            this_id = module.make_id(element)
-            dup = True
-            while dup:
-                if this_id not in ids:
-                    dup = False
-                    ids.append(this_id)
-                else:
-                    this_id = module.make_id(element)  # This exercises line 52
-            return ids[-1]
-
-        module.make_id = mock_make_id  # type: ignore[assignment]
-        module.get_unique_id = patched_get_unique_id  # type: ignore[assignment]
-
-        try:
-            result = dicttoxml.get_unique_id("test")
-            assert result == "test_789012"
-            assert call_count == 2
-        finally:
-            module.make_id = original_make_id
-            module.get_unique_id = original_get_unique_id
+        # Verify format: element_NNNNNN
+        assert isinstance(result, str)
+        assert result.startswith("test_element_")
+        numeric_part = result.replace("test_element_", "")
+        assert numeric_part.isdigit()
+        assert 100000 <= int(numeric_part) <= 999999
 
     def test_convert_with_bool_direct(self) -> None:
         """Test convert function with boolean input directly."""
@@ -893,7 +859,7 @@ class TestDict2xml:
             cdata=False,
             item_name="test",
             item_wrap=False,
-            parentIsList=False
+            parent_is_list=False
         )
         assert 'type="dict"' in result
 
@@ -908,7 +874,7 @@ class TestDict2xml:
             cdata=False,
             item_name="test",
             item_wrap=False,
-            parentIsList=False
+            parent_is_list=False
         )
         assert "nested" in result
 
@@ -1035,7 +1001,7 @@ class TestDict2xml:
                 cdata=False,
                 item_name="test",
                 item_wrap=False,
-                parentIsList=False
+                parent_is_list=False
             )
             assert "test" in result
         finally:

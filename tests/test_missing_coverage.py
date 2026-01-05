@@ -21,16 +21,11 @@ if TYPE_CHECKING:
     pass
 
 
-class TestGetUniqueIdDuplicateGeneration:
-    """Test line 52: duplicate ID generation in get_unique_id loop"""
+class TestGetUniqueId:
+    """Test get_unique_id function."""
 
-    def test_get_unique_id_generates_id_when_duplicates_occur(self) -> None:
-        """Test that get_unique_id handles the while loop by regenerating IDs on duplicates.
-
-        Line 52 (this_id = make_id(element)) is executed when a duplicate is found.
-        Since make_id uses SystemRandom, we can't guarantee duplicates, but we can
-        ensure the function returns a valid ID in the correct format.
-        """
+    def test_get_unique_id_returns_valid_format(self) -> None:
+        """Test that get_unique_id returns a valid ID in the correct format."""
         result = get_unique_id("test_element")
 
         # Verify it returns a string in the expected format
@@ -43,15 +38,8 @@ class TestGetUniqueIdDuplicateGeneration:
         assert numeric_part.isdigit()
         assert 100000 <= int(numeric_part) <= 999999
 
-    def test_get_unique_id_duplicate_id_regeneration(self) -> None:
-        """Test line 52: trigger duplicate ID regeneration.
-
-        Line 52 (this_id = make_id(element)) only executes if this_id is in the ids list.
-        We can't easily trigger this with the current implementation since ids starts empty,
-        but we test the function's robustness when make_id returns duplicates.
-        """
-        # Call get_unique_id multiple times - while theoretically one could duplicate
-        # due to SystemRandom, the function handles this correctly
+    def test_get_unique_id_multiple_calls(self) -> None:
+        """Test that get_unique_id works correctly with multiple calls."""
         ids_generated = [get_unique_id("test") for _ in range(10)]
 
         # All generated IDs should be properly formatted
@@ -304,25 +292,6 @@ class TestXpath31TypesComprehensive:
         assert get_xpath31_tag_name(CustomType()) == "string"
 
 
-class TestGetUniqueIdDuplicateIteration:
-    """Test the while loop iteration in get_unique_id (line 47-52)"""
-
-    def test_get_unique_id_returns_valid_format(self) -> None:
-        """Test that get_unique_id returns properly formatted ID."""
-        from json2xml.dicttoxml import get_unique_id
-
-        # Call multiple times to ensure consistency
-        ids = [get_unique_id("element") for _ in range(5)]
-
-        # All should be unique
-        assert len(set(ids)) == 5
-
-        # All should follow the format
-        for id_val in ids:
-            assert isinstance(id_val, str)
-            assert id_val.startswith("element_")
-            numeric_part = id_val.split("_")[-1]
-            assert numeric_part.isdigit()
 
 
 class TestConvertToXpath31AllPaths:

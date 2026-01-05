@@ -119,3 +119,5 @@ jobs:
     - name: Run ruff
       run: uvx ruff check json2xml tests
 
+    - name: Run type check
+      run: uvx ty check json2xml

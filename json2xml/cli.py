@@ -349,6 +349,8 @@ def main(argv: list[str] | None = None) -> int:
             attr_type=args.attr_type,
             item_wrap=args.item_wrap,
             xpath_format=args.xpath_format,
+            cdata=args.cdata,
+            list_headers=args.list_headers,
         )
         xml_output = converter.to_xml()
 

@@ -21,6 +21,8 @@ class Json2xml:
         attr_type: bool = True,
         item_wrap: bool = True,
         xpath_format: bool = False,
+        cdata: bool = False,
+        list_headers: bool = False,
     ):
         self.data = data
         self.pretty = pretty
@@ -29,6 +31,8 @@ class Json2xml:
         self.root = root
         self.item_wrap = item_wrap
         self.xpath_format = xpath_format
+        self.cdata = cdata
+        self.list_headers = list_headers
 
     def to_xml(self) -> Any | None:
         """
@@ -42,6 +46,8 @@ class Json2xml:
                 attr_type=self.attr_type,
                 item_wrap=self.item_wrap,
                 xpath_format=self.xpath_format,
+                cdata=self.cdata,
+                list_headers=self.list_headers,
             )
             if self.pretty:
                 try:

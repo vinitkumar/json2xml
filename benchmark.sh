@@ -3,8 +3,15 @@
 # Benchmark script for json2xml-py vs json2xml-go
 # Compares performance of Python and Go implementations
 #
+# Environment variables:
+#   GO_CLI: Path to json2xml-go binary (default: json2xml-go in PATH)
+#   MEDIUM_JSON_FILE: Path to medium JSON test file (default: ./examples/bigexample.json)
+#
 
 set -e
+
+# Resolve repository-relative paths based on this script's location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -18,12 +25,13 @@ echo -e "${BLUE}  json2xml Benchmark: Python vs Go${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-# Configuration
-PYTHON_CLI="python -m json2xml.cli"
-GO_CLI="/Users/vinitkumar/projects/go/json2xml-go/json2xml-go"
+# Configuration - can be overridden via environment variables
+PYTHON_CLI="${PYTHON_CLI:-python -m json2xml.cli}"
+GO_CLI="${GO_CLI:-json2xml-go}"
 ITERATIONS=10
 SMALL_JSON='{"name": "John", "age": 30, "city": "New York"}'
-MEDIUM_JSON="$(cat /Users/vinitkumar/projects/python/json2xml/examples/bigexample.json)"
+MEDIUM_JSON_FILE="${MEDIUM_JSON_FILE:-$SCRIPT_DIR/examples/bigexample.json}"
+MEDIUM_JSON="$(cat "$MEDIUM_JSON_FILE")"
 LARGE_JSON_FILE="/tmp/json2xml_benchmark_large.json"
 
 # Generate a large JSON file for testing

@@ -4,6 +4,10 @@ Benchmark script for json2xml-py vs json2xml-go.
 
 Compares performance of Python and Go implementations across
 different JSON sizes.
+
+Environment variables:
+    JSON2XML_GO_CLI: Path to the json2xml-go binary (default: json2xml-go in PATH)
+    JSON2XML_EXAMPLES_DIR: Path to examples directory (default: ./examples relative to script)
 """
 from __future__ import annotations
 
@@ -17,10 +21,13 @@ import tempfile
 import time
 from pathlib import Path
 
-# Paths
+# Base directory for repo-relative defaults
+BASE_DIR = Path(__file__).resolve().parent
+
+# Paths - configurable via environment variables
 PYTHON_CLI = [sys.executable, "-m", "json2xml.cli"]
-GO_CLI = Path("/Users/vinitkumar/projects/go/json2xml-go/json2xml-go")
-EXAMPLES_DIR = Path("/Users/vinitkumar/projects/python/json2xml/examples")
+GO_CLI = Path(os.environ.get("JSON2XML_GO_CLI", "json2xml-go"))
+EXAMPLES_DIR = Path(os.environ.get("JSON2XML_EXAMPLES_DIR", str(BASE_DIR / "examples")))
 
 # Colors for terminal output
 class Colors:

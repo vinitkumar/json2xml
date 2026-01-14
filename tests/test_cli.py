@@ -5,12 +5,6 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-import pytest
-
-if TYPE_CHECKING:
-    from pytest import CaptureFixture
 
 
 class TestCLI:
@@ -223,3 +217,55 @@ class TestCLI:
         assert "<outer" in result.stdout
         assert "<inner" in result.stdout
         assert "42" in result.stdout
+
+    def test_cdata_option(self) -> None:
+        """Test -c/--cdata flag wraps string values in CDATA sections."""
+        result = subprocess.run(
+            [
+                sys.executable, "-m", "json2xml.cli",
+                "-s", '{"message": "Hello <World>"}',
+                "-c",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0
+        assert "<![CDATA[" in result.stdout
+
+    def test_list_headers_option(self) -> None:
+        """Test -l/--list-headers flag repeats headers for each list item."""
+        result = subprocess.run(
+            [
+                sys.executable, "-m", "json2xml.cli",
+                "-s", '{"items": [1, 2, 3]}',
+                "-l",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0
+        # The flag should be accepted and produce valid output
+        assert "<item" in result.stdout
+        assert "1" in result.stdout
+
+    def test_stdin_empty_with_dash(self) -> None:
+        """Test error handling when stdin is empty with - argument."""
+        result = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", "-"],
+            input="",
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 1
+        assert "Empty input" in result.stderr or "Error" in result.stderr
+
+    def test_stdin_whitespace_only(self) -> None:
+        """Test error handling when stdin contains only whitespace."""
+        result = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", "-"],
+            input="   \n\t  ",
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 1
+        assert "Empty input" in result.stderr or "Error" in result.stderr

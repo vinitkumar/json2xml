@@ -36,6 +36,9 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/vinitkumar/json2xml"
 
+[project.scripts]
+json2xml-py = "json2xml.cli:main"
+
 [tool.setuptools.packages.find]
 include = ["json2xml"]
 

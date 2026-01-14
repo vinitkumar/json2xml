@@ -1,6 +1,32 @@
 History
 =======
 
+5.4.0 / 2026-01-15
+==================
+
+  * test: add comprehensive CLI tests for 99% coverage
+  * docs: add CLI usage and cross-reference to Go version
+  * feat: add CLI support for json2xml-py (#266)
+  * chore(deps): bump urllib3 from 2.6.0 to 2.6.3 in /docs (#265)
+  * update documentation and make it more correct (#263)
+  * feat: update doc packages
+  * chore: update GitHub Actions to latest versions (#262)
+  * chore(deps): bump urllib3 from 2.5.0 to 2.6.0 in /docs (#261)
+  * feat: update python3.15.0 to alpha 3 (#260)
+  * feat: bump to match the version
+  * feat: add xPath support (#259)
+  * chore(deps): bump starlette from 0.47.2 to 0.49.1 in /docs (#257)
+  * feat: improvements to ruff and new python 3.15 (#255)
+  * Modernize Python code to 3.10+ with pyupgrade (#254)
+  * check arm build ubuntu (#253)
+  * Remove duplicate typecheck job from pythonpackage workflow
+  * Migrate from mypy to ty for type checking (#252)
+  * Add Python 3.14t (freethreaded) to testing matrix (#251)
+  * prod release (#249)
+  * bump python to latest rc2
+  * fix: switch to release candidate 2 of Python 3.14
+
+
 5.3.1 / 2025-12-08
 ==================
 

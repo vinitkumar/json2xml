@@ -8,6 +8,7 @@ Welcome to json2xml's documentation!
    readme
    installation
    usage
+   benchmarks
    modules
    contributing
    authors

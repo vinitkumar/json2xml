@@ -20,6 +20,8 @@ Documentation: https://json2xml.readthedocs.io.
 
 The library was initially dependent on the `dict2xml` project, but it has now been integrated into json2xml itself. This has led to cleaner code, the addition of types and tests, and overall improved performance.
 
+**Looking for a Go version?** Check out `json2xml-go <https://github.com/vinitkumar/json2xml-go>`_, a Go port of this library with identical features and a native CLI tool.
+
 
 
 Architecture Diagram
@@ -27,6 +29,30 @@ Architecture Diagram
 
 .. image:: ./diagram.png
 
+
+Installation
+^^^^^^^^^^^^
+
+**As a Library**
+
+.. code-block:: console
+
+    pip install json2xml
+
+**As a CLI Tool**
+
+The library includes a command-line tool ``json2xml-py`` that gets installed automatically:
+
+.. code-block:: console
+
+    pip install json2xml
+
+    # Now you can use it from the command line
+    json2xml-py data.json
+    json2xml-py -s '{"name": "John", "age": 30}'
+    json2xml-py -u https://api.example.com/data.json
+
+For CLI options, run ``json2xml-py --help``.
 
 Features
 ^^^^^^^^
@@ -37,6 +63,7 @@ json2xml supports the following features:
 * Conversion from a `json` file to XML
 * Conversion from an API that emits `json` data to XML
 * Compliant with the `json-to-xml` function specification from `XPath 3.1 <https://www.w3.org/TR/xpath-functions-31/#func-json-to-xml>`_
+* **Command-line tool** for easy conversion from the terminal
 
 Usage
 ^^^^^
@@ -253,6 +280,77 @@ Using tools directly:
     pytest --cov=json2xml --cov-report=term -xvs tests -n auto
     ruff check json2xml tests
     mypy json2xml tests
+
+
+CLI Usage
+^^^^^^^^^
+
+The ``json2xml-py`` command-line tool provides an easy way to convert JSON to XML from the terminal.
+
+**Basic Examples**
+
+.. code-block:: console
+
+    # Convert a JSON file to XML
+    json2xml-py data.json
+
+    # Convert with custom wrapper element
+    json2xml-py -w root data.json
+
+    # Read JSON from string
+    json2xml-py -s '{"name": "John", "age": 30}'
+
+    # Read from stdin
+    cat data.json | json2xml-py -
+
+    # Output to file
+    json2xml-py -o output.xml data.json
+
+    # Use XPath 3.1 format
+    json2xml-py -x data.json
+
+    # Disable pretty printing and type attributes
+    json2xml-py --no-pretty --no-type data.json
+
+**CLI Options**
+
+.. code-block:: text
+
+    Input Options:
+      -u, --url string        Read JSON from URL
+      -s, --string string     Read JSON from string
+      [input-file]            Read JSON from file (use - for stdin)
+
+    Output Options:
+      -o, --output string     Output file (default: stdout)
+
+    Conversion Options:
+      -w, --wrapper string    Wrapper element name (default "all")
+      -r, --root              Include root element (default true)
+      -p, --pretty            Pretty print output (default true)
+      -t, --type              Include type attributes (default true)
+      -i, --item-wrap         Wrap list items in <item> elements (default true)
+      -x, --xpath             Use XPath 3.1 json-to-xml format
+      -c, --cdata             Wrap string values in CDATA sections
+      -l, --list-headers      Repeat headers for each list item
+
+    Other Options:
+      -v, --version           Show version information
+      -h, --help              Show help message
+
+
+Go Version
+^^^^^^^^^^
+
+A Go port of this library is available at `json2xml-go <https://github.com/vinitkumar/json2xml-go>`_.
+
+**Install the Go CLI:**
+
+.. code-block:: console
+
+    go install github.com/vinitkumar/json2xml-go/cmd/json2xml@latest
+
+The Go version provides the same features and a native compiled binary for maximum performance.
 
 
 Help and Support to maintain this project

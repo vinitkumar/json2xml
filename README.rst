@@ -1,3 +1,7 @@
+.. image:: ./json2xml-hero.png
+   :alt: json2xml hero
+
+
 ========
 json2xml
 ========

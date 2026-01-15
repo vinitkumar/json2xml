@@ -357,6 +357,54 @@ A Go port of this library is available at `json2xml-go <https://github.com/vinit
 The Go version provides the same features and a native compiled binary for maximum performance.
 
 
+Performance Benchmarks
+^^^^^^^^^^^^^^^^^^^^^^
+
+Comprehensive benchmarks comparing Python, Go, and Zig implementations:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 20 15 15
+
+   * - Test Case
+     - Python (CPython)
+     - Go
+     - Zig
+   * - **Small JSON** (47 bytes)
+     - 68.88ms
+     - 7.13ms
+     - 2.65ms
+   * - **Medium JSON** (2.6 KB)
+     - 73.40ms
+     - 4.85ms
+     - 2.13ms
+   * - **Large JSON** (323 KB)
+     - 420.06ms
+     - 68.88ms
+     - 5.90ms
+   * - **Very Large JSON** (1.6 MB)
+     - 2.08s
+     - 288.75ms
+     - 20.62ms
+
+**Recommendation by Use Case:**
+
+- **Python integration / scripting**: Use this library (json2xml)
+- **CLI tool / moderate performance**: Use `json2xml-go <https://github.com/vinitkumar/json2xml-go>`_
+- **Maximum performance / large files**: Use `json2xml-zig <https://github.com/vinitkumar/json2xml-zig>`_
+
+For detailed benchmarks, see `BENCHMARKS.md <https://github.com/vinitkumar/json2xml/blob/master/BENCHMARKS.md>`_.
+
+
+Other Implementations
+^^^^^^^^^^^^^^^^^^^^^
+
+This library is also available in other languages:
+
+- **Go**: `json2xml-go <https://github.com/vinitkumar/json2xml-go>`_ - 7x faster, native compiled binary
+- **Zig**: `json2xml-zig <https://github.com/vinitkumar/json2xml-zig>`_ - 85x faster, maximum performance
+
+
 Help and Support to maintain this project
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

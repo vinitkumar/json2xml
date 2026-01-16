@@ -1,6 +1,18 @@
 History
 =======
 
+6.0.1 / 2026-01-16
+==================
+
+  * feat: enable 'fast' optional dependency for easy Rust installation
+  * docs: update benchmarks with comprehensive Python/Rust/Go/Zig comparison
+  * feat: add benchmark_all.py for multi-implementation benchmarking
+
+Installation with Rust acceleration:
+
+  * pip install json2xml[fast]
+
+
 6.0.0 / 2026-01-16
 ==================
 

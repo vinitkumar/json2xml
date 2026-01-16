@@ -1,127 +1,133 @@
 # json2xml Benchmark Results
 
-Comprehensive performance comparison between Python implementations and the Go version of json2xml.
+Comprehensive performance comparison between all json2xml implementations.
 
 ## Test Environment
 
-- **Machine**: Apple Silicon (aarch64)
+- **Machine**: Apple Silicon (M-series, aarch64)
 - **OS**: macOS
-- **Date**: January 14, 2026
+- **Date**: January 16, 2026
 
 ### Implementations Tested
 
-| Implementation | Version | Notes |
-|----------------|---------|-------|
-| CPython | 3.14.2 | Homebrew installation |
-| CPython | 3.15.0a4 | Latest alpha via uv |
-| PyPy | 3.10.16 | JIT-compiled Python |
-| Go | 1.0.0 | json2xml-go |
+| Implementation | Type | Notes |
+|----------------|------|-------|
+| Python | Library | Pure Python (json2xml) |
+| Rust | Library | Native extension via PyO3 (json2xml-rs) |
+| Go | CLI | Standalone binary (json2xml-go) |
+| Zig | CLI | Standalone binary (json2xml-zig) |
 
 ## Test Data
 
 | Size | Description | Bytes |
 |------|-------------|-------|
 | Small | Simple object `{"name": "John", "age": 30, "city": "New York"}` | 47 |
-| Medium | `bigexample.json` (patent data) | 2,598 |
-| Large | 1,000 generated records with nested structures | 323,130 |
-| Very Large | 5,000 generated records with nested structures | 1,619,991 |
+| Medium | 10 generated records with nested structures | 3,212 |
+| bigexample.json | Real-world patent data | 2,018 |
+| Large | 100 generated records with nested structures | 32,226 |
+| Very Large | 1,000 generated records with nested structures | 323,126 |
 
 ## Results
 
-### Individual Test Results
+### Performance Summary
 
-| Test | CPython 3.14.2 | CPython 3.15.0a4 | PyPy 3.10.16 | Go |
-|------|----------------|------------------|--------------|-----|
-| **Small JSON** (47 bytes) | 75.46ms | 55.74ms (**1.4x faster**) | 121.47ms (1.6x slower) | 3.69ms (**20.4x faster**) |
-| **Medium JSON** (2.6KB) | 73.87ms | 57.98ms (**1.3x faster**) | 125.73ms (1.7x slower) | 4.32ms (**17.1x faster**) |
-| **Large JSON** (323KB) | 419.67ms | 328.98ms (**1.3x faster**) | 517.51ms (1.2x slower) | 67.13ms (**6.3x faster**) |
-| **Very Large JSON** (1.6MB) | 2.09s | 1.86s (**1.1x faster**) | 1.42s (**1.5x faster**) | 287.58ms (**7.3x faster**) |
+| Test Case | Python | Rust | Go | Zig |
+|-----------|--------|------|-----|-----|
+| Small (47B) | 40.12µs | 1.45µs | 4.65ms | 3.74ms |
+| Medium (3.2KB) | 2.14ms | 71.28µs | 4.07ms | 3.28ms |
+| bigexample (2KB) | 819.46µs | 32.88µs | 4.02ms | 2.96ms |
+| Large (32KB) | 21.08ms | 739.89µs | 4.05ms | 6.11ms |
+| Very Large (323KB) | 212.61ms | 7.55ms | 4.38ms | 33.24ms |
 
-### Summary (Average Across All Tests)
+### Speedup vs Pure Python
 
-| Implementation | Avg Time | vs CPython 3.14.2 |
-|----------------|----------|-------------------|
-| **Go** | 90.68ms | **7.34x faster** 🚀 |
-| **PyPy 3.10.16** | 545.58ms | **1.22x faster** |
-| **CPython 3.15.0a4** | 575.45ms | **1.16x faster** |
-| **CPython 3.14.2** | 665.23ms | baseline |
+| Test Case | Rust | Go | Zig |
+|-----------|------|-----|-----|
+| Small (47B) | **27.6x** | 0.0x* | 0.0x* |
+| Medium (3.2KB) | **30.0x** | 0.5x* | 0.7x* |
+| bigexample (2KB) | **24.9x** | 0.2x* | 0.3x* |
+| Large (32KB) | **28.5x** | 5.2x | 3.5x |
+| Very Large (323KB) | **28.2x** | **48.5x** | 6.4x |
+
+*CLI tools have process spawn overhead (~3-4ms) which dominates for small inputs
 
 ## Key Observations
 
-### 1. Go is the Clear Winner
+### 1. Rust Extension is the Best Choice for Python Users 🦀
 
-Go outperforms all Python implementations by a significant margin:
-- **7.34x faster** than CPython 3.14.2 on average
-- Up to **20x faster** for small inputs due to minimal startup overhead
-- Consistent performance across all input sizes
+The Rust extension (json2xml-rs) provides:
+- **~28x faster** than pure Python consistently across all input sizes
+- **Zero process overhead** - called directly from Python
+- **Automatic fallback** - pure Python used if Rust unavailable
+- **Easy install**: `pip install json2xml[fast]`
 
-### 2. CPython 3.15.0a4 Shows Promising Improvements
+### 2. Go Excels for Large CLI Workloads 🚀
 
-The latest Python alpha demonstrates consistent performance gains:
-- **13-35% faster** than CPython 3.14.2 across all test sizes
-- Improvements likely due to ongoing interpreter optimizations
+For very large inputs (323KB+):
+- **48.5x faster** than Python
+- But ~3-4ms startup overhead hurts small file performance
+- Best for batch processing or large file conversions
 
-### 3. PyPy Has Interesting Trade-offs
+### 3. Zig is Competitive but Has Trade-offs
 
-PyPy's JIT compiler creates a unique performance profile:
-- **Slower for small/medium inputs**: JIT compilation overhead hurts for quick operations
-- **Faster for very large inputs**: JIT shines on the 5K record test (1.5x faster than CPython)
-- Best suited for long-running processes or batch processing
+- Consistent ~3ms startup overhead
+- Good for medium-large files (3-6x faster than Python)
+- Less optimized than Go for very large inputs
 
-### 4. Startup Overhead Dominates Small Inputs
+### 4. Process Spawn Overhead Matters
 
-Python's interpreter startup time is significant:
-- CPython takes **55-75ms** even for 47 bytes of JSON
-- Go takes only **3.7ms** for the same operation
-- For CLI tools processing small files, Go provides a much better user experience
+CLI tools (Go, Zig) have ~3-4ms process spawn overhead:
+- Dominates for small inputs (makes them appear slower than Python!)
+- Negligible for large inputs where actual work dominates
+- Rust extension avoids this entirely by being a native Python module
 
 ## When to Use Each Implementation
 
-| Use Case | Recommended |
-|----------|-------------|
-| CLI tool for small/medium files | **Go** (json2xml-go) |
-| High-throughput batch processing | **Go** or **PyPy** |
-| Integration with Python codebase | **CPython 3.15+** |
-| One-off conversions in scripts | **CPython** (any version) |
+| Use Case | Recommended | Why |
+|----------|-------------|-----|
+| Python library calls | **Rust** (`pip install json2xml[fast]`) | 28x faster, no overhead |
+| Small files via CLI | **Rust** via Python | CLI overhead dominates |
+| Large files via CLI | **Go** (json2xml-go) | 48x faster for 300KB+ |
+| Batch processing | **Go** or **Rust** | Both excellent |
+| Pure Python required | **Python** (json2xml) | Always available |
+
+## Installation
+
+```bash
+# Pure Python (always works)
+pip install json2xml
+
+# With Rust acceleration (recommended)
+pip install json2xml[fast]
+
+# Go CLI
+go install github.com/vinitkumar/json2xml-go@latest
+
+# Zig CLI
+# See: github.com/nicholasgriffintn/json2xml-zig
+```
 
 ## Running the Benchmarks
 
-### Python Multi-Implementation Benchmark
+### Comprehensive Benchmark (All Implementations)
 
 ```bash
-# Set the Go CLI path
-export JSON2XML_GO_CLI=/path/to/json2xml-go
+python benchmark_all.py
+```
 
-# Run the benchmark
+### Rust vs Python Only
+
+```bash
+python benchmark_rust.py
+```
+
+### Multi-Python Version Benchmark
+
+```bash
 python benchmark_multi_python.py
 ```
 
-### Simple Python vs Go Benchmark
+## Related Projects
 
-```bash
-# Set paths via environment variables (optional)
-export JSON2XML_GO_CLI=/path/to/json2xml-go
-export JSON2XML_EXAMPLES_DIR=/path/to/examples
-
-# Run the benchmark
-python benchmark.py
-```
-
-## Reproducing Results
-
-1. Install required Python versions using `uv`:
-   ```bash
-   uv python install 3.14 3.15.0a4 pypy@3.10
-   ```
-
-2. Build the Go binary:
-   ```bash
-   cd /path/to/json2xml-go
-   go build -o json2xml-go ./cmd/json2xml-go
-   ```
-
-3. Run the multi-Python benchmark:
-   ```bash
-   cd /path/to/json2xml
-   python benchmark_multi_python.py
-   ```
+- **Go version**: [github.com/vinitkumar/json2xml-go](https://github.com/vinitkumar/json2xml-go)
+- **Zig version**: [github.com/nicholasgriffintn/json2xml-zig](https://github.com/nicholasgriffintn/json2xml-zig)

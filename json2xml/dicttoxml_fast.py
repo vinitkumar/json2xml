@@ -29,7 +29,7 @@ try:
     from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # type: ignore[import-not-found]
     _USE_RUST = True
     LOG.debug("Using Rust backend for dicttoxml")
-except ImportError:
+except ImportError:  # pragma: no cover
     LOG.debug("Rust backend not available, using pure Python")
     rust_escape_xml = None
     rust_wrap_cdata = None

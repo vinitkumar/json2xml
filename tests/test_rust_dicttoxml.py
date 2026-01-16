@@ -16,6 +16,7 @@ try:
 except ImportError:
     RUST_AVAILABLE = False
 
+import json2xml.dicttoxml_fast as fast_module
 from json2xml import dicttoxml as py_dicttoxml
 from json2xml.dicttoxml_fast import (
     dicttoxml as fast_dicttoxml,
@@ -573,8 +574,6 @@ class TestFastDicttoxmlPythonFallback:
         """Test escape_xml falls back to Python when Rust unavailable."""
         from unittest.mock import patch
 
-        import json2xml.dicttoxml_fast as fast_module
-
         # Temporarily mock _USE_RUST to False
         with patch.object(fast_module, '_USE_RUST', False):
             result = fast_module.escape_xml("Hello <World>")
@@ -585,8 +584,6 @@ class TestFastDicttoxmlPythonFallback:
         """Test wrap_cdata falls back to Python when Rust unavailable."""
         from unittest.mock import patch
 
-        import json2xml.dicttoxml_fast as fast_module
-
         # Temporarily mock _USE_RUST to False
         with patch.object(fast_module, '_USE_RUST', False):
             result = fast_module.wrap_cdata("Hello World")
@@ -596,8 +593,6 @@ class TestFastDicttoxmlPythonFallback:
         """Test escape_xml falls back when rust_escape_xml is None."""
         from unittest.mock import patch
 
-        import json2xml.dicttoxml_fast as fast_module
-
         with patch.object(fast_module, 'rust_escape_xml', None):
             result = fast_module.escape_xml("Test & Value")
             assert "&amp;" in result
@@ -605,8 +600,6 @@ class TestFastDicttoxmlPythonFallback:
     def test_wrap_cdata_fallback_when_rust_func_none(self):
         """Test wrap_cdata falls back when rust_wrap_cdata is None."""
         from unittest.mock import patch
-
-        import json2xml.dicttoxml_fast as fast_module
 
         with patch.object(fast_module, 'rust_wrap_cdata', None):
             result = fast_module.wrap_cdata("Test Content")

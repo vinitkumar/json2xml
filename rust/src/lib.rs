@@ -32,32 +32,6 @@ fn wrap_cdata(s: &str) -> String {
     format!("<![CDATA[{}]]>", escaped)
 }
 
-/// Get the XML type string for a Python value
-fn get_xml_type(obj: &Bound<'_, PyAny>) -> &'static str {
-    if obj.is_none() {
-        "null"
-    } else if obj.is_instance_of::<PyBool>() {
-        "bool"
-    } else if obj.is_instance_of::<PyInt>() {
-        "int"
-    } else if obj.is_instance_of::<PyFloat>() {
-        "float"
-    } else if obj.is_instance_of::<PyString>() {
-        "str"
-    } else if obj.is_instance_of::<PyDict>() {
-        "dict"
-    } else if obj.is_instance_of::<PyList>() {
-        "list"
-    } else {
-        // Check for other sequences by trying to get length
-        if obj.len().is_ok() {
-            "list"
-        } else {
-            "str"
-        }
-    }
-}
-
 /// Check if a key is a valid XML element name (simplified check)
 /// Full validation would require XML parsing, but this catches common issues
 fn is_valid_xml_name(key: &str) -> bool {
@@ -167,13 +141,13 @@ fn convert_value(
 
     // Handle dict
     if obj.is_instance_of::<PyDict>() {
-        let dict: &Bound<'_, PyDict> = obj.downcast()?;
+        let dict: &Bound<'_, PyDict> = obj.cast()?;
         return convert_dict(py, dict, parent, config);
     }
 
     // Handle list
     if obj.is_instance_of::<PyList>() {
-        let list: &Bound<'_, PyList> = obj.downcast()?;
+        let list: &Bound<'_, PyList> = obj.cast()?;
         return convert_list(py, list, parent, config);
     }
 
@@ -264,7 +238,7 @@ fn convert_none(key: &str, config: &ConvertConfig) -> PyResult<String> {
 fn convert_dict(
     py: Python<'_>,
     dict: &Bound<'_, PyDict>,
-    parent: &str,
+    _parent: &str,
     config: &ConvertConfig,
 ) -> PyResult<String> {
     let mut output = String::new();
@@ -345,7 +319,7 @@ fn convert_dict(
         }
         // Handle nested dict
         else if val.is_instance_of::<PyDict>() {
-            let nested_dict: &Bound<'_, PyDict> = val.downcast()?;
+            let nested_dict: &Bound<'_, PyDict> = val.cast()?;
             let mut attrs = Vec::new();
             if let Some((k, v)) = name_attr {
                 attrs.push((k, v));
@@ -359,7 +333,7 @@ fn convert_dict(
         }
         // Handle list
         else if val.is_instance_of::<PyList>() {
-            let list: &Bound<'_, PyList> = val.downcast()?;
+            let list: &Bound<'_, PyList> = val.cast()?;
             let list_output = convert_list(py, list, &xml_key, config)?;
 
             if config.item_wrap {
@@ -477,7 +451,7 @@ fn convert_list(
         }
         // Handle nested dict
         else if item.is_instance_of::<PyDict>() {
-            let nested_dict: &Bound<'_, PyDict> = item.downcast()?;
+            let nested_dict: &Bound<'_, PyDict> = item.cast()?;
             let inner = convert_dict(py, nested_dict, tag_name, config)?;
 
             if config.item_wrap || config.list_headers {
@@ -493,7 +467,7 @@ fn convert_list(
         }
         // Handle nested list
         else if item.is_instance_of::<PyList>() {
-            let nested_list: &Bound<'_, PyList> = item.downcast()?;
+            let nested_list: &Bound<'_, PyList> = item.cast()?;
             let inner = convert_list(py, nested_list, tag_name, config)?;
 
             let mut attrs = Vec::new();
@@ -558,10 +532,10 @@ fn dicttoxml(
     };
 
     let content = if obj.is_instance_of::<PyDict>() {
-        let dict: &Bound<'_, PyDict> = obj.downcast()?;
+        let dict: &Bound<'_, PyDict> = obj.cast()?;
         convert_dict(py, dict, custom_root, &config)?
     } else if obj.is_instance_of::<PyList>() {
-        let list: &Bound<'_, PyList> = obj.downcast()?;
+        let list: &Bound<'_, PyList> = obj.cast()?;
         convert_list(py, list, custom_root, &config)?
     } else {
         convert_value(py, obj, custom_root, &config, custom_root)?

@@ -325,6 +325,40 @@ class TestRustVsPythonCompatibility:
         rust, python = self.compare_outputs(data)
         assert rust == python
 
+    def test_item_wrap_false_matches(self):
+        """Test that item_wrap=False produces matching output."""
+        data = {"colors": ["red", "green", "blue"]}
+        rust, python = self.compare_outputs(data, item_wrap=False)
+        assert rust == python
+
+    @pytest.mark.xfail(reason="Rust list_headers implementation differs from Python - uses different wrapping semantics")
+    def test_list_headers_true_matches(self):
+        """Test that list_headers=True produces matching output."""
+        data = {"items": ["one", "two", "three"]}
+        rust, python = self.compare_outputs(data, list_headers=True)
+        assert rust == python
+
+    @pytest.mark.xfail(reason="Rust item_wrap=False with nested dicts differs from Python - known limitation")
+    def test_item_wrap_false_with_nested_dict_matches(self):
+        """Test item_wrap=False with nested dicts in list."""
+        data = {"users": [{"name": "Alice"}, {"name": "Bob"}]}
+        rust, python = self.compare_outputs(data, item_wrap=False)
+        assert rust == python
+
+    @pytest.mark.xfail(reason="Rust list_headers with nested structures differs from Python - known limitation")
+    def test_list_headers_with_nested_matches(self):
+        """Test list_headers=True with nested structures."""
+        data = {"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}
+        rust, python = self.compare_outputs(data, list_headers=True)
+        assert rust == python
+
+    def test_very_large_integer_matches(self):
+        """Test that very large integers (beyond i64) produce matching output."""
+        big_int = 10**30  # Way beyond i64 range
+        data = {"huge": big_int}
+        rust, python = self.compare_outputs(data)
+        assert rust == python
+
 
 class TestFastDicttoxmlWrapper:
     """Test the dicttoxml_fast wrapper module."""
@@ -378,11 +412,11 @@ class TestRustEdgeCases:
         assert "México" in result_str
 
     def test_numeric_string_key(self):
-        # Keys that are numbers should be prefixed with 'n'
+        # Keys that are purely numeric should be prefixed with 'n'
         data = {"123": "value"}
         result = rust_dicttoxml(data)
-        # Either the key is modified or wrapped in a name attribute
-        assert b"<n123" in result or b'name="123"' in result
+        # Numeric keys are always prefixed with 'n' per make_valid_xml_name
+        assert b"<n123" in result
 
     def test_key_with_spaces(self):
         data = {"my key": "value"}
@@ -394,6 +428,13 @@ class TestRustEdgeCases:
         data = {"big": 9999999999999999}
         result = rust_dicttoxml(data)
         assert b"9999999999999999" in result
+
+    def test_very_large_integer_beyond_i64(self):
+        """Test integers larger than i64 max (2^63-1) are handled gracefully."""
+        big_int = 10**30  # Way beyond i64 range
+        data = {"huge": big_int}
+        result = rust_dicttoxml(data)
+        assert str(big_int).encode() in result
 
     def test_negative_number(self):
         data = {"negative": -42}

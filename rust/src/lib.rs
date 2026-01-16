@@ -121,10 +121,13 @@ fn convert_value(
         return convert_bool(item_name, val, config);
     }
 
-    // Handle int
+    // Handle int - try i64 first, fall back to string for large integers
     if obj.is_instance_of::<PyInt>() {
-        let val: i64 = obj.extract()?;
-        return convert_number(item_name, &val.to_string(), "int", config);
+        let val_str = match obj.extract::<i64>() {
+            Ok(val) => val.to_string(),
+            Err(_) => obj.str()?.extract::<String>()?, // Fall back for big ints
+        };
+        return convert_number(item_name, &val_str, "int", config);
     }
 
     // Handle float
@@ -277,9 +280,12 @@ fn convert_dict(
             )
             .unwrap();
         }
-        // Handle int
+        // Handle int - try i64 first, fall back to string for large integers
         else if val.is_instance_of::<PyInt>() {
-            let int_val: i64 = val.extract()?;
+            let int_str = match val.extract::<i64>() {
+                Ok(v) => v.to_string(),
+                Err(_) => val.str()?.extract::<String>()?,
+            };
             let mut attrs = Vec::new();
             if let Some((k, v)) = name_attr {
                 attrs.push((k, v));
@@ -291,7 +297,7 @@ fn convert_dict(
             write!(
                 output,
                 "<{}{}>{}</{}>",
-                xml_key, attr_string, int_val, xml_key
+                xml_key, attr_string, int_str, xml_key
             )
             .unwrap();
         }
@@ -456,9 +462,12 @@ fn convert_list(
             )
             .unwrap();
         }
-        // Handle int
+        // Handle int - try i64 first, fall back to string for large integers
         else if item.is_instance_of::<PyInt>() {
-            let int_val: i64 = item.extract()?;
+            let int_str = match item.extract::<i64>() {
+                Ok(v) => v.to_string(),
+                Err(_) => item.str()?.extract::<String>()?,
+            };
             let mut attrs = Vec::new();
             if config.attr_type {
                 attrs.push(("type".to_string(), "int".to_string()));
@@ -467,7 +476,7 @@ fn convert_list(
             write!(
                 output,
                 "<{}{}>{}</{}>",
-                tag_name, attr_string, int_val, tag_name
+                tag_name, attr_string, int_str, tag_name
             )
             .unwrap();
         }

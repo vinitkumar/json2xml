@@ -13,6 +13,7 @@ on:
       - 'rust/**'
       - 'tests/test_rust_dicttoxml.py'
       - '.github/workflows/rust-ci.yml'
+  workflow_dispatch:  # Allow manual trigger
 
 env:
   CARGO_TERM_COLOR: always
@@ -87,6 +88,8 @@ jobs:
   benchmark:
     name: Performance Benchmark
     runs-on: ubuntu-latest
+    # Only run benchmarks on push to main/master or manual trigger, not on PRs
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
 

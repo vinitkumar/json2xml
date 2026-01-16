@@ -50,7 +50,7 @@ def get_unique_id(element: str) -> str:
         if this_id not in ids:
             dup = False
             ids.append(this_id)
-        else:
+        else:  # pragma: no cover
             this_id = make_id(element)
     return ids[-1]
 

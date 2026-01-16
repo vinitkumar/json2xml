@@ -64,11 +64,13 @@ Ready to contribute? Here's how to set up `json2xml` for local development.
 
     $ git clone git@github.com:your_name_here/json2xml.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy using uv (recommended) or pip::
 
-    $ mkvirtualenv json2xml
     $ cd json2xml/
-    $ python setup.py develop
+    $ uv venv
+    $ source .venv/bin/activate
+    $ uv pip install -r requirements-dev.txt
+    $ uv pip install -e .
 
 4. Create a branch for local development::
 
@@ -76,14 +78,15 @@ Ready to contribute? Here's how to set up `json2xml` for local development.
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the
-   tests, including testing other Python versions with tox::
+5. When you're done making changes, check that your changes pass linting and the
+   tests::
 
-    $ flake8 json2xml tests
-    $ python setup.py test or py.test
-    $ tox
-
-   To get flake8 and tox, just pip install them into your virtualenv.
+    $ make check-all  # Runs lint, typecheck, and tests
+    
+    # Or individually:
+    $ ruff check json2xml tests
+    $ mypy json2xml tests
+    $ pytest tests/
 
 6. Commit your changes and push your branch to GitHub::
 
@@ -92,6 +95,59 @@ Ready to contribute? Here's how to set up `json2xml` for local development.
     $ git push origin name-of-your-bugfix-or-feature
 
 7. Submit a pull request through the GitHub website.
+
+Rust Extension Development
+--------------------------
+
+The ``json2xml-rs`` Rust extension provides ~29x faster performance. If you want to contribute to the Rust extension:
+
+**Prerequisites**
+
+Install Rust and maturin::
+
+    $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    $ uv pip install maturin
+
+**Building the Extension**
+
+::
+
+    # Build and install in development mode
+    $ cd rust
+    $ uv pip install -e .
+    
+    # Or using maturin directly
+    $ maturin develop --release
+
+**Running Rust Tests**
+
+::
+
+    $ pytest tests/test_rust_dicttoxml.py -v
+
+**Running Benchmarks**
+
+::
+
+    $ python benchmark_rust.py
+
+**Rust Code Structure**
+
+The Rust code is located in ``rust/src/lib.rs`` and includes:
+
+- ``escape_xml()`` - XML character escaping
+- ``wrap_cdata()`` - CDATA section wrapping
+- ``convert_dict()`` - Dictionary to XML conversion
+- ``convert_list()`` - List to XML conversion
+- ``dicttoxml()`` - Main entry point exposed to Python
+
+When making changes to the Rust code:
+
+1. Ensure all existing tests pass
+2. Add tests for new functionality
+3. Run ``cargo fmt`` to format Rust code
+4. Run ``cargo clippy`` for linting
+5. Verify Python compatibility tests pass
 
 Pull Request Guidelines
 -----------------------

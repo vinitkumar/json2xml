@@ -1,6 +1,48 @@
 History
 =======
 
+6.0.0 / 2026-01-16
+==================
+
+**Major Release: Native Rust Extension for 29x Faster Performance**
+
+This release introduces an optional native Rust extension built with PyO3 that provides
+approximately 29x faster JSON to XML conversion compared to pure Python.
+
+New Features:
+
+  * feat: add optional Rust extension (json2xml-rs) for ~29x faster performance
+  * feat: add dicttoxml_fast module with automatic backend selection
+  * feat: seamless fallback to pure Python when Rust extension is not installed
+  * feat: pre-built wheels for Linux (x86_64, aarch64), macOS (Intel, Apple Silicon), Windows
+
+Performance Improvements:
+
+  * Small JSON (47 bytes): 33x faster
+  * Medium JSON (3.2KB): 28x faster
+  * Large JSON (32KB): 30x faster
+  * Very Large JSON (323KB): 29x faster
+
+New Files:
+
+  * rust/ - PyO3 Rust extension source code
+  * json2xml/dicttoxml_fast.py - Auto-selecting wrapper module
+  * tests/test_rust_dicttoxml.py - 65 comprehensive tests for Rust extension
+  * benchmark_rust.py - Performance comparison script
+  * .github/workflows/build-rust-wheels.yml - CI for building wheels
+  * .github/workflows/rust-ci.yml - CI for Rust code quality
+
+Installation:
+
+  * Pure Python: pip install json2xml
+  * With Rust acceleration: pip install json2xml-rs (then import from dicttoxml_fast)
+
+Documentation:
+
+  * Updated README with Rust extension usage and benchmarks
+  * Updated CONTRIBUTING with Rust development guide
+
+
 5.4.0 / 2026-01-15
 ==================
 

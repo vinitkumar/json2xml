@@ -24,9 +24,9 @@ _USE_RUST = False
 _rust_dicttoxml = None
 
 try:
-    from json2xml_rs import dicttoxml as _rust_dicttoxml
-    from json2xml_rs import escape_xml_py as rust_escape_xml
-    from json2xml_rs import wrap_cdata_py as rust_wrap_cdata
+    from json2xml_rs import dicttoxml as _rust_dicttoxml  # type: ignore[import-not-found]
+    from json2xml_rs import escape_xml_py as rust_escape_xml  # type: ignore[import-not-found]
+    from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # type: ignore[import-not-found]
     _USE_RUST = True
     LOG.debug("Using Rust backend for dicttoxml")
 except ImportError:
@@ -35,7 +35,7 @@ except ImportError:
     rust_wrap_cdata = None
 
 # Import the pure Python implementation as fallback
-from json2xml import dicttoxml as _py_dicttoxml
+from json2xml import dicttoxml as _py_dicttoxml  # noqa: E402
 
 
 def is_rust_available() -> bool:

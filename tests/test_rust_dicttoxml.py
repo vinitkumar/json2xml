@@ -10,15 +10,20 @@ import pytest
 
 # Check if Rust extension is available
 try:
-    from json2xml_rs import dicttoxml as rust_dicttoxml
-    from json2xml_rs import escape_xml_py, wrap_cdata_py
+    from json2xml_rs import dicttoxml as rust_dicttoxml  # type: ignore[import-not-found]
+    from json2xml_rs import escape_xml_py, wrap_cdata_py  # type: ignore[import-not-found]
     RUST_AVAILABLE = True
 except ImportError:
     RUST_AVAILABLE = False
 
 from json2xml import dicttoxml as py_dicttoxml
-from json2xml.dicttoxml_fast import dicttoxml as fast_dicttoxml, is_rust_available, get_backend
-
+from json2xml.dicttoxml_fast import (
+    dicttoxml as fast_dicttoxml,
+)
+from json2xml.dicttoxml_fast import (
+    get_backend,
+    is_rust_available,
+)
 
 # Skip all tests if Rust is not available
 pytestmark = pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not installed")

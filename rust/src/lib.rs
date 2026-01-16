@@ -182,11 +182,19 @@ fn convert_string(key: &str, val: &str, config: &ConvertConfig) -> PyResult<Stri
         escape_xml(val)
     };
 
-    Ok(format!("<{}{}>{}</{}>", xml_key, attr_string, content, xml_key))
+    Ok(format!(
+        "<{}{}>{}</{}>",
+        xml_key, attr_string, content, xml_key
+    ))
 }
 
 /// Convert a number value to XML
-fn convert_number(key: &str, val: &str, type_name: &str, config: &ConvertConfig) -> PyResult<String> {
+fn convert_number(
+    key: &str,
+    val: &str,
+    type_name: &str,
+    config: &ConvertConfig,
+) -> PyResult<String> {
     let (xml_key, name_attr) = make_valid_xml_name(key);
     let mut attrs = Vec::new();
 
@@ -215,7 +223,10 @@ fn convert_bool(key: &str, val: bool, config: &ConvertConfig) -> PyResult<String
 
     let attr_string = make_attr_string(&attrs);
     let bool_str = if val { "true" } else { "false" };
-    Ok(format!("<{}{}>{}</{}>", xml_key, attr_string, bool_str, xml_key))
+    Ok(format!(
+        "<{}{}>{}</{}>",
+        xml_key, attr_string, bool_str, xml_key
+    ))
 }
 
 /// Convert a None value to XML
@@ -259,7 +270,12 @@ fn convert_dict(
             }
             let attr_string = make_attr_string(&attrs);
             let bool_str = if bool_val { "true" } else { "false" };
-            write!(output, "<{}{}>{}</{}>", xml_key, attr_string, bool_str, xml_key).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                xml_key, attr_string, bool_str, xml_key
+            )
+            .unwrap();
         }
         // Handle int
         else if val.is_instance_of::<PyInt>() {
@@ -272,7 +288,12 @@ fn convert_dict(
                 attrs.push(("type".to_string(), "int".to_string()));
             }
             let attr_string = make_attr_string(&attrs);
-            write!(output, "<{}{}>{}</{}>", xml_key, attr_string, int_val, xml_key).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                xml_key, attr_string, int_val, xml_key
+            )
+            .unwrap();
         }
         // Handle float
         else if val.is_instance_of::<PyFloat>() {
@@ -285,7 +306,12 @@ fn convert_dict(
                 attrs.push(("type".to_string(), "float".to_string()));
             }
             let attr_string = make_attr_string(&attrs);
-            write!(output, "<{}{}>{}</{}>", xml_key, attr_string, float_val, xml_key).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                xml_key, attr_string, float_val, xml_key
+            )
+            .unwrap();
         }
         // Handle string
         else if val.is_instance_of::<PyString>() {
@@ -303,7 +329,12 @@ fn convert_dict(
             } else {
                 escape_xml(&str_val)
             };
-            write!(output, "<{}{}>{}</{}>", xml_key, attr_string, content, xml_key).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                xml_key, attr_string, content, xml_key
+            )
+            .unwrap();
         }
         // Handle None
         else if val.is_none() {
@@ -329,7 +360,12 @@ fn convert_dict(
             }
             let attr_string = make_attr_string(&attrs);
             let inner = convert_dict(py, nested_dict, &xml_key, config)?;
-            write!(output, "<{}{}>{}</{}>", xml_key, attr_string, inner, xml_key).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                xml_key, attr_string, inner, xml_key
+            )
+            .unwrap();
         }
         // Handle list
         else if val.is_instance_of::<PyList>() {
@@ -345,7 +381,12 @@ fn convert_dict(
                     attrs.push(("type".to_string(), "list".to_string()));
                 }
                 let attr_string = make_attr_string(&attrs);
-                write!(output, "<{}{}>{}</{}>", xml_key, attr_string, list_output, xml_key).unwrap();
+                write!(
+                    output,
+                    "<{}{}>{}</{}>",
+                    xml_key, attr_string, list_output, xml_key
+                )
+                .unwrap();
             } else {
                 output.push_str(&list_output);
             }
@@ -366,7 +407,12 @@ fn convert_dict(
             } else {
                 escape_xml(&str_val)
             };
-            write!(output, "<{}{}>{}</{}>", xml_key, attr_string, content, xml_key).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                xml_key, attr_string, content, xml_key
+            )
+            .unwrap();
         }
     }
 
@@ -403,7 +449,12 @@ fn convert_list(
             }
             let attr_string = make_attr_string(&attrs);
             let bool_str = if bool_val { "true" } else { "false" };
-            write!(output, "<{}{}>{}</{}>", tag_name, attr_string, bool_str, tag_name).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                tag_name, attr_string, bool_str, tag_name
+            )
+            .unwrap();
         }
         // Handle int
         else if item.is_instance_of::<PyInt>() {
@@ -413,7 +464,12 @@ fn convert_list(
                 attrs.push(("type".to_string(), "int".to_string()));
             }
             let attr_string = make_attr_string(&attrs);
-            write!(output, "<{}{}>{}</{}>", tag_name, attr_string, int_val, tag_name).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                tag_name, attr_string, int_val, tag_name
+            )
+            .unwrap();
         }
         // Handle float
         else if item.is_instance_of::<PyFloat>() {
@@ -423,7 +479,12 @@ fn convert_list(
                 attrs.push(("type".to_string(), "float".to_string()));
             }
             let attr_string = make_attr_string(&attrs);
-            write!(output, "<{}{}>{}</{}>", tag_name, attr_string, float_val, tag_name).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                tag_name, attr_string, float_val, tag_name
+            )
+            .unwrap();
         }
         // Handle string
         else if item.is_instance_of::<PyString>() {
@@ -438,7 +499,12 @@ fn convert_list(
             } else {
                 escape_xml(&str_val)
             };
-            write!(output, "<{}{}>{}</{}>", tag_name, attr_string, content, tag_name).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                tag_name, attr_string, content, tag_name
+            )
+            .unwrap();
         }
         // Handle None
         else if item.is_none() {
@@ -460,7 +526,12 @@ fn convert_list(
                     attrs.push(("type".to_string(), "dict".to_string()));
                 }
                 let attr_string = make_attr_string(&attrs);
-                write!(output, "<{}{}>{}</{}>", tag_name, attr_string, inner, tag_name).unwrap();
+                write!(
+                    output,
+                    "<{}{}>{}</{}>",
+                    tag_name, attr_string, inner, tag_name
+                )
+                .unwrap();
             } else {
                 output.push_str(&inner);
             }
@@ -475,7 +546,12 @@ fn convert_list(
                 attrs.push(("type".to_string(), "list".to_string()));
             }
             let attr_string = make_attr_string(&attrs);
-            write!(output, "<{}{}>{}</{}>", tag_name, attr_string, inner, tag_name).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                tag_name, attr_string, inner, tag_name
+            )
+            .unwrap();
         }
         // Fallback
         else {
@@ -490,7 +566,12 @@ fn convert_list(
             } else {
                 escape_xml(&str_val)
             };
-            write!(output, "<{}{}>{}</{}>", tag_name, attr_string, content, tag_name).unwrap();
+            write!(
+                output,
+                "<{}{}>{}</{}>",
+                tag_name, attr_string, content, tag_name
+            )
+            .unwrap();
         }
     }
 

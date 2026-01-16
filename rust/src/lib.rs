@@ -595,6 +595,7 @@ fn convert_list(
 ///     bytes: The XML representation of the input object
 #[pyfunction]
 #[pyo3(signature = (obj, root=true, custom_root="root", attr_type=true, item_wrap=true, cdata=false, list_headers=false))]
+#[allow(clippy::too_many_arguments)]
 fn dicttoxml(
     py: Python<'_>,
     obj: &Bound<'_, PyAny>,

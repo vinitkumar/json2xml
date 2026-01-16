@@ -1,0 +1,18 @@
+[package]
+name = "json2xml_rs"
+version = "0.1.0"
+edition = "2021"
+description = "Fast native JSON to XML conversion for Python"
+license = "Apache-2.0"
+
+[lib]
+name = "json2xml_rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.27", features = ["extension-module"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3

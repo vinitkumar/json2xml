@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "json2xml"
-version = "5.4.0"  # Replace with the dynamic version if needed
+version = "6.0.0"
 description = "Simple Python Library to convert JSON to XML"
 readme = "README.rst"
 requires-python = ">=3.10"
@@ -50,6 +50,11 @@ include = ["json2xml"]
 test = [
     "pytest>=8.4.1",
 ]
+# Note: The 'fast' extra will be available after json2xml-rs is published to PyPI.
+# For now, install the Rust extension separately:
+#   cd rust && pip install -e .
+# Then the dicttoxml_fast module will automatically use the Rust backend.
+# fast = ["json2xml-rs>=0.1.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

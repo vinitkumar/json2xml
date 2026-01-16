@@ -1,0 +1,114 @@
+name: Rust Extension CI
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'rust/**'
+      - 'tests/test_rust_dicttoxml.py'
+      - '.github/workflows/rust-ci.yml'
+  pull_request:
+    branches: [master, main]
+    paths:
+      - 'rust/**'
+      - 'tests/test_rust_dicttoxml.py'
+      - '.github/workflows/rust-ci.yml'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  rust-lint:
+    name: Rust Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Check formatting
+        working-directory: rust
+        run: cargo fmt --check
+
+      - name: Run clippy
+        working-directory: rust
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  rust-test:
+    name: Build & Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Install maturin
+        run: pip install maturin
+
+      - name: Build Rust extension
+        working-directory: rust
+        run: maturin build --release
+
+      - name: Install the wheel
+        shell: bash
+        run: |
+          pip install rust/target/wheels/*.whl
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest defusedxml
+          pip install -e .
+
+      - name: Verify import
+        run: |
+          python -c "from json2xml_rs import dicttoxml; print('Rust extension loaded!')"
+          python -c "from json2xml.dicttoxml_fast import get_backend; print(f'Backend: {get_backend()}')"
+
+      - name: Run Rust-specific tests
+        run: pytest tests/test_rust_dicttoxml.py -v
+
+      - name: Run full test suite
+        run: pytest tests/ -v --ignore=tests/test_cli.py
+
+  benchmark:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Install maturin
+        run: pip install maturin
+
+      - name: Build Rust extension
+        working-directory: rust
+        run: maturin build --release
+
+      - name: Install dependencies
+        run: |
+          pip install rust/target/wheels/*.whl
+          pip install -e .
+
+      - name: Run benchmark
+        run: python benchmark_rust.py

@@ -43,6 +43,22 @@ Installation
 
     pip install json2xml
 
+**With Native Rust Acceleration (29x faster)**
+
+For maximum performance, install the optional Rust extension:
+
+.. code-block:: console
+
+    # Install json2xml with Rust acceleration (when published)
+    pip install json2xml[fast]
+    
+    # Or install the Rust extension separately
+    pip install json2xml-rs
+
+The Rust extension provides **29x faster** conversion compared to pure Python. It's automatically used when available, with seamless fallback to pure Python.
+
+*Note: The ``json2xml-rs`` package will be available on PyPI after the first Rust release.*
+
 **As a CLI Tool**
 
 The library includes a command-line tool ``json2xml-py`` that gets installed automatically:
@@ -285,6 +301,43 @@ Using tools directly:
     ruff check json2xml tests
     mypy json2xml tests
 
+**Rust Extension Development**
+
+The optional Rust extension (``json2xml-rs``) provides 29x faster performance. To develop or build the Rust extension:
+
+Prerequisites:
+
+ .. code-block:: console
+
+    # Install Rust (if not already installed)
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    
+    # Install maturin (Rust-Python build tool)
+    uv pip install maturin
+
+Building the extension:
+
+ .. code-block:: console
+
+    # Development build (installs in current environment)
+    cd rust
+    uv pip install -e .
+    
+    # Or using maturin directly
+    maturin develop --release
+    
+    # Production wheel build
+    maturin build --release
+
+Running Rust benchmarks:
+
+ .. code-block:: console
+
+    # After building the extension
+    python benchmark_rust.py
+
+The Rust code is in ``rust/src/lib.rs`` and uses PyO3 for Python bindings.
+
 
 CLI Usage
 ^^^^^^^^^
@@ -355,6 +408,67 @@ A Go port of this library is available at `json2xml-go <https://github.com/vinit
     go install github.com/vinitkumar/json2xml-go/cmd/json2xml@latest
 
 The Go version provides the same features and a native compiled binary for maximum performance.
+
+
+Rust Extension (PyO3)
+^^^^^^^^^^^^^^^^^^^^^
+
+For users who need maximum performance within Python, json2xml includes an optional native Rust extension built with PyO3:
+
+.. code-block:: console
+
+    pip install json2xml[fast]
+
+**Rust vs Pure Python Performance:**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 20 20 15
+
+   * - Test Case
+     - Pure Python
+     - Rust Extension
+     - Speedup
+   * - **Small JSON** (47 bytes)
+     - 41µs
+     - 1.3µs
+     - **33x**
+   * - **Medium JSON** (3.2 KB)
+     - 2.1ms
+     - 76µs
+     - **28x**
+   * - **Large JSON** (32 KB)
+     - 21.5ms
+     - 727µs
+     - **30x**
+   * - **Very Large JSON** (323 KB)
+     - 215ms
+     - 7.4ms
+     - **29x**
+
+**Usage with Rust Extension:**
+
+.. code-block:: python
+
+    # Automatic backend selection (recommended)
+    from json2xml.dicttoxml_fast import dicttoxml, get_backend
+
+    print(f"Using backend: {get_backend()}")  # 'rust' or 'python'
+    
+    data = {"name": "John", "age": 30}
+    xml_bytes = dicttoxml(data)
+
+The ``dicttoxml_fast`` module automatically uses the Rust backend when available and falls back to pure Python for unsupported features (like ``xpath_format``, ``xml_namespaces``, or custom ``item_func``).
+
+**Platform Support:**
+
+Pre-built wheels are available for:
+
+- Linux (x86_64, aarch64)
+- macOS (x86_64, arm64/Apple Silicon)
+- Windows (x86_64)
+
+For other platforms, the pure Python version is used automatically.
 
 
 Performance Benchmarks

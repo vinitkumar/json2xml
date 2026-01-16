@@ -21,8 +21,14 @@ from json2xml.dicttoxml_fast import (
     dicttoxml as fast_dicttoxml,
 )
 from json2xml.dicttoxml_fast import (
+    escape_xml as fast_escape_xml,
+)
+from json2xml.dicttoxml_fast import (
     get_backend,
     is_rust_available,
+)
+from json2xml.dicttoxml_fast import (
+    wrap_cdata as fast_wrap_cdata,
 )
 
 # Skip all tests if Rust is not available
@@ -453,3 +459,114 @@ class TestRustPerformanceBasics:
             current = current["level"]
         result = rust_dicttoxml(data)
         assert b"<level" in result
+
+
+class TestFastDicttoxmlHelpers:
+    """Test helper functions in dicttoxml_fast module."""
+
+    def test_escape_xml_via_rust(self):
+        """Test escape_xml uses Rust backend when available."""
+        result = fast_escape_xml("Hello <World> & 'Friends'")
+        assert "&lt;" in result
+        assert "&gt;" in result
+        assert "&amp;" in result
+        assert "&apos;" in result
+
+    def test_escape_xml_empty_string(self):
+        """Test escape_xml with empty string."""
+        result = fast_escape_xml("")
+        assert result == ""
+
+    def test_escape_xml_no_special_chars(self):
+        """Test escape_xml with no special characters."""
+        result = fast_escape_xml("Hello World")
+        assert result == "Hello World"
+
+    def test_wrap_cdata_via_rust(self):
+        """Test wrap_cdata uses Rust backend when available."""
+        result = fast_wrap_cdata("Hello <World>")
+        assert result == "<![CDATA[Hello <World>]]>"
+
+    def test_wrap_cdata_empty_string(self):
+        """Test wrap_cdata with empty string."""
+        result = fast_wrap_cdata("")
+        assert result == "<![CDATA[]]>"
+
+    def test_wrap_cdata_with_cdata_end_sequence(self):
+        """Test wrap_cdata handles ]]> in content."""
+        result = fast_wrap_cdata("Content with ]]> inside")
+        assert "]]>" in result
+        assert result.startswith("<![CDATA[")
+
+    def test_special_keys_in_nested_list(self):
+        """Test that special keys in lists trigger Python fallback."""
+        # List containing dicts with special keys
+        data = {"items": [{"@attrs": {"id": "1"}, "@val": "value"}]}
+        result = fast_dicttoxml(data)
+        # Should use Python fallback and handle @attrs correctly
+        assert b'id="1"' in result
+
+    def test_special_keys_deep_in_list(self):
+        """Test special keys detection in deeply nested list structures."""
+        data = {
+            "outer": [
+                {"normal": "value"},
+                {"nested": {"@attrs": {"class": "test"}, "@val": "content"}}
+            ]
+        }
+        result = fast_dicttoxml(data)
+        assert b'class="test"' in result
+
+    def test_list_with_flat_key(self):
+        """Test @flat key handling in lists."""
+        data = {"items": [{"name@flat": "John"}]}
+        result = fast_dicttoxml(data)
+        # Should use Python fallback for @flat handling
+        assert b"John" in result
+
+
+class TestFastDicttoxmlPythonFallback:
+    """Test Python fallback paths in dicttoxml_fast module."""
+
+    def test_escape_xml_python_fallback(self):
+        """Test escape_xml falls back to Python when Rust unavailable."""
+        from unittest.mock import patch
+
+        import json2xml.dicttoxml_fast as fast_module
+
+        # Temporarily mock _USE_RUST to False
+        with patch.object(fast_module, '_USE_RUST', False):
+            result = fast_module.escape_xml("Hello <World>")
+            assert "&lt;" in result
+            assert "&gt;" in result
+
+    def test_wrap_cdata_python_fallback(self):
+        """Test wrap_cdata falls back to Python when Rust unavailable."""
+        from unittest.mock import patch
+
+        import json2xml.dicttoxml_fast as fast_module
+
+        # Temporarily mock _USE_RUST to False
+        with patch.object(fast_module, '_USE_RUST', False):
+            result = fast_module.wrap_cdata("Hello World")
+            assert result == "<![CDATA[Hello World]]>"
+
+    def test_escape_xml_fallback_when_rust_func_none(self):
+        """Test escape_xml falls back when rust_escape_xml is None."""
+        from unittest.mock import patch
+
+        import json2xml.dicttoxml_fast as fast_module
+
+        with patch.object(fast_module, 'rust_escape_xml', None):
+            result = fast_module.escape_xml("Test & Value")
+            assert "&amp;" in result
+
+    def test_wrap_cdata_fallback_when_rust_func_none(self):
+        """Test wrap_cdata falls back when rust_wrap_cdata is None."""
+        from unittest.mock import patch
+
+        import json2xml.dicttoxml_fast as fast_module
+
+        with patch.object(fast_module, 'rust_wrap_cdata', None):
+            result = fast_module.wrap_cdata("Test Content")
+            assert result == "<![CDATA[Test Content]]>"

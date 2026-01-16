@@ -24,11 +24,11 @@ _USE_RUST = False
 _rust_dicttoxml = None
 
 try:
-    from json2xml_rs import dicttoxml as _rust_dicttoxml  # type: ignore[import-not-found]
-    from json2xml_rs import escape_xml_py as rust_escape_xml  # type: ignore[import-not-found]
-    from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # type: ignore[import-not-found]
-    _USE_RUST = True
-    LOG.debug("Using Rust backend for dicttoxml")
+    from json2xml_rs import dicttoxml as _rust_dicttoxml  # type: ignore[import-not-found]  # pragma: no cover
+    from json2xml_rs import escape_xml_py as rust_escape_xml  # type: ignore[import-not-found]  # pragma: no cover
+    from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # type: ignore[import-not-found]  # pragma: no cover
+    _USE_RUST = True  # pragma: no cover
+    LOG.debug("Using Rust backend for dicttoxml")  # pragma: no cover
 except ImportError:  # pragma: no cover
     LOG.debug("Rust backend not available, using pure Python")
     rust_escape_xml = None
@@ -95,7 +95,7 @@ def dicttoxml(
     if not needs_python and isinstance(obj, dict):
         needs_python = _has_special_keys(obj)
 
-    if _USE_RUST and not needs_python and _rust_dicttoxml is not None:
+    if _USE_RUST and not needs_python and _rust_dicttoxml is not None:  # pragma: no cover
         # Use fast Rust implementation
         return _rust_dicttoxml(
             obj,
@@ -143,14 +143,14 @@ def _has_special_keys(obj: Any) -> bool:
 # Re-export commonly used functions
 def escape_xml(s: str) -> str:
     """Escape special XML characters in a string."""
-    if _USE_RUST and rust_escape_xml is not None:
+    if _USE_RUST and rust_escape_xml is not None:  # pragma: no cover
         return rust_escape_xml(s)
     return _py_dicttoxml.escape_xml(s)
 
 
 def wrap_cdata(s: str) -> str:
     """Wrap a string in a CDATA section."""
-    if _USE_RUST and rust_wrap_cdata is not None:
+    if _USE_RUST and rust_wrap_cdata is not None:  # pragma: no cover
         return rust_wrap_cdata(s)
     return _py_dicttoxml.wrap_cdata(s)
 

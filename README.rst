@@ -531,7 +531,7 @@ This library is also available in other languages:
 
 - **Rust**: `json2xml-rs <https://pypi.org/project/json2xml-rs/>`_ - 28x faster, Python extension via PyO3
 - **Go**: `json2xml-go <https://github.com/vinitkumar/json2xml-go>`_ - 48x faster for large files, native CLI
-- **Zig**: `json2xml-zig <https://github.com/nicholasgriffintn/json2xml-zig>`_ - 6x faster, native CLI
+- **Zig**: `json2xml-zig <https://github.com/vinitkumar/json2xml-zig>`_ - 6x faster, native CLI
 
 
 Help and Support to maintain this project

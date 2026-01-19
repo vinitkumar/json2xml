@@ -1,6 +1,13 @@
 History
 =======
 
+6.0.2 / 2026-01-20
+==================
+
+  * fix: upgrade urllib3 to patched version (#269)
+  * Update README.rst (#268)
+  * docs: update README with comprehensive benchmark results
+
 6.0.1 / 2026-01-16
 ==================
 

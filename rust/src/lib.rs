@@ -3,14 +3,16 @@
 //! This module provides a high-performance Rust implementation of dicttoxml
 //! that can be used as a drop-in replacement for the pure Python version.
 
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
 use std::fmt::Write;
 
 /// Escape special XML characters in a string.
 /// This is one of the hottest paths - optimized for single-pass processing.
 #[inline]
-fn escape_xml(s: &str) -> String {
+pub fn escape_xml(s: &str) -> String {
     let mut result = String::with_capacity(s.len() + s.len() / 10);
     for c in s.chars() {
         match c {
@@ -27,14 +29,14 @@ fn escape_xml(s: &str) -> String {
 
 /// Wrap content in CDATA section
 #[inline]
-fn wrap_cdata(s: &str) -> String {
+pub fn wrap_cdata(s: &str) -> String {
     let escaped = s.replace("]]>", "]]]]><![CDATA[>");
     format!("<![CDATA[{}]]>", escaped)
 }
 
 /// Check if a key is a valid XML element name (simplified check)
 /// Full validation would require XML parsing, but this catches common issues
-fn is_valid_xml_name(key: &str) -> bool {
+pub fn is_valid_xml_name(key: &str) -> bool {
     if key.is_empty() {
         return false;
     }
@@ -59,7 +61,7 @@ fn is_valid_xml_name(key: &str) -> bool {
 }
 
 /// Make a valid XML name from a key, returning the key and any attributes
-fn make_valid_xml_name(key: &str) -> (String, Option<(String, String)>) {
+pub fn make_valid_xml_name(key: &str) -> (String, Option<(String, String)>) {
     let escaped = escape_xml(key);
 
     // Already valid
@@ -83,7 +85,7 @@ fn make_valid_xml_name(key: &str) -> (String, Option<(String, String)>) {
 }
 
 /// Build an attribute string from key-value pairs
-fn make_attr_string(attrs: &[(String, String)]) -> String {
+pub fn make_attr_string(attrs: &[(String, String)]) -> String {
     if attrs.is_empty() {
         return String::new();
     }
@@ -95,6 +97,7 @@ fn make_attr_string(attrs: &[(String, String)]) -> String {
 }
 
 /// Configuration for XML conversion
+#[cfg(feature = "python")]
 struct ConvertConfig {
     attr_type: bool,
     cdata: bool,
@@ -102,7 +105,11 @@ struct ConvertConfig {
     list_headers: bool,
 }
 
+#[cfg(feature = "python")]
+use pyo3::PyResult;
+
 /// Convert a Python value to XML string
+#[cfg(feature = "python")]
 fn convert_value(
     py: Python<'_>,
     obj: &Bound<'_, PyAny>,
@@ -167,6 +174,7 @@ fn convert_value(
 }
 
 /// Convert a string value to XML
+#[cfg(feature = "python")]
 fn convert_string(key: &str, val: &str, config: &ConvertConfig) -> PyResult<String> {
     let (xml_key, name_attr) = make_valid_xml_name(key);
     let mut attrs = Vec::new();
@@ -192,6 +200,7 @@ fn convert_string(key: &str, val: &str, config: &ConvertConfig) -> PyResult<Stri
 }
 
 /// Convert a number value to XML
+#[cfg(feature = "python")]
 fn convert_number(
     key: &str,
     val: &str,
@@ -213,6 +222,7 @@ fn convert_number(
 }
 
 /// Convert a boolean value to XML
+#[cfg(feature = "python")]
 fn convert_bool(key: &str, val: bool, config: &ConvertConfig) -> PyResult<String> {
     let (xml_key, name_attr) = make_valid_xml_name(key);
     let mut attrs = Vec::new();
@@ -233,6 +243,7 @@ fn convert_bool(key: &str, val: bool, config: &ConvertConfig) -> PyResult<String
 }
 
 /// Convert a None value to XML
+#[cfg(feature = "python")]
 fn convert_none(key: &str, config: &ConvertConfig) -> PyResult<String> {
     let (xml_key, name_attr) = make_valid_xml_name(key);
     let mut attrs = Vec::new();
@@ -249,6 +260,7 @@ fn convert_none(key: &str, config: &ConvertConfig) -> PyResult<String> {
 }
 
 /// Convert a dictionary to XML
+#[cfg(feature = "python")]
 fn convert_dict(
     py: Python<'_>,
     dict: &Bound<'_, PyDict>,
@@ -426,6 +438,7 @@ fn convert_dict(
 }
 
 /// Convert a list to XML
+#[cfg(feature = "python")]
 fn convert_list(
     py: Python<'_>,
     list: &Bound<'_, PyList>,
@@ -602,6 +615,7 @@ fn convert_list(
 ///
 /// Returns:
 ///     bytes: The XML representation of the input object
+#[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(signature = (obj, root=true, custom_root="root", attr_type=true, item_wrap=true, cdata=false, list_headers=false))]
 #[allow(clippy::too_many_arguments)]
@@ -647,22 +661,252 @@ fn dicttoxml(
 /// Fast XML string escaping.
 ///
 /// Escapes &, ", ', <, > characters for XML.
+#[cfg(feature = "python")]
 #[pyfunction]
 fn escape_xml_py(s: &str) -> String {
     escape_xml(s)
 }
 
 /// Wrap a string in CDATA section.
+#[cfg(feature = "python")]
 #[pyfunction]
 fn wrap_cdata_py(s: &str) -> String {
     wrap_cdata(s)
 }
 
 /// A Python module implemented in Rust.
+#[cfg(feature = "python")]
 #[pymodule]
 fn json2xml_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(dicttoxml, m)?)?;
     m.add_function(wrap_pyfunction!(escape_xml_py, m)?)?;
     m.add_function(wrap_pyfunction!(wrap_cdata_py, m)?)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod escape_xml_tests {
+        use super::*;
+
+        #[test]
+        fn escapes_ampersand() {
+            assert_eq!(escape_xml("foo & bar"), "foo &amp; bar");
+        }
+
+        #[test]
+        fn escapes_double_quote() {
+            assert_eq!(escape_xml("say \"hello\""), "say &quot;hello&quot;");
+        }
+
+        #[test]
+        fn escapes_single_quote() {
+            assert_eq!(escape_xml("it's fine"), "it&apos;s fine");
+        }
+
+        #[test]
+        fn escapes_less_than() {
+            assert_eq!(escape_xml("a < b"), "a &lt; b");
+        }
+
+        #[test]
+        fn escapes_greater_than() {
+            assert_eq!(escape_xml("a > b"), "a &gt; b");
+        }
+
+        #[test]
+        fn escapes_all_special_chars() {
+            assert_eq!(
+                escape_xml("<tag attr=\"val\" & 'x'>"),
+                "&lt;tag attr=&quot;val&quot; &amp; &apos;x&apos;&gt;"
+            );
+        }
+
+        #[test]
+        fn handles_empty_string() {
+            assert_eq!(escape_xml(""), "");
+        }
+
+        #[test]
+        fn handles_no_special_chars() {
+            assert_eq!(escape_xml("hello world 123"), "hello world 123");
+        }
+
+        #[test]
+        fn handles_unicode() {
+            assert_eq!(escape_xml("café & thé"), "café &amp; thé");
+        }
+    }
+
+    mod wrap_cdata_tests {
+        use super::*;
+
+        #[test]
+        fn wraps_simple_string() {
+            assert_eq!(wrap_cdata("hello"), "<![CDATA[hello]]>");
+        }
+
+        #[test]
+        fn wraps_empty_string() {
+            assert_eq!(wrap_cdata(""), "<![CDATA[]]>");
+        }
+
+        #[test]
+        fn escapes_cdata_end_sequence() {
+            assert_eq!(wrap_cdata("foo]]>bar"), "<![CDATA[foo]]]]><![CDATA[>bar]]>");
+        }
+
+        #[test]
+        fn handles_multiple_cdata_end_sequences() {
+            assert_eq!(
+                wrap_cdata("a]]>b]]>c"),
+                "<![CDATA[a]]]]><![CDATA[>b]]]]><![CDATA[>c]]>"
+            );
+        }
+
+        #[test]
+        fn handles_special_xml_chars() {
+            assert_eq!(wrap_cdata("<tag & \"attr\">"), "<![CDATA[<tag & \"attr\">]]>");
+        }
+    }
+
+    mod is_valid_xml_name_tests {
+        use super::*;
+
+        #[test]
+        fn accepts_simple_name() {
+            assert!(is_valid_xml_name("element"));
+        }
+
+        #[test]
+        fn accepts_name_with_underscore_prefix() {
+            assert!(is_valid_xml_name("_element"));
+        }
+
+        #[test]
+        fn accepts_name_with_numbers() {
+            assert!(is_valid_xml_name("item123"));
+        }
+
+        #[test]
+        fn accepts_name_with_hyphens() {
+            assert!(is_valid_xml_name("my-element"));
+        }
+
+        #[test]
+        fn accepts_name_with_dots() {
+            assert!(is_valid_xml_name("my.element"));
+        }
+
+        #[test]
+        fn accepts_name_with_colons() {
+            assert!(is_valid_xml_name("ns:element"));
+        }
+
+        #[test]
+        fn rejects_empty_string() {
+            assert!(!is_valid_xml_name(""));
+        }
+
+        #[test]
+        fn rejects_name_starting_with_number() {
+            assert!(!is_valid_xml_name("123element"));
+        }
+
+        #[test]
+        fn rejects_name_starting_with_hyphen() {
+            assert!(!is_valid_xml_name("-element"));
+        }
+
+        #[test]
+        fn rejects_name_with_spaces() {
+            assert!(!is_valid_xml_name("my element"));
+        }
+
+        #[test]
+        fn rejects_xml_prefix_lowercase() {
+            assert!(!is_valid_xml_name("xmlelement"));
+        }
+
+        #[test]
+        fn rejects_xml_prefix_uppercase() {
+            assert!(!is_valid_xml_name("XMLelement"));
+        }
+
+        #[test]
+        fn rejects_xml_prefix_mixed_case() {
+            assert!(!is_valid_xml_name("XmLelement"));
+        }
+    }
+
+    mod make_valid_xml_name_tests {
+        use super::*;
+
+        #[test]
+        fn returns_valid_name_unchanged() {
+            let (name, attr) = make_valid_xml_name("element");
+            assert_eq!(name, "element");
+            assert!(attr.is_none());
+        }
+
+        #[test]
+        fn prepends_n_to_numeric_key() {
+            let (name, attr) = make_valid_xml_name("123");
+            assert_eq!(name, "n123");
+            assert!(attr.is_none());
+        }
+
+        #[test]
+        fn replaces_spaces_with_underscores() {
+            let (name, attr) = make_valid_xml_name("my element");
+            assert_eq!(name, "my_element");
+            assert!(attr.is_none());
+        }
+
+        #[test]
+        fn falls_back_to_key_with_name_attr() {
+            let (name, attr) = make_valid_xml_name("-invalid");
+            assert_eq!(name, "key");
+            assert_eq!(attr, Some(("name".to_string(), "-invalid".to_string())));
+        }
+
+        #[test]
+        fn escapes_special_chars_in_name() {
+            let (name, attr) = make_valid_xml_name("tag&name");
+            assert_eq!(name, "key");
+            assert_eq!(attr, Some(("name".to_string(), "tag&amp;name".to_string())));
+        }
+    }
+
+    mod make_attr_string_tests {
+        use super::*;
+
+        #[test]
+        fn returns_empty_for_empty_attrs() {
+            assert_eq!(make_attr_string(&[]), "");
+        }
+
+        #[test]
+        fn formats_single_attr() {
+            let attrs = vec![("type".to_string(), "str".to_string())];
+            assert_eq!(make_attr_string(&attrs), " type=\"str\"");
+        }
+
+        #[test]
+        fn formats_multiple_attrs() {
+            let attrs = vec![
+                ("name".to_string(), "foo".to_string()),
+                ("type".to_string(), "int".to_string()),
+            ];
+            assert_eq!(make_attr_string(&attrs), " name=\"foo\" type=\"int\"");
+        }
+
+        #[test]
+        fn escapes_attr_values() {
+            let attrs = vec![("name".to_string(), "foo & bar".to_string())];
+            assert_eq!(make_attr_string(&attrs), " name=\"foo &amp; bar\"");
+        }
+    }
 }

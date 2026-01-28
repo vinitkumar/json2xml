@@ -1,0 +1,51 @@
+[package]
+name = "json2xml_rs-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+
+[dependencies.json2xml_rs]
+path = ".."
+default-features = false
+
+[[bin]]
+name = "fuzz_escape_xml"
+path = "fuzz_targets/fuzz_escape_xml.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_wrap_cdata"
+path = "fuzz_targets/fuzz_wrap_cdata.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_is_valid_xml_name"
+path = "fuzz_targets/fuzz_is_valid_xml_name.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_make_valid_xml_name"
+path = "fuzz_targets/fuzz_make_valid_xml_name.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_make_attr_string"
+path = "fuzz_targets/fuzz_make_attr_string.rs"
+test = false
+doc = false
+bench = false

@@ -7,10 +7,14 @@ license = "Apache-2.0"
 
 [lib]
 name = "json2xml_rs"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["python"]
+python = ["pyo3/extension-module", "dep:pyo3"]
 
 [dependencies]
-pyo3 = { version = "0.27", features = ["extension-module"] }
+pyo3 = { version = "0.27", optional = true }
 
 [profile.release]
 lto = true

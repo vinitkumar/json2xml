@@ -38,6 +38,10 @@ jobs:
         working-directory: rust
         run: cargo clippy --all-targets --all-features -- -D warnings
 
+      - name: Run Rust unit tests
+        working-directory: rust
+        run: cargo test --no-default-features
+
   rust-test:
     name: Build & Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}

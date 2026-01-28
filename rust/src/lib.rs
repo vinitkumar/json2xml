@@ -768,7 +768,10 @@ mod tests {
 
         #[test]
         fn handles_special_xml_chars() {
-            assert_eq!(wrap_cdata("<tag & \"attr\">"), "<![CDATA[<tag & \"attr\">]]>");
+            assert_eq!(
+                wrap_cdata("<tag & \"attr\">"),
+                "<![CDATA[<tag & \"attr\">]]>"
+            );
         }
     }
 

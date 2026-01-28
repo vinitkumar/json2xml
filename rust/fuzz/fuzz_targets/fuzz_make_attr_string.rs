@@ -22,10 +22,17 @@ fuzz_target!(|input: AttrInput| {
     // 2. Result should start with space (for XML formatting)
     assert!(result.starts_with(' '), "Attribute string should start with space");
     
-    // 3. Each attribute should produce key="value" format
+    // 3. Each attribute should produce a ` key="value"`-like fragment.
+    //    We check for the more specific pattern ` {key}="` to avoid
+    //    passing on overlapping keys (e.g. "a" vs "aa") or malformed formatting.
     for (key, _value) in &input.attrs {
-        // Key should appear in the result
-        assert!(result.contains(key), "Key '{}' should appear in result", key);
+        let expected_fragment = format!(" {}=\"", key);
+        assert!(
+            result.contains(&expected_fragment),
+            "Attribute fragment '{}' should appear in result '{}'",
+            expected_fragment,
+            result
+        );
     }
     
     // 4. Values should be escaped (no raw & < > " ' in values)

@@ -31,10 +31,6 @@ dependencies = [
     "defusedxml",
     "urllib3",
     "xmltodict>=0.12.0",
-    "pytest",
-    "pytest-cov",
-    "coverage",
-    "setuptools",
 ]
 
 [project.urls]
@@ -47,8 +43,11 @@ json2xml-py = "json2xml.cli:main"
 include = ["json2xml"]
 
 [project.optional-dependencies]
-test = [
+dev = [
     "pytest>=8.4.1",
+    "pytest-cov",
+    "coverage",
+    "setuptools",
 ]
 fast = ["json2xml-rs>=0.1.0"]
 

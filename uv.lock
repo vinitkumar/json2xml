@@ -147,39 +147,37 @@ wheels = [
 
 [[package]]
 name = "json2xml"
-version = "6.0.1"
+version = "6.0.2"
 source = { editable = "." }
 dependencies = [
-    { name = "coverage" },
     { name = "defusedxml" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "setuptools" },
     { name = "urllib3" },
     { name = "xmltodict" },
 ]
 
 [package.optional-dependencies]
+dev = [
+    { name = "coverage" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "setuptools" },
+]
 fast = [
     { name = "json2xml-rs" },
-]
-test = [
-    { name = "pytest" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "coverage" },
+    { name = "coverage", marker = "extra == 'dev'" },
     { name = "defusedxml" },
     { name = "json2xml-rs", marker = "extra == 'fast'", specifier = ">=0.1.0" },
-    { name = "pytest" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.4.1" },
-    { name = "pytest-cov" },
-    { name = "setuptools" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
+    { name = "pytest-cov", marker = "extra == 'dev'" },
+    { name = "setuptools", marker = "extra == 'dev'" },
     { name = "urllib3" },
     { name = "xmltodict", specifier = ">=0.12.0" },
 ]
-provides-extras = ["test", "fast"]
+provides-extras = ["dev", "fast"]
 
 [[package]]
 name = "json2xml-rs"

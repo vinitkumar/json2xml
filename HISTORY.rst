@@ -1,6 +1,17 @@
 History
 =======
 
+6.0.3 / 2026-01-29
+==================
+
+  * bump version
+  * Add rust tests (#271)
+  * feat(rust): make PyO3 optional to fix Python 3.14 fuzz linking (#270)
+  * chore: bump release
+  * fix: upgrade urllib3 to patched version (#269)
+  * Update README.rst (#268)
+  * docs: update README with comprehensive benchmark results
+
 6.0.2 / 2026-01-20
 ==================
 

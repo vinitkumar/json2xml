@@ -1,3 +1,15 @@
+
+n.n.n / 2026-02-12
+==================
+
+  * docs: generate changelog
+  * bump version
+  * Add rust tests (#271)
+  * feat(rust): make PyO3 optional to fix Python 3.14 fuzz linking (#270)
+  * chore: bump release
+  * fix: upgrade urllib3 to patched version (#269)
+  * Update README.rst (#268)
+  * docs: update README with comprehensive benchmark results
 History
 =======
 

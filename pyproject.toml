@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "json2xml"
-version = "6.0.3"
+version = "6.0.4"
 description = "Simple Python Library to convert JSON to XML"
 readme = "README.rst"
 requires-python = ">=3.10"
@@ -30,7 +30,6 @@ classifiers = [
 dependencies = [
     "defusedxml",
     "urllib3",
-    "xmltodict>=0.12.0",
 ]
 
 [project.urls]
@@ -48,6 +47,7 @@ dev = [
     "pytest-cov",
     "coverage",
     "setuptools",
+    "xmltodict>=0.12.0",
 ]
 fast = ["json2xml-rs>=0.1.0"]
 

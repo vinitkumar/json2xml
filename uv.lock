@@ -147,12 +147,11 @@ wheels = [
 
 [[package]]
 name = "json2xml"
-version = "6.0.2"
+version = "6.0.3"
 source = { editable = "." }
 dependencies = [
     { name = "defusedxml" },
     { name = "urllib3" },
-    { name = "xmltodict" },
 ]
 
 [package.optional-dependencies]
@@ -161,6 +160,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "setuptools" },
+    { name = "xmltodict" },
 ]
 fast = [
     { name = "json2xml-rs" },
@@ -175,7 +175,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "setuptools", marker = "extra == 'dev'" },
     { name = "urllib3" },
-    { name = "xmltodict", specifier = ">=0.12.0" },
+    { name = "xmltodict", marker = "extra == 'dev'", specifier = ">=0.12.0" },
 ]
 provides-extras = ["dev", "fast"]
 

@@ -1,7 +1,10 @@
+History
+=======
 
-n.n.n / 2026-02-12
+6.0.4 / 2026-02-12
 ==================
 
+  * fix: remove test dependencies to correct place
   * docs: generate changelog
   * bump version
   * Add rust tests (#271)
@@ -10,8 +13,7 @@ n.n.n / 2026-02-12
   * fix: upgrade urllib3 to patched version (#269)
   * Update README.rst (#268)
   * docs: update README with comprehensive benchmark results
-History
-=======
+
 
 6.0.3 / 2026-01-29
 ==================

@@ -64,7 +64,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv pip install --system -e .
-        uv pip install --system pytest pytest-xdist pytest-cov
+        uv pip install --system pytest pytest-xdist pytest-cov xmltodict
 
     - name: Create coverage directory
       run: mkdir -p coverage/reports

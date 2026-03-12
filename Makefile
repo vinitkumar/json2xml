@@ -1,4 +1,4 @@
-.PHONY: clean clean-test clean-pyc clean-build docs help
+.PHONY: clean clean-test clean-pyc clean-build docs help test-rust test-all
 .DEFAULT_GOAL := help
 
 define BROWSER_PYSCRIPT
@@ -60,10 +60,15 @@ typecheck: ## check types with ty
 	uvx ty check json2xml tests
 
 test: ## run tests quickly with the default Python
-	pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests -n auto
+	pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests
 
 test-simple: ## run tests without coverage
 	pytest -vv tests
+
+test-rust: ## run Rust tests
+	cd rust && cargo test --no-default-features
+
+test-all: test test-rust ## run all tests (Python and Rust)
 
 check-all: lint typecheck test ## run all checks (lint, typecheck, test)
 

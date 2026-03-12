@@ -60,28 +60,29 @@ pub fn is_valid_xml_name(key: &str) -> bool {
     !key.to_lowercase().starts_with("xml")
 }
 
-/// Make a valid XML name from a key, returning the key and any attributes
+/// Make a valid XML name from a key, returning the tag name and the raw
+/// (unescaped) original key when a fallback is needed. Escaping of the
+/// attribute value is handled later by `make_attr_string`, so we must NOT
+/// escape here to avoid double-escaping.
 pub fn make_valid_xml_name(key: &str) -> (String, Option<(String, String)>) {
-    let escaped = escape_xml(key);
-
     // Already valid
-    if is_valid_xml_name(&escaped) {
-        return (escaped, None);
+    if is_valid_xml_name(key) {
+        return (key.to_string(), None);
     }
 
     // Numeric key - prepend 'n'
-    if escaped.chars().all(|c| c.is_ascii_digit()) {
-        return (format!("n{}", escaped), None);
+    if key.bytes().all(|b| b.is_ascii_digit()) && !key.is_empty() {
+        return (format!("n{}", key), None);
     }
 
     // Try replacing spaces with underscores
-    let with_underscores = escaped.replace(' ', "_");
+    let with_underscores = key.replace(' ', "_");
     if is_valid_xml_name(&with_underscores) {
         return (with_underscores, None);
     }
 
-    // Fall back to using "key" with name attribute
-    ("key".to_string(), Some(("name".to_string(), escaped)))
+    // Fall back to using "key" with name attribute (raw value, escaped later)
+    ("key".to_string(), Some(("name".to_string(), key.to_string())))
 }
 
 /// Build an attribute string from key-value pairs
@@ -876,10 +877,23 @@ mod tests {
         }
 
         #[test]
-        fn escapes_special_chars_in_name() {
+        fn returns_raw_key_for_invalid_names() {
+            // make_valid_xml_name must return the raw key, not escaped.
+            // Escaping happens later in make_attr_string to avoid double-escaping.
             let (name, attr) = make_valid_xml_name("tag&name");
             assert_eq!(name, "key");
-            assert_eq!(attr, Some(("name".to_string(), "tag&amp;name".to_string())));
+            assert_eq!(attr, Some(("name".to_string(), "tag&name".to_string())));
+        }
+
+        #[test]
+        fn double_escape_does_not_happen() {
+            // End-to-end: make_valid_xml_name + make_attr_string should produce
+            // a single level of escaping, not &amp;amp;
+            let (name, attr) = make_valid_xml_name("tag&name");
+            assert_eq!(name, "key");
+            let attrs = attr.map(|(k, v)| vec![(k, v)]).unwrap_or_default();
+            let attr_string = make_attr_string(&attrs);
+            assert_eq!(attr_string, " name=\"tag&amp;name\"");
         }
     }
 

@@ -138,10 +138,10 @@ fn convert_value(
         return convert_number(item_name, &val_str, "int", config);
     }
 
-    // Handle float
+    // Handle float - use Python's str() for parity (Rust renders 1.0 as "1")
     if obj.is_instance_of::<PyFloat>() {
-        let val: f64 = obj.extract()?;
-        return convert_number(item_name, &val.to_string(), "float", config);
+        let val_str: String = obj.str()?.extract()?;
+        return convert_number(item_name, &val_str, "float", config);
     }
 
     // Handle string
@@ -314,9 +314,9 @@ fn convert_dict(
             )
             .unwrap();
         }
-        // Handle float
+        // Handle float - use Python's str() for parity (Rust renders 1.0 as "1")
         else if val.is_instance_of::<PyFloat>() {
-            let float_val: f64 = val.extract()?;
+            let float_str: String = val.str()?.extract()?;
             let mut attrs = Vec::new();
             if let Some((k, v)) = name_attr {
                 attrs.push((k, v));
@@ -328,7 +328,7 @@ fn convert_dict(
             write!(
                 output,
                 "<{}{}>{}</{}>",
-                xml_key, attr_string, float_val, xml_key
+                xml_key, attr_string, float_str, xml_key
             )
             .unwrap();
         }
@@ -494,9 +494,9 @@ fn convert_list(
             )
             .unwrap();
         }
-        // Handle float
+        // Handle float - use Python's str() for parity (Rust renders 1.0 as "1")
         else if item.is_instance_of::<PyFloat>() {
-            let float_val: f64 = item.extract()?;
+            let float_str: String = item.str()?.extract()?;
             let mut attrs = Vec::new();
             if config.attr_type {
                 attrs.push(("type".to_string(), "float".to_string()));
@@ -505,7 +505,7 @@ fn convert_list(
             write!(
                 output,
                 "<{}{}>{}</{}>",
-                tag_name, attr_string, float_val, tag_name
+                tag_name, attr_string, float_str, tag_name
             )
             .unwrap();
         }

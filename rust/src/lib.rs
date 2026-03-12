@@ -164,7 +164,7 @@ fn convert_value(
 
     // Handle other sequences (tuples, etc.) - check if iterable via try_iter
     if let Ok(iter) = obj.try_iter() {
-        let items: Vec<Bound<'_, PyAny>> = iter.filter_map(|r| r.ok()).collect();
+        let items: Vec<Bound<'_, PyAny>> = iter.collect::<PyResult<_>>()?;
         let list = PyList::new(py, &items)?;
         return convert_list(py, &list, parent, config);
     }

@@ -249,7 +249,7 @@ fn write_value(
     }
 
     // String
-    if let Ok(py_str) = obj.downcast::<PyString>() {
+    if let Ok(py_str) = obj.cast::<PyString>() {
         let s = py_str.to_str()?;
         write_open_tag(out, tag, name_attr, type_attr(cfg, "str"));
         if cfg.cdata {
@@ -262,7 +262,7 @@ fn write_value(
     }
 
     // Dict
-    if let Ok(dict) = obj.downcast::<PyDict>() {
+    if let Ok(dict) = obj.cast::<PyDict>() {
         if wrap_container {
             write_open_tag(out, tag, name_attr, type_attr(cfg, "dict"));
         }
@@ -274,7 +274,7 @@ fn write_value(
     }
 
     // List
-    if let Ok(list) = obj.downcast::<PyList>() {
+    if let Ok(list) = obj.cast::<PyList>() {
         if wrap_container {
             write_open_tag(out, tag, name_attr, type_attr(cfg, "list"));
         }
@@ -300,7 +300,8 @@ fn write_value(
     }
 
     // Fallback: convert to string via Python's str()
-    let s = obj.str()?.to_str()?;
+    let py_str = obj.str()?;
+    let s = py_str.to_str()?;
     write_open_tag(out, tag, name_attr, type_attr(cfg, "str"));
     if cfg.cdata {
         push_cdata(out, s);
@@ -325,7 +326,7 @@ fn write_dict_contents(
         let name_attr = name_attr_pair.as_ref().map(|(_, v)| v.as_str());
 
         // Lists in dicts get special wrapping treatment
-        if let Ok(list) = val.downcast::<PyList>() {
+        if let Ok(list) = val.cast::<PyList>() {
             if cfg.item_wrap {
                 write_open_tag(out, &xml_key, name_attr, type_attr(cfg, "list"));
                 write_list_contents(py, out, list, &xml_key, cfg)?;
@@ -359,7 +360,7 @@ fn write_list_contents(
 
     for item in list.iter() {
         // Dicts inside lists have special wrapping logic
-        if let Ok(dict) = item.downcast::<PyDict>() {
+        if let Ok(dict) = item.cast::<PyDict>() {
             if cfg.item_wrap || cfg.list_headers {
                 write_open_tag(out, tag_name, None, type_attr(cfg, "dict"));
                 write_dict_contents(py, out, dict, cfg)?;
@@ -426,9 +427,9 @@ fn dicttoxml(
         out.push('>');
     }
 
-    if let Ok(dict) = obj.downcast::<PyDict>() {
+    if let Ok(dict) = obj.cast::<PyDict>() {
         write_dict_contents(py, &mut out, dict, &config)?;
-    } else if let Ok(list) = obj.downcast::<PyList>() {
+    } else if let Ok(list) = obj.cast::<PyList>() {
         write_list_contents(py, &mut out, list, custom_root, &config)?;
     } else {
         write_value(py, &mut out, obj, custom_root, None, &config, true)?;

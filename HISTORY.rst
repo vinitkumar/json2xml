@@ -1,6 +1,14 @@
 
-n.n.n / 2026-03-12
+6.0.5 / 2026-03-12
 ==================
+
+  * fix: prevent double-escaping of XML attribute values for invalid key names
+  * fix: use Python-compatible float formatting in the Rust backend
+  * fix: propagate iteration errors instead of silently swallowing them
+  * fix: validate ``custom_root`` as a valid XML element name
+  * refactor: reduce Rust writer allocations and remove duplicated dispatch logic
+  * chore: bump pyo3 and rust binding versions
+  * fix: add missing ``xmltodict`` dependency to Rust CI workflow
 
 
 History
@@ -587,4 +595,3 @@ v3.0.0 / 2019-02-26
   * Cleanup Readme.md
   * Update issue templates
   * fix vulnerabilities in requests
-

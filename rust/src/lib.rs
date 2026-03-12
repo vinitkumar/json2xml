@@ -9,31 +9,74 @@ use pyo3::prelude::*;
 use pyo3::exceptions::PyValueError;
 #[cfg(feature = "python")]
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
-use std::fmt::Write;
-
-/// Escape special XML characters in a string.
-/// This is one of the hottest paths - optimized for single-pass processing.
+/// Escape special XML characters in a string (allocating convenience wrapper).
 #[inline]
 pub fn escape_xml(s: &str) -> String {
-    let mut result = String::with_capacity(s.len() + s.len() / 10);
-    for c in s.chars() {
-        match c {
-            '&' => result.push_str("&amp;"),
-            '"' => result.push_str("&quot;"),
-            '\'' => result.push_str("&apos;"),
-            '<' => result.push_str("&lt;"),
-            '>' => result.push_str("&gt;"),
-            _ => result.push(c),
-        }
-    }
-    result
+    let mut out = String::with_capacity(s.len() + s.len() / 10);
+    push_escaped_attr(&mut out, s);
+    out
 }
 
-/// Wrap content in CDATA section
+/// Append text content with XML escaping (only &, <, > need escaping in text nodes).
+/// Scans bytes for speed, copies clean slices in bulk.
+#[inline]
+pub fn push_escaped_text(out: &mut String, s: &str) {
+    let mut last = 0;
+    for (i, b) in s.bytes().enumerate() {
+        let repl = match b {
+            b'&' => "&amp;",
+            b'<' => "&lt;",
+            b'>' => "&gt;",
+            _ => continue,
+        };
+        out.push_str(&s[last..i]);
+        out.push_str(repl);
+        last = i + 1;
+    }
+    out.push_str(&s[last..]);
+}
+
+/// Append attribute value with full XML escaping (also escapes quotes).
+#[inline]
+pub fn push_escaped_attr(out: &mut String, s: &str) {
+    let mut last = 0;
+    for (i, b) in s.bytes().enumerate() {
+        let repl = match b {
+            b'&' => "&amp;",
+            b'"' => "&quot;",
+            b'\'' => "&apos;",
+            b'<' => "&lt;",
+            b'>' => "&gt;",
+            _ => continue,
+        };
+        out.push_str(&s[last..i]);
+        out.push_str(repl);
+        last = i + 1;
+    }
+    out.push_str(&s[last..]);
+}
+
+/// Wrap content in CDATA section (allocating convenience wrapper).
 #[inline]
 pub fn wrap_cdata(s: &str) -> String {
-    let escaped = s.replace("]]>", "]]]]><![CDATA[>");
-    format!("<![CDATA[{}]]>", escaped)
+    let mut out = String::with_capacity(s.len() + 12);
+    push_cdata(&mut out, s);
+    out
+}
+
+/// Append a CDATA section directly to the buffer.
+#[inline]
+pub fn push_cdata(out: &mut String, s: &str) {
+    out.push_str("<![CDATA[");
+    let mut start = 0;
+    while let Some(i) = s[start..].find("]]>") {
+        let abs = start + i;
+        out.push_str(&s[start..abs]);
+        out.push_str("]]]]><![CDATA[>");
+        start = abs + 3;
+    }
+    out.push_str(&s[start..]);
+    out.push_str("]]>");
 }
 
 /// Check if a key is a valid XML element name (simplified check)
@@ -59,7 +102,11 @@ pub fn is_valid_xml_name(key: &str) -> bool {
     }
 
     // Names starting with "xml" (case-insensitive) are reserved
-    !key.to_lowercase().starts_with("xml")
+    if key.len() >= 3 && key.as_bytes()[..3].eq_ignore_ascii_case(b"xml") {
+        return false;
+    }
+
+    true
 }
 
 /// Make a valid XML name from a key, returning the tag name and the raw
@@ -87,20 +134,56 @@ pub fn make_valid_xml_name(key: &str) -> (String, Option<(String, String)>) {
     ("key".to_string(), Some(("name".to_string(), key.to_string())))
 }
 
-/// Build an attribute string from key-value pairs
+/// Build an attribute string from key-value pairs (allocating convenience wrapper).
 pub fn make_attr_string(attrs: &[(String, String)]) -> String {
-    if attrs.is_empty() {
-        return String::new();
-    }
-    let mut result = String::new();
+    let mut out = String::new();
+    push_attrs(&mut out, attrs);
+    out
+}
+
+/// Append XML attributes directly to a buffer.
+#[inline]
+fn push_attrs(out: &mut String, attrs: &[(String, String)]) {
     for (k, v) in attrs {
-        write!(result, " {}=\"{}\"", k, escape_xml(v)).unwrap();
+        out.push(' ');
+        out.push_str(k);
+        out.push_str("=\"");
+        push_escaped_attr(out, v);
+        out.push('"');
     }
-    result
+}
+
+/// Write opening tag with optional name and type attributes directly to buffer.
+#[cfg(feature = "python")]
+#[inline]
+fn write_open_tag(out: &mut String, tag: &str, name_attr: Option<&str>, type_attr: Option<&str>) {
+    out.push('<');
+    out.push_str(tag);
+    if let Some(name) = name_attr {
+        out.push_str(" name=\"");
+        push_escaped_attr(out, name);
+        out.push('"');
+    }
+    if let Some(ty) = type_attr {
+        out.push_str(" type=\"");
+        out.push_str(ty);
+        out.push('"');
+    }
+    out.push('>');
+}
+
+/// Write a closing tag directly to buffer.
+#[cfg(feature = "python")]
+#[inline]
+fn write_close_tag(out: &mut String, tag: &str) {
+    out.push_str("</");
+    out.push_str(tag);
+    out.push('>');
 }
 
 /// Configuration for XML conversion
 #[cfg(feature = "python")]
+#[derive(Copy, Clone)]
 struct ConvertConfig {
     attr_type: bool,
     cdata: bool,
@@ -111,496 +194,184 @@ struct ConvertConfig {
 #[cfg(feature = "python")]
 use pyo3::PyResult;
 
-/// Convert a Python value to XML string
+/// Return `Some(type_name)` when `attr_type` is enabled.
 #[cfg(feature = "python")]
-fn convert_value(
+#[inline]
+fn type_attr<'a>(cfg: &ConvertConfig, ty: &'a str) -> Option<&'a str> {
+    if cfg.attr_type { Some(ty) } else { None }
+}
+
+/// Single unified type-dispatch writer. Every Python value goes through here
+/// exactly once, writing directly into the shared output buffer.
+#[cfg(feature = "python")]
+fn write_value(
     py: Python<'_>,
+    out: &mut String,
     obj: &Bound<'_, PyAny>,
-    parent: &str,
-    config: &ConvertConfig,
-    item_name: &str,
-) -> PyResult<String> {
-    // Handle None
+    tag: &str,
+    name_attr: Option<&str>,
+    cfg: &ConvertConfig,
+    wrap_container: bool,
+) -> PyResult<()> {
+    // None
     if obj.is_none() {
-        return convert_none(item_name, config);
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "null"));
+        write_close_tag(out, tag);
+        return Ok(());
     }
 
-    // Handle bool (must check before int since bool is subclass of int in Python)
+    // Bool (must check before int since bool is subclass of int in Python)
     if obj.is_instance_of::<PyBool>() {
-        let val: bool = obj.extract()?;
-        return convert_bool(item_name, val, config);
+        let v: bool = obj.extract()?;
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "bool"));
+        out.push_str(if v { "true" } else { "false" });
+        write_close_tag(out, tag);
+        return Ok(());
     }
 
-    // Handle int - try i64 first, fall back to string for large integers
+    // Int - try i64 first, fall back to string for large integers
     if obj.is_instance_of::<PyInt>() {
-        let val_str = match obj.extract::<i64>() {
-            Ok(val) => val.to_string(),
-            Err(_) => obj.str()?.extract::<String>()?, // Fall back for big ints
-        };
-        return convert_number(item_name, &val_str, "int", config);
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "int"));
+        match obj.extract::<i64>() {
+            Ok(v) => { out.push_str(&v.to_string()); }
+            Err(_) => { out.push_str(obj.str()?.to_str()?); }
+        }
+        write_close_tag(out, tag);
+        return Ok(());
     }
 
-    // Handle float - use Python's str() for parity (Rust renders 1.0 as "1")
+    // Float - use Python's str() for parity (Rust renders 1.0 as "1")
     if obj.is_instance_of::<PyFloat>() {
-        let val_str: String = obj.str()?.extract()?;
-        return convert_number(item_name, &val_str, "float", config);
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "float"));
+        out.push_str(obj.str()?.to_str()?);
+        write_close_tag(out, tag);
+        return Ok(());
     }
 
-    // Handle string
-    if obj.is_instance_of::<PyString>() {
-        let val: String = obj.extract()?;
-        return convert_string(item_name, &val, config);
+    // String
+    if let Ok(py_str) = obj.downcast::<PyString>() {
+        let s = py_str.to_str()?;
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "str"));
+        if cfg.cdata {
+            push_cdata(out, s);
+        } else {
+            push_escaped_text(out, s);
+        }
+        write_close_tag(out, tag);
+        return Ok(());
     }
 
-    // Handle dict
-    if obj.is_instance_of::<PyDict>() {
-        let dict: &Bound<'_, PyDict> = obj.cast()?;
-        return convert_dict(py, dict, parent, config);
+    // Dict
+    if let Ok(dict) = obj.downcast::<PyDict>() {
+        if wrap_container {
+            write_open_tag(out, tag, name_attr, type_attr(cfg, "dict"));
+        }
+        write_dict_contents(py, out, dict, cfg)?;
+        if wrap_container {
+            write_close_tag(out, tag);
+        }
+        return Ok(());
     }
 
-    // Handle list
-    if obj.is_instance_of::<PyList>() {
-        let list: &Bound<'_, PyList> = obj.cast()?;
-        return convert_list(py, list, parent, config);
+    // List
+    if let Ok(list) = obj.downcast::<PyList>() {
+        if wrap_container {
+            write_open_tag(out, tag, name_attr, type_attr(cfg, "list"));
+        }
+        write_list_contents(py, out, list, tag, cfg)?;
+        if wrap_container {
+            write_close_tag(out, tag);
+        }
+        return Ok(());
     }
 
-    // Handle other sequences (tuples, etc.) - check if iterable via try_iter
+    // Other iterables (tuples, generators, etc.)
     if let Ok(iter) = obj.try_iter() {
         let items: Vec<Bound<'_, PyAny>> = iter.collect::<PyResult<_>>()?;
         let list = PyList::new(py, &items)?;
-        return convert_list(py, &list, parent, config);
+        if wrap_container {
+            write_open_tag(out, tag, name_attr, type_attr(cfg, "list"));
+        }
+        write_list_contents(py, out, &list, tag, cfg)?;
+        if wrap_container {
+            write_close_tag(out, tag);
+        }
+        return Ok(());
     }
 
-    // Fallback: convert to string
-    let val: String = obj.str()?.extract()?;
-    convert_string(item_name, &val, config)
-}
-
-/// Convert a string value to XML
-#[cfg(feature = "python")]
-fn convert_string(key: &str, val: &str, config: &ConvertConfig) -> PyResult<String> {
-    let (xml_key, name_attr) = make_valid_xml_name(key);
-    let mut attrs = Vec::new();
-
-    if let Some((k, v)) = name_attr {
-        attrs.push((k, v));
-    }
-    if config.attr_type {
-        attrs.push(("type".to_string(), "str".to_string()));
-    }
-
-    let attr_string = make_attr_string(&attrs);
-    let content = if config.cdata {
-        wrap_cdata(val)
+    // Fallback: convert to string via Python's str()
+    let s = obj.str()?.to_str()?;
+    write_open_tag(out, tag, name_attr, type_attr(cfg, "str"));
+    if cfg.cdata {
+        push_cdata(out, s);
     } else {
-        escape_xml(val)
-    };
-
-    Ok(format!(
-        "<{}{}>{}</{}>",
-        xml_key, attr_string, content, xml_key
-    ))
+        push_escaped_text(out, s);
+    }
+    write_close_tag(out, tag);
+    Ok(())
 }
 
-/// Convert a number value to XML
+/// Write all key-value pairs of a dict into the buffer.
 #[cfg(feature = "python")]
-fn convert_number(
-    key: &str,
-    val: &str,
-    type_name: &str,
-    config: &ConvertConfig,
-) -> PyResult<String> {
-    let (xml_key, name_attr) = make_valid_xml_name(key);
-    let mut attrs = Vec::new();
-
-    if let Some((k, v)) = name_attr {
-        attrs.push((k, v));
-    }
-    if config.attr_type {
-        attrs.push(("type".to_string(), type_name.to_string()));
-    }
-
-    let attr_string = make_attr_string(&attrs);
-    Ok(format!("<{}{}>{}</{}>", xml_key, attr_string, val, xml_key))
-}
-
-/// Convert a boolean value to XML
-#[cfg(feature = "python")]
-fn convert_bool(key: &str, val: bool, config: &ConvertConfig) -> PyResult<String> {
-    let (xml_key, name_attr) = make_valid_xml_name(key);
-    let mut attrs = Vec::new();
-
-    if let Some((k, v)) = name_attr {
-        attrs.push((k, v));
-    }
-    if config.attr_type {
-        attrs.push(("type".to_string(), "bool".to_string()));
-    }
-
-    let attr_string = make_attr_string(&attrs);
-    let bool_str = if val { "true" } else { "false" };
-    Ok(format!(
-        "<{}{}>{}</{}>",
-        xml_key, attr_string, bool_str, xml_key
-    ))
-}
-
-/// Convert a None value to XML
-#[cfg(feature = "python")]
-fn convert_none(key: &str, config: &ConvertConfig) -> PyResult<String> {
-    let (xml_key, name_attr) = make_valid_xml_name(key);
-    let mut attrs = Vec::new();
-
-    if let Some((k, v)) = name_attr {
-        attrs.push((k, v));
-    }
-    if config.attr_type {
-        attrs.push(("type".to_string(), "null".to_string()));
-    }
-
-    let attr_string = make_attr_string(&attrs);
-    Ok(format!("<{}{}></{}>", xml_key, attr_string, xml_key))
-}
-
-/// Convert a dictionary to XML
-#[cfg(feature = "python")]
-fn convert_dict(
+fn write_dict_contents(
     py: Python<'_>,
+    out: &mut String,
     dict: &Bound<'_, PyDict>,
-    _parent: &str,
-    config: &ConvertConfig,
-) -> PyResult<String> {
-    let mut output = String::new();
-
+    cfg: &ConvertConfig,
+) -> PyResult<()> {
     for (key, val) in dict.iter() {
         let key_str: String = key.str()?.extract()?;
-        let (xml_key, name_attr) = make_valid_xml_name(&key_str);
+        let (xml_key, name_attr_pair) = make_valid_xml_name(&key_str);
+        let name_attr = name_attr_pair.as_ref().map(|(_, v)| v.as_str());
 
-        // Handle bool (must check before int)
-        if val.is_instance_of::<PyBool>() {
-            let bool_val: bool = val.extract()?;
-            let mut attrs = Vec::new();
-            if let Some((k, v)) = name_attr {
-                attrs.push((k, v));
-            }
-            if config.attr_type {
-                attrs.push(("type".to_string(), "bool".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            let bool_str = if bool_val { "true" } else { "false" };
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                xml_key, attr_string, bool_str, xml_key
-            )
-            .unwrap();
-        }
-        // Handle int - try i64 first, fall back to string for large integers
-        else if val.is_instance_of::<PyInt>() {
-            let int_str = match val.extract::<i64>() {
-                Ok(v) => v.to_string(),
-                Err(_) => val.str()?.extract::<String>()?,
-            };
-            let mut attrs = Vec::new();
-            if let Some((k, v)) = name_attr {
-                attrs.push((k, v));
-            }
-            if config.attr_type {
-                attrs.push(("type".to_string(), "int".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                xml_key, attr_string, int_str, xml_key
-            )
-            .unwrap();
-        }
-        // Handle float - use Python's str() for parity (Rust renders 1.0 as "1")
-        else if val.is_instance_of::<PyFloat>() {
-            let float_str: String = val.str()?.extract()?;
-            let mut attrs = Vec::new();
-            if let Some((k, v)) = name_attr {
-                attrs.push((k, v));
-            }
-            if config.attr_type {
-                attrs.push(("type".to_string(), "float".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                xml_key, attr_string, float_str, xml_key
-            )
-            .unwrap();
-        }
-        // Handle string
-        else if val.is_instance_of::<PyString>() {
-            let str_val: String = val.extract()?;
-            let mut attrs = Vec::new();
-            if let Some((k, v)) = name_attr {
-                attrs.push((k, v));
-            }
-            if config.attr_type {
-                attrs.push(("type".to_string(), "str".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            let content = if config.cdata {
-                wrap_cdata(&str_val)
+        // Lists in dicts get special wrapping treatment
+        if let Ok(list) = val.downcast::<PyList>() {
+            if cfg.item_wrap {
+                write_open_tag(out, &xml_key, name_attr, type_attr(cfg, "list"));
+                write_list_contents(py, out, list, &xml_key, cfg)?;
+                write_close_tag(out, &xml_key);
             } else {
-                escape_xml(&str_val)
-            };
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                xml_key, attr_string, content, xml_key
-            )
-            .unwrap();
-        }
-        // Handle None
-        else if val.is_none() {
-            let mut attrs = Vec::new();
-            if let Some((k, v)) = name_attr {
-                attrs.push((k, v));
-            }
-            if config.attr_type {
-                attrs.push(("type".to_string(), "null".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            write!(output, "<{}{}></{}>", xml_key, attr_string, xml_key).unwrap();
-        }
-        // Handle nested dict
-        else if val.is_instance_of::<PyDict>() {
-            let nested_dict: &Bound<'_, PyDict> = val.cast()?;
-            let mut attrs = Vec::new();
-            if let Some((k, v)) = name_attr {
-                attrs.push((k, v));
-            }
-            if config.attr_type {
-                attrs.push(("type".to_string(), "dict".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            let inner = convert_dict(py, nested_dict, &xml_key, config)?;
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                xml_key, attr_string, inner, xml_key
-            )
-            .unwrap();
-        }
-        // Handle list
-        else if val.is_instance_of::<PyList>() {
-            let list: &Bound<'_, PyList> = val.cast()?;
-            let list_output = convert_list(py, list, &xml_key, config)?;
-
-            if config.item_wrap {
-                let mut attrs = Vec::new();
-                if let Some((k, v)) = name_attr {
-                    attrs.push((k, v));
-                }
-                if config.attr_type {
-                    attrs.push(("type".to_string(), "list".to_string()));
-                }
-                let attr_string = make_attr_string(&attrs);
-                write!(
-                    output,
-                    "<{}{}>{}</{}>",
-                    xml_key, attr_string, list_output, xml_key
-                )
-                .unwrap();
-            } else {
-                output.push_str(&list_output);
-            }
-        }
-        // Fallback: convert to string
-        else {
-            let str_val: String = val.str()?.extract()?;
-            let mut attrs = Vec::new();
-            if let Some((k, v)) = name_attr {
-                attrs.push((k, v));
-            }
-            if config.attr_type {
-                attrs.push(("type".to_string(), "str".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            let content = if config.cdata {
-                wrap_cdata(&str_val)
-            } else {
-                escape_xml(&str_val)
-            };
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                xml_key, attr_string, content, xml_key
-            )
-            .unwrap();
-        }
-    }
-
-    Ok(output)
-}
-
-/// Convert a list to XML
-#[cfg(feature = "python")]
-fn convert_list(
-    py: Python<'_>,
-    list: &Bound<'_, PyList>,
-    parent: &str,
-    config: &ConvertConfig,
-) -> PyResult<String> {
-    let mut output = String::new();
-    let item_name = "item";
-
-    for item in list.iter() {
-        let tag_name = if config.item_wrap || config.list_headers {
-            if config.list_headers {
-                parent
-            } else {
-                item_name
+                write_list_contents(py, out, list, &xml_key, cfg)?;
             }
         } else {
-            parent
-        };
-
-        // Handle bool (must check before int)
-        if item.is_instance_of::<PyBool>() {
-            let bool_val: bool = item.extract()?;
-            let mut attrs = Vec::new();
-            if config.attr_type {
-                attrs.push(("type".to_string(), "bool".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            let bool_str = if bool_val { "true" } else { "false" };
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                tag_name, attr_string, bool_str, tag_name
-            )
-            .unwrap();
-        }
-        // Handle int - try i64 first, fall back to string for large integers
-        else if item.is_instance_of::<PyInt>() {
-            let int_str = match item.extract::<i64>() {
-                Ok(v) => v.to_string(),
-                Err(_) => item.str()?.extract::<String>()?,
-            };
-            let mut attrs = Vec::new();
-            if config.attr_type {
-                attrs.push(("type".to_string(), "int".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                tag_name, attr_string, int_str, tag_name
-            )
-            .unwrap();
-        }
-        // Handle float - use Python's str() for parity (Rust renders 1.0 as "1")
-        else if item.is_instance_of::<PyFloat>() {
-            let float_str: String = item.str()?.extract()?;
-            let mut attrs = Vec::new();
-            if config.attr_type {
-                attrs.push(("type".to_string(), "float".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                tag_name, attr_string, float_str, tag_name
-            )
-            .unwrap();
-        }
-        // Handle string
-        else if item.is_instance_of::<PyString>() {
-            let str_val: String = item.extract()?;
-            let mut attrs = Vec::new();
-            if config.attr_type {
-                attrs.push(("type".to_string(), "str".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            let content = if config.cdata {
-                wrap_cdata(&str_val)
-            } else {
-                escape_xml(&str_val)
-            };
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                tag_name, attr_string, content, tag_name
-            )
-            .unwrap();
-        }
-        // Handle None
-        else if item.is_none() {
-            let mut attrs = Vec::new();
-            if config.attr_type {
-                attrs.push(("type".to_string(), "null".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            write!(output, "<{}{}></{}>", tag_name, attr_string, tag_name).unwrap();
-        }
-        // Handle nested dict
-        else if item.is_instance_of::<PyDict>() {
-            let nested_dict: &Bound<'_, PyDict> = item.cast()?;
-            let inner = convert_dict(py, nested_dict, tag_name, config)?;
-
-            if config.item_wrap || config.list_headers {
-                let mut attrs = Vec::new();
-                if config.attr_type {
-                    attrs.push(("type".to_string(), "dict".to_string()));
-                }
-                let attr_string = make_attr_string(&attrs);
-                write!(
-                    output,
-                    "<{}{}>{}</{}>",
-                    tag_name, attr_string, inner, tag_name
-                )
-                .unwrap();
-            } else {
-                output.push_str(&inner);
-            }
-        }
-        // Handle nested list
-        else if item.is_instance_of::<PyList>() {
-            let nested_list: &Bound<'_, PyList> = item.cast()?;
-            let inner = convert_list(py, nested_list, tag_name, config)?;
-
-            let mut attrs = Vec::new();
-            if config.attr_type {
-                attrs.push(("type".to_string(), "list".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                tag_name, attr_string, inner, tag_name
-            )
-            .unwrap();
-        }
-        // Fallback
-        else {
-            let str_val: String = item.str()?.extract()?;
-            let mut attrs = Vec::new();
-            if config.attr_type {
-                attrs.push(("type".to_string(), "str".to_string()));
-            }
-            let attr_string = make_attr_string(&attrs);
-            let content = if config.cdata {
-                wrap_cdata(&str_val)
-            } else {
-                escape_xml(&str_val)
-            };
-            write!(
-                output,
-                "<{}{}>{}</{}>",
-                tag_name, attr_string, content, tag_name
-            )
-            .unwrap();
+            write_value(py, out, &val, &xml_key, name_attr, cfg, true)?;
         }
     }
+    Ok(())
+}
 
-    Ok(output)
+/// Write all items of a list into the buffer.
+#[cfg(feature = "python")]
+fn write_list_contents(
+    py: Python<'_>,
+    out: &mut String,
+    list: &Bound<'_, PyList>,
+    parent: &str,
+    cfg: &ConvertConfig,
+) -> PyResult<()> {
+    let tag_name = if cfg.list_headers {
+        parent
+    } else if cfg.item_wrap {
+        "item"
+    } else {
+        parent
+    };
+
+    for item in list.iter() {
+        // Dicts inside lists have special wrapping logic
+        if let Ok(dict) = item.downcast::<PyDict>() {
+            if cfg.item_wrap || cfg.list_headers {
+                write_open_tag(out, tag_name, None, type_attr(cfg, "dict"));
+                write_dict_contents(py, out, dict, cfg)?;
+                write_close_tag(out, tag_name);
+            } else {
+                write_dict_contents(py, out, dict, cfg)?;
+            }
+        } else {
+            write_value(py, out, &item, tag_name, None, cfg, true)?;
+        }
+    }
+    Ok(())
 }
 
 /// Convert a Python dict/list to XML bytes.
@@ -646,26 +417,30 @@ fn dicttoxml(
         list_headers,
     };
 
-    let content = if obj.is_instance_of::<PyDict>() {
-        let dict: &Bound<'_, PyDict> = obj.cast()?;
-        convert_dict(py, dict, custom_root, &config)?
-    } else if obj.is_instance_of::<PyList>() {
-        let list: &Bound<'_, PyList> = obj.cast()?;
-        convert_list(py, list, custom_root, &config)?
-    } else {
-        convert_value(py, obj, custom_root, &config, custom_root)?
-    };
+    let mut out = String::new();
 
-    let output = if root {
-        format!(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><{}>{}</{}>",
-            custom_root, content, custom_root
-        )
-    } else {
-        content
-    };
+    if root {
+        out.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+        out.push('<');
+        out.push_str(custom_root);
+        out.push('>');
+    }
 
-    Ok(output.into_bytes())
+    if let Ok(dict) = obj.downcast::<PyDict>() {
+        write_dict_contents(py, &mut out, dict, &config)?;
+    } else if let Ok(list) = obj.downcast::<PyList>() {
+        write_list_contents(py, &mut out, list, custom_root, &config)?;
+    } else {
+        write_value(py, &mut out, obj, custom_root, None, &config, true)?;
+    }
+
+    if root {
+        out.push_str("</");
+        out.push_str(custom_root);
+        out.push('>');
+    }
+
+    Ok(out.into_bytes())
 }
 
 /// Fast XML string escaping.
@@ -933,6 +708,81 @@ mod tests {
         fn escapes_attr_values() {
             let attrs = vec![("name".to_string(), "foo & bar".to_string())];
             assert_eq!(make_attr_string(&attrs), " name=\"foo &amp; bar\"");
+        }
+    }
+
+    mod push_escaped_text_tests {
+        use super::*;
+
+        #[test]
+        fn escapes_only_text_chars() {
+            let mut out = String::new();
+            push_escaped_text(&mut out, "a < b & c > d");
+            assert_eq!(out, "a &lt; b &amp; c &gt; d");
+        }
+
+        #[test]
+        fn does_not_escape_quotes_in_text() {
+            let mut out = String::new();
+            push_escaped_text(&mut out, "say \"hello\" & 'bye'");
+            assert_eq!(out, "say \"hello\" &amp; 'bye'");
+        }
+
+        #[test]
+        fn handles_empty_string() {
+            let mut out = String::new();
+            push_escaped_text(&mut out, "");
+            assert_eq!(out, "");
+        }
+
+        #[test]
+        fn handles_no_special_chars() {
+            let mut out = String::new();
+            push_escaped_text(&mut out, "plain text 123");
+            assert_eq!(out, "plain text 123");
+        }
+
+        #[test]
+        fn handles_unicode() {
+            let mut out = String::new();
+            push_escaped_text(&mut out, "café & thé");
+            assert_eq!(out, "café &amp; thé");
+        }
+    }
+
+    mod push_escaped_attr_tests {
+        use super::*;
+
+        #[test]
+        fn escapes_quotes_and_special_chars() {
+            let mut out = String::new();
+            push_escaped_attr(&mut out, "a\"b'c&d<e>f");
+            assert_eq!(out, "a&quot;b&apos;c&amp;d&lt;e&gt;f");
+        }
+    }
+
+    mod push_cdata_tests {
+        use super::*;
+
+        #[test]
+        fn wraps_simple_string() {
+            let mut out = String::new();
+            push_cdata(&mut out, "hello");
+            assert_eq!(out, "<![CDATA[hello]]>");
+        }
+
+        #[test]
+        fn escapes_cdata_end_sequence() {
+            let mut out = String::new();
+            push_cdata(&mut out, "foo]]>bar");
+            assert_eq!(out, "<![CDATA[foo]]]]><![CDATA[>bar]]>");
+        }
+
+        #[test]
+        fn handles_multiple_cdata_end_sequences() {
+            let mut out = String::new();
+            push_cdata(&mut out, "a]]>b]]>c");
+            assert_eq!(out, "<![CDATA[a]]]]><![CDATA[>b]]]]><![CDATA[>c]]>");
         }
     }
 }

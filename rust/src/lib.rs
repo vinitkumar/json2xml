@@ -6,6 +6,8 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 #[cfg(feature = "python")]
+use pyo3::exceptions::PyValueError;
+#[cfg(feature = "python")]
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
 use std::fmt::Write;
 
@@ -630,6 +632,13 @@ fn dicttoxml(
     cdata: bool,
     list_headers: bool,
 ) -> PyResult<Vec<u8>> {
+    if !is_valid_xml_name(custom_root) {
+        return Err(PyValueError::new_err(format!(
+            "Invalid XML root element name: '{}'",
+            custom_root
+        )));
+    }
+
     let config = ConvertConfig {
         attr_type,
         cdata,

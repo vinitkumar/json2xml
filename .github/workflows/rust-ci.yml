@@ -75,7 +75,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          pip install pytest defusedxml
+          pip install pytest pytest-cov defusedxml xmltodict
           pip install -e .
 
       - name: Verify import

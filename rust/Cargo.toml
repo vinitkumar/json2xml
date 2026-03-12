@@ -1,6 +1,6 @@
 [package]
 name = "json2xml_rs"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Fast native JSON to XML conversion for Python"
 license = "Apache-2.0"
@@ -14,7 +14,7 @@ default = ["python"]
 python = ["pyo3/extension-module", "dep:pyo3"]
 
 [dependencies]
-pyo3 = { version = "0.27", optional = true }
+pyo3 = { version = "0.28.2", optional = true }
 
 [profile.release]
 lto = true

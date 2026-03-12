@@ -43,7 +43,7 @@ Installation
 
     pip install json2xml
 
-**With Native Rust Acceleration (28x faster)**
+**With Native Rust Acceleration (up to 149x faster)**
 
 For maximum performance, install the optional Rust extension:
 
@@ -55,7 +55,7 @@ For maximum performance, install the optional Rust extension:
     # Or install the Rust extension separately
     pip install json2xml-rs
 
-The Rust extension provides **28x faster** conversion compared to pure Python. It's automatically used when available, with seamless fallback to pure Python.
+The Rust extension provides **75-149x faster** conversion compared to pure Python. It's automatically used when available, with seamless fallback to pure Python.
 
 **As a CLI Tool**
 
@@ -301,7 +301,7 @@ Using tools directly:
 
 **Rust Extension Development**
 
-The optional Rust extension (``json2xml-rs``) provides 29x faster performance. To develop or build the Rust extension:
+The optional Rust extension (``json2xml-rs``) provides up to 149x faster performance. To develop or build the Rust extension:
 
 Prerequisites:
 
@@ -428,21 +428,21 @@ For users who need maximum performance within Python, json2xml includes an optio
      - Rust Extension
      - Speedup
    * - **Small JSON** (47 bytes)
-     - 40µs
-     - 1.5µs
-     - **27x**
+     - 78µs
+     - 1.05µs
+     - **75x**
    * - **Medium JSON** (3.2 KB)
-     - 2.1ms
-     - 71µs
-     - **30x**
+     - 2.15ms
+     - 15µs
+     - **139x**
    * - **Large JSON** (32 KB)
-     - 21ms
-     - 740µs
-     - **28x**
+     - 22ms
+     - 151µs
+     - **146x**
    * - **Very Large JSON** (323 KB)
-     - 213ms
-     - 7.5ms
-     - **28x**
+     - 219ms
+     - 1.47ms
+     - **149x**
 
 **Usage with Rust Extension:**
 

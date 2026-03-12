@@ -17,7 +17,7 @@ pub fn escape_xml(s: &str) -> String {
     out
 }
 
-/// Append text content with XML escaping (only &, <, > need escaping in text nodes).
+/// Append text content with XML escaping matching the Python implementation.
 /// Scans bytes for speed, copies clean slices in bulk.
 #[inline]
 pub fn push_escaped_text(out: &mut String, s: &str) {
@@ -25,6 +25,8 @@ pub fn push_escaped_text(out: &mut String, s: &str) {
     for (i, b) in s.bytes().enumerate() {
         let repl = match b {
             b'&' => "&amp;",
+            b'"' => "&quot;",
+            b'\'' => "&apos;",
             b'<' => "&lt;",
             b'>' => "&gt;",
             _ => continue,
@@ -716,17 +718,17 @@ mod tests {
         use super::*;
 
         #[test]
-        fn escapes_only_text_chars() {
+        fn escapes_special_chars_in_text() {
             let mut out = String::new();
             push_escaped_text(&mut out, "a < b & c > d");
             assert_eq!(out, "a &lt; b &amp; c &gt; d");
         }
 
         #[test]
-        fn does_not_escape_quotes_in_text() {
+        fn escapes_quotes_in_text() {
             let mut out = String::new();
             push_escaped_text(&mut out, "say \"hello\" & 'bye'");
-            assert_eq!(out, "say \"hello\" &amp; 'bye'");
+            assert_eq!(out, "say &quot;hello&quot; &amp; &apos;bye&apos;");
         }
 
         #[test]

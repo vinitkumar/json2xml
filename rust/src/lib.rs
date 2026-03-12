@@ -4,9 +4,9 @@
 //! that can be used as a drop-in replacement for the pure Python version.
 
 #[cfg(feature = "python")]
-use pyo3::prelude::*;
-#[cfg(feature = "python")]
 use pyo3::exceptions::PyValueError;
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
 #[cfg(feature = "python")]
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
 /// Escape special XML characters in a string (allocating convenience wrapper).
@@ -133,7 +133,10 @@ pub fn make_valid_xml_name(key: &str) -> (String, Option<(String, String)>) {
     }
 
     // Fall back to using "key" with name attribute (raw value, escaped later)
-    ("key".to_string(), Some(("name".to_string(), key.to_string())))
+    (
+        "key".to_string(),
+        Some(("name".to_string(), key.to_string())),
+    )
 }
 
 /// Build an attribute string from key-value pairs (allocating convenience wrapper).
@@ -200,7 +203,11 @@ use pyo3::PyResult;
 #[cfg(feature = "python")]
 #[inline]
 fn type_attr<'a>(cfg: &ConvertConfig, ty: &'a str) -> Option<&'a str> {
-    if cfg.attr_type { Some(ty) } else { None }
+    if cfg.attr_type {
+        Some(ty)
+    } else {
+        None
+    }
 }
 
 /// Single unified type-dispatch writer. Every Python value goes through here
@@ -235,8 +242,12 @@ fn write_value(
     if obj.is_instance_of::<PyInt>() {
         write_open_tag(out, tag, name_attr, type_attr(cfg, "int"));
         match obj.extract::<i64>() {
-            Ok(v) => { out.push_str(&v.to_string()); }
-            Err(_) => { out.push_str(obj.str()?.to_str()?); }
+            Ok(v) => {
+                out.push_str(&v.to_string());
+            }
+            Err(_) => {
+                out.push_str(obj.str()?.to_str()?);
+            }
         }
         write_close_tag(out, tag);
         return Ok(());

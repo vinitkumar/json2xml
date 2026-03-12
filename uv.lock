@@ -147,7 +147,7 @@ wheels = [
 
 [[package]]
 name = "json2xml"
-version = "6.0.4"
+version = "6.0.5"
 source = { editable = "." }
 dependencies = [
     { name = "defusedxml" },

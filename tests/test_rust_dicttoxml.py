@@ -6,6 +6,8 @@ and matches the Python implementation for supported features.
 """
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 # Check if Rust extension is available
@@ -494,8 +496,8 @@ class TestRustPerformanceBasics:
 
     def test_deeply_nested_structure(self):
         """Ensure deep nesting doesn't crash."""
-        data = {"level": None}
-        current = data
+        data: dict[str, Any] = {"level": None}
+        current: dict[str, Any] = data
         for i in range(50):
             current["level"] = {"value": i}
             current = current["level"]

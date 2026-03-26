@@ -24,9 +24,9 @@ _USE_RUST = False
 _rust_dicttoxml = None
 
 try:
-    from json2xml_rs import dicttoxml as _rust_dicttoxml  # type: ignore[import-not-found]  # pragma: no cover
-    from json2xml_rs import escape_xml_py as rust_escape_xml  # type: ignore[import-not-found]  # pragma: no cover
-    from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # type: ignore[import-not-found]  # pragma: no cover
+    from json2xml_rs import dicttoxml as _rust_dicttoxml  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]  # pragma: no cover
+    from json2xml_rs import escape_xml_py as rust_escape_xml  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]  # pragma: no cover
+    from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]  # pragma: no cover
     _USE_RUST = True  # pragma: no cover
     LOG.debug("Using Rust backend for dicttoxml")  # pragma: no cover
 except ImportError:  # pragma: no cover

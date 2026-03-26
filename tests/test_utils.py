@@ -225,22 +225,22 @@ class TestReadFromString:
     def test_readfromstring_invalid_type_int(self) -> None:
         """Test reading with integer input."""
         with pytest.raises(StringReadError, match="Input is not a proper JSON string"):
-            readfromstring(123)  # type: ignore[arg-type]
+            readfromstring(123)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
     def test_readfromstring_invalid_type_list(self) -> None:
         """Test reading with list input."""
         with pytest.raises(StringReadError, match="Input is not a proper JSON string"):
-            readfromstring(["not", "a", "string"])  # type: ignore[arg-type]
+            readfromstring(["not", "a", "string"])  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
     def test_readfromstring_invalid_type_dict(self) -> None:
         """Test reading with dict input."""
         with pytest.raises(StringReadError, match="Input is not a proper JSON string"):
-            readfromstring({"not": "a string"})  # type: ignore[arg-type]
+            readfromstring({"not": "a string"})  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
     def test_readfromstring_invalid_type_none(self) -> None:
         """Test reading with None input."""
         with pytest.raises(StringReadError, match="Input is not a proper JSON string"):
-            readfromstring(None)  # type: ignore[arg-type]
+            readfromstring(None)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
 
     def test_readfromstring_invalid_json_syntax(self) -> None:
         """Test reading string with invalid JSON syntax."""

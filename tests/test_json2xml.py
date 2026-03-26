@@ -56,12 +56,12 @@ class TestJson2xml:
 
     def test_read_from_invalid_string1(self) -> None:
         with pytest.raises(StringReadError) as pytest_wrapped_e:
-            readfromstring(1)  # type: ignore[arg-type]
+            readfromstring(1)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
         assert pytest_wrapped_e.type == StringReadError
 
     def test_read_from_invalid_string2(self) -> None:
         with pytest.raises(StringReadError) as pytest_wrapped_e:
-            readfromstring(jsondata=None)  # type: ignore[arg-type]
+            readfromstring(jsondata=None)  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
         assert pytest_wrapped_e.type == StringReadError
 
     def test_read_from_invalid_jsonstring(self) -> None:

@@ -578,7 +578,7 @@ class TestDict2xml:
 
         # Should return the class name for unsupported types
         # Using type: ignore for intentional test of unsupported type
-        result = dicttoxml.get_xml_type(CustomClass())  # type: ignore[arg-type]
+        result = dicttoxml.get_xml_type(CustomClass())  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
         assert result == "CustomClass"
 
     def test_make_valid_xml_name_invalid_chars(self) -> None:
@@ -807,8 +807,8 @@ class TestDict2xml:
                     this_id = module.make_id(element)  # This exercises line 52
             return ids[-1]
 
-        module.make_id = mock_make_id  # type: ignore[assignment]
-        module.get_unique_id = patched_get_unique_id  # type: ignore[assignment]
+        module.make_id = mock_make_id  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
+        module.get_unique_id = patched_get_unique_id  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
         try:
             result = dicttoxml.get_unique_id("test")
@@ -874,7 +874,7 @@ class TestDict2xml:
 
         with pytest.raises(TypeError, match="Unsupported data type:"):
             dicttoxml.convert(
-                obj=CustomClass(),  # type: ignore[arg-type]
+                obj=CustomClass(),  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
                 ids=None,
                 attr_type=False,
                 item_func=lambda x: "item",
@@ -1024,7 +1024,7 @@ class TestDict2xml:
                 return True
             return original_is_primitive(val)
 
-        module.is_primitive_type = mock_is_primitive  # type: ignore[assignment]
+        module.is_primitive_type = mock_is_primitive  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
         try:
             item = {"@val": {"test": "data"}}
             result = dicttoxml.dict2xml_str(

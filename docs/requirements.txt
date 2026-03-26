@@ -60,7 +60,7 @@ pygments==2.19.1
     #   accessible-pygments
     #   furo
     #   sphinx
-requests==2.32.4
+requests==2.33.0
     # via sphinx
 roman-numerals==4.1.0
     # via sphinx

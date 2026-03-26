@@ -15,9 +15,9 @@ try:
     from json2xml_rs import (
         dicttoxml as rust_dicttoxml,  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
     )
-    from json2xml_rs import (  # type: ignore[import-not-found]  # ty: ignore[unresolved-import]
-        escape_xml_py,
-        wrap_cdata_py,
+    from json2xml_rs import (  # type: ignore[import-not-found]
+        escape_xml_py,  # ty: ignore[unresolved-import]
+        wrap_cdata_py,  # ty: ignore[unresolved-import]
     )
     RUST_AVAILABLE = True
 except ImportError:

@@ -60,6 +60,7 @@ AUTHOR = "Vinit Kumar"
 EMAIL = "mail@vinitkumar.me"
 
 
+# @lat: [[architecture#CLI entrypoint]]
 def create_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser."""
     parser = argparse.ArgumentParser(
@@ -228,6 +229,7 @@ Examples:
     return parser
 
 
+# @lat: [[behavior#Input readers]]
 def read_input(args: argparse.Namespace) -> dict[str, Any] | list[Any]:
     """
     Read JSON input from the specified source.

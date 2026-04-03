@@ -229,6 +229,7 @@ class TestJson2xml:
         if xmldata:
             assert b'encoding="UTF-8"' in xmldata
 
+    # @lat: [[tests#Conversion behavior#XPath format adds functions namespace]]
     def test_xpath_format_basic(self) -> None:
         """Test XPath 3.1 json-to-xml format with basic types."""
         data = {"name": "John", "age": 30, "active": True}

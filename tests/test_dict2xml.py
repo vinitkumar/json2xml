@@ -3,6 +3,7 @@ import numbers
 from typing import TYPE_CHECKING, Any
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 
 from json2xml import dicttoxml
 
@@ -10,7 +11,6 @@ if TYPE_CHECKING:
     from _pytest.capture import CaptureFixture
     from _pytest.fixtures import FixtureRequest
     from _pytest.logging import LogCaptureFixture
-    from _pytest.monkeypatch import MonkeyPatch
 
 
 class TestDict2xml:
@@ -774,29 +774,20 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, cdata=True, attr_type=False, root=False)
         assert b"<key><![CDATA[value]]></key>" == result
 
-    def test_get_unique_id_with_duplicates(self) -> None:
+    def test_get_unique_id_with_duplicates(self, monkeypatch: MonkeyPatch) -> None:
         """Test get_unique_id when duplicates are generated."""
-        # We need to modify the original get_unique_id to simulate a pre-existing ID list
         import json2xml.dicttoxml as module
 
-        # Save original function
-        original_get_unique_id = module.get_unique_id
-
-        # Track make_id calls
         call_count = 0
-        original_make_id = module.make_id
 
         def mock_make_id(element: str, start: int = 100000, end: int = 999999) -> str:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
-                return "test_123456"  # First call - will collide
-            else:
-                return "test_789012"  # Second call - unique
+                return "test_123456"
+            return "test_789012"
 
-        # Patch get_unique_id to use a pre-populated ids list
         def patched_get_unique_id(element: str) -> str:
-            # Start with a pre-existing ID to force collision
             ids = ["test_123456"]
             this_id = module.make_id(element)
             dup = True
@@ -805,19 +796,15 @@ class TestDict2xml:
                     dup = False
                     ids.append(this_id)
                 else:
-                    this_id = module.make_id(element)  # This exercises line 52
+                    this_id = module.make_id(element)
             return ids[-1]
 
-        module.make_id = mock_make_id  # type: ignore[assignment]
-        module.get_unique_id = patched_get_unique_id  # type: ignore[assignment]
+        monkeypatch.setattr(module, "make_id", mock_make_id)
+        monkeypatch.setattr(module, "get_unique_id", patched_get_unique_id)
 
-        try:
-            result = dicttoxml.get_unique_id("test")
-            assert result == "test_789012"
-            assert call_count == 2
-        finally:
-            module.make_id = original_make_id
-            module.get_unique_id = original_get_unique_id
+        result = dicttoxml.get_unique_id("test")
+        assert result == "test_789012"
+        assert call_count == 2
 
     def test_convert_with_bool_direct(self) -> None:
         """Test convert function with boolean input directly."""
@@ -1012,12 +999,10 @@ class TestDict2xml:
         )
         assert "<item><item>nested</item><item>list</item></item>" == result
 
-    def test_dict2xml_str_with_primitive_dict_rawitem(self) -> None:
+    def test_dict2xml_str_with_primitive_dict_rawitem(self, monkeypatch: MonkeyPatch) -> None:
         """Test dict2xml_str with primitive dict as rawitem to trigger line 274."""
-        # Create a case where rawitem is a dict and is_primitive_type returns True
-        # This is tricky because normally dicts are not primitive types
-        # We need to mock is_primitive_type to return True for a dict
         import json2xml.dicttoxml as module
+
         original_is_primitive = module.is_primitive_type
 
         def mock_is_primitive(val: Any) -> bool:
@@ -1025,22 +1010,19 @@ class TestDict2xml:
                 return True
             return original_is_primitive(val)
 
-        module.is_primitive_type = mock_is_primitive  # type: ignore[assignment]
-        try:
-            item = {"@val": {"test": "data"}}
-            result = dicttoxml.dict2xml_str(
-                attr_type=False,
-                attr={},
-                item=item,
-                item_func=lambda x: "item",
-                cdata=False,
-                item_name="test",
-                item_wrap=False,
-                parentIsList=False
-            )
-            assert "test" in result
-        finally:
-            module.is_primitive_type = original_is_primitive
+        monkeypatch.setattr(module, "is_primitive_type", mock_is_primitive)
+        item = {"@val": {"test": "data"}}
+        result = dicttoxml.dict2xml_str(
+            attr_type=False,
+            attr={},
+            item=item,
+            item_func=lambda x: "item",
+            cdata=False,
+            item_name="test",
+            item_wrap=False,
+            parentIsList=False
+        )
+        assert "test" in result
 
     def test_convert_dict_with_falsy_value_line_400(self) -> None:
         """Test convert_dict with falsy value to trigger line 400."""

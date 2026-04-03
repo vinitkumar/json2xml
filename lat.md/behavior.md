@@ -6,7 +6,7 @@ This file captures the observable conversion and input rules that matter more th
 
 The input helpers convert files, strings, URLs, and stdin into Python data structures while surfacing source-specific errors to callers.
 
-[[json2xml/utils.py#readfromjson]] wraps file and JSON decoding failures in `JSONReadError`. [[json2xml/utils.py#readfromstring]] rejects non-string inputs and malformed JSON with `StringReadError`. [[json2xml/utils.py#readfromurl]] performs a GET request and raises `URLReadError` when the HTTP status is not `200`.
+[[json2xml/utils.py#readfromjson]] wraps file and JSON decoding failures in `JSONReadError`. [[json2xml/utils.py#readfromstring]] accepts unknown caller input so invalid-type tests can call it honestly, then rejects non-string inputs and malformed JSON with `StringReadError`. [[json2xml/utils.py#readfromurl]] performs a GET request and raises `URLReadError` when the HTTP status is not `200`.
 
 ## Conversion output
 

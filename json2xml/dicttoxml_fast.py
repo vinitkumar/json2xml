@@ -17,22 +17,24 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
+RustStringTransform = Callable[[str], str]
+
 LOG = logging.getLogger("dicttoxml_fast")
 
 # Try to import the Rust implementation
 _USE_RUST = False
-_rust_dicttoxml = None
+_rust_dicttoxml: Callable[..., bytes] | None = None
+rust_escape_xml: RustStringTransform | None = None
+rust_wrap_cdata: RustStringTransform | None = None
 
 try:
-    from json2xml_rs import dicttoxml as _rust_dicttoxml  # type: ignore[import-not-found]  # pragma: no cover
-    from json2xml_rs import escape_xml_py as rust_escape_xml  # type: ignore[import-not-found]  # pragma: no cover
-    from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # type: ignore[import-not-found]  # pragma: no cover
+    from json2xml_rs import dicttoxml as _rust_dicttoxml  # pragma: no cover
+    from json2xml_rs import escape_xml_py as rust_escape_xml  # pragma: no cover
+    from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # pragma: no cover
     _USE_RUST = True  # pragma: no cover
     LOG.debug("Using Rust backend for dicttoxml")  # pragma: no cover
 except ImportError:  # pragma: no cover
     LOG.debug("Rust backend not available, using pure Python")
-    rust_escape_xml = None
-    rust_wrap_cdata = None
 
 # Import the pure Python implementation as fallback
 from json2xml import dicttoxml as _py_dicttoxml  # noqa: E402

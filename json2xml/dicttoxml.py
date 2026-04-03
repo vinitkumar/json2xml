@@ -72,7 +72,7 @@ ELEMENT = Union[
 ]
 
 
-def get_xml_type(val: ELEMENT) -> str:
+def get_xml_type(val: Any) -> str:
     """
     Get the XML type of a given value.
 
@@ -268,7 +268,7 @@ def convert_to_xpath31(obj: Any, parent_key: str | None = None) -> str:
 
 
 def convert(
-    obj: ELEMENT,
+    obj: Any,
     ids: Any,
     attr_type: bool,
     item_func: Callable[[str], str],

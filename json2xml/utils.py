@@ -45,7 +45,7 @@ def readfromurl(url: str, params: dict[str, str] | None = None) -> dict[str, str
     raise URLReadError("URL is not returning correct response")
 
 
-def readfromstring(jsondata: str) -> dict[str, str]:
+def readfromstring(jsondata: object) -> dict[str, str]:
     """Loads JSON data from a string and returns a dictionary."""
     if not isinstance(jsondata, str):
         raise StringReadError("Input is not a proper JSON string")

@@ -72,7 +72,7 @@ ELEMENT = Union[
 ]
 
 
-def get_xml_type(val: ELEMENT) -> str:
+def get_xml_type(val: Any) -> str:
     """
     Get the XML type of a given value.
 
@@ -227,6 +227,7 @@ def get_xpath31_tag_name(val: Any) -> str:
     return "string"
 
 
+# @lat: [[behavior#XPath 3.1 format]]
 def convert_to_xpath31(obj: Any, parent_key: str | None = None) -> str:
     """
     Convert a Python object to XPath 3.1 json-to-xml format.
@@ -267,7 +268,7 @@ def convert_to_xpath31(obj: Any, parent_key: str | None = None) -> str:
 
 
 def convert(
-    obj: ELEMENT,
+    obj: Any,
     ids: Any,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -631,6 +632,7 @@ def convert_none(
     return f"<{key}{attr_string}></{key}>"
 
 
+# @lat: [[architecture#Conversion engine]]
 def dicttoxml(
     obj: ELEMENT,
     root: bool = True,

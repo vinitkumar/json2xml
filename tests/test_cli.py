@@ -588,6 +588,7 @@ class TestCLIUnitTests:
             assert result == {"key": "value"}
             mock_stdin.assert_called_once()
 
+    # @lat: [[tests#CLI input resolution#URL input takes priority]]
     def test_read_input_priority_url_over_string(self) -> None:
         """Test URL input takes priority over string input."""
         with patch("json2xml.cli.readfromurl") as mock_url:
@@ -649,6 +650,7 @@ class TestCLIUnitTests:
             content = output_file.read_text()
             assert "<key" in content
 
+    # @lat: [[tests#CLI input resolution#Dash argument reads stdin]]
     def test_read_input_stdin_dash_argument(self) -> None:
         """Test read_input with '-' as input_file reads from stdin."""
         with patch("json2xml.cli.read_from_stdin") as mock_stdin:

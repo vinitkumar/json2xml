@@ -48,6 +48,7 @@ def get_backend() -> str:
     return "rust" if _USE_RUST else "python"
 
 
+# @lat: [[architecture#Backend selection]]
 def dicttoxml(
     obj: Any,
     root: bool = True,

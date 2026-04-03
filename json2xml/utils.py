@@ -24,6 +24,7 @@ class StringReadError(Exception):
     pass
 
 
+# @lat: [[behavior#Input readers]]
 def readfromjson(filename: str) -> dict[str, str]:
     """Reads a JSON file and returns a dictionary."""
     try:

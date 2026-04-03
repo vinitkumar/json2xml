@@ -102,6 +102,7 @@ class TestDict2xml:
         )
         assert result == b"<bike><item>blue</item><item>green</item></bike>"
 
+    # @lat: [[tests#Conversion behavior#Item-wrap false repeats parent tag]]
     def test_item_wrap_false(self) -> None:
         """Test dicttoxml with item_wrap=False."""
         data = {"bike": ["blue", "green"]}

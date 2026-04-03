@@ -227,6 +227,7 @@ def get_xpath31_tag_name(val: Any) -> str:
     return "string"
 
 
+# @lat: [[behavior#XPath 3.1 format]]
 def convert_to_xpath31(obj: Any, parent_key: str | None = None) -> str:
     """
     Convert a Python object to XPath 3.1 json-to-xml format.
@@ -631,6 +632,7 @@ def convert_none(
     return f"<{key}{attr_string}></{key}>"
 
 
+# @lat: [[architecture#Conversion engine]]
 def dicttoxml(
     obj: ELEMENT,
     root: bool = True,

@@ -8,6 +8,7 @@ from json2xml import dicttoxml
 from .utils import InvalidDataError
 
 
+# @lat: [[architecture#Core pipeline]]
 class Json2xml:
     """
     Wrapper class to convert the data to xml
@@ -34,6 +35,8 @@ class Json2xml:
         self.cdata = cdata
         self.list_headers = list_headers
 
+    # @lat: [[behavior#Conversion output]]
+    # @lat: [[behavior#Invalid XML payloads]]
     def to_xml(self) -> Any | None:
         """
         Convert to xml using dicttoxml.dicttoxml and then pretty print it.

@@ -341,7 +341,6 @@ def dict2xml_str(
     parse dict2xml
     """
     ids: list[str] = []  # initialize list of unique ids
-    ", ".join(str(key) for key in item)
     subtree = ""  # Initialize subtree with default empty string
 
     if attr_type:

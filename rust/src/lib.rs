@@ -340,7 +340,14 @@ fn write_dict_contents(
 
         // Lists in dicts get special wrapping treatment
         if let Ok(list) = val.cast::<PyList>() {
-            if cfg.item_wrap {
+            let first_is_scalar = list
+                .get_item(0)
+                .ok()
+                .map(|item| is_python_scalar(&item))
+                .unwrap_or(false);
+            let wrap_list_container = (cfg.item_wrap || !first_is_scalar) && !cfg.list_headers;
+
+            if wrap_list_container {
                 write_open_tag(out, &xml_key, name_attr, type_attr(cfg, "list"));
                 write_list_contents(py, out, list, &xml_key, cfg)?;
                 write_close_tag(out, &xml_key);
@@ -354,6 +361,18 @@ fn write_dict_contents(
     Ok(())
 }
 
+/// Return true when a Python object is treated as a primitive scalar by the
+/// pure-Python serializer for list-wrapper decisions.
+#[cfg(feature = "python")]
+#[inline]
+fn is_python_scalar(obj: &Bound<'_, PyAny>) -> bool {
+    obj.is_none()
+        || obj.is_instance_of::<PyBool>()
+        || obj.is_instance_of::<PyInt>()
+        || obj.is_instance_of::<PyFloat>()
+        || obj.is_instance_of::<PyString>()
+}
+
 /// Write all items of a list into the buffer.
 #[cfg(feature = "python")]
 fn write_list_contents(
@@ -363,7 +382,8 @@ fn write_list_contents(
     parent: &str,
     cfg: &ConvertConfig,
 ) -> PyResult<()> {
-    let tag_name = if cfg.list_headers {
+    let scalar_tag_name = if cfg.item_wrap { "item" } else { parent };
+    let dict_tag_name = if cfg.list_headers {
         parent
     } else if cfg.item_wrap {
         "item"
@@ -375,14 +395,19 @@ fn write_list_contents(
         // Dicts inside lists have special wrapping logic
         if let Ok(dict) = item.cast::<PyDict>() {
             if cfg.item_wrap || cfg.list_headers {
-                write_open_tag(out, tag_name, None, type_attr(cfg, "dict"));
+                let dict_type_attr = if cfg.list_headers {
+                    None
+                } else {
+                    type_attr(cfg, "dict")
+                };
+                write_open_tag(out, dict_tag_name, None, dict_type_attr);
                 write_dict_contents(py, out, dict, cfg)?;
-                write_close_tag(out, tag_name);
+                write_close_tag(out, dict_tag_name);
             } else {
                 write_dict_contents(py, out, dict, cfg)?;
             }
         } else {
-            write_value(py, out, &item, tag_name, None, cfg, true)?;
+            write_value(py, out, &item, scalar_tag_name, None, cfg, true)?;
         }
     }
     Ok(())

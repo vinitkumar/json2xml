@@ -252,7 +252,8 @@ class TestRustDicttoxmlOptions:
     def test_list_headers(self):
         data = {"colors": ["red", "green"]}
         result = rust_dicttoxml(data, list_headers=True)
-        assert b"<colors" in result
+        assert b"<item type=\"str\">red</item>" in result
+        assert b"<item type=\"str\">green</item>" in result
 
 
 class TestRustVsPythonCompatibility:
@@ -334,21 +335,18 @@ class TestRustVsPythonCompatibility:
         rust, python = self.compare_outputs(data, item_wrap=False)
         assert rust == python
 
-    @pytest.mark.xfail(reason="Rust list_headers implementation differs from Python - uses different wrapping semantics")
     def test_list_headers_true_matches(self):
         """Test that list_headers=True produces matching output."""
         data = {"items": ["one", "two", "three"]}
         rust, python = self.compare_outputs(data, list_headers=True)
         assert rust == python
 
-    @pytest.mark.xfail(reason="Rust item_wrap=False with nested dicts differs from Python - known limitation")
     def test_item_wrap_false_with_nested_dict_matches(self):
         """Test item_wrap=False with nested dicts in list."""
         data = {"users": [{"name": "Alice"}, {"name": "Bob"}]}
         rust, python = self.compare_outputs(data, item_wrap=False)
         assert rust == python
 
-    @pytest.mark.xfail(reason="Rust list_headers with nested structures differs from Python - known limitation")
     def test_list_headers_with_nested_matches(self):
         """Test list_headers=True with nested structures."""
         data = {"products": [{"id": 1, "name": "Widget"}, {"id": 2, "name": "Gadget"}]}

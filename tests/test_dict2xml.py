@@ -500,6 +500,92 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, xml_namespaces=namespaces)
         assert b'xmlns="http://example.com"' in result
 
+    # @lat: [[tests#Conversion behavior#Default xml namespaces stay empty]]
+    def test_dicttoxml_without_xml_namespaces_keeps_previous_output(self) -> None:
+        """Test dicttoxml without xml_namespaces keeps the default XML shape."""
+        data = {"bike": "blue"}
+        result = dicttoxml.dicttoxml(data, attr_type=False)
+        assert (
+            b'<?xml version="1.0" encoding="UTF-8" ?>'
+            b"<root><bike>blue</bike></root>" == result
+        )
+        assert b"xmlns" not in result
+        assert b"xsi:" not in result
+
+    # @lat: [[tests#Conversion behavior#Explicit xml namespaces emit schema attributes]]
+    def test_dicttoxml_with_explicit_xml_namespaces_emits_schema_attributes(self) -> None:
+        """Test dicttoxml emits explicit namespace declarations and XSI schema attributes."""
+        data = {"bike": "blue"}
+        namespaces = {
+            "veh": "https://example.com/vehicle",
+            "xsi": {
+                "schemaInstance": "http://www.w3.org/2001/XMLSchema-instance",
+                "schemaLocation": "https://example.com/vehicle vehicle.xsd",
+                "noNamespaceSchemaLocation": "vehicle-no-namespace.xsd",
+            },
+        }
+        namespaces_before = {
+            prefix: value.copy() if isinstance(value, dict) else value
+            for prefix, value in namespaces.items()
+        }
+
+        result = dicttoxml.dicttoxml(
+            data,
+            custom_root="vehicle",
+            attr_type=False,
+            xml_namespaces=namespaces,
+        )
+
+        assert (
+            b'<?xml version="1.0" encoding="UTF-8" ?>'
+            b'<vehicle xmlns:veh="https://example.com/vehicle" '
+            b'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+            b'xsi:schemaLocation="https://example.com/vehicle vehicle.xsd">'
+            b"<bike>blue</bike>"
+            b"</vehicle>" == result
+        )
+        assert b"xsi:noNamespaceSchemaLocation" not in result
+        assert namespaces == namespaces_before
+
+    # @lat: [[tests#Conversion behavior#Xml namespace inputs are not mutated across calls]]
+    def test_dicttoxml_reuses_xml_namespaces_without_mutating_input(self) -> None:
+        """Test reusing xml_namespaces across calls does not mutate or accumulate state."""
+        data = {"bike": "blue"}
+        namespaces = {
+            "veh": "https://example.com/vehicle",
+            "xsi": {
+                "schemaInstance": "http://www.w3.org/2001/XMLSchema-instance",
+                "schemaLocation": "https://example.com/vehicle vehicle.xsd",
+            },
+        }
+        namespaces_before = {
+            prefix: value.copy() if isinstance(value, dict) else value
+            for prefix, value in namespaces.items()
+        }
+
+        first = dicttoxml.dicttoxml(
+            data,
+            custom_root="vehicle",
+            attr_type=False,
+            xml_namespaces=namespaces,
+        )
+        second = dicttoxml.dicttoxml(
+            data,
+            custom_root="vehicle",
+            attr_type=False,
+            xml_namespaces=namespaces,
+        )
+
+        assert first == second
+        assert first.count(b'xmlns:veh="https://example.com/vehicle"') == 1
+        assert first.count(
+            b'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
+        ) == 1
+        assert first.count(
+            b'xsi:schemaLocation="https://example.com/vehicle vehicle.xsd"'
+        ) == 1
+        assert namespaces == namespaces_before
+
     def test_datetime_conversion(self) -> None:
         """Test datetime conversion."""
         data = {"key": datetime.datetime(2023, 2, 15, 12, 30, 45)}

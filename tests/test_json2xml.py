@@ -21,12 +21,6 @@ from json2xml.utils import (
 class TestJson2xml:
     """Tests for `json2xml` package."""
 
-    def setUp(self) -> None:
-        """Set up test fixtures, if any."""
-
-    def tearDown(self) -> None:
-        """Tear down test fixtures, if any."""
-
     def test_read_from_json(self) -> None:
         """Test something."""
         data = readfromjson("examples/bigexample.json")

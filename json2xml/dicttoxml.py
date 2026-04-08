@@ -797,7 +797,8 @@ def dicttoxml(
 
     output = []
     namespace_str = ""
-    xml_namespaces = xml_namespaces or {}
+    if xml_namespaces is None:
+        xml_namespaces = {}
     for prefix in xml_namespaces:
         if prefix == 'xsi':
             for schema_att in xml_namespaces[prefix]:

@@ -1,4 +1,14 @@
 
+6.0.6 / 2026-04-08
+==================
+
+  * fix: review cleanup (#281)
+  * fix: remove needless line (#280)
+  * docs: add lat.md support to the codebase (#279)
+  * chore(deps): bump pygments from 2.19.1 to 2.20.0 in /docs (#278)
+  * fix: upgrade Python workflow to 3.12
+
+
 6.0.5 / 2026-03-12
 ==================
 

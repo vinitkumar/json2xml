@@ -14,6 +14,8 @@ Default output includes an XML declaration, wraps content in `all`, pretty print
 
 [[json2xml/json2xml.py#Json2xml#to_xml]] calls [[json2xml/dicttoxml.py#dicttoxml]] with the configured wrapper, root, `attr_type`, `item_wrap`, `cdata`, and `list_headers` options. When `item_wrap=False`, list values repeat the parent tag instead of creating `<item>` children. When `pretty=False`, the library returns the serializer bytes directly.
 
+The Rust fast path in [[rust/src/lib.rs#write_dict_contents]] and [[rust/src/lib.rs#write_list_contents]] mirrors those Python list-wrapper rules. `list_headers=True` suppresses the outer list container and repeats the parent tag only for nested dict items, while primitive items still use the same scalar tags that Python emits.
+
 ## XPath 3.1 format
 
 XPath mode swaps the project-specific XML shape for the W3C `json-to-xml` mapping with typed element names and the XPath functions namespace.

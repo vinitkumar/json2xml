@@ -345,7 +345,7 @@ fn write_dict_contents(
                 .ok()
                 .map(|item| is_python_scalar(&item))
                 .unwrap_or(false);
-            let wrap_list_container = !cfg.list_headers && !(first_is_scalar && !cfg.item_wrap);
+            let wrap_list_container = (cfg.item_wrap || !first_is_scalar) && !cfg.list_headers;
 
             if wrap_list_container {
                 write_open_tag(out, &xml_key, name_attr, type_attr(cfg, "list"));

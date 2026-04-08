@@ -29,3 +29,15 @@ XPath mode should emit the W3C XPath functions namespace and typed child element
 ### Item-wrap false repeats parent tag
 
 Disabling item wrapping should repeat the parent element name for primitive list items instead of producing nested `<item>` tags.
+
+### Default xml namespaces stay empty
+
+Calling `dicttoxml` without `xml_namespaces` should preserve the legacy root output and avoid adding namespace declarations or `xsi:` attributes implicitly.
+
+### Explicit xml namespaces emit schema attributes
+
+Supplying namespace prefixes and an `xsi` mapping should emit the expected `xmlns:*` declarations plus supported schema attributes without mutating the caller input.
+
+### Xml namespace inputs are not mutated across calls
+
+Reusing one `xml_namespaces` mapping across multiple `dicttoxml` calls should return identical XML each time so namespace declarations never accumulate on the shared dict.

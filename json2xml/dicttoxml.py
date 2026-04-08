@@ -641,7 +641,7 @@ def dicttoxml(
     item_wrap: bool = True,
     item_func: Callable[[str], str] = default_item_func,
     cdata: bool = False,
-    xml_namespaces: dict[str, Any] = {},
+    xml_namespaces: dict[str, Any] | None = None,
     list_headers: bool = False,
     xpath_format: bool = False,
 ) -> bytes:
@@ -797,6 +797,7 @@ def dicttoxml(
 
     output = []
     namespace_str = ""
+    xml_namespaces = xml_namespaces or {}
     for prefix in xml_namespaces:
         if prefix == 'xsi':
             for schema_att in xml_namespaces[prefix]:

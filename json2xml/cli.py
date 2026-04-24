@@ -43,10 +43,10 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Any
 
 from json2xml import __version__
 from json2xml.json2xml import Json2xml
+from json2xml.types import JSONValue
 from json2xml.utils import (
     JSONReadError,
     StringReadError,
@@ -230,7 +230,7 @@ Examples:
 
 
 # @lat: [[behavior#Input readers]]
-def read_input(args: argparse.Namespace) -> dict[str, Any] | list[Any]:
+def read_input(args: argparse.Namespace) -> JSONValue:
     """
     Read JSON input from the specified source.
 
@@ -278,7 +278,7 @@ def read_input(args: argparse.Namespace) -> dict[str, Any] | list[Any]:
     sys.exit(1)
 
 
-def read_from_stdin() -> dict[str, Any] | list[Any]:
+def read_from_stdin() -> JSONValue:
     """
     Read JSON from standard input.
 

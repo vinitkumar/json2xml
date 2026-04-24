@@ -677,6 +677,35 @@ class TestDict2xml:
         assert new_key == "key"
         assert new_attr == {"name": "<invalid>key"}
 
+    def test_dicttoxml_val_none_emits_empty_element(self) -> None:
+        """Test @val=None serializes as empty text without leaking Python's repr."""
+        result = dicttoxml.dicttoxml(
+            {"field": {"@attrs": {"source": "api"}, "@val": None}},
+            root=False,
+            attr_type=False,
+        )
+
+        assert result == b'<field source="api"></field>'
+        assert b"None" not in result
+
+    def test_dicttoxml_val_bool_serializes_lowercase(self) -> None:
+        """Test @val booleans serialize as lowercase XML text with attributes intact."""
+        result = dicttoxml.dicttoxml(
+            {
+                "active": {"@attrs": {"flag": "yes"}, "@val": True},
+                "disabled": {"@attrs": {"flag": "no"}, "@val": False},
+            },
+            root=False,
+            attr_type=False,
+        )
+
+        assert result == (
+            b'<active flag="yes">true</active>'
+            b'<disabled flag="no">false</disabled>'
+        )
+        assert b"True" not in result
+        assert b"False" not in result
+
     # @lat: [[tests#Conversion behavior#Special attributes do not mutate input]]
     def test_dicttoxml_does_not_mutate_special_attribute_input(self) -> None:
         """Test @attrs and @val conversion leaves caller data untouched."""

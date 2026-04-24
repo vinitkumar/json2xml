@@ -12,7 +12,7 @@ Library callers usually construct [[json2xml/json2xml.py#Json2xml]] with a decod
 
 The pure Python serializer recursively maps Python values to XML elements, attributes, and text while preserving the project-specific options around wrappers, list handling, and type metadata.
 
-[[json2xml/dicttoxml.py#dicttoxml]] is the public serializer. It handles the XML declaration, root wrapper, namespace emission, XPath mode, and then routes nested values through helper functions such as [[json2xml/dicttoxml.py#convert]], [[json2xml/dicttoxml.py#convert_dict]], and [[json2xml/dicttoxml.py#convert_list]]. [[json2xml/dicttoxml.py#get_xml_type]] and [[json2xml/dicttoxml.py#convert]] accept broad caller input and classify unsupported values at runtime, so tests can probe failure paths without lying to the type checker. Invalid XML names are normalized by [[json2xml/dicttoxml.py#make_valid_xml_name]] instead of crashing immediately on user keys.
+[[json2xml/dicttoxml.py#dicttoxml]] is the public serializer. It handles the XML declaration, root wrapper, namespace emission, XPath mode, and then routes nested values through helper functions such as [[json2xml/dicttoxml.py#convert]], [[json2xml/dicttoxml.py#convert_dict]], and [[json2xml/dicttoxml.py#convert_list]]. [[json2xml/dicttoxml.py#get_xml_type]] and [[json2xml/dicttoxml.py#convert]] accept broad caller input and classify unsupported values at runtime, so tests can probe failure paths without lying to the type checker. Invalid XML names are normalized by [[json2xml/dicttoxml.py#make_valid_xml_name]] instead of crashing immediately on user keys, and special `@attrs`/`@val` handling avoids mutating caller data.
 
 ## Backend selection
 

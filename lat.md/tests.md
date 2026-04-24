@@ -18,6 +18,14 @@ When both URL and string inputs are present, the CLI should read from the URL fi
 
 When the positional input is `-`, the CLI should read stdin instead of trying to open a file literally named `-`.
 
+## Input readers
+
+These tests verify the concrete reader helpers against realistic source behavior so parsing and error wrapping stay aligned with production use.
+
+### URL reader uses real HTTP and wraps failures
+
+URL input should read valid JSON over HTTP and wrap status, network, and decoding failures in `URLReadError`.
+
 ## Conversion behavior
 
 These tests pin the XML shapes that matter most for interoperability, especially the modes that intentionally diverge from the default serializer.
@@ -41,3 +49,19 @@ Supplying namespace prefixes and an `xsi` mapping should emit the expected `xmln
 ### Xml namespace inputs are not mutated across calls
 
 Reusing one `xml_namespaces` mapping across multiple `dicttoxml` calls should return identical XML each time so namespace declarations never accumulate on the shared dict.
+
+### Falsy JSON values convert to XML
+
+Falsy JSON values such as empty objects, empty arrays, zero, false, and empty strings should convert through the public API instead of being treated as missing data.
+
+### Special attributes do not mutate input
+
+Converting dictionaries that use `@attrs` and `@val` should preserve the caller's original data so objects can be reused safely.
+
+### Invalid XML names normalize without double escaping
+
+Invalid element names should fall back to `<key name="...">` with the original name escaped exactly once in the emitted attribute.
+
+### Flat suffix never creates invalid XML tags
+
+Keys ending in `@flat` should keep their flattening behavior where supported and must never leak the suffix into scalar or dict element names.

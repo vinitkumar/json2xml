@@ -1,3 +1,4 @@
+import copy
 import datetime
 import numbers
 from typing import TYPE_CHECKING, Any
@@ -674,7 +675,47 @@ class TestDict2xml:
         attr: dict[str, Any] = {}
         new_key, new_attr = dicttoxml.make_valid_xml_name(key, attr)
         assert new_key == "key"
-        assert new_attr == {"name": "&lt;invalid&gt;key"}
+        assert new_attr == {"name": "<invalid>key"}
+
+    # @lat: [[tests#Conversion behavior#Special attributes do not mutate input]]
+    def test_dicttoxml_does_not_mutate_special_attribute_input(self) -> None:
+        """Test @attrs and @val conversion leaves caller data untouched."""
+        data: dict[str, Any] = {
+            "product": {
+                "@attrs": {"sku": "bike-1"},
+                "@val": "Road bike",
+            },
+            "items": [
+                {
+                    "@attrs": {"position": "1"},
+                    "@val": 42,
+                }
+            ],
+        }
+        original = copy.deepcopy(data)
+
+        result = dicttoxml.dicttoxml(data, root=False, attr_type=False)
+
+        assert result == (
+            b'<product sku="bike-1">Road bike</product>'
+            b'<items><item position="1">42</item></items>'
+        )
+        assert data == original
+
+    # @lat: [[tests#Conversion behavior#Invalid XML names normalize without double escaping]]
+    def test_invalid_xml_name_fallback_escapes_name_attribute_once(self) -> None:
+        """Test fallback name attributes are escaped once at emission time."""
+        result = dicttoxml.dicttoxml({"a&b": "value"}, root=False, attr_type=False)
+        assert result == b'<key name="a&amp;b">value</key>'
+
+    # @lat: [[tests#Conversion behavior#Flat suffix never creates invalid XML tags]]
+    def test_flat_suffix_on_scalar_and_dict_keys_stays_well_formed(self) -> None:
+        """Test @flat suffix keys do not leak into scalar or dict element names."""
+        scalar = dicttoxml.dicttoxml({"name@flat": "Bike"}, root=False, attr_type=False)
+        nested = dicttoxml.dicttoxml({"item@flat": {"name": "Bike"}}, root=False, attr_type=False)
+
+        assert scalar == b"<name>Bike</name>"
+        assert nested == b"<item><name>Bike</name></item>"
 
     def test_dict2xml_str_invalid_type(self) -> None:
         """Test dict2xml_str with invalid type."""

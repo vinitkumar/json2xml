@@ -6,13 +6,13 @@ This file captures the observable conversion and input rules that matter more th
 
 The input helpers convert files, strings, URLs, and stdin into Python data structures while surfacing source-specific errors to callers.
 
-[[json2xml/utils.py#readfromjson]] wraps file and JSON decoding failures in `JSONReadError`. [[json2xml/utils.py#readfromstring]] accepts unknown caller input so invalid-type tests can call it honestly, then rejects non-string inputs and malformed JSON with `StringReadError`. [[json2xml/utils.py#readfromurl]] performs a GET request and raises `URLReadError` when the HTTP status is not `200`.
+[[json2xml/utils.py#readfromjson]] wraps file and JSON decoding failures in `JSONReadError`. [[json2xml/utils.py#readfromstring]] accepts unknown caller input so invalid-type tests can call it honestly, then rejects non-string inputs and malformed JSON with `StringReadError`. [[json2xml/utils.py#readfromurl]] performs a bounded GET request and raises `URLReadError` for network, non-200, decoding, and JSON parse failures.
 
 ## Conversion output
 
 Default output includes an XML declaration, wraps content in `all`, pretty prints the document, and annotates elements with their source type unless callers disable those features.
 
-[[json2xml/json2xml.py#Json2xml#to_xml]] calls [[json2xml/dicttoxml.py#dicttoxml]] with the configured wrapper, root, `attr_type`, `item_wrap`, `cdata`, and `list_headers` options. When `item_wrap=False`, list values repeat the parent tag instead of creating `<item>` children. When `pretty=False`, the library returns the serializer bytes directly.
+[[json2xml/json2xml.py#Json2xml#to_xml]] calls [[json2xml/dicttoxml.py#dicttoxml]] with the configured wrapper, root, `attr_type`, `item_wrap`, `cdata`, and `list_headers` options. It treats only `None` as absent input, so falsy JSON values still serialize. When `item_wrap=False`, list values repeat the parent tag instead of creating `<item>` children. When `pretty=False`, the library returns the serializer bytes directly.
 
 The Rust fast path in [[rust/src/lib.rs#write_dict_contents]] and [[rust/src/lib.rs#write_list_contents]] mirrors those Python list-wrapper rules. `list_headers=True` suppresses the outer list container and repeats the parent tag only for nested dict items, while primitive items still use the same scalar tags that Python emits.
 

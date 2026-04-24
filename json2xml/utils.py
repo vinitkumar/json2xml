@@ -1,7 +1,14 @@
-"""Utility methods for converting XML data to dictionary from various sources."""
+"""Utility methods for reading JSON data from various sources."""
+from __future__ import annotations
+
 import json
 
 import urllib3
+
+from .types import JSONValue
+
+DEFAULT_URL_TIMEOUT = urllib3.Timeout(connect=5.0, read=30.0)
+_HTTP = urllib3.PoolManager()
 
 
 class JSONReadError(Exception):
@@ -25,31 +32,42 @@ class StringReadError(Exception):
 
 
 # @lat: [[behavior#Input readers]]
-def readfromjson(filename: str) -> dict[str, str]:
-    """Reads a JSON file and returns a dictionary."""
+def readfromjson(filename: str) -> JSONValue:
+    """Read JSON data from a file."""
     try:
         with open(filename, encoding="utf-8") as jsondata:
             return json.load(jsondata)
-    except ValueError:
-        raise JSONReadError("Invalid JSON File")
-    except OSError:
-        raise JSONReadError("Invalid JSON File")
+    except (ValueError, OSError) as error:
+        raise JSONReadError("Invalid JSON File") from error
 
 
-def readfromurl(url: str, params: dict[str, str] | None = None) -> dict[str, str]:
-    """Loads JSON data from a URL and returns a dictionary."""
-    http = urllib3.PoolManager()
-    response = http.request("GET", url, fields=params)
-    if response.status == 200:
-        return json.loads(response.data.decode('utf-8'))
-    raise URLReadError("URL is not returning correct response")
+def readfromurl(url: str, params: dict[str, str] | None = None) -> JSONValue:
+    """Load JSON data from a URL."""
+    try:
+        response = _HTTP.request(
+            "GET",
+            url,
+            fields=params,
+            timeout=DEFAULT_URL_TIMEOUT,
+            retries=False,
+        )
+    except urllib3.exceptions.HTTPError as error:
+        raise URLReadError("URL could not be read") from error
+
+    if response.status != 200:
+        raise URLReadError("URL is not returning correct response")
+
+    try:
+        return json.loads(response.data.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise URLReadError("URL did not return valid JSON") from error
 
 
-def readfromstring(jsondata: object) -> dict[str, str]:
-    """Loads JSON data from a string and returns a dictionary."""
+def readfromstring(jsondata: object) -> JSONValue:
+    """Load JSON data from a string."""
     if not isinstance(jsondata, str):
         raise StringReadError("Input is not a proper JSON string")
     try:
         return json.loads(jsondata)
-    except ValueError:
-        raise StringReadError("Input is not a proper JSON string")
+    except ValueError as error:
+        raise StringReadError("Input is not a proper JSON string") from error

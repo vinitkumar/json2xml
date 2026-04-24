@@ -20,6 +20,12 @@ The fast-path module prefers the Rust extension when it can preserve Python sema
 
 [[json2xml/dicttoxml_fast.py#dicttoxml]] uses the Rust backend only when optional features such as `ids`, custom `item_func`, XML namespaces, XPath mode, or special `@` keys are not involved. A local stub for the optional `json2xml_rs` module keeps static analysis aligned with that fallback design, so type checking still passes when the extension is not installed. This keeps fast installs fast without letting the optimized path silently change behavior.
 
+## Performance benchmarks
+
+The benchmark docs record measured implementation tradeoffs so users can choose between Python, Rust, Go, and Zig without guessing.
+
+The April 2026 benchmark on Apple Silicon shows the Rust extension as the best option for Python library calls, with 57-129x speedups over pure Python and no process overhead. Go and Zig remain useful for native CLI workflows where startup cost is acceptable.
+
 ## CLI entrypoint
 
 The CLI is a thin adapter that parses options, resolves one input source, and forwards those options into the same converter used by the library API.

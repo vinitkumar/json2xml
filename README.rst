@@ -43,7 +43,7 @@ Installation
 
     pip install json2xml
 
-**With Native Rust Acceleration (up to 149x faster)**
+**With Native Rust Acceleration (up to 129x faster)**
 
 For maximum performance, install the optional Rust extension:
 
@@ -55,7 +55,7 @@ For maximum performance, install the optional Rust extension:
     # Or install the Rust extension separately
     pip install json2xml-rs
 
-The Rust extension provides **75-149x faster** conversion compared to pure Python. It's automatically used when available, with seamless fallback to pure Python.
+The Rust extension provides **57-129x faster** conversion compared to pure Python in the latest benchmark. It's automatically used when available, with seamless fallback to pure Python.
 
 **As a CLI Tool**
 
@@ -301,7 +301,7 @@ Using tools directly:
 
 **Rust Extension Development**
 
-The optional Rust extension (``json2xml-rs``) provides up to 149x faster performance. To develop or build the Rust extension:
+The optional Rust extension (``json2xml-rs``) provides up to 129x faster performance in the latest benchmark. To develop or build the Rust extension:
 
 Prerequisites:
 
@@ -428,21 +428,21 @@ For users who need maximum performance within Python, json2xml includes an optio
      - Rust Extension
      - Speedup
    * - **Small JSON** (47 bytes)
-     - 78µs
-     - 1.05µs
-     - **75x**
+     - 31.49µs
+     - 0.55µs
+     - **56.8x**
    * - **Medium JSON** (3.2 KB)
-     - 2.15ms
-     - 15µs
-     - **139x**
+     - 1.69ms
+     - 16.15µs
+     - **105.0x**
    * - **Large JSON** (32 KB)
-     - 22ms
-     - 151µs
-     - **146x**
+     - 17.97ms
+     - 168.21µs
+     - **106.8x**
    * - **Very Large JSON** (323 KB)
-     - 219ms
-     - 1.47ms
-     - **149x**
+     - 183.33ms
+     - 1.42ms
+     - **129.0x**
 
 **Usage with Rust Extension:**
 
@@ -472,7 +472,7 @@ For other platforms, the pure Python version is used automatically.
 Performance Benchmarks
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Comprehensive benchmarks comparing all implementations (Apple Silicon, January 2026):
+Comprehensive benchmarks comparing all implementations (Apple Silicon, macOS 26.4.1, Python 3.14.4, April 2026):
 
 .. list-table::
    :header-rows: 1
@@ -485,40 +485,40 @@ Comprehensive benchmarks comparing all implementations (Apple Silicon, January 2
      - Zig
      - Best
    * - **Small** (47B)
-     - 40µs
-     - 1.5µs
-     - 4.6ms
-     - 3.7ms
-     - Rust (28x)
+     - 31.49µs
+     - 0.55µs
+     - 4.09ms
+     - 2.02ms
+     - Rust (56.8x)
    * - **Medium** (3.2KB)
-     - 2.1ms
-     - 71µs
-     - 4.1ms
-     - 3.3ms
-     - Rust (30x)
+     - 1.69ms
+     - 16.15µs
+     - 4.07ms
+     - 2.09ms
+     - Rust (105.0x)
    * - **Large** (32KB)
-     - 21ms
-     - 740µs
-     - 4ms
-     - 6.1ms
-     - Rust (28x)
+     - 17.97ms
+     - 168.21µs
+     - 4.10ms
+     - 2.42ms
+     - Rust (106.8x)
    * - **Very Large** (323KB)
-     - 213ms
-     - 7.5ms
-     - 4.4ms
-     - 33ms
-     - Go (48x)
+     - 183.33ms
+     - 1.42ms
+     - 4.20ms
+     - 5.12ms
+     - Rust (129.0x)
 
 **Key Findings:**
 
-- **Rust extension**: ~28x faster than Python, zero overhead (best for Python users)
-- **Go CLI**: 48x faster for large files (300KB+), but has ~4ms startup overhead
-- **Zig CLI**: 3-6x faster for medium-large files
+- **Rust extension**: 57-129x faster than Python, zero process overhead (best for Python users)
+- **Go CLI**: 43.6x faster for very large files (300KB+), but has ~4ms startup overhead
+- **Zig CLI**: 7.4x faster for large files and 35.8x faster for very large files, with ~2ms startup overhead
 
 **Recommendation by Use Case:**
 
-- **Python library calls**: Use ``pip install json2xml[fast]`` (Rust, 28x faster)
-- **Large file CLI processing**: Use `json2xml-go <https://github.com/vinitkumar/json2xml-go>`_ (Go, 48x for 300KB+)
+- **Python library calls**: Use ``pip install json2xml[fast]`` (Rust, up to 129x faster)
+- **Large file CLI processing**: Use `json2xml-go <https://github.com/vinitkumar/json2xml-go>`_ or `json2xml-zig <https://github.com/vinitkumar/json2xml-zig>`_ depending on your workload
 - **Pure Python required**: Use ``pip install json2xml``
 
 For detailed benchmarks, see `BENCHMARKS.md <https://github.com/vinitkumar/json2xml/blob/master/BENCHMARKS.md>`_.
@@ -529,9 +529,9 @@ Other Implementations
 
 This library is also available in other languages:
 
-- **Rust**: `json2xml-rs <https://pypi.org/project/json2xml-rs/>`_ - 28x faster, Python extension via PyO3
-- **Go**: `json2xml-go <https://github.com/vinitkumar/json2xml-go>`_ - 48x faster for large files, native CLI
-- **Zig**: `json2xml-zig <https://github.com/vinitkumar/json2xml-zig>`_ - 6x faster, native CLI
+- **Rust**: `json2xml-rs <https://pypi.org/project/json2xml-rs/>`_ - up to 129x faster, Python extension via PyO3
+- **Go**: `json2xml-go <https://github.com/vinitkumar/json2xml-go>`_ - 43.6x faster for very large files, native CLI
+- **Zig**: `json2xml-zig <https://github.com/vinitkumar/json2xml-zig>`_ - 35.8x faster for very large files, native CLI
 
 
 Help and Support to maintain this project

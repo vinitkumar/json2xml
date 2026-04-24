@@ -54,7 +54,6 @@ fast = ["json2xml-rs>=0.1.0"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-xvs = true
 addopts = "--cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term"
 [tool.ruff]
 exclude = [

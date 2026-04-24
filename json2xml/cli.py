@@ -43,10 +43,11 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Any
+from typing import NoReturn
 
 from json2xml import __version__
 from json2xml.json2xml import Json2xml
+from json2xml.types import JSONValue
 from json2xml.utils import (
     JSONReadError,
     StringReadError,
@@ -58,6 +59,12 @@ from json2xml.utils import (
 
 AUTHOR = "Vinit Kumar"
 EMAIL = "mail@vinitkumar.me"
+
+
+def exit_with_error(message: str) -> NoReturn:
+    """Print an error message and terminate CLI processing."""
+    print(message, file=sys.stderr)
+    raise SystemExit(1)
 
 
 # @lat: [[architecture#CLI entrypoint]]
@@ -230,7 +237,7 @@ Examples:
 
 
 # @lat: [[behavior#Input readers]]
-def read_input(args: argparse.Namespace) -> dict[str, Any] | list[Any]:
+def read_input(args: argparse.Namespace) -> JSONValue:
     """
     Read JSON input from the specified source.
 
@@ -250,15 +257,13 @@ def read_input(args: argparse.Namespace) -> dict[str, Any] | list[Any]:
         try:
             return readfromurl(args.url)
         except URLReadError as e:
-            print(f"Error reading from URL: {e}", file=sys.stderr)
-            sys.exit(1)
+            exit_with_error(f"Error reading from URL: {e}")
 
     if args.string:
         try:
             return readfromstring(args.string)
         except StringReadError as e:
-            print(f"Error parsing JSON string: {e}", file=sys.stderr)
-            sys.exit(1)
+            exit_with_error(f"Error parsing JSON string: {e}")
 
     if args.input_file:
         if args.input_file == "-":
@@ -267,18 +272,16 @@ def read_input(args: argparse.Namespace) -> dict[str, Any] | list[Any]:
         try:
             return readfromjson(args.input_file)
         except JSONReadError as e:
-            print(f"Error reading JSON file: {e}", file=sys.stderr)
-            sys.exit(1)
+            exit_with_error(f"Error reading JSON file: {e}")
 
     # Check if there's data on stdin
     if not sys.stdin.isatty():
         return read_from_stdin()
 
-    print("Error: No input provided. Use -h for help.", file=sys.stderr)
-    sys.exit(1)
+    exit_with_error("Error: No input provided. Use -h for help.")
 
 
-def read_from_stdin() -> dict[str, Any] | list[Any]:
+def read_from_stdin() -> JSONValue:
     """
     Read JSON from standard input.
 
@@ -291,12 +294,10 @@ def read_from_stdin() -> dict[str, Any] | list[Any]:
     try:
         json_str = sys.stdin.read().strip()
         if not json_str:
-            print("Error: Empty input", file=sys.stderr)
-            sys.exit(1)
+            exit_with_error("Error: Empty input")
         return readfromstring(json_str)
     except StringReadError as e:
-        print(f"Error parsing JSON from stdin: {e}", file=sys.stderr)
-        sys.exit(1)
+        exit_with_error(f"Error parsing JSON from stdin: {e}")
 
 
 def write_output(output: str | bytes, output_file: str | None) -> None:

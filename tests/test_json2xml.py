@@ -4,6 +4,7 @@
 
 import json
 from pyexpat import ExpatError
+from typing import Any
 
 import pytest
 import xmltodict
@@ -77,6 +78,22 @@ class TestJson2xml:
         data = None
         xmldata = json2xml.Json2xml(data).to_xml()
         assert xmldata is None
+
+    # @lat: [[tests#Conversion behavior#Falsy JSON values convert to XML]]
+    @pytest.mark.parametrize(
+        ("data", "expected"),
+        [
+            ({}, b"<all></all>"),
+            ([], b"<all></all>"),
+            (0, b"<item type=\"int\">0</item>"),
+            (False, b"<item type=\"bool\">false</item>"),
+            ("", b"<item type=\"str\"></item>"),
+        ],
+    )
+    def test_json_to_xml_falsy_values(self, data: Any, expected: bytes) -> None:
+        xmldata = json2xml.Json2xml(data, pretty=False).to_xml()
+        assert isinstance(xmldata, bytes)
+        assert expected in xmldata
 
     def test_custom_wrapper_and_indent(self) -> None:
         data = readfromstring(

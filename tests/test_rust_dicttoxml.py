@@ -360,6 +360,27 @@ class TestRustVsPythonCompatibility:
         rust, python = self.compare_outputs(data)
         assert rust == python
 
+    # @lat: [[tests#Conversion behavior#Rust and Python XML name parity]]
+    @pytest.mark.parametrize(
+        "data",
+        [
+            {"123": "value"},
+            {"my key": "value"},
+            {"a&b": "value"},
+            {"a<b": "value"},
+            {'quote"key': "value"},
+            {"apost'key": "value"},
+            {"ns1:node1": "value"},
+            {"名前": "太郎"},
+            {"-bad": "value"},
+            {"": "value"},
+        ],
+    )
+    def test_xml_name_normalization_matches(self, data: dict[str, str]):
+        """Test Rust and Python agree on supported XML name normalization cases."""
+        rust, python = self.compare_outputs(data, root=False, attr_type=False)
+        assert rust == python
+
 
 class TestFastDicttoxmlWrapper:
     """Test the dicttoxml_fast wrapper module."""

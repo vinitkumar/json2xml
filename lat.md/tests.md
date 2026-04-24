@@ -65,3 +65,7 @@ Invalid element names should fall back to `<key name="...">` with the original n
 ### Flat suffix never creates invalid XML tags
 
 Keys ending in `@flat` should keep their flattening behavior where supported and must never leak the suffix into scalar or dict element names.
+
+### Rust and Python XML name parity
+
+The Rust accelerator and Python serializer should agree on supported XML name normalization cases so fast-path output does not drift silently.

@@ -1,4 +1,11 @@
 
+6.0.7 / 2026-04-26
+==================
+
+  * fix: handle JSON conversion edge cases and improve URL reader robustness (#284)
+  * chore(deps-dev): bump pytest from 9.0.1 to 9.0.3 (#282)
+
+
 6.0.6 / 2026-04-08
 ==================
 

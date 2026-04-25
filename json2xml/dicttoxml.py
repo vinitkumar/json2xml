@@ -102,7 +102,7 @@ def get_xml_type(val: Any) -> str:
     return type(val).__name__
 
 
-def escape_xml(s: str | int | float | numbers.Number) -> str:
+def escape_xml(s: str | int | float | numbers.Number | None) -> str:
     """
     Escape a string for use in XML.
 
@@ -155,32 +155,24 @@ def key_is_valid_xml(key: str) -> bool:
 
 
 def make_valid_xml_name(key: str, attr: dict[str, Any]) -> tuple[str, dict[str, Any]]:
-    """Tests an XML name and fixes it if invalid"""
-    key = escape_xml(key)
-    # nothing happens at escape_xml if attr is not a string, we don't
-    # need to pass it to the method at all.
-    # attr = escape_xml(attr)
+    """Return a valid XML element name and carry the original key as metadata when needed."""
+    key = str(key)
 
-    # pass through if key is already valid
     if key_is_valid_xml(key):
         return key, attr
 
-    # prepend a lowercase n if the key is numeric
-    if isinstance(key, int) or key.isdigit():
+    if key.isdigit():
         return f"n{key}", attr
 
-    # replace spaces with underscores if that fixes the problem
-    if key_is_valid_xml(key.replace(" ", "_")):
-        return key.replace(" ", "_"), attr
+    key_with_underscores = key.replace(" ", "_")
+    if key_is_valid_xml(key_with_underscores):
+        return key_with_underscores, attr
 
-    # allow namespace prefixes + ignore @flat in key
-    if key_is_valid_xml(key.replace(":", "").replace("@flat", "")):
+    if ":" in key and key_is_valid_xml(key.replace(":", "")):
         return key, attr
 
-    # key is still invalid - move it into a name attribute
     attr["name"] = key
-    key = "key"
-    return key, attr
+    return "key", attr
 
 
 def wrap_cdata(s: str | int | float | numbers.Number) -> str:
@@ -345,13 +337,20 @@ def dict2xml_str(
 
     if attr_type:
         attr["type"] = get_xml_type(item)
-    val_attr: dict[str, str] = item.pop("@attrs", attr)  # update attr with custom @attr if exists
-    rawitem = item["@val"] if "@val" in item else item
+    val_attr = dict(item["@attrs"]) if "@attrs" in item else dict(attr)
+    if "@val" in item:
+        rawitem = item["@val"]
+    elif "@attrs" in item:
+        rawitem = {key: value for key, value in item.items() if key != "@attrs"}
+    else:
+        rawitem = item
     if is_primitive_type(rawitem):
-        if isinstance(rawitem, dict):
+        if rawitem is None:
+            subtree = ""
+        elif isinstance(rawitem, bool):
+            subtree = str(rawitem).lower()
+        else:
             subtree = escape_xml(str(rawitem))
-        if isinstance(rawitem, str):
-            subtree = escape_xml(rawitem)
     else:
         # we can not use convert_dict, because rawitem could be non-dict
         subtree = convert(
@@ -423,8 +422,10 @@ def convert_dict(
 
     for key, val in obj.items():
         attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
+        key_is_flat = isinstance(key, str) and key.endswith("@flat")
+        xml_key = key[:-5] if key_is_flat else key
 
-        key, attr = make_valid_xml_name(key, attr)
+        key, attr = make_valid_xml_name(xml_key, attr)
 
         # since bool is also a subtype of number.Number and int, the check for bool
         # never comes and hence we get wrong value for the xml type bool
@@ -468,7 +469,7 @@ def convert_dict(
                     item=val,
                     item_func=item_func,
                     cdata=cdata,
-                    item_name=key,
+                    item_name=f"{key}@flat" if key_is_flat else key,
                     item_wrap=item_wrap,
                     list_headers=list_headers
                 )

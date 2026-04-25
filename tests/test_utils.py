@@ -1,7 +1,10 @@
 """Test module for json2xml.utils functionality."""
 import json
+import socket
 import tempfile
-from typing import TYPE_CHECKING
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import TYPE_CHECKING, ClassVar
 from unittest.mock import Mock, patch
 
 import pytest
@@ -17,10 +20,52 @@ from json2xml.utils import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from _pytest.capture import CaptureFixture
     from _pytest.fixtures import FixtureRequest
     from _pytest.logging import LogCaptureFixture
     from _pytest.monkeypatch import MonkeyPatch
+
+
+class JsonTestHandler(BaseHTTPRequestHandler):
+    """Tiny HTTP handler for exercising the real URL reader."""
+
+    responses: ClassVar[dict[str, tuple[int, bytes]]] = {
+        "/data.json": (200, b'{"key": "value", "number": 42}'),
+        "/api": (200, b'{"result": "success"}'),
+        "/invalid.json": (200, b"invalid json content"),
+        "/error.json": (500, b'{"error": true}'),
+        "/api.json": (200, b'{"api": "response", "status": "ok"}'),
+    }
+
+    def do_GET(self) -> None:
+        path = self.path.split("?", 1)[0]
+        status, body = self.responses.get(path, (404, b'{"error": "not found"}'))
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format: str, *args: object) -> None:
+        pass
+
+
+@pytest.fixture
+# @lat: [[tests#Input readers#URL reader uses real HTTP and wraps failures]]
+def json_server() -> "Iterator[str]":
+    server = ThreadingHTTPServer(("127.0.0.1", 0), JsonTestHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        host = server.server_address[0]
+        port = server.server_address[1]
+        yield f"http://{host}:{port}"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=1)
 
 
 class TestExceptions:
@@ -109,89 +154,42 @@ class TestReadFromJson:
 class TestReadFromUrl:
     """Test readfromurl function."""
 
-    @patch('json2xml.utils.urllib3.PoolManager')
-    def test_readfromurl_success(self, mock_pool_manager: Mock) -> None:
+    def test_readfromurl_success(self, json_server: str) -> None:
         """Test successful URL reading."""
-        # Mock response
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.data = b'{"key": "value", "number": 42}'
-
-        # Mock PoolManager
-        mock_http = Mock()
-        mock_http.request.return_value = mock_response
-        mock_pool_manager.return_value = mock_http
-
-        result = readfromurl("http://example.com/data.json")
+        result = readfromurl(f"{json_server}/data.json")
 
         assert result == {"key": "value", "number": 42}
-        mock_pool_manager.assert_called_once()
-        mock_http.request.assert_called_once_with("GET", "http://example.com/data.json", fields=None)
 
-    @patch('json2xml.utils.urllib3.PoolManager')
-    def test_readfromurl_success_with_params(self, mock_pool_manager: Mock) -> None:
+    def test_readfromurl_success_with_params(self, json_server: str) -> None:
         """Test successful URL reading with parameters."""
-        # Mock response
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.data = b'{"result": "success"}'
-
-        # Mock PoolManager
-        mock_http = Mock()
-        mock_http.request.return_value = mock_response
-        mock_pool_manager.return_value = mock_http
-
         params = {"param1": "value1", "param2": "value2"}
-        result = readfromurl("http://example.com/api", params=params)
+        result = readfromurl(f"{json_server}/api", params=params)
 
         assert result == {"result": "success"}
-        mock_http.request.assert_called_once_with("GET", "http://example.com/api", fields=params)
 
-    @patch('json2xml.utils.urllib3.PoolManager')
-    def test_readfromurl_http_error(self, mock_pool_manager: Mock) -> None:
+    def test_readfromurl_http_error(self, json_server: str) -> None:
         """Test URL reading with HTTP error status."""
-        # Mock response with error status
-        mock_response = Mock()
-        mock_response.status = 404
-
-        # Mock PoolManager
-        mock_http = Mock()
-        mock_http.request.return_value = mock_response
-        mock_pool_manager.return_value = mock_http
-
         with pytest.raises(URLReadError, match="URL is not returning correct response"):
-            readfromurl("http://example.com/nonexistent.json")
+            readfromurl(f"{json_server}/nonexistent.json")
 
-    @patch('json2xml.utils.urllib3.PoolManager')
-    def test_readfromurl_server_error(self, mock_pool_manager: Mock) -> None:
+    def test_readfromurl_server_error(self, json_server: str) -> None:
         """Test URL reading with server error status."""
-        # Mock response with server error status
-        mock_response = Mock()
-        mock_response.status = 500
-
-        # Mock PoolManager
-        mock_http = Mock()
-        mock_http.request.return_value = mock_response
-        mock_pool_manager.return_value = mock_http
-
         with pytest.raises(URLReadError, match="URL is not returning correct response"):
-            readfromurl("http://example.com/error.json")
+            readfromurl(f"{json_server}/error.json")
 
-    @patch('json2xml.utils.urllib3.PoolManager')
-    def test_readfromurl_invalid_json_response(self, mock_pool_manager: Mock) -> None:
+    def test_readfromurl_invalid_json_response(self, json_server: str) -> None:
         """Test URL reading with invalid JSON response."""
-        # Mock response with invalid JSON
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.data = b'invalid json content'
+        with pytest.raises(URLReadError, match="URL did not return valid JSON"):
+            readfromurl(f"{json_server}/invalid.json")
 
-        # Mock PoolManager
-        mock_http = Mock()
-        mock_http.request.return_value = mock_response
-        mock_pool_manager.return_value = mock_http
+    def test_readfromurl_network_error(self) -> None:
+        """Test network failures are wrapped as URLReadError."""
+        with socket.socket() as unused_socket:
+            unused_socket.bind(("127.0.0.1", 0))
+            port = unused_socket.getsockname()[1]
 
-        with pytest.raises(json.JSONDecodeError):
-            readfromurl("http://example.com/invalid.json")
+        with pytest.raises(URLReadError, match="URL could not be read"):
+            readfromurl(f"http://127.0.0.1:{port}/data.json")
 
 
 class TestReadFromString:
@@ -287,22 +285,11 @@ class TestIntegration:
         assert b"<name>test</name>" in xml_result
         assert b"<value>123</value>" in xml_result
 
-    @patch('json2xml.utils.urllib3.PoolManager')
-    def test_readfromurl_then_convert_to_xml(self, mock_pool_manager: Mock) -> None:
+    def test_readfromurl_then_convert_to_xml(self, json_server: str) -> None:
         """Test reading from URL and converting to XML."""
         from json2xml import dicttoxml
 
-        # Mock response
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.data = b'{"api": "response", "status": "ok"}'
-
-        # Mock PoolManager
-        mock_http = Mock()
-        mock_http.request.return_value = mock_response
-        mock_pool_manager.return_value = mock_http
-
-        data = readfromurl("http://example.com/api.json")
+        data = readfromurl(f"{json_server}/api.json")
         xml_result = dicttoxml.dicttoxml(data, attr_type=False, root=False)
 
         assert b"<api>response</api>" in xml_result

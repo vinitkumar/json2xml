@@ -5,6 +5,7 @@ from defusedxml.minidom import parseString
 
 from json2xml import dicttoxml
 
+from .types import JSONValue
 from .utils import InvalidDataError
 
 
@@ -15,7 +16,7 @@ class Json2xml:
     """
     def __init__(
         self,
-        data: dict[str, Any] | list[Any] | None = None,
+        data: JSONValue = None,
         wrapper: str = "all",
         root: bool = True,
         pretty: bool = True,
@@ -41,7 +42,7 @@ class Json2xml:
         """
         Convert to xml using dicttoxml.dicttoxml and then pretty print it.
         """
-        if self.data:
+        if self.data is not None:
             xml_data = dicttoxml.dicttoxml(
                 self.data,
                 root=self.root,

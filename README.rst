@@ -18,13 +18,99 @@ json2xml
 .. image:: https://codecov.io/gh/vinitkumar/json2xml/branch/master/graph/badge.svg?token=Yt2h55eTL2
       :target: https://codecov.io/gh/vinitkumar/json2xml
 
-json2xml is a Python library that allows you to convert JSON data into XML format. It's simple, efficient, and easy to use.
+json2xml is a Python library and CLI for converting JSON data into XML. It is designed for teams that need predictable XML output, Python-first ergonomics, and a faster native path when conversion speed matters.
 
 Documentation: https://json2xml.readthedocs.io.
 
 The library was initially dependent on the `dict2xml` project, but it has now been integrated into json2xml itself. This has led to cleaner code, the addition of types and tests, and overall improved performance.
 
 **Looking for a Go version?** Check out `json2xml-go <https://github.com/vinitkumar/json2xml-go>`_, a Go port of this library with identical features and a native CLI tool.
+
+Why json2xml?
+^^^^^^^^^^^^^
+
+Use json2xml when you need:
+
+* A Python library for turning dictionaries, strings, files, or API responses into XML
+* A command-line tool for quick JSON-to-XML conversion from scripts and terminals
+* Optional Rust acceleration with automatic fallback to the pure Python implementation
+* XPath 3.1 compatible output when standards-friendly XML is required
+* A small, focused project with tests, docs, benchmarks, and multiple native implementation experiments
+
+Quick Start
+^^^^^^^^^^^
+
+Install the Python package:
+
+.. code-block:: console
+
+    pip install json2xml
+
+Use it from Python:
+
+.. code-block:: python
+
+    from json2xml import json2xml
+    from json2xml.utils import readfromstring
+
+    data = readfromstring('{"name": "Ada", "language": "Python"}')
+    print(json2xml.Json2xml(data).to_xml())
+
+Use it from the terminal:
+
+.. code-block:: console
+
+    json2xml-py -s '{"name": "Ada", "language": "Python"}'
+
+Install the accelerated path:
+
+.. code-block:: console
+
+    pip install json2xml[fast]
+
+Performance Snapshot
+^^^^^^^^^^^^^^^^^^^^
+
+The optional Rust extension is the fastest path for Python callers because it avoids process startup overhead and falls back to pure Python when a feature is not supported natively.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 20 20 15
+
+   * - Test Case
+     - Pure Python
+     - Rust Extension
+     - Speedup
+   * - **Small JSON** (47 bytes)
+     - 31.49µs
+     - 0.55µs
+     - **56.8x**
+   * - **Medium JSON** (3.2 KB)
+     - 1.69ms
+     - 16.15µs
+     - **105.0x**
+   * - **Large JSON** (32 KB)
+     - 17.97ms
+     - 168.21µs
+     - **106.8x**
+   * - **Very Large JSON** (323 KB)
+     - 183.33ms
+     - 1.42ms
+     - **129.0x**
+
+See `BENCHMARKS.md <https://github.com/vinitkumar/json2xml/blob/master/BENCHMARKS.md>`_ for the full Python, Rust, Go, and Zig comparison.
+
+Project Roadmap
+^^^^^^^^^^^^^^^
+
+The next phase of json2xml is focused on making the project easier to adopt, benchmark, and contribute to:
+
+* Improve examples for common API, file, and CLI workflows
+* Add clearer contribution paths for docs, CLI polish, and benchmark coverage
+* Keep comparing Python, Rust, Go, and Zig implementations with reproducible benchmarks
+* Continue hardening the Rust extension fallback behavior across platforms
+
+See `ROADMAP.md <https://github.com/vinitkumar/json2xml/blob/master/ROADMAP.md>`_ for more detail.
 
 
 
@@ -538,4 +624,3 @@ Help and Support to maintain this project
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - You can sponsor my work for this plugin here: https://github.com/sponsors/vinitkumar/
-

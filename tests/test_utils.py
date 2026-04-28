@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 class JsonTestHandler(BaseHTTPRequestHandler):
     """Tiny HTTP handler for exercising the real URL reader."""
 
-    responses: ClassVar[dict[str, tuple[int, bytes]]] = {
+    json_responses: ClassVar[dict[str, tuple[int, bytes]]] = {
         "/data.json": (200, b'{"key": "value", "number": 42}'),
         "/api": (200, b'{"result": "success"}'),
         "/invalid.json": (200, b"invalid json content"),
@@ -41,7 +41,7 @@ class JsonTestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         path = self.path.split("?", 1)[0]
-        status, body = self.responses.get(path, (404, b'{"error": "not found"}'))
+        status, body = self.json_responses.get(path, (404, b'{"error": "not found"}'))
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))

@@ -9,6 +9,17 @@ helps, and credit will always be given.
 
 You can contribute in many ways:
 
+Good First Contributions
+------------------------
+
+If you are new to the project, these are useful places to start:
+
+* Improve examples for real-world API responses, files, and command-line usage.
+* Add small tests around conversion options such as wrappers, list handling, CDATA, and XPath output.
+* Improve benchmark documentation or add a reproducible benchmark case.
+* Polish CLI behavior, error messages, and help text.
+* Review the roadmap in ``ROADMAP.md`` and open a focused issue before starting larger changes.
+
 Types of Contributions
 ----------------------
 
@@ -99,7 +110,7 @@ Ready to contribute? Here's how to set up `json2xml` for local development.
 Rust Extension Development
 --------------------------
 
-The ``json2xml-rs`` Rust extension provides ~29x faster performance. If you want to contribute to the Rust extension:
+The ``json2xml-rs`` Rust extension provides ~57-129x faster performance in the current benchmark. If you want to contribute to the Rust extension:
 
 **Prerequisites**
 

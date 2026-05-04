@@ -33,6 +33,52 @@ Here's how to use each method:
     print(json2xml.Json2xml(data).to_xml())
 
 
+Real-world Examples
+-------------------
+
+Convert a JSON API response in Python when another service expects XML:
+
+.. code-block:: python
+
+    from json2xml import json2xml
+
+    api_response = {"user": {"id": 7, "name": "Ada"}, "active": True}
+    print(json2xml.Json2xml(api_response, pretty=False).to_xml().decode("utf-8"))
+
+Output:
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="UTF-8" ?><all><user type="dict"><id type="int">7</id><name type="str">Ada</name></user><active type="bool">true</active></all>
+
+Convert a local JSON export from the shell:
+
+.. code-block:: console
+
+    cat > orders.json <<'JSON'
+    {"orders":[{"id":"A100","total":19.99},{"id":"A101","total":5.5}]}
+    JSON
+    json2xml-py --no-pretty --no-type orders.json
+
+Output:
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="UTF-8" ?><all><orders><item><id>A100</id><total>19.99</total></item><item><id>A101</id><total>5.5</total></item></orders></all>
+
+Convert stdin in a shell pipeline:
+
+.. code-block:: console
+
+    printf '%s\n' '{"event":"deploy","status":"ok"}' | json2xml-py --no-pretty --no-type -
+
+Output:
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="UTF-8" ?><all><event>deploy</event><status>ok</status></all>
+
+
 Constructor Parameters
 ----------------------
 

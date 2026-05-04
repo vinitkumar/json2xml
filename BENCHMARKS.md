@@ -9,6 +9,16 @@ Comprehensive performance comparison between all json2xml implementations.
 - **Python**: 3.14.4
 - **Date**: April 24, 2026
 
+To make new runs comparable, record the same fields for your machine before
+publishing results:
+
+```bash
+python --version
+uname -a
+sw_vers 2>/dev/null || true
+which json2xml-go json2xml-zig 2>/dev/null || true
+```
+
 ### Implementations Tested
 
 | Implementation | Type | Notes |
@@ -114,7 +124,50 @@ go install github.com/vinitkumar/json2xml-go@latest
 
 ## Running the Benchmarks
 
+Run benchmarks from a clean checkout with the project installed in an isolated
+environment. The exact virtual environment tool does not matter; the commands
+below use `uv` because it keeps Python setup reproducible.
+
+### Required Tools
+
+| Tool | Required for | Notes |
+|------|--------------|-------|
+| Python 3.10+ | Pure Python benchmarks | The published run used Python 3.14.4. |
+| Rust toolchain | Rust extension benchmarks | Needed only when building `json2xml_rs` locally. |
+| maturin | Rust extension benchmarks | Builds and installs the PyO3 extension. |
+| json2xml-go | Go CLI benchmarks | Must be on `PATH` as `json2xml-go`. |
+| json2xml-zig | Zig CLI benchmarks | Must be on `PATH` as `json2xml-zig`. |
+
+### Environment Setup
+
+```bash
+uv venv
+source .venv/bin/activate
+uv pip install -e .
+```
+
+For Rust benchmarks, install the extension into the same environment:
+
+```bash
+uv pip install maturin
+cd rust
+maturin develop --release
+cd ..
+```
+
+For native CLI benchmarks, install the external tools and verify that the
+commands are visible:
+
+```bash
+go install github.com/vinitkumar/json2xml-go@latest
+which json2xml-go
+which json2xml-zig
+```
+
 ### Comprehensive Benchmark (All Implementations)
+
+Runs pure Python, Rust if `json2xml_rs` imports successfully, Go if
+`json2xml-go` is on `PATH`, and Zig if `json2xml-zig` is on `PATH`.
 
 ```bash
 python benchmark_all.py
@@ -122,15 +175,33 @@ python benchmark_all.py
 
 ### Rust vs Python Only
 
+Runs the library-call benchmark for pure Python and the PyO3 Rust extension.
+If the extension is not installed, the script prints a warning and reports
+Python-only results for reference.
+
 ```bash
 python benchmark_rust.py
 ```
 
 ### Multi-Python Version Benchmark
 
+Creates per-interpreter virtual environments under `.benchmark_venvs/` and
+compares the hard-coded Python paths in `benchmark_multi_python.py`. Edit
+`PYTHON_VERSIONS` in that script or install the listed interpreters before
+running it. Set `JSON2XML_GO_CLI=/path/to/json2xml-go` if the Go binary is not
+named `json2xml-go` on `PATH`.
+
 ```bash
 python benchmark_multi_python.py
 ```
+
+### Interpreting CLI Numbers
+
+The Go and Zig rows measure full process startup plus conversion because
+`benchmark_all.py` invokes those tools with `subprocess.run`. That is the right
+measurement for shell workflows, but it is not directly comparable to Python or
+Rust library calls for tiny inputs. For small JSON payloads, process startup can
+dominate the result; for large payloads, conversion throughput matters more.
 
 ## Related Projects
 

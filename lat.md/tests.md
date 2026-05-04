@@ -81,3 +81,11 @@ Keys ending in `@flat` should keep their flattening behavior where supported and
 ### Rust and Python XML name parity
 
 The Rust accelerator and Python serializer should agree on supported XML name normalization cases so fast-path output does not drift silently.
+
+### Fast wrapper uses Rust for supported options
+
+When the optional Rust callable is available and the selected options are Rust-backed, the fast wrapper should dispatch directly to that callable.
+
+### Special keys force Python fallback
+
+Special dictionary keys such as `@attrs` and `@val` should bypass the Rust callable so the Python serializer can preserve legacy attribute semantics.

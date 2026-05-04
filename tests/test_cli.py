@@ -187,7 +187,7 @@ class TestCLI:
             text=True,
         )
         assert result.returncode == 1
-        assert "Error" in result.stderr
+        assert "Invalid JSON in --string input" in result.stderr
 
     def test_no_input_error(self) -> None:
         """Test error when no input is provided."""
@@ -201,6 +201,7 @@ class TestCLI:
         )
         # Should fail with no input error
         assert result.returncode == 1
+        assert "Empty stdin" in result.stderr
 
     def test_list_input(self) -> None:
         """Test handling of JSON array input."""
@@ -267,7 +268,7 @@ class TestCLI:
             text=True,
         )
         assert result.returncode == 1
-        assert "Empty input" in result.stderr or "Error" in result.stderr
+        assert "Empty stdin" in result.stderr
 
     def test_stdin_whitespace_only(self) -> None:
         """Test error handling when stdin contains only whitespace."""
@@ -303,8 +304,10 @@ class TestCLI:
             text=True,
         )
         assert result.returncode == 1
-        assert "Error" in result.stderr
+        assert "JSON file not found" in result.stderr
+        assert "use - to read JSON from stdin" in result.stderr
 
+    # @lat: [[tests#CLI failure messages#Invalid file JSON names the source]]
     def test_invalid_json_file(self) -> None:
         """Test error handling for file with invalid JSON content."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -318,7 +321,8 @@ class TestCLI:
             )
 
         assert result.returncode == 1
-        assert "Error" in result.stderr
+        assert "Could not parse JSON file" in result.stderr
+        assert str(json_file) in result.stderr
 
     def test_output_file_permission_error(self) -> None:
         """Test error handling when output file cannot be written."""
@@ -553,8 +557,9 @@ class TestCLIUnitTests:
             assert exc_info.value.code == 1
 
         captured = capsys.readouterr()
-        assert "Error reading JSON file" in captured.err
+        assert "JSON file not found" in captured.err
 
+    # @lat: [[tests#CLI failure messages#No input is actionable]]
     def test_read_input_no_input_tty(self, capsys: CaptureFixture[str]) -> None:
         """Test read_input exits when no input provided and stdin is a tty."""
         with patch("sys.stdin.isatty", return_value=True):

@@ -36,7 +36,7 @@ Running the CLI without JSON should fail with a message that tells users to pass
 
 ### Invalid file JSON names the source
 
-Malformed JSON read from a file should mention that file path so users can distinguish file parsing failures from string, stdin, or conversion failures.
+Malformed JSON read from an existing file should mention that file path so users can distinguish file parsing failures from missing-file, string, stdin, or conversion failures.
 
 ## Conversion behavior
 

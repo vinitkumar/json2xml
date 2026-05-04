@@ -559,6 +559,31 @@ class TestCLIUnitTests:
         captured = capsys.readouterr()
         assert "JSON file not found" in captured.err
 
+    def test_read_input_existing_json_file_parse_error(self, capsys: CaptureFixture[str]) -> None:
+        """Test read_input keeps parse failures distinct from missing file failures."""
+        from json2xml.utils import JSONReadError
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            json_file = Path(tmpdir) / "invalid.json"
+            json_file.write_text("{")
+
+            with patch("json2xml.cli.readfromjson") as mock_read:
+                mock_read.side_effect = JSONReadError("Invalid JSON File")
+
+                args = MagicMock()
+                args.url = None
+                args.string = None
+                args.input_file = str(json_file)
+
+                with pytest.raises(SystemExit) as exc_info:
+                    read_input(args)
+
+                assert exc_info.value.code == 1
+
+        captured = capsys.readouterr()
+        assert "Could not parse JSON file" in captured.err
+        assert str(json_file) in captured.err
+
     # @lat: [[tests#CLI failure messages#No input is actionable]]
     def test_read_input_no_input_tty(self, capsys: CaptureFixture[str]) -> None:
         """Test read_input exits when no input provided and stdin is a tty."""

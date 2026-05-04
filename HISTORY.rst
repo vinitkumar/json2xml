@@ -1,4 +1,11 @@
 
+6.1.0 / 2026-05-04
+==================
+
+  * fix: address open contribution issues (#292)
+  * docs: improve README and add public roadmap (#287)
+
+
 6.0.7 / 2026-04-26
 ==================
 

@@ -26,6 +26,8 @@ The benchmark docs record measured implementation tradeoffs so users can choose 
 
 The April 2026 benchmark on Apple Silicon shows the Rust extension as the best option for Python library calls, with 57-129x speedups over pure Python and no process overhead. Go and Zig remain useful for native CLI workflows where startup cost is acceptable.
 
+Reproduction docs require contributors to record machine, OS, Python, and tool availability before comparing results. `benchmark_all.py` mixes library calls and CLI subprocesses intentionally, so its Go and Zig rows include process startup overhead.
+
 ## CLI entrypoint
 
 The CLI is a thin adapter that parses options, resolves one input source, and forwards those options into the same converter used by the library API.

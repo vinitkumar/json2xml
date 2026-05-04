@@ -8,6 +8,12 @@ The input helpers convert files, strings, URLs, and stdin into Python data struc
 
 [[json2xml/utils.py#readfromjson]] wraps file and JSON decoding failures in `JSONReadError`. [[json2xml/utils.py#readfromstring]] accepts unknown caller input so invalid-type tests can call it honestly, then rejects non-string inputs and malformed JSON with `StringReadError`. [[json2xml/utils.py#readfromurl]] performs a bounded GET request and raises `URLReadError` for network, non-200, decoding, and JSON parse failures.
 
+## User examples
+
+The public examples favor realistic API, file, and stdin flows with compact before-and-after output that can be checked against the real converter.
+
+README and docs examples use `pretty=False` for scan-friendly output and avoid hidden fixtures. They cover Python API conversion, local JSON exports, and shell pipelines so users can choose the right entry point quickly.
+
 ## Conversion output
 
 Default output includes an XML declaration, wraps content in `all`, pretty prints the document, and annotates elements with their source type unless callers disable those features.

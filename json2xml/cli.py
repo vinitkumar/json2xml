@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 from typing import NoReturn
 
 from json2xml import __version__
@@ -263,22 +264,36 @@ def read_input(args: argparse.Namespace) -> JSONValue:
         try:
             return readfromstring(args.string)
         except StringReadError as e:
-            exit_with_error(f"Error parsing JSON string: {e}")
+            exit_with_error(
+                "Error: Invalid JSON in --string input. "
+                f"Pass a valid JSON object, array, string, number, boolean, or null. ({e})"
+            )
 
     if args.input_file:
         if args.input_file == "-":
             # Read from stdin
             return read_from_stdin()
+        if not Path(args.input_file).is_file():
+            exit_with_error(
+                f"Error: JSON file not found: {args.input_file}. "
+                "Check the path or use - to read JSON from stdin."
+            )
         try:
             return readfromjson(args.input_file)
         except JSONReadError as e:
-            exit_with_error(f"Error reading JSON file: {e}")
+            exit_with_error(
+                f"Error: Could not parse JSON file: {args.input_file}. "
+                f"Check that the file contains valid JSON. ({e})"
+            )
 
     # Check if there's data on stdin
     if not sys.stdin.isatty():
         return read_from_stdin()
 
-    exit_with_error("Error: No input provided. Use -h for help.")
+    exit_with_error(
+        "Error: No input provided. Pass a JSON file, use - for stdin, "
+        "or provide --string/--url."
+    )
 
 
 def read_from_stdin() -> JSONValue:
@@ -294,10 +309,15 @@ def read_from_stdin() -> JSONValue:
     try:
         json_str = sys.stdin.read().strip()
         if not json_str:
-            exit_with_error("Error: Empty input")
+            exit_with_error(
+                "Error: Empty stdin. Pipe JSON into stdin or pass a file/--string."
+            )
         return readfromstring(json_str)
     except StringReadError as e:
-        exit_with_error(f"Error parsing JSON from stdin: {e}")
+        exit_with_error(
+            "Error: Invalid JSON from stdin. Pipe valid JSON into stdin "
+            f"or pass a file/--string. ({e})"
+        )
 
 
 def write_output(output: str | bytes, output_file: str | None) -> None:

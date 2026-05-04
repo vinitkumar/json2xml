@@ -26,6 +26,18 @@ These tests verify the concrete reader helpers against realistic source behavior
 
 URL input should read valid JSON over HTTP and wrap status, network, and decoding failures in `URLReadError`.
 
+## CLI failure messages
+
+These tests verify common command-line failures return short messages that name the broken input source and point users at the next valid action.
+
+### No input is actionable
+
+Running the CLI without JSON should fail with a message that tells users to pass a file, stdin, string, or URL instead of only reporting a generic error.
+
+### Invalid file JSON names the source
+
+Malformed JSON read from an existing file should mention that file path so users can distinguish file parsing failures from missing-file, string, stdin, or conversion failures.
+
 ## Conversion behavior
 
 These tests pin the XML shapes that matter most for interoperability, especially the modes that intentionally diverge from the default serializer.
@@ -69,3 +81,11 @@ Keys ending in `@flat` should keep their flattening behavior where supported and
 ### Rust and Python XML name parity
 
 The Rust accelerator and Python serializer should agree on supported XML name normalization cases so fast-path output does not drift silently.
+
+### Fast wrapper uses Rust for supported options
+
+When the optional Rust callable is available and the selected options are Rust-backed, the fast wrapper should dispatch directly to that callable.
+
+### Special keys force Python fallback
+
+Special dictionary keys such as `@attrs` and `@val` should bypass the Rust callable so the Python serializer can preserve legacy attribute semantics.

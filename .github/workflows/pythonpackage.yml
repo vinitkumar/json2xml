@@ -15,8 +15,6 @@ on:
 
 permissions:
   contents: read
-  checks: write    # For test results
-  pull-requests: write   # For codecov
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,12 +34,12 @@ jobs:
           "ubuntu-24.04-arm"
         ]
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
@@ -53,7 +51,7 @@ jobs:
         python -c "import sys; print('Free-threading enabled:', not sys._is_gil_enabled() if hasattr(sys, '_is_gil_enabled') else False)"
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       with:
         enable-cache: true
         cache-dependency-glob: |
@@ -76,7 +74,7 @@ jobs:
         PYTHONPATH: ${{ github.workspace }}
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
       if: success()
       with:
         directory: ./coverage/reports/
@@ -94,17 +92,17 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         persist-credentials: false
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
       with:
         python-version: '3.12'
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       with:
         enable-cache: true
         cache-dependency-glob: |
@@ -118,4 +116,3 @@ jobs:
 
     - name: Run ruff
       run: uvx ruff check json2xml tests
-

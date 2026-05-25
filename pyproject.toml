@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "defusedxml",
-    "urllib3",
+    "urllib3>=2.7.0",
 ]
 
 [project.urls]
@@ -47,6 +47,7 @@ dev = [
     "pytest-cov",
     "coverage",
     "setuptools",
+    "pygments>=2.20.0",
     "xmltodict>=0.12.0",
 ]
 fast = ["json2xml-rs>=0.1.0"]

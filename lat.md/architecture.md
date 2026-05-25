@@ -28,6 +28,18 @@ The April 2026 benchmark on Apple Silicon shows the Rust extension as the best o
 
 Reproduction docs require contributors to record machine, OS, Python, and tool availability before comparing results. `benchmark_all.py` mixes library calls and CLI subprocesses intentionally, so its Go and Zig rows include process startup overhead.
 
+## Dependency security
+
+Dependency floors and lockfiles keep known vulnerable packages out of runtime and development environments.
+
+Runtime dependencies are declared in `pyproject.toml` and mirrored by `uv.lock`; legacy requirements inputs remain pinned for tooling that still consumes requirements files. Security fixes should update both resolver paths so `uv audit` and requirements-based installs agree.
+
+## Workflow supply-chain hardening
+
+GitHub Actions workflows run with read-only tokens by default and use full SHA pins so third-party action updates are explicit.
+
+The `.github/workflows/` files declare the minimum `permissions:` scopes needed by each workflow, with CodeQL retaining `security-events: write` for result upload. Action references are pinned to immutable commits with the upstream tag retained in comments for reviewability, and `.github/dependabot.yml` checks the `github-actions` ecosystem weekly so those pins do not silently age.
+
 ## CLI entrypoint
 
 The CLI is a thin adapter that parses options, resolves one input source, and forwards those options into the same converter used by the library API.

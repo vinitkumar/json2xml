@@ -18,7 +18,9 @@ README and docs examples use `pretty=False` for scan-friendly output and avoid h
 
 Default output includes an XML declaration, wraps content in `all`, pretty prints the document, and annotates elements with their source type unless callers disable those features.
 
-[[json2xml/json2xml.py#Json2xml#to_xml]] calls [[json2xml/dicttoxml.py#dicttoxml]] with the configured wrapper, root, `attr_type`, `item_wrap`, `cdata`, and `list_headers` options. It treats only `None` as absent input, so falsy JSON values still serialize. When `item_wrap=False`, list values repeat the parent tag instead of creating `<item>` children. When `pretty=False`, the library returns the serializer bytes directly.
+[[json2xml/json2xml.py#Json2xml#to_xml]] calls [[json2xml/dicttoxml_fast.py#dicttoxml]] with the configured wrapper, root, `attr_type`, `item_wrap`, `cdata`, and `list_headers` options. It treats only `None` as absent input, so falsy JSON values still serialize. When `item_wrap=False`, list values repeat the parent tag instead of creating `<item>` children. When `pretty=False`, the library returns the serializer bytes directly.
+
+The fast backend selector falls back to the pure Python serializer for root scalar payloads so values like `0`, `false`, and `""` keep the historical `<item>` element inside the configured root wrapper.
 
 The Rust fast path in [[rust/src/lib.rs#write_dict_contents]] and [[rust/src/lib.rs#write_list_contents]] mirrors those Python list-wrapper rules. `list_headers=True` suppresses the outer list container and repeats the parent tag only for nested dict items, while primitive items still use the same scalar tags that Python emits.
 

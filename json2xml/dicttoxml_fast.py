@@ -92,6 +92,7 @@ def dicttoxml(
         or item_func is not None
         or xml_namespaces
         or xpath_format
+        or not isinstance(obj, (dict, list))
     )
 
     # Check for special dict keys that require Python

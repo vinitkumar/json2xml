@@ -3,7 +3,7 @@ from typing import Any
 
 from defusedxml.minidom import parseString
 
-from json2xml import dicttoxml
+from json2xml import dicttoxml_fast as dicttoxml
 
 from .types import JSONValue
 from .utils import InvalidDataError

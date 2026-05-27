@@ -95,6 +95,33 @@ class TestJson2xml:
         assert isinstance(xmldata, bytes)
         assert expected in xmldata
 
+    # @lat: [[tests#Conversion behavior#Json2xml uses fast backend selection]]
+    def test_json_to_xml_uses_fast_backend(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Json2xml should delegate through the backend selector used by fast installs."""
+        calls: list[dict[str, Any]] = []
+
+        def fake_dicttoxml(data: Any, **kwargs: Any) -> bytes:
+            calls.append({"data": data, **kwargs})
+            return b"<all><name>Ada</name></all>"
+
+        monkeypatch.setattr(json2xml.dicttoxml, "dicttoxml", fake_dicttoxml)
+
+        xmldata = json2xml.Json2xml({"name": "Ada"}, wrapper="all", pretty=False).to_xml()
+
+        assert xmldata == b"<all><name>Ada</name></all>"
+        assert calls == [
+            {
+                "data": {"name": "Ada"},
+                "root": True,
+                "custom_root": "all",
+                "attr_type": True,
+                "item_wrap": True,
+                "xpath_format": False,
+                "cdata": False,
+                "list_headers": False,
+            }
+        ]
+
     def test_custom_wrapper_and_indent(self) -> None:
         data = readfromstring(
             '{"login":"mojombo","id":1,"avatar_url":"https://avatars0.githubusercontent.com/u/1?v=4"}'

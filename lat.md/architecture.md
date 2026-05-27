@@ -4,9 +4,9 @@ This file documents the main execution paths that turn JSON input into XML outpu
 
 ## Core pipeline
 
-The standard pipeline reads JSON into Python objects, passes that data through [[json2xml/json2xml.py#Json2xml]], and delegates serialization to [[json2xml/dicttoxml.py#dicttoxml]].
+The standard pipeline reads JSON into Python objects, passes that data through [[json2xml/json2xml.py#Json2xml]], and delegates serialization through the fast backend selector in [[json2xml/dicttoxml_fast.py#dicttoxml]].
 
-Library callers usually construct [[json2xml/json2xml.py#Json2xml]] with a decoded `dict` or `list`. CLI callers reach the same conversion path through [[json2xml/cli.py#read_input]], which resolves the input source before creating the converter. Pretty output is produced by reparsing the generated XML so callers get indented text when requested.
+Library callers usually construct [[json2xml/json2xml.py#Json2xml]] with decoded JSON data. CLI callers reach the same conversion path through [[json2xml/cli.py#read_input]], which resolves the input source before creating the converter. Pretty output is produced by reparsing the generated XML so callers get indented text when requested.
 
 ## Conversion engine
 
@@ -18,7 +18,7 @@ The pure Python serializer recursively maps Python values to XML elements, attri
 
 The fast-path module prefers the Rust extension when it can preserve Python semantics, and falls back to the Python serializer for unsupported features.
 
-[[json2xml/dicttoxml_fast.py#dicttoxml]] uses the Rust backend only when optional features such as `ids`, custom `item_func`, XML namespaces, XPath mode, or special `@` keys are not involved. A local stub for the optional `json2xml_rs` module keeps static analysis aligned with that fallback design, so type checking still passes when the extension is not installed. This keeps fast installs fast without letting the optimized path silently change behavior.
+[[json2xml/dicttoxml_fast.py#dicttoxml]] uses the Rust backend only when optional features such as `ids`, custom `item_func`, XML namespaces, XPath mode, root scalar payloads, or special `@` keys are not involved. A local stub for the optional `json2xml_rs` module keeps static analysis aligned with that fallback design, so type checking still passes when the extension is not installed. This keeps fast installs fast without letting the optimized path silently change behavior.
 
 ## Performance benchmarks
 

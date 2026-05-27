@@ -86,6 +86,14 @@ The Rust accelerator and Python serializer should agree on supported XML name no
 
 When the optional Rust callable is available and the selected options are Rust-backed, the fast wrapper should dispatch directly to that callable.
 
+### Json2xml uses fast backend selection
+
+The public `Json2xml` wrapper should delegate through the fast backend selector so regular library and CLI conversions can use the Rust accelerator when installed.
+
 ### Special keys force Python fallback
 
 Special dictionary keys such as `@attrs` and `@val` should bypass the Rust callable so the Python serializer can preserve legacy attribute semantics.
+
+### Root scalars keep Python fallback
+
+Root scalar payloads should bypass the Rust callable until the accelerator preserves the legacy Python `<item>` wrapper shape under the configured root element.

@@ -83,6 +83,19 @@ def test_fast_wrapper_falls_back_to_python_for_special_keys(
     rust_backend.assert_not_called()
 
 
+# @lat: [[tests#Conversion behavior#Root scalars keep Python fallback]]
+def test_fast_wrapper_falls_back_to_python_for_root_scalars(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Root scalar values should keep the legacy Python <item> wrapper shape."""
+    rust_backend = _force_rust_backend(monkeypatch)
+
+    result = fast_module.dicttoxml(0, custom_root="all")
+
+    assert b'<item type="int">0</item>' in result
+    rust_backend.assert_not_called()
+
+
 def test_fast_wrapper_falls_back_to_python_when_rust_is_unavailable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

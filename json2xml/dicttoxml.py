@@ -17,6 +17,7 @@ _SAFE_RANDOM = SystemRandom()
 
 # Set up logging
 LOG = logging.getLogger("dicttoxml")
+_XML_ESCAPE_CHARS = frozenset("&\"'<>")
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -83,23 +84,23 @@ def get_xml_type(val: Any) -> str:
     Returns:
         str: The XML type.
     """
-    if val is not None:
-        if type(val).__name__ in ("str", "unicode"):
-            return "str"
-        if type(val).__name__ in ("int", "long"):
-            return "int"
-        if type(val).__name__ == "float":
-            return "float"
-        if type(val).__name__ == "bool":
-            return "bool"
-        if isinstance(val, numbers.Number):
-            return "number"
-        if isinstance(val, dict):
-            return "dict"
-        if isinstance(val, Sequence):
-            return "list"
-    else:
+    if val is None:
         return "null"
+    val_type = type(val)
+    if val_type is str:
+        return "str"
+    if val_type is int:
+        return "int"
+    if val_type is float:
+        return "float"
+    if val_type is bool:
+        return "bool"
+    if isinstance(val, numbers.Number):
+        return "number"
+    if isinstance(val, dict):
+        return "dict"
+    if isinstance(val, Sequence):
+        return "list"
     return type(val).__name__
 
 
@@ -114,7 +115,8 @@ def escape_xml(s: str | int | float | numbers.Number | None) -> str:
         str: The escaped string.
     """
     if isinstance(s, str):
-        s = str(s)  # avoid UnicodeDecodeError
+        if not _XML_ESCAPE_CHARS.intersection(s):
+            return s
         s = s.replace("&", "&amp;")
         s = s.replace('"', "&quot;")
         s = s.replace("'", "&apos;")
@@ -133,8 +135,15 @@ def make_attrstring(attr: dict[str, Any]) -> str:
     Returns:
         str: The string of XML attributes.
     """
+    if not attr:
+        return ""
+    if len(attr) == 1:
+        key, val = next(iter(attr.items()))
+        if key == "type":
+            return f' type="{val}"'
+        return f' {key}="{escape_xml(val)}"'
     attrstring = " ".join([f'{k}="{escape_xml(v)}"' for k, v in attr.items()])
-    return f'{" " if attrstring != "" else ""}{attrstring}'
+    return f" {attrstring}"
 
 
 def _is_fast_valid_xml_name(key: str) -> bool:
@@ -333,8 +342,7 @@ def convert(
 
 
 def is_primitive_type(val: Any) -> bool:
-    t = get_xml_type(val)
-    return t in {"str", "int", "float", "bool", "number", "null"}
+    return val is None or isinstance(val, (str, bool, numbers.Number))
 
 
 def dict2xml_str(
@@ -452,18 +460,18 @@ def convert_dict(
         # here, we just change order and check for bool first, because no other
         # type other than bool can be true for bool check
         if isinstance(val, bool):
-            addline(convert_bool(key, val, attr_type, attr, cdata))
+            addline(convert_bool_valid_name(key, val, attr_type, attr))
 
         elif isinstance(val, (numbers.Number, str)):
             addline(
-                convert_kv(
+                convert_kv_valid_name(
                     key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
                 )
             )
 
         elif hasattr(val, "isoformat"):  # datetime
             addline(
-                convert_kv(
+                convert_kv_valid_name(
                     key=key,
                     val=val.isoformat(),
                     attr_type=attr_type,
@@ -496,7 +504,7 @@ def convert_dict(
             )
 
         elif not val:
-            addline(convert_none(key, attr_type, attr, cdata))
+            addline(convert_none_valid_name(key, attr_type, attr))
 
         else:
             raise TypeError(f"Unsupported data type: {val} ({type(val).__name__})")
@@ -521,6 +529,9 @@ def convert_list(
     item_name = item_func(parent)  # Is item_name still relevant if item_wrap is false
     if item_name.endswith("@flat"):
         item_name = item_name[:-5]
+    item_name, item_name_attr = make_valid_xml_name(item_name, {})
+    scalar_key = item_name if item_wrap else parent
+    scalar_key, scalar_key_attr = make_valid_xml_name(scalar_key, {})
     this_id = None
     if ids:
         this_id = get_unique_id(parent)
@@ -529,13 +540,17 @@ def convert_list(
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
 
         if isinstance(item, bool):
-            addline(convert_bool(item_name, item, attr_type, attr, cdata))
+            if item_name_attr:
+                attr.update(item_name_attr)
+            addline(convert_bool_valid_name(item_name, item, attr_type, attr))
 
         elif isinstance(item, (numbers.Number, str)):
+            if scalar_key_attr:
+                attr.update(scalar_key_attr)
             if item_wrap:
                 addline(
-                    convert_kv(
-                        key=item_name,
+                    convert_kv_valid_name(
+                        key=scalar_key,
                         val=item,
                         attr_type=attr_type,
                         attr=attr,
@@ -544,8 +559,8 @@ def convert_list(
                 )
             else:
                 addline(
-                    convert_kv(
-                        key=parent,
+                    convert_kv_valid_name(
+                        key=scalar_key,
                         val=item,
                         attr_type=attr_type,
                         attr=attr,
@@ -554,8 +569,10 @@ def convert_list(
                 )
 
         elif hasattr(item, "isoformat"):  # datetime
+            if item_name_attr:
+                attr.update(item_name_attr)
             addline(
-                convert_kv(
+                convert_kv_valid_name(
                     key=item_name,
                     val=item.isoformat(),
                     attr_type=attr_type,
@@ -595,7 +612,9 @@ def convert_list(
             )
 
         elif item is None:
-            addline(convert_none(item_name, attr_type, attr, cdata))
+            if item_name_attr:
+                attr.update(item_name_attr)
+            addline(convert_none_valid_name(item_name, attr_type, attr))
 
         else:
             raise TypeError(f"Unsupported data type: {item} ({type(item).__name__})")
@@ -624,6 +643,23 @@ def convert_kv(
     return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
 
 
+def convert_kv_valid_name(
+    key: str,
+    val: str | int | float | numbers.Number | datetime.datetime | datetime.date,
+    attr_type: bool,
+    attr: dict[str, Any],
+    cdata: bool = False,
+) -> str:
+    """Converts a scalar into an XML element when the caller already validated the key."""
+    if hasattr(val, "isoformat") and isinstance(val, (datetime.datetime, datetime.date)):
+        val = val.isoformat()
+
+    if attr_type:
+        attr["type"] = get_xml_type(val)
+    attr_string = make_attrstring(attr)
+    return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+
+
 def convert_bool(
     key: str, val: bool, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
 ) -> str:
@@ -638,6 +674,19 @@ def convert_bool(
     return f"<{key}{attr_string}>{str(val).lower()}</{key}>"
 
 
+def convert_bool_valid_name(
+    key: str,
+    val: bool,
+    attr_type: bool,
+    attr: dict[str, Any],
+) -> str:
+    """Converts a boolean when the caller already validated the key."""
+    if attr_type:
+        attr["type"] = "bool"
+    attr_string = make_attrstring(attr)
+    return f"<{key}{attr_string}>{str(val).lower()}</{key}>"
+
+
 def convert_none(
     key: str, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
 ) -> str:
@@ -648,6 +697,16 @@ def convert_none(
 
     if attr_type:
         attr["type"] = get_xml_type(None)
+    attr_string = make_attrstring(attr)
+    return f"<{key}{attr_string}></{key}>"
+
+
+def convert_none_valid_name(
+    key: str, attr_type: bool, attr: dict[str, Any]
+) -> str:
+    """Converts a null value when the caller already validated the key."""
+    if attr_type:
+        attr["type"] = "null"
     attr_string = make_attrstring(attr)
     return f"<{key}{attr_string}></{key}>"
 

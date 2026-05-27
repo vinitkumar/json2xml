@@ -82,6 +82,14 @@ Keys ending in `@flat` should keep their flattening behavior where supported and
 
 The Rust accelerator and Python serializer should agree on supported XML name normalization cases so fast-path output does not drift silently.
 
+### Invalid list item names preserve metadata
+
+Generated list item names that are not valid XML should emit `<key>` elements with the original name preserved in a `name` attribute across scalar item types.
+
+### Valid-name scalar helper formats dates
+
+The scalar helper used after key validation should still ISO-format date values before assigning type metadata and serializing element text.
+
 ### Fast wrapper uses Rust for supported options
 
 When the optional Rust callable is available and the selected options are Rust-backed, the fast wrapper should dispatch directly to that callable.

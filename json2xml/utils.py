@@ -2,13 +2,26 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
-import urllib3
+__lazy_modules__ = ["urllib3"]
 
 from .types import JSONValue
 
-DEFAULT_URL_TIMEOUT = urllib3.Timeout(connect=5.0, read=30.0)
-_HTTP = urllib3.PoolManager()
+DEFAULT_URL_TIMEOUT: Any | None = None
+_HTTP: Any | None = None
+
+
+def _get_http_client() -> tuple[Any, Any, Any]:
+    """Import and initialize urllib3 only for URL reads."""
+    import urllib3
+
+    global DEFAULT_URL_TIMEOUT, _HTTP
+    if DEFAULT_URL_TIMEOUT is None:
+        DEFAULT_URL_TIMEOUT = urllib3.Timeout(connect=5.0, read=30.0)
+    if _HTTP is None:
+        _HTTP = urllib3.PoolManager()
+    return urllib3, _HTTP, DEFAULT_URL_TIMEOUT
 
 
 class JSONReadError(Exception):
@@ -43,12 +56,13 @@ def readfromjson(filename: str) -> JSONValue:
 
 def readfromurl(url: str, params: dict[str, str] | None = None) -> JSONValue:
     """Load JSON data from a URL."""
+    urllib3, http, timeout = _get_http_client()
     try:
-        response = _HTTP.request(
+        response = http.request(
             "GET",
             url,
             fields=params,
-            timeout=DEFAULT_URL_TIMEOUT,
+            timeout=timeout,
             retries=False,
         )
     except urllib3.exceptions.HTTPError as error:

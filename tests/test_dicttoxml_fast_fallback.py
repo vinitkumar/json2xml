@@ -12,9 +12,20 @@ import json2xml.dicttoxml_fast as fast_module
 def _force_rust_backend(monkeypatch: pytest.MonkeyPatch) -> Mock:
     """Install a fake Rust backend so tests can exercise selection logic without PyO3."""
     rust_backend = Mock(return_value=b"<rust/>")
-    monkeypatch.setattr(fast_module, "_USE_RUST", True)
+    monkeypatch.setattr(fast_module, "_use_rust", True)
     monkeypatch.setattr(fast_module, "_rust_dicttoxml", rust_backend)
     return rust_backend
+
+
+# @lat: [[tests#Conversion behavior#Fast wrapper exposes backend metadata]]
+def test_fast_wrapper_reports_python_backend_when_rust_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Backend metadata should reflect the active fallback backend."""
+    monkeypatch.setattr(fast_module, "_use_rust", False)
+
+    assert fast_module.is_rust_available() is False
+    assert fast_module.get_backend() == "python"
 
 
 # @lat: [[tests#Conversion behavior#Fast wrapper uses Rust for supported options]]
@@ -76,10 +87,25 @@ def test_fast_wrapper_falls_back_to_python_for_special_keys(
     """Special @attrs/@val keys require Python processing even when Rust is installed."""
     rust_backend = _force_rust_backend(monkeypatch)
 
-    result = fast_module.dicttoxml({"record": {"@attrs": {"id": "7"}, "@val": "Ada"}})
+    result = fast_module.dicttoxml(
+        {"records": [{"record": {"@attrs": {"id": "7"}, "@val": "Ada"}}]}
+    )
 
     assert b'id="7"' in result
     assert b">Ada</record>" in result
+    rust_backend.assert_not_called()
+
+
+# @lat: [[tests#Conversion behavior#Root scalars keep Python fallback]]
+def test_fast_wrapper_falls_back_to_python_for_root_scalars(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Root scalar values should keep the legacy Python <item> wrapper shape."""
+    rust_backend = _force_rust_backend(monkeypatch)
+
+    result = fast_module.dicttoxml(0, custom_root="all")
+
+    assert b'<item type="int">0</item>' in result
     rust_backend.assert_not_called()
 
 
@@ -88,7 +114,7 @@ def test_fast_wrapper_falls_back_to_python_when_rust_is_unavailable(
 ) -> None:
     """Contributors without json2xml_rs should still exercise the pure Python fallback."""
     rust_backend = Mock(return_value=b"<rust/>")
-    monkeypatch.setattr(fast_module, "_USE_RUST", False)
+    monkeypatch.setattr(fast_module, "_use_rust", False)
     monkeypatch.setattr(fast_module, "_rust_dicttoxml", rust_backend)
 
     result = fast_module.dicttoxml({"name": "Ada"})
@@ -96,3 +122,16 @@ def test_fast_wrapper_falls_back_to_python_when_rust_is_unavailable(
     assert b"<name" in result
     assert b">Ada</name>" in result
     rust_backend.assert_not_called()
+
+
+# @lat: [[tests#Conversion behavior#Fast helper functions use Python fallback]]
+def test_fast_helper_functions_use_python_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Helper exports should preserve behavior when Rust helpers are unavailable."""
+    monkeypatch.setattr(fast_module, "_use_rust", False)
+    monkeypatch.setattr(fast_module, "rust_escape_xml", None)
+    monkeypatch.setattr(fast_module, "rust_wrap_cdata", None)
+
+    assert fast_module.escape_xml("Ada & <XML>") == "Ada &amp; &lt;XML&gt;"
+    assert fast_module.wrap_cdata("Ada <XML>") == "<![CDATA[Ada <XML>]]>"

@@ -82,10 +82,46 @@ Keys ending in `@flat` should keep their flattening behavior where supported and
 
 The Rust accelerator and Python serializer should agree on supported XML name normalization cases so fast-path output does not drift silently.
 
+### Invalid list item names preserve metadata
+
+Generated list item names that are not valid XML should emit `<key>` elements with the original name preserved in a `name` attribute across scalar item types.
+
+### Valid-name scalar helper formats dates
+
+The scalar helper used after key validation should still ISO-format date values before assigning type metadata and serializing element text.
+
 ### Fast wrapper uses Rust for supported options
 
 When the optional Rust callable is available and the selected options are Rust-backed, the fast wrapper should dispatch directly to that callable.
 
+### Fast wrapper exposes backend metadata
+
+Backend metadata helpers should report whether Rust is active and name the selected backend so callers can diagnose fallback behavior.
+
+### Fast helper functions use Python fallback
+
+Helper exports for XML escaping and CDATA wrapping should preserve Python behavior when Rust helper callables are unavailable.
+
+### Json2xml uses fast backend selection
+
+The public `Json2xml` wrapper should delegate through the fast backend selector so regular library and CLI conversions can use the Rust accelerator when installed.
+
 ### Special keys force Python fallback
 
 Special dictionary keys such as `@attrs` and `@val` should bypass the Rust callable so the Python serializer can preserve legacy attribute semantics.
+
+### Root scalars keep Python fallback
+
+Root scalar payloads should bypass the Rust callable until the accelerator preserves the legacy Python `<item>` wrapper shape under the configured root element.
+
+## XML helper behavior
+
+These tests pin low-level XML helper contracts so performance refactors keep the same serializer output and caller-side mutation behavior.
+
+### Valid-name helpers preserve caller attrs
+
+Helpers that receive prevalidated XML names should add type metadata only to the emitted element and must not mutate caller-owned attribute dictionaries.
+
+### XML name validity fast and cached paths
+
+XML name validation should agree across the ASCII fast path, parser-backed path, and repeated cached calls so optimization does not change accepted names.

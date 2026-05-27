@@ -1070,6 +1070,45 @@ class TestDict2xml:
         )
         assert 'type="list"' in result
 
+    # @lat: [[tests#Conversion behavior#Invalid list item names preserve metadata]]
+    def test_convert_list_invalid_item_name_metadata_for_scalar_paths(self) -> None:
+        """Invalid generated list item names should preserve the original name attribute."""
+        item_name_result = dicttoxml.convert_list(
+            items=[True, datetime.date(2026, 5, 27), None],
+            ids=[],
+            parent="items",
+            attr_type=True,
+            item_func=lambda _parent: "bad&key",
+            cdata=False,
+            item_wrap=True,
+        )
+        parent_name_result = dicttoxml.convert_list(
+            items=[7],
+            ids=[],
+            parent="bad&parent",
+            attr_type=True,
+            item_func=lambda _parent: "item",
+            cdata=False,
+            item_wrap=False,
+        )
+
+        assert '<key name="bad&amp;key" type="bool">true</key>' in item_name_result
+        assert '<key name="bad&amp;key" type="str">2026-05-27</key>' in item_name_result
+        assert '<key name="bad&amp;key" type="null"></key>' in item_name_result
+        assert parent_name_result == '<key name="bad&amp;parent" type="int">7</key>'
+
+    # @lat: [[tests#Conversion behavior#Valid-name scalar helper formats dates]]
+    def test_convert_kv_valid_name_formats_date_values(self) -> None:
+        """The valid-name scalar helper should format date values before type tagging."""
+        result = dicttoxml.convert_kv_valid_name(
+            key="published",
+            val=datetime.date(2026, 5, 27),
+            attr_type=True,
+            attr={},
+        )
+
+        assert result == '<published type="str">2026-05-27</published>'
+
     def test_convert_dict_with_bool_value(self) -> None:
         """Test convert_dict with boolean value."""
         obj = {"flag": True}

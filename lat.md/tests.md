@@ -113,3 +113,15 @@ Special dictionary keys such as `@attrs` and `@val` should bypass the Rust calla
 ### Root scalars keep Python fallback
 
 Root scalar payloads should bypass the Rust callable until the accelerator preserves the legacy Python `<item>` wrapper shape under the configured root element.
+
+## XML helper behavior
+
+These tests pin low-level XML helper contracts so performance refactors keep the same serializer output and caller-side mutation behavior.
+
+### Valid-name helpers preserve caller attrs
+
+Helpers that receive prevalidated XML names should add type metadata only to the emitted element and must not mutate caller-owned attribute dictionaries.
+
+### XML name validity fast and cached paths
+
+XML name validation should agree across the ASCII fast path, parser-backed path, and repeated cached calls so optimization does not change accepted names.

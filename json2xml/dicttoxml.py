@@ -654,6 +654,7 @@ def convert_kv_valid_name(
     if hasattr(val, "isoformat") and isinstance(val, (datetime.datetime, datetime.date)):
         val = val.isoformat()
 
+    attr = dict(attr)
     if attr_type:
         attr["type"] = get_xml_type(val)
     attr_string = make_attrstring(attr)
@@ -681,6 +682,7 @@ def convert_bool_valid_name(
     attr: dict[str, Any],
 ) -> str:
     """Converts a boolean when the caller already validated the key."""
+    attr = dict(attr)
     if attr_type:
         attr["type"] = "bool"
     attr_string = make_attrstring(attr)
@@ -705,6 +707,7 @@ def convert_none_valid_name(
     key: str, attr_type: bool, attr: dict[str, Any]
 ) -> str:
     """Converts a null value when the caller already validated the key."""
+    attr = dict(attr)
     if attr_type:
         attr["type"] = "null"
     attr_string = make_attrstring(attr)

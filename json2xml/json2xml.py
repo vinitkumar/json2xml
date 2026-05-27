@@ -53,8 +53,9 @@ class Json2xml:
                 list_headers=self.list_headers,
             )
             if self.pretty:
-                from defusedxml.minidom import parseString
                 from pyexpat import ExpatError
+
+                from defusedxml.minidom import parseString
 
                 try:
                     result = parseString(xml_data).toprettyxml(encoding="UTF-8").decode()

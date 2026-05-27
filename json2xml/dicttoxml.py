@@ -5,8 +5,8 @@ import logging
 import numbers
 from collections.abc import Callable, Sequence
 from decimal import Decimal
-from functools import lru_cache
 from fractions import Fraction
+from functools import lru_cache
 from random import SystemRandom
 from typing import Any, Union, cast
 

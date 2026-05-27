@@ -5,11 +5,12 @@ import logging
 import numbers
 from collections.abc import Callable, Sequence
 from decimal import Decimal
+from functools import lru_cache
 from fractions import Fraction
 from random import SystemRandom
 from typing import Any, Union, cast
 
-from defusedxml.minidom import parseString
+__lazy_modules__ = ["defusedxml.minidom"]
 
 # Create a safe random number generator
 _SAFE_RANDOM = SystemRandom()
@@ -136,6 +137,17 @@ def make_attrstring(attr: dict[str, Any]) -> str:
     return f'{" " if attrstring != "" else ""}{attrstring}'
 
 
+def _is_fast_valid_xml_name(key: str) -> bool:
+    """Return True for ASCII XML names known to be accepted by the legacy parser."""
+    if not key or not key.isascii() or ":" in key:
+        return False
+    first = key[0]
+    if not (first.isalpha() or first == "_"):
+        return False
+    return all(char.isalnum() or char in {"-", "_", "."} for char in key[1:])
+
+
+@lru_cache(maxsize=4096)
 def key_is_valid_xml(key: str) -> bool:
     """
     Check if a key is a valid XML name.
@@ -146,6 +158,14 @@ def key_is_valid_xml(key: str) -> bool:
     Returns:
         bool: True if the key is a valid XML name, False otherwise.
     """
+    key = str(key)
+    if _is_fast_valid_xml_name(key):
+        return True
+    if not key or key.isdigit() or ":" in key:
+        return False
+
+    from defusedxml.minidom import parseString
+
     test_xml = f'<?xml version="1.0" encoding="UTF-8" ?><{key}>foo</{key}>'
     try:
         parseString(test_xml)

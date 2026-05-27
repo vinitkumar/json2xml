@@ -22,7 +22,7 @@ RustStringTransform = Callable[[str], str]
 LOG = logging.getLogger("dicttoxml_fast")
 
 # Try to import the Rust implementation
-_USE_RUST = False
+_use_rust = False
 _rust_dicttoxml: Callable[..., bytes] | None = None
 rust_escape_xml: RustStringTransform | None = None
 rust_wrap_cdata: RustStringTransform | None = None
@@ -31,23 +31,23 @@ try:
     from json2xml_rs import dicttoxml as _rust_dicttoxml  # pragma: no cover
     from json2xml_rs import escape_xml_py as rust_escape_xml  # pragma: no cover
     from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # pragma: no cover
-    _USE_RUST = True  # pragma: no cover
+    _use_rust = True  # pragma: no cover
     LOG.debug("Using Rust backend for dicttoxml")  # pragma: no cover
 except ImportError:  # pragma: no cover
     LOG.debug("Rust backend not available, using pure Python")
 
-# Import the pure Python implementation as fallback
-from json2xml import dicttoxml as _py_dicttoxml  # noqa: E402
+# Import the pure Python implementation as fallback.
+import json2xml.dicttoxml as _py_dicttoxml  # noqa: E402
 
 
 def is_rust_available() -> bool:
     """Check if the Rust backend is available."""
-    return _USE_RUST
+    return _use_rust
 
 
 def get_backend() -> str:
     """Return the name of the current backend ('rust' or 'python')."""
-    return "rust" if _USE_RUST else "python"
+    return "rust" if _use_rust else "python"
 
 
 # @lat: [[architecture#Backend selection]]
@@ -99,7 +99,7 @@ def dicttoxml(
     if not needs_python and isinstance(obj, dict):
         needs_python = _has_special_keys(obj)
 
-    if _USE_RUST and not needs_python and _rust_dicttoxml is not None:  # pragma: no cover
+    if _use_rust and not needs_python and _rust_dicttoxml is not None:  # pragma: no cover
         # Use fast Rust implementation
         return _rust_dicttoxml(
             obj,
@@ -147,14 +147,14 @@ def _has_special_keys(obj: Any) -> bool:
 # Re-export commonly used functions
 def escape_xml(s: str) -> str:
     """Escape special XML characters in a string."""
-    if _USE_RUST and rust_escape_xml is not None:  # pragma: no cover
+    if _use_rust and rust_escape_xml is not None:  # pragma: no cover
         return rust_escape_xml(s)
     return _py_dicttoxml.escape_xml(s)
 
 
 def wrap_cdata(s: str) -> str:
     """Wrap a string in a CDATA section."""
-    if _USE_RUST and rust_wrap_cdata is not None:  # pragma: no cover
+    if _use_rust and rust_wrap_cdata is not None:  # pragma: no cover
         return rust_wrap_cdata(s)
     return _py_dicttoxml.wrap_cdata(s)
 

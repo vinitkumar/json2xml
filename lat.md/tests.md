@@ -86,6 +86,14 @@ The Rust accelerator and Python serializer should agree on supported XML name no
 
 When the optional Rust callable is available and the selected options are Rust-backed, the fast wrapper should dispatch directly to that callable.
 
+### Fast wrapper exposes backend metadata
+
+Backend metadata helpers should report whether Rust is active and name the selected backend so callers can diagnose fallback behavior.
+
+### Fast helper functions use Python fallback
+
+Helper exports for XML escaping and CDATA wrapping should preserve Python behavior when Rust helper callables are unavailable.
+
 ### Json2xml uses fast backend selection
 
 The public `Json2xml` wrapper should delegate through the fast backend selector so regular library and CLI conversions can use the Rust accelerator when installed.

@@ -3,7 +3,6 @@ from typing import Any
 __lazy_modules__ = ["defusedxml.minidom", "pyexpat"]
 
 from . import dicttoxml_fast as dicttoxml
-
 from .types import JSONValue
 from .utils import InvalidDataError
 

@@ -137,7 +137,11 @@ def make_attrstring(attr: dict[str, Any]) -> str:
     """
     if not attr:
         return ""
+<<<<<<< HEAD
     validate_xml_attr_names(attr)
+||||||| 3567ea9
+=======
+>>>>>>> origin/master
     if len(attr) == 1:
         key, val = next(iter(attr.items()))
         if key == "type":

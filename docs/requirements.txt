@@ -111,7 +111,7 @@ waitress==3.0.2
     # via webtest
 watchfiles==1.0.4
     # via sphinx-autobuild
-webob==1.8.9
+webob==1.8.10
     # via webtest
 websockets==15.0
     # via sphinx-autobuild

@@ -137,6 +137,7 @@ def make_attrstring(attr: dict[str, Any]) -> str:
     """
     if not attr:
         return ""
+    validate_xml_attr_names(attr)
     if len(attr) == 1:
         key, val = next(iter(attr.items()))
         if key == "type":
@@ -181,6 +182,30 @@ def key_is_valid_xml(key: str) -> bool:
         return True
     except Exception:  # minidom does not implement exceptions well
         return False
+
+
+@lru_cache(maxsize=4096)
+def key_is_valid_xml_attr(key: str) -> bool:
+    """Return True when key can be emitted directly as an XML attribute name."""
+    key = str(key)
+    if not key:
+        return False
+
+    from defusedxml.minidom import parseString
+
+    test_xml = f'<?xml version="1.0" encoding="UTF-8" ?><root {key}="value"></root>'
+    try:
+        parseString(test_xml)
+        return True
+    except Exception:  # minidom does not implement exceptions well
+        return False
+
+
+def validate_xml_attr_names(attr: dict[str, Any]) -> None:
+    """Reject attributes that would make the generated XML malformed."""
+    for key in attr:
+        if not key_is_valid_xml_attr(key):
+            raise ValueError(f"Invalid XML attribute name: {key}")
 
 
 def make_valid_xml_name(key: str, attr: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -902,10 +927,11 @@ def dicttoxml(
             namespace_str += f' xmlns:{prefix}="{ns}"'
     if root:
         output.append('<?xml version="1.0" encoding="UTF-8" ?>')
+        custom_root, root_attr = make_valid_xml_name(custom_root, {})
         output_elem = convert(
             obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
         )
-        output.append(f"<{custom_root}{namespace_str}>{output_elem}</{custom_root}>")
+        output.append(f"<{custom_root}{make_attrstring(root_attr)}{namespace_str}>{output_elem}</{custom_root}>")
     else:
         output.append(
             convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)

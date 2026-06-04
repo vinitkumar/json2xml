@@ -494,6 +494,30 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, custom_root="custom", attr_type=False)
         assert b"<custom><key>value</key></custom>" in result
 
+    # @lat: [[tests#Conversion behavior#Custom root names normalize before raw output]]
+    def test_dicttoxml_normalizes_invalid_custom_root_name(self) -> None:
+        """Invalid custom roots should use the same XML-name normalization as JSON object keys."""
+        result = dicttoxml.dicttoxml(
+            {"key": "value"},
+            custom_root="custom root",
+            attr_type=False,
+        )
+
+        assert result == (
+            b'<?xml version="1.0" encoding="UTF-8" ?>'
+            b"<custom_root><key>value</key></custom_root>"
+        )
+
+    # @lat: [[tests#Conversion behavior#Invalid custom attributes are rejected]]
+    def test_dicttoxml_rejects_invalid_custom_attribute_names(self) -> None:
+        """Invalid custom attribute names should fail before dicttoxml returns malformed XML bytes."""
+        with pytest.raises(ValueError, match="Invalid XML attribute name"):
+            dicttoxml.dicttoxml(
+                {"key": {"@attrs": {"bad attr": "value"}, "@val": "payload"}},
+                root=False,
+                attr_type=False,
+            )
+
     def test_dicttoxml_with_xml_namespaces(self) -> None:
         """Test dicttoxml with XML namespaces."""
         data = {"key": "value"}

@@ -114,6 +114,14 @@ Special dictionary keys such as `@attrs` and `@val` should bypass the Rust calla
 
 Root scalar payloads should bypass the Rust callable until the accelerator preserves the legacy Python `<item>` wrapper shape under the configured root element.
 
+### Custom root names normalize before raw output
+
+Invalid custom root names should use the serializer's existing XML-name normalization before raw bytes are returned so `pretty=False` cannot emit malformed root tags.
+
+### Invalid custom attributes are rejected
+
+Custom `@attrs` keys that are not valid XML attribute names should fail explicitly because attributes have no safe metadata fallback equivalent to element `<key name="...">` output.
+
 ## XML helper behavior
 
 These tests pin low-level XML helper contracts so performance refactors keep the same serializer output and caller-side mutation behavior.

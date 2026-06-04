@@ -509,14 +509,29 @@ class TestDict2xml:
         )
 
     # @lat: [[tests#Conversion behavior#Invalid custom attributes are rejected]]
-    def test_dicttoxml_rejects_invalid_custom_attribute_names(self) -> None:
+    @pytest.mark.parametrize(
+        "attr_name",
+        ["", "1foo", "foo>bar", 'foo"bar', "foo\nbar", "bad attr"],
+    )
+    def test_dicttoxml_rejects_invalid_custom_attribute_names(self, attr_name: str) -> None:
         """Invalid custom attribute names should fail before dicttoxml returns malformed XML bytes."""
         with pytest.raises(ValueError, match="Invalid XML attribute name"):
             dicttoxml.dicttoxml(
-                {"key": {"@attrs": {"bad attr": "value"}, "@val": "payload"}},
+                {"key": {"@attrs": {attr_name: "value"}, "@val": "payload"}},
                 root=False,
                 attr_type=False,
             )
+
+    @pytest.mark.parametrize("attr_name", ["a_b", "a-b", "xmlAttr"])
+    def test_dicttoxml_accepts_valid_custom_attribute_edge_names(self, attr_name: str) -> None:
+        """Borderline valid custom attribute names should remain accepted."""
+        result = dicttoxml.dicttoxml(
+            {"key": {"@attrs": {attr_name: "value"}, "@val": "payload"}},
+            root=False,
+            attr_type=False,
+        )
+
+        assert result == f'<key {attr_name}="value">payload</key>'.encode()
 
     def test_dicttoxml_with_xml_namespaces(self) -> None:
         """Test dicttoxml with XML namespaces."""

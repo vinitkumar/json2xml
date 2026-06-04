@@ -133,3 +133,7 @@ Helpers that receive prevalidated XML names should add type metadata only to the
 ### XML name validity fast and cached paths
 
 XML name validation should agree across the ASCII fast path, parser-backed path, and repeated cached calls so optimization does not change accepted names.
+
+### XML attribute name validation
+
+Attribute name validation should reject malformed custom attribute keys while preserving parser-accepted edge names such as underscores, hyphens, and xml-prefixed names.

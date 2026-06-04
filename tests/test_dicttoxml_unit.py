@@ -134,3 +134,30 @@ def test_key_is_valid_xml_fast_and_parse_paths_are_stable_under_cache() -> None:
     assert second == cases
     cache_info = dicttoxml.key_is_valid_xml.cache_info()
     assert cache_info.hits >= len(cases)
+
+
+# @lat: [[tests#XML helper behavior#XML attribute name validation]]
+def test_xml_attribute_name_validation_accepts_only_parser_valid_names() -> None:
+    dicttoxml.key_is_valid_xml_attr.cache_clear()
+
+    cases = {
+        "a_b": True,
+        "a-b": True,
+        "xmlAttr": True,
+        "": False,
+        "1foo": False,
+        "foo>bar": False,
+        'foo"bar': False,
+        "foo\nbar": False,
+    }
+
+    first = {key: dicttoxml.key_is_valid_xml_attr(key) for key in cases}
+    second = {key: dicttoxml.key_is_valid_xml_attr(key) for key in reversed(cases)}
+
+    assert first == cases
+    assert second == cases
+    dicttoxml.validate_xml_attr_names({key: "value" for key, is_valid in cases.items() if is_valid})
+    for key, is_valid in cases.items():
+        if not is_valid:
+            with pytest.raises(ValueError, match="Invalid XML attribute name"):
+                dicttoxml.validate_xml_attr_names({key: "value"})

@@ -66,7 +66,7 @@ test-simple: ## run tests without coverage
 	pytest -vv tests
 
 test-rust: ## run Rust tests
-	cd rust && cargo test --no-default-features
+	cd rust && cargo test
 
 test-all: test test-rust ## run all tests (Python and Rust)
 
@@ -100,4 +100,3 @@ dist: clean ## builds source and wheel package
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
-

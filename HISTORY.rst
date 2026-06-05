@@ -1,4 +1,15 @@
 
+6.2.0 / 2026-06-05
+==================
+
+  * feat: reduce peak serializer memory in the pure Python rooted-output path
+  * feat: reduce Rust extension peak serializer memory by writing directly into Python bytes
+  * fix: split PyO3 extension-module linking so ``cargo test`` works on macOS
+  * chore: release ``json2xml-rs`` 0.3.0 and make ``json2xml[fast]`` require the memory-saving Rust package
+  * chore: update the Rust extension crate to Rust 2024 with rust-version 1.96
+  * docs: add reproducible Rust memory benchmark results showing about 49% lower serializer RSS delta
+
+
 6.1.0 / 2026-05-04
 ==================
 

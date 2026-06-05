@@ -28,6 +28,12 @@ The Rust extension crate targets the Rust 2024 edition and pins `rust-version` t
 
 The Cargo feature layout separates normal Rust/PyO3 tests from extension-module builds. `cargo test` uses the default `python` feature without extension-module linking, while maturin enables the `extension-module` feature for wheel builds.
 
+## Release packaging
+
+Package releases keep the Python wrapper and Rust accelerator versioned together so optional fast installs receive compatible wheels.
+
+The Python package version lives in `pyproject.toml` and `json2xml/__init__.py`. The Rust accelerator version lives in both `rust/Cargo.toml` and `rust/pyproject.toml`, and the Python `fast` extra should require the Rust package version that contains any expected accelerator behavior.
+
 ## Performance benchmarks
 
 The benchmark docs record measured implementation tradeoffs so users can choose between Python, Rust, Go, and Zig without guessing.

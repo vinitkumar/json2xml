@@ -265,11 +265,7 @@ use pyo3::PyResult;
 #[cfg(feature = "python")]
 #[inline]
 fn type_attr<'a>(cfg: &ConvertConfig, ty: &'a str) -> Option<&'a str> {
-    if cfg.attr_type {
-        Some(ty)
-    } else {
-        None
-    }
+    if cfg.attr_type { Some(ty) } else { None }
 }
 
 /// Single unified type-dispatch writer. Every Python value goes through here

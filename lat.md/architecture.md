@@ -24,6 +24,8 @@ The fast-path module prefers the Rust extension when it can preserve Python sema
 
 The Rust backend writes serializer output into Python's bytes writer instead of building a Rust string and copying it across the extension boundary. This keeps the fast path's peak output memory closer to the final `bytes` object.
 
+The Rust extension crate targets the Rust 2024 edition and pins `rust-version` to the current stable toolchain so native builds fail clearly on older compilers.
+
 ## Performance benchmarks
 
 The benchmark docs record measured implementation tradeoffs so users can choose between Python, Rust, Go, and Zig without guessing.

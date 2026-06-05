@@ -19,6 +19,7 @@ env:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   # Build wheels for Linux

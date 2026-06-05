@@ -8,7 +8,9 @@ use pyo3::exceptions::PyValueError;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 #[cfg(feature = "python")]
-use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString};
+use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString};
+#[cfg(feature = "python")]
+use std::io::Write;
 /// Escape special XML characters in a string (allocating convenience wrapper).
 #[inline]
 pub fn escape_xml(s: &str) -> String {
@@ -56,6 +58,61 @@ pub fn push_escaped_attr(out: &mut String, s: &str) {
         last = i + 1;
     }
     out.push_str(&s[last..]);
+}
+
+#[cfg(feature = "python")]
+#[inline]
+fn write_str(out: &mut dyn Write, s: &str) -> PyResult<()> {
+    out.write_all(s.as_bytes())?;
+    Ok(())
+}
+
+#[cfg(feature = "python")]
+#[inline]
+fn write_byte(out: &mut dyn Write, b: u8) -> PyResult<()> {
+    out.write_all(&[b])?;
+    Ok(())
+}
+
+#[cfg(feature = "python")]
+#[inline]
+fn write_escaped_text(out: &mut dyn Write, s: &str) -> PyResult<()> {
+    let mut last = 0;
+    for (i, b) in s.bytes().enumerate() {
+        let repl = match b {
+            b'&' => "&amp;",
+            b'"' => "&quot;",
+            b'\'' => "&apos;",
+            b'<' => "&lt;",
+            b'>' => "&gt;",
+            _ => continue,
+        };
+        write_str(out, &s[last..i])?;
+        write_str(out, repl)?;
+        last = i + 1;
+    }
+    write_str(out, &s[last..])
+}
+
+#[cfg(feature = "python")]
+#[inline]
+fn write_escaped_attr(out: &mut dyn Write, s: &str) -> PyResult<()> {
+    write_escaped_text(out, s)
+}
+
+#[cfg(feature = "python")]
+#[inline]
+fn write_cdata(out: &mut dyn Write, s: &str) -> PyResult<()> {
+    write_str(out, "<![CDATA[")?;
+    let mut start = 0;
+    while let Some(i) = s[start..].find("]]>") {
+        let abs = start + i;
+        write_str(out, &s[start..abs])?;
+        write_str(out, "]]]]><![CDATA[>")?;
+        start = abs + 3;
+    }
+    write_str(out, &s[start..])?;
+    write_str(out, "]]>")
 }
 
 /// Wrap content in CDATA section (allocating convenience wrapper).
@@ -161,29 +218,34 @@ fn push_attrs(out: &mut String, attrs: &[(String, String)]) {
 /// Write opening tag with optional name and type attributes directly to buffer.
 #[cfg(feature = "python")]
 #[inline]
-fn write_open_tag(out: &mut String, tag: &str, name_attr: Option<&str>, type_attr: Option<&str>) {
-    out.push('<');
-    out.push_str(tag);
+fn write_open_tag(
+    out: &mut dyn Write,
+    tag: &str,
+    name_attr: Option<&str>,
+    type_attr: Option<&str>,
+) -> PyResult<()> {
+    write_byte(out, b'<')?;
+    write_str(out, tag)?;
     if let Some(name) = name_attr {
-        out.push_str(" name=\"");
-        push_escaped_attr(out, name);
-        out.push('"');
+        write_str(out, " name=\"")?;
+        write_escaped_attr(out, name)?;
+        write_byte(out, b'"')?;
     }
     if let Some(ty) = type_attr {
-        out.push_str(" type=\"");
-        out.push_str(ty);
-        out.push('"');
+        write_str(out, " type=\"")?;
+        write_str(out, ty)?;
+        write_byte(out, b'"')?;
     }
-    out.push('>');
+    write_byte(out, b'>')
 }
 
 /// Write a closing tag directly to buffer.
 #[cfg(feature = "python")]
 #[inline]
-fn write_close_tag(out: &mut String, tag: &str) {
-    out.push_str("</");
-    out.push_str(tag);
-    out.push('>');
+fn write_close_tag(out: &mut dyn Write, tag: &str) -> PyResult<()> {
+    write_str(out, "</")?;
+    write_str(out, tag)?;
+    write_byte(out, b'>')
 }
 
 /// Configuration for XML conversion
@@ -203,11 +265,7 @@ use pyo3::PyResult;
 #[cfg(feature = "python")]
 #[inline]
 fn type_attr<'a>(cfg: &ConvertConfig, ty: &'a str) -> Option<&'a str> {
-    if cfg.attr_type {
-        Some(ty)
-    } else {
-        None
-    }
+    if cfg.attr_type { Some(ty) } else { None }
 }
 
 /// Single unified type-dispatch writer. Every Python value goes through here
@@ -215,7 +273,7 @@ fn type_attr<'a>(cfg: &ConvertConfig, ty: &'a str) -> Option<&'a str> {
 #[cfg(feature = "python")]
 fn write_value(
     py: Python<'_>,
-    out: &mut String,
+    out: &mut dyn Write,
     obj: &Bound<'_, PyAny>,
     tag: &str,
     name_attr: Option<&str>,
@@ -224,64 +282,64 @@ fn write_value(
 ) -> PyResult<()> {
     // None
     if obj.is_none() {
-        write_open_tag(out, tag, name_attr, type_attr(cfg, "null"));
-        write_close_tag(out, tag);
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "null"))?;
+        write_close_tag(out, tag)?;
         return Ok(());
     }
 
     // Bool (must check before int since bool is subclass of int in Python)
     if obj.is_instance_of::<PyBool>() {
         let v: bool = obj.extract()?;
-        write_open_tag(out, tag, name_attr, type_attr(cfg, "bool"));
-        out.push_str(if v { "true" } else { "false" });
-        write_close_tag(out, tag);
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "bool"))?;
+        write_str(out, if v { "true" } else { "false" })?;
+        write_close_tag(out, tag)?;
         return Ok(());
     }
 
     // Int - try i64 first, fall back to string for large integers
     if obj.is_instance_of::<PyInt>() {
-        write_open_tag(out, tag, name_attr, type_attr(cfg, "int"));
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "int"))?;
         match obj.extract::<i64>() {
             Ok(v) => {
-                out.push_str(&v.to_string());
+                write_str(out, &v.to_string())?;
             }
             Err(_) => {
-                out.push_str(obj.str()?.to_str()?);
+                write_str(out, obj.str()?.to_str()?)?;
             }
         }
-        write_close_tag(out, tag);
+        write_close_tag(out, tag)?;
         return Ok(());
     }
 
     // Float - use Python's str() for parity (Rust renders 1.0 as "1")
     if obj.is_instance_of::<PyFloat>() {
-        write_open_tag(out, tag, name_attr, type_attr(cfg, "float"));
-        out.push_str(obj.str()?.to_str()?);
-        write_close_tag(out, tag);
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "float"))?;
+        write_str(out, obj.str()?.to_str()?)?;
+        write_close_tag(out, tag)?;
         return Ok(());
     }
 
     // String
     if let Ok(py_str) = obj.cast::<PyString>() {
         let s = py_str.to_str()?;
-        write_open_tag(out, tag, name_attr, type_attr(cfg, "str"));
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "str"))?;
         if cfg.cdata {
-            push_cdata(out, s);
+            write_cdata(out, s)?;
         } else {
-            push_escaped_text(out, s);
+            write_escaped_text(out, s)?;
         }
-        write_close_tag(out, tag);
+        write_close_tag(out, tag)?;
         return Ok(());
     }
 
     // Dict
     if let Ok(dict) = obj.cast::<PyDict>() {
         if wrap_container {
-            write_open_tag(out, tag, name_attr, type_attr(cfg, "dict"));
+            write_open_tag(out, tag, name_attr, type_attr(cfg, "dict"))?;
         }
         write_dict_contents(py, out, dict, cfg)?;
         if wrap_container {
-            write_close_tag(out, tag);
+            write_close_tag(out, tag)?;
         }
         return Ok(());
     }
@@ -289,11 +347,11 @@ fn write_value(
     // List
     if let Ok(list) = obj.cast::<PyList>() {
         if wrap_container {
-            write_open_tag(out, tag, name_attr, type_attr(cfg, "list"));
+            write_open_tag(out, tag, name_attr, type_attr(cfg, "list"))?;
         }
         write_list_contents(py, out, list, tag, cfg)?;
         if wrap_container {
-            write_close_tag(out, tag);
+            write_close_tag(out, tag)?;
         }
         return Ok(());
     }
@@ -303,11 +361,11 @@ fn write_value(
         let items: Vec<Bound<'_, PyAny>> = iter.collect::<PyResult<_>>()?;
         let list = PyList::new(py, &items)?;
         if wrap_container {
-            write_open_tag(out, tag, name_attr, type_attr(cfg, "list"));
+            write_open_tag(out, tag, name_attr, type_attr(cfg, "list"))?;
         }
         write_list_contents(py, out, &list, tag, cfg)?;
         if wrap_container {
-            write_close_tag(out, tag);
+            write_close_tag(out, tag)?;
         }
         return Ok(());
     }
@@ -315,13 +373,13 @@ fn write_value(
     // Fallback: convert to string via Python's str()
     let py_str = obj.str()?;
     let s = py_str.to_str()?;
-    write_open_tag(out, tag, name_attr, type_attr(cfg, "str"));
+    write_open_tag(out, tag, name_attr, type_attr(cfg, "str"))?;
     if cfg.cdata {
-        push_cdata(out, s);
+        write_cdata(out, s)?;
     } else {
-        push_escaped_text(out, s);
+        write_escaped_text(out, s)?;
     }
-    write_close_tag(out, tag);
+    write_close_tag(out, tag)?;
     Ok(())
 }
 
@@ -329,7 +387,7 @@ fn write_value(
 #[cfg(feature = "python")]
 fn write_dict_contents(
     py: Python<'_>,
-    out: &mut String,
+    out: &mut dyn Write,
     dict: &Bound<'_, PyDict>,
     cfg: &ConvertConfig,
 ) -> PyResult<()> {
@@ -348,9 +406,9 @@ fn write_dict_contents(
             let wrap_list_container = (cfg.item_wrap || !first_is_scalar) && !cfg.list_headers;
 
             if wrap_list_container {
-                write_open_tag(out, &xml_key, name_attr, type_attr(cfg, "list"));
+                write_open_tag(out, &xml_key, name_attr, type_attr(cfg, "list"))?;
                 write_list_contents(py, out, list, &xml_key, cfg)?;
-                write_close_tag(out, &xml_key);
+                write_close_tag(out, &xml_key)?;
             } else {
                 write_list_contents(py, out, list, &xml_key, cfg)?;
             }
@@ -377,7 +435,7 @@ fn is_python_scalar(obj: &Bound<'_, PyAny>) -> bool {
 #[cfg(feature = "python")]
 fn write_list_contents(
     py: Python<'_>,
-    out: &mut String,
+    out: &mut dyn Write,
     list: &Bound<'_, PyList>,
     parent: &str,
     cfg: &ConvertConfig,
@@ -400,9 +458,9 @@ fn write_list_contents(
                 } else {
                     type_attr(cfg, "dict")
                 };
-                write_open_tag(out, dict_tag_name, None, dict_type_attr);
+                write_open_tag(out, dict_tag_name, None, dict_type_attr)?;
                 write_dict_contents(py, out, dict, cfg)?;
-                write_close_tag(out, dict_tag_name);
+                write_close_tag(out, dict_tag_name)?;
             } else {
                 write_dict_contents(py, out, dict, cfg)?;
             }
@@ -441,7 +499,7 @@ fn dicttoxml(
     item_wrap: bool,
     cdata: bool,
     list_headers: bool,
-) -> PyResult<Vec<u8>> {
+) -> PyResult<Py<PyBytes>> {
     if !is_valid_xml_name(custom_root) {
         return Err(PyValueError::new_err(format!(
             "Invalid XML root element name: '{}'",
@@ -456,30 +514,31 @@ fn dicttoxml(
         list_headers,
     };
 
-    let mut out = String::new();
+    PyBytes::new_with_writer(py, 0, |out| {
+        if root {
+            write_str(out, "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>")?;
+            write_byte(out, b'<')?;
+            write_str(out, custom_root)?;
+            write_byte(out, b'>')?;
+        }
 
-    if root {
-        out.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-        out.push('<');
-        out.push_str(custom_root);
-        out.push('>');
-    }
+        if let Ok(dict) = obj.cast::<PyDict>() {
+            write_dict_contents(py, out, dict, &config)?;
+        } else if let Ok(list) = obj.cast::<PyList>() {
+            write_list_contents(py, out, list, custom_root, &config)?;
+        } else {
+            write_value(py, out, obj, custom_root, None, &config, true)?;
+        }
 
-    if let Ok(dict) = obj.cast::<PyDict>() {
-        write_dict_contents(py, &mut out, dict, &config)?;
-    } else if let Ok(list) = obj.cast::<PyList>() {
-        write_list_contents(py, &mut out, list, custom_root, &config)?;
-    } else {
-        write_value(py, &mut out, obj, custom_root, None, &config, true)?;
-    }
+        if root {
+            write_str(out, "</")?;
+            write_str(out, custom_root)?;
+            write_byte(out, b'>')?;
+        }
 
-    if root {
-        out.push_str("</");
-        out.push_str(custom_root);
-        out.push('>');
-    }
-
-    Ok(out.into_bytes())
+        Ok(())
+    })
+    .map(Bound::unbind)
 }
 
 /// Fast XML string escaping.

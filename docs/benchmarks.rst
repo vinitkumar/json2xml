@@ -145,6 +145,8 @@ Recent pure Python improvements substantially reduced conversion time. Medium an
 
 Go and Zig remain useful for native CLI workflows. They are slower for small and medium inputs because startup dominates, but both beat Python on the 323KB workload when full CLI process time is measured.
 
+See ``docs/rust_memory_benchmark.rst`` for the June 2026 Rust peak-memory comparison between the previous extension-boundary copy and the Python bytes-writer implementation.
+
 When to Use Each Implementation
 -------------------------------
 

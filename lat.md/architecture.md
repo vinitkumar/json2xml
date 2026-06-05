@@ -14,11 +14,25 @@ The pure Python serializer recursively maps Python values to XML elements, attri
 
 [[json2xml/dicttoxml.py#dicttoxml]] is the public serializer. It handles the XML declaration, root wrapper, namespace emission, XPath mode, and then routes nested values through helper functions such as [[json2xml/dicttoxml.py#convert]], [[json2xml/dicttoxml.py#convert_dict]], and [[json2xml/dicttoxml.py#convert_list]]. [[json2xml/dicttoxml.py#get_xml_type]] and [[json2xml/dicttoxml.py#convert]] accept broad caller input and classify unsupported values at runtime, so tests can probe failure paths without lying to the type checker. Invalid XML names are normalized by [[json2xml/dicttoxml.py#make_valid_xml_name]] instead of crashing immediately on user keys; common ASCII names use cached fast validation, while parser validation remains available for non-ASCII or unusual names. Dict and list scalar paths reuse validated element names and specialize generated type attributes so common payloads avoid repeated normalization and escaping work. Special `@attrs`/`@val` handling avoids mutating caller data.
 
+The root wrapper path releases the unwrapped XML body before UTF-8 encoding the final document. That keeps peak memory closer to the returned byte size without changing the recursive serializer contract.
+
 ## Backend selection
 
 The fast-path module prefers the Rust extension when it can preserve Python semantics, and falls back to the Python serializer for unsupported features.
 
 [[json2xml/dicttoxml_fast.py#dicttoxml]] uses the Rust backend only when optional features such as `ids`, custom `item_func`, XML namespaces, XPath mode, root scalar payloads, or special `@` keys are not involved. A local stub for the optional `json2xml_rs` module keeps static analysis aligned with that fallback design, so type checking still passes when the extension is not installed. This keeps fast installs fast without letting the optimized path silently change behavior.
+
+The Rust backend writes serializer output into Python's bytes writer instead of building a Rust string and copying it across the extension boundary. This keeps the fast path's peak output memory closer to the final `bytes` object.
+
+The Rust extension crate targets the Rust 2024 edition and pins `rust-version` to the current stable toolchain so native builds fail clearly on older compilers.
+
+The Cargo feature layout separates normal Rust/PyO3 tests from extension-module builds. `cargo test` uses the default `python` feature without extension-module linking, while maturin enables the `extension-module` feature for wheel builds.
+
+## Release packaging
+
+Package releases keep the Python wrapper and Rust accelerator versioned together so optional fast installs receive compatible wheels.
+
+The Python package version lives in `pyproject.toml` and `json2xml/__init__.py`. The Rust accelerator version lives in both `rust/Cargo.toml` and `rust/pyproject.toml`, and the Python `fast` extra should require the Rust package version that contains any expected accelerator behavior.
 
 ## Performance benchmarks
 
@@ -27,6 +41,8 @@ The benchmark docs record measured implementation tradeoffs so users can choose 
 The May 2026 benchmark on Apple Silicon shows the Rust extension as the best option for Python library calls, with 4-14x speedups over the optimized pure Python path and no process overhead. Go and Zig remain useful for native CLI workflows where startup cost is acceptable.
 
 Reproduction docs require contributors to record machine, OS, Python, and tool availability before comparing results. `benchmark_all.py` mixes library calls and CLI subprocesses intentionally, so its Go and Zig rows include process startup overhead.
+
+The June 2026 Rust memory benchmark uses [[benchmark_memory_rust.py#main]] to compare release builds in fresh Python processes. The bytes-writer implementation cuts serializer peak RSS by about half for large outputs, with a documented throughput tradeoff.
 
 ## Dependency security
 

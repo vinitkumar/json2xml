@@ -903,7 +903,6 @@ def dicttoxml(
         ]
         return "".join(output).encode("utf-8")
 
-    output = []
     namespace_str = ""
     if xml_namespaces is None:
         xml_namespaces = {}
@@ -926,15 +925,18 @@ def dicttoxml(
             ns = xml_namespaces[prefix]
             namespace_str += f' xmlns:{prefix}="{ns}"'
     if root:
-        output.append('<?xml version="1.0" encoding="UTF-8" ?>')
         custom_root, root_attr = make_valid_xml_name(custom_root, {})
         output_elem = convert(
             obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
         )
-        output.append(f"<{custom_root}{make_attrstring(root_attr)}{namespace_str}>{output_elem}</{custom_root}>")
-    else:
-        output.append(
-            convert(obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers)
+        output = (
+            f'<?xml version="1.0" encoding="UTF-8" ?>'
+            f"<{custom_root}{make_attrstring(root_attr)}{namespace_str}>"
+            f"{output_elem}</{custom_root}>"
         )
-
-    return "".join(output).encode("utf-8")
+        del output_elem
+        return output.encode("utf-8")
+    else:
+        return convert(
+            obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers
+        ).encode("utf-8")

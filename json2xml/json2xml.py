@@ -57,7 +57,7 @@ class Json2xml:
                 from defusedxml.minidom import parseString
 
                 try:
-                    result = parseString(xml_data.decode("utf-8")).toprettyxml(encoding="UTF-8").decode()
+                    result = parseString(xml_data).toprettyxml(encoding="UTF-8").decode()
                 except ExpatError:
                     raise InvalidDataError
                 return result

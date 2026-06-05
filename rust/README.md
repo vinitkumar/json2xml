@@ -6,7 +6,7 @@ A high-performance Rust implementation of the dicttoxml module using PyO3.
 
 ### Prerequisites
 
-- Rust (1.70+)
+- Rust (1.96+)
 - Python (3.9+)
 - maturin (`pip install maturin`)
 
@@ -75,6 +75,10 @@ The Rust implementation is expected to be 5-15x faster than pure Python for:
 - String escaping (single-pass vs. multiple `.replace()` calls)
 - Type dispatch (compiled match statements vs. `isinstance()` chains)
 - String building (pre-allocated buffers vs. f-string concatenation)
+
+Version 0.3.0 writes serializer output directly into Python bytes, reducing the
+measured serializer RSS delta for a 100,000-record benchmark by about 49%
+compared with the previous Rust implementation.
 
 ## Limitations
 

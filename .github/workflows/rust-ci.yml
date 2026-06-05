@@ -17,6 +17,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_VERSION: '1.96.0'
 
 permissions:
   contents: read
@@ -31,6 +32,7 @@ jobs:
       - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1
         with:
+          toolchain: ${{ env.RUST_VERSION }}
           components: rustfmt, clippy
 
       - name: Check formatting
@@ -43,7 +45,7 @@ jobs:
 
       - name: Run Rust unit tests
         working-directory: rust
-        run: cargo test --no-default-features
+        run: cargo test
 
   rust-test:
     name: Build & Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
@@ -63,6 +65,8 @@ jobs:
 
       - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
 
       - name: Install maturin
         run: pip install maturin
@@ -107,6 +111,8 @@ jobs:
 
       - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@46268bd060767258de96ed93c1251119784f2ab6 # v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
 
       - name: Install maturin
         run: pip install maturin

@@ -26,6 +26,8 @@ The Rust backend writes serializer output into Python's bytes writer instead of 
 
 The Rust extension crate targets the Rust 2024 edition and pins `rust-version` to the current stable toolchain so native builds fail clearly on older compilers.
 
+The Cargo feature layout separates normal Rust/PyO3 tests from extension-module builds. `cargo test` uses the default `python` feature without extension-module linking, while maturin enables the `extension-module` feature for wheel builds.
+
 ## Performance benchmarks
 
 The benchmark docs record measured implementation tradeoffs so users can choose between Python, Rust, Go, and Zig without guessing.

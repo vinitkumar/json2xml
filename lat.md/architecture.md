@@ -22,6 +22,8 @@ The fast-path module prefers the Rust extension when it can preserve Python sema
 
 [[json2xml/dicttoxml_fast.py#dicttoxml]] uses the Rust backend only when optional features such as `ids`, custom `item_func`, XML namespaces, XPath mode, root scalar payloads, or special `@` keys are not involved. A local stub for the optional `json2xml_rs` module keeps static analysis aligned with that fallback design, so type checking still passes when the extension is not installed. This keeps fast installs fast without letting the optimized path silently change behavior.
 
+The Rust backend writes serializer output into Python's bytes writer instead of building a Rust string and copying it across the extension boundary. This keeps the fast path's peak output memory closer to the final `bytes` object.
+
 ## Performance benchmarks
 
 The benchmark docs record measured implementation tradeoffs so users can choose between Python, Rust, Go, and Zig without guessing.

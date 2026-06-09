@@ -18,6 +18,7 @@ _SAFE_RANDOM = SystemRandom()
 
 # Set up logging
 LOG = logging.getLogger("dicttoxml")
+_XML_ESCAPE_CHARS = frozenset("&\"'<>")
 
 
 class _XMLWriter:
@@ -130,7 +131,7 @@ def escape_xml(s: str | int | float | numbers.Number | None) -> str:
         str: The escaped string.
     """
     if isinstance(s, str):
-        if "&" not in s and '"' not in s and "'" not in s and "<" not in s and ">" not in s:
+        if not _XML_ESCAPE_CHARS.intersection(s):
             return s
         s = s.replace("&", "&amp;")
         s = s.replace('"', "&quot;")
@@ -163,28 +164,13 @@ def make_attrstring(attr: dict[str, Any]) -> str:
 
 
 def make_typed_attrstring(attr: dict[str, Any], xml_type: str) -> str:
-    """Create XML attributes with a type value without copying caller attrs."""
+    """Create XML attributes with a type value without mutating caller attrs."""
     if not attr:
         return f' type="{xml_type}"'
 
-    validate_xml_attr_names(attr)
-    if len(attr) == 1:
-        key, val = next(iter(attr.items()))
-        if key == "type":
-            return f' type="{xml_type}"'
-        return f' {key}="{escape_xml(val)}" type="{xml_type}"'
-
-    attr_parts: list[str] = []
-    type_written = False
-    for key, val in attr.items():
-        if key == "type":
-            attr_parts.append(f'type="{xml_type}"')
-            type_written = True
-        else:
-            attr_parts.append(f'{key}="{escape_xml(val)}"')
-    if not type_written:
-        attr_parts.append(f'type="{xml_type}"')
-    return f" {' '.join(attr_parts)}"
+    typed_attr = dict(attr)
+    typed_attr["type"] = xml_type
+    return make_attrstring(typed_attr)
 
 
 def _is_fast_valid_xml_name(key: str) -> bool:
@@ -588,14 +574,12 @@ def _append_dict2xml_str(
     if has_custom_attrs:
         raw_attrs = item["@attrs"]
         val_attr = raw_attrs if isinstance(raw_attrs, dict) else dict(raw_attrs)
+        rawitem = item["@val"] if "@val" in item else {
+            key: value for key, value in item.items() if key != "@attrs"
+        }
     else:
         val_attr = attr
-    if "@val" in item:
-        rawitem = item["@val"]
-    elif has_custom_attrs:
-        rawitem = item
-    else:
-        rawitem = item
+        rawitem = item.get("@val", item)
 
     if parentIsList and list_headers:
         if len(val_attr) > 0 and not item_wrap:
@@ -612,7 +596,6 @@ def _append_dict2xml_str(
             item_wrap,
             item_name,
             list_headers,
-            skip_attrs=has_custom_attrs and "@val" not in item,
         )
         output.write(f"</{parent}>")
     elif item.get("@flat", False) or (parentIsList and not item_wrap):
@@ -626,7 +609,6 @@ def _append_dict2xml_str(
             item_wrap,
             item_name,
             list_headers,
-            skip_attrs=has_custom_attrs and "@val" not in item,
         )
     else:
         output.write(f"<{item_name}{make_attrstring(val_attr)}>")
@@ -640,7 +622,6 @@ def _append_dict2xml_str(
             item_wrap,
             item_name,
             list_headers,
-            skip_attrs=has_custom_attrs and "@val" not in item,
         )
         output.write(f"</{item_name}>")
 
@@ -655,7 +636,6 @@ def _append_rawitem(
     item_wrap: bool,
     item_name: str,
     list_headers: bool,
-    skip_attrs: bool = False,
 ) -> None:
     if rawitem is None:
         return
@@ -664,20 +644,6 @@ def _append_rawitem(
     elif isinstance(rawitem, (str, numbers.Number)):
         output.write(escape_xml(str(rawitem)))
     else:
-        if skip_attrs and isinstance(rawitem, dict):
-            _append_convert_dict(
-                output,
-                rawitem,
-                ids,
-                item_name,
-                attr_type,
-                item_func,
-                cdata,
-                item_wrap,
-                list_headers=list_headers,
-                skip_key="@attrs",
-            )
-            return
         _append_convert(
             output,
             rawitem,
@@ -750,12 +716,9 @@ def _append_convert_dict(
     cdata: bool,
     item_wrap: bool,
     list_headers: bool = False,
-    skip_key: str | None = None,
 ) -> None:
     """Append a dict as XML without allocating a joined child subtree."""
     for key, val in obj.items():
-        if key == skip_key:
-            continue
         attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
         key_is_flat = isinstance(key, str) and key.endswith("@flat")
         xml_key = key[:-5] if key_is_flat else key
@@ -832,21 +795,19 @@ def _append_convert_list(
     this_id = get_unique_id(parent) if ids else None
 
     for i, item in enumerate(items):
+        base_attr: dict[str, Any] | None = None
+        if ids:
+            base_attr = {"id": f"{this_id}_{i + 1}"}
+
         if isinstance(item, bool):
-            if ids:
-                attr = {"id": f"{this_id}_{i + 1}"}
-                if item_name_attr:
-                    attr.update(item_name_attr)
-            else:
-                attr = item_name_attr
+            attr = dict(base_attr) if base_attr else {}
+            if item_name_attr:
+                attr.update(item_name_attr)
             output.write(convert_bool_valid_name(item_name, item, attr_type, attr))
         elif isinstance(item, (numbers.Number, str)):
-            if ids:
-                attr = {"id": f"{this_id}_{i + 1}"}
-                if scalar_key_attr:
-                    attr.update(scalar_key_attr)
-            else:
-                attr = scalar_key_attr
+            attr = dict(base_attr) if base_attr else {}
+            if scalar_key_attr:
+                attr.update(scalar_key_attr)
             output.write(
                 convert_kv_valid_name(
                     key=scalar_key,
@@ -857,12 +818,9 @@ def _append_convert_list(
                 )
             )
         elif hasattr(item, "isoformat"):
-            if ids:
-                attr = {"id": f"{this_id}_{i + 1}"}
-                if item_name_attr:
-                    attr.update(item_name_attr)
-            else:
-                attr = item_name_attr
+            attr = dict(base_attr) if base_attr else {}
+            if item_name_attr:
+                attr.update(item_name_attr)
             output.write(
                 convert_kv_valid_name(
                     key=item_name,
@@ -873,7 +831,7 @@ def _append_convert_list(
                 )
             )
         elif isinstance(item, dict):
-            attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
+            attr = dict(base_attr) if base_attr else {}
             _append_dict2xml_str(
                 output,
                 attr_type=attr_type,
@@ -888,7 +846,7 @@ def _append_convert_list(
                 list_headers=list_headers,
             )
         elif isinstance(item, Sequence):
-            attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
+            attr = dict(base_attr) if base_attr else {}
             _append_list2xml_str(
                 output,
                 attr_type=attr_type,
@@ -901,12 +859,9 @@ def _append_convert_list(
                 list_headers=list_headers,
             )
         elif item is None:
-            if ids:
-                attr = {"id": f"{this_id}_{i + 1}"}
-                if item_name_attr:
-                    attr.update(item_name_attr)
-            else:
-                attr = item_name_attr
+            attr = dict(base_attr) if base_attr else {}
+            if item_name_attr:
+                attr.update(item_name_attr)
             output.write(convert_none_valid_name(item_name, attr_type, attr))
         else:
             raise TypeError(f"Unsupported data type: {item} ({type(item).__name__})")

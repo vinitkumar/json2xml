@@ -113,6 +113,35 @@ def test_valid_name_helpers_keep_existing_attrs_without_attr_type() -> None:
     assert base_attrs == {"name": "invalid key"}
 
 
+# @lat: [[tests#XML helper behavior#Container helpers preserve caller attrs]]
+def test_container_helpers_set_type_without_mutating_caller_attrs() -> None:
+    dict_attrs = {"id": "shared"}
+    list_attrs = {"id": "shared"}
+
+    assert dicttoxml.dict2xml_str(
+        attr_type=True,
+        attr=dict_attrs,
+        item={"name": "Bike"},
+        item_func=lambda _parent: "item",
+        cdata=False,
+        item_name="product",
+        item_wrap=True,
+        parentIsList=False,
+    ) == '<product id="shared" type="dict"><name type="str">Bike</name></product>'
+    assert dict_attrs == {"id": "shared"}
+
+    assert dicttoxml.list2xml_str(
+        attr_type=True,
+        attr=list_attrs,
+        item=["Bike"],
+        item_func=lambda _parent: "item",
+        cdata=False,
+        item_name="products",
+        item_wrap=True,
+    ) == '<products id="shared" type="list"><item type="str">Bike</item></products>'
+    assert list_attrs == {"id": "shared"}
+
+
 # @lat: [[tests#XML helper behavior#XML name validity fast and cached paths]]
 def test_key_is_valid_xml_fast_and_parse_paths_are_stable_under_cache() -> None:
     dicttoxml.key_is_valid_xml.cache_clear()

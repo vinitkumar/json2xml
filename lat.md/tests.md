@@ -130,6 +130,10 @@ These tests pin low-level XML helper contracts so performance refactors keep the
 
 Helpers that receive prevalidated XML names should add type metadata only to the emitted element and must not mutate caller-owned attribute dictionaries.
 
+### Container helpers preserve caller attrs
+
+Dict and list element helpers should add container type metadata only to emitted XML and must not mutate caller-owned attribute dictionaries.
+
 ### XML name validity fast and cached paths
 
 XML name validation should agree across the ASCII fast path, parser-backed path, and repeated cached calls so optimization does not change accepted names.

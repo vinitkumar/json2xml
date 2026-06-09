@@ -7,6 +7,7 @@ from collections.abc import Callable, Sequence
 from decimal import Decimal
 from fractions import Fraction
 from functools import lru_cache
+from io import BytesIO
 from random import SystemRandom
 from typing import Any, Union, cast
 
@@ -18,6 +19,21 @@ _SAFE_RANDOM = SystemRandom()
 # Set up logging
 LOG = logging.getLogger("dicttoxml")
 _XML_ESCAPE_CHARS = frozenset("&\"'<>")
+
+
+class _XMLWriter:
+    """Small UTF-8 byte writer used by the internal streaming serializer."""
+
+    __slots__ = ("_buffer",)
+
+    def __init__(self) -> None:
+        self._buffer = BytesIO()
+
+    def write(self, value: str) -> None:
+        self._buffer.write(value.encode("utf-8"))
+
+    def to_bytes(self) -> bytes:
+        return self._buffer.getvalue()
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -287,30 +303,42 @@ def convert_to_xpath31(obj: Any, parent_key: str | None = None) -> str:
     Returns:
         str: XML string in XPath 3.1 format.
     """
+    output = _XMLWriter()
+    _append_xpath31(output, obj, parent_key)
+    return output.to_bytes().decode("utf-8")
+
+
+def _append_xpath31(
+    output: _XMLWriter,
+    obj: Any,
+    parent_key: str | None = None,
+    namespace: bool = False,
+) -> None:
+    """Append XPath 3.1 json-to-xml output without building child strings."""
     key_attr = f' key="{escape_xml(parent_key)}"' if parent_key is not None else ""
+    namespace_attr = f' xmlns="{XPATH_FUNCTIONS_NS}"' if namespace else ""
     tag_name = get_xpath31_tag_name(obj)
 
     if tag_name == "null":
-        return f"<null{key_attr}/>"
-
-    if tag_name == "boolean":
-        return f"<boolean{key_attr}>{str(obj).lower()}</boolean>"
-
-    if tag_name == "number":
-        return f"<number{key_attr}>{obj}</number>"
-
-    if tag_name == "string":
-        return f"<string{key_attr}>{escape_xml(str(obj))}</string>"
-
-    if tag_name == "map":
-        children = "".join(convert_to_xpath31(v, k) for k, v in obj.items())
-        return f"<map{key_attr}>{children}</map>"
-
-    if tag_name == "array":
-        children = "".join(convert_to_xpath31(item) for item in obj)
-        return f"<array{key_attr}>{children}</array>"
-
-    return f"<string{key_attr}>{escape_xml(str(obj))}</string>"
+        output.write(f"<null{namespace_attr}{key_attr}/>")
+    elif tag_name == "boolean":
+        output.write(f"<boolean{namespace_attr}{key_attr}>{str(obj).lower()}</boolean>")
+    elif tag_name == "number":
+        output.write(f"<number{namespace_attr}{key_attr}>{obj}</number>")
+    elif tag_name == "string":
+        output.write(f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>")
+    elif tag_name == "map":
+        output.write(f"<map{namespace_attr}{key_attr}>")
+        for key, val in obj.items():
+            _append_xpath31(output, val, key)
+        output.write("</map>")
+    elif tag_name == "array":
+        output.write(f"<array{namespace_attr}{key_attr}>")
+        for item in obj:
+            _append_xpath31(output, item)
+        output.write("</array>")
+    else:
+        output.write(f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>")
 
 
 def convert(
@@ -325,45 +353,19 @@ def convert(
 ) -> str:
     """Routes the elements of an object to the right function to convert them
     based on their data type"""
-    item_name = item_func(parent)
-    # since bool is also a subtype of number.Number and int, the check for bool
-    # never comes and hence we get wrong value for the xml type bool
-    # here, we just change order and check for bool first, because no other
-    # type other than bool can be true for bool check
-    if isinstance(obj, bool):
-        return convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata)
-
-    if isinstance(obj, numbers.Number):
-        return convert_kv(
-            key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
-        )
-
-    if isinstance(obj, str):
-        return convert_kv(
-            key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
-        )
-
-    if hasattr(obj, "isoformat") and isinstance(
-        obj, (datetime.datetime, datetime.date)
-    ):
-        return convert_kv(
-            key=item_name,
-            val=obj.isoformat(),
-            attr_type=attr_type,
-            attr={},
-            cdata=cdata,
-        )
-
-    if obj is None:
-        return convert_none(key=item_name, attr_type=attr_type, cdata=cdata)
-
-    if isinstance(obj, dict):
-        return convert_dict(cast("dict[str, Any]", obj), ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
-
-    if isinstance(obj, Sequence):
-        return convert_list(obj, ids, parent, attr_type, item_func, cdata, item_wrap, list_headers=list_headers)
-
-    raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
+    output = _XMLWriter()
+    _append_convert(
+        output,
+        obj,
+        ids,
+        attr_type,
+        item_func,
+        cdata,
+        item_wrap,
+        parent,
+        list_headers=list_headers,
+    )
+    return output.to_bytes().decode("utf-8")
 
 
 def is_primitive_type(val: Any) -> bool:
@@ -385,42 +387,21 @@ def dict2xml_str(
     """
     parse dict2xml
     """
-    ids: list[str] = []  # initialize list of unique ids
-    subtree = ""  # Initialize subtree with default empty string
-
-    if attr_type:
-        attr["type"] = get_xml_type(item)
-    val_attr = dict(item["@attrs"]) if "@attrs" in item else dict(attr)
-    if "@val" in item:
-        rawitem = item["@val"]
-    elif "@attrs" in item:
-        rawitem = {key: value for key, value in item.items() if key != "@attrs"}
-    else:
-        rawitem = item
-    if is_primitive_type(rawitem):
-        if rawitem is None:
-            subtree = ""
-        elif isinstance(rawitem, bool):
-            subtree = str(rawitem).lower()
-        else:
-            subtree = escape_xml(str(rawitem))
-    else:
-        # we can not use convert_dict, because rawitem could be non-dict
-        subtree = convert(
-            rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers=list_headers
-        )
-
-    if parentIsList and list_headers:
-        if len(val_attr) > 0 and not item_wrap:
-            attrstring = make_attrstring(val_attr)
-            return f"<{parent}{attrstring}>{subtree}</{parent}>"
-        return f"<{parent}>{subtree}</{parent}>"
-    elif item.get("@flat", False) or (parentIsList and not item_wrap):
-        return subtree
-
-    attrstring = make_attrstring(val_attr)
-
-    return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
+    output = _XMLWriter()
+    _append_dict2xml_str(
+        output,
+        attr_type,
+        attr,
+        item,
+        item_func,
+        cdata,
+        item_name,
+        item_wrap,
+        parentIsList,
+        parent,
+        list_headers=list_headers,
+    )
+    return output.to_bytes().decode("utf-8")
 
 
 def list2xml_str(
@@ -433,30 +414,19 @@ def list2xml_str(
     item_wrap: bool,
     list_headers: bool = False,
 ) -> str:
-    ids: list[str] = []  # initialize list of unique ids
-    if attr_type:
-        attr["type"] = get_xml_type(item)
-    flat = False
-    subtree = ""  # Initialize subtree with default empty string
-    if item_name.endswith("@flat"):
-        item_name = item_name[0:-5]
-        flat = True
-    subtree = convert_list(
-        items=item,
-        ids=ids,
-        parent=item_name,
-        attr_type=attr_type,
-        item_func=item_func,
-        cdata=cdata,
-        item_wrap=item_wrap,
-        list_headers=list_headers
+    output = _XMLWriter()
+    _append_list2xml_str(
+        output,
+        attr_type,
+        attr,
+        item,
+        item_func,
+        cdata,
+        item_name,
+        item_wrap,
+        list_headers=list_headers,
     )
-    if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap):
-        return subtree
-    elif list_headers:
-        return subtree
-    attrstring = make_attrstring(attr)
-    return f"<{item_name}{attrstring}>{subtree}</{item_name}>"
+    return output.to_bytes().decode("utf-8")
 
 
 def convert_dict(
@@ -470,71 +440,19 @@ def convert_dict(
     list_headers: bool = False
 ) -> str:
     """Converts a dict into an XML string."""
-    output: list[str] = []
-    addline = output.append
-
-    for key, val in obj.items():
-        attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
-        key_is_flat = isinstance(key, str) and key.endswith("@flat")
-        xml_key = key[:-5] if key_is_flat else key
-
-        key, attr = make_valid_xml_name(xml_key, attr)
-
-        # since bool is also a subtype of number.Number and int, the check for bool
-        # never comes and hence we get wrong value for the xml type bool
-        # here, we just change order and check for bool first, because no other
-        # type other than bool can be true for bool check
-        if isinstance(val, bool):
-            addline(convert_bool_valid_name(key, val, attr_type, attr))
-
-        elif isinstance(val, (numbers.Number, str)):
-            addline(
-                convert_kv_valid_name(
-                    key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
-                )
-            )
-
-        elif hasattr(val, "isoformat"):  # datetime
-            addline(
-                convert_kv_valid_name(
-                    key=key,
-                    val=val.isoformat(),
-                    attr_type=attr_type,
-                    attr=attr,
-                    cdata=cdata,
-                )
-            )
-
-        elif isinstance(val, dict):
-            addline(
-                dict2xml_str(
-                    attr_type, attr, val, item_func, cdata, key, item_wrap,
-                    False,
-                    list_headers=list_headers
-                )
-            )
-
-        elif isinstance(val, Sequence):
-            addline(
-                list2xml_str(
-                    attr_type=attr_type,
-                    attr=attr,
-                    item=val,
-                    item_func=item_func,
-                    cdata=cdata,
-                    item_name=f"{key}@flat" if key_is_flat else key,
-                    item_wrap=item_wrap,
-                    list_headers=list_headers
-                )
-            )
-
-        elif not val:
-            addline(convert_none_valid_name(key, attr_type, attr))
-
-        else:
-            raise TypeError(f"Unsupported data type: {val} ({type(val).__name__})")
-
-    return "".join(output)
+    output = _XMLWriter()
+    _append_convert_dict(
+        output,
+        obj,
+        ids,
+        parent,
+        attr_type,
+        item_func,
+        cdata,
+        item_wrap,
+        list_headers=list_headers,
+    )
+    return output.to_bytes().decode("utf-8")
 
 
 def convert_list(
@@ -548,18 +466,290 @@ def convert_list(
     list_headers: bool = False,
 ) -> str:
     """Converts a list into an XML string."""
-    output: list[str] = []
-    addline = output.append
+    output = _XMLWriter()
+    _append_convert_list(
+        output,
+        items,
+        ids,
+        parent,
+        attr_type,
+        item_func,
+        cdata,
+        item_wrap,
+        list_headers=list_headers,
+    )
+    return output.to_bytes().decode("utf-8")
 
-    item_name = item_func(parent)  # Is item_name still relevant if item_wrap is false
+
+def _append_convert(
+    output: _XMLWriter,
+    obj: Any,
+    ids: Any,
+    attr_type: bool,
+    item_func: Callable[[str], str],
+    cdata: bool,
+    item_wrap: bool,
+    parent: str = "root",
+    list_headers: bool = False,
+) -> None:
+    """Append converted XML directly into output without building subtree strings."""
+    item_name = item_func(parent)
+
+    if isinstance(obj, bool):
+        output.write(convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata))
+    elif isinstance(obj, numbers.Number):
+        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
+    elif isinstance(obj, str):
+        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
+    elif hasattr(obj, "isoformat") and isinstance(obj, (datetime.datetime, datetime.date)):
+        output.write(
+            convert_kv(
+                key=item_name,
+                val=obj.isoformat(),
+                attr_type=attr_type,
+                attr={},
+                cdata=cdata,
+            )
+        )
+    elif obj is None:
+        output.write(convert_none(key=item_name, attr_type=attr_type, cdata=cdata))
+    elif isinstance(obj, dict):
+        _append_convert_dict(
+            output,
+            cast("dict[str, Any]", obj),
+            ids,
+            parent,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            list_headers=list_headers,
+        )
+    elif isinstance(obj, Sequence):
+        _append_convert_list(
+            output,
+            obj,
+            ids,
+            parent,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            list_headers=list_headers,
+        )
+    else:
+        raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
+
+
+def _append_dict2xml_str(
+    output: _XMLWriter,
+    attr_type: bool,
+    attr: dict[str, Any],
+    item: dict[str, Any],
+    item_func: Callable[[str], str],
+    cdata: bool,
+    item_name: str,
+    item_wrap: bool,
+    parentIsList: bool,
+    parent: str = "",
+    list_headers: bool = False,
+) -> None:
+    """Append a dict element using the same shape as dict2xml_str."""
+    ids: list[str] = []
+    attr = dict(attr)
+
+    if attr_type:
+        attr["type"] = get_xml_type(item)
+    val_attr = dict(item["@attrs"]) if "@attrs" in item else dict(attr)
+    if "@val" in item:
+        rawitem = item["@val"]
+    elif "@attrs" in item:
+        rawitem = {key: value for key, value in item.items() if key != "@attrs"}
+    else:
+        rawitem = item
+
+    if parentIsList and list_headers:
+        if len(val_attr) > 0 and not item_wrap:
+            output.write(f"<{parent}{make_attrstring(val_attr)}>")
+        else:
+            output.write(f"<{parent}>")
+        _append_rawitem(output, rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers)
+        output.write(f"</{parent}>")
+    elif item.get("@flat", False) or (parentIsList and not item_wrap):
+        _append_rawitem(output, rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers)
+    else:
+        output.write(f"<{item_name}{make_attrstring(val_attr)}>")
+        _append_rawitem(output, rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers)
+        output.write(f"</{item_name}>")
+
+
+def _append_rawitem(
+    output: _XMLWriter,
+    rawitem: Any,
+    ids: list[str],
+    attr_type: bool,
+    item_func: Callable[[str], str],
+    cdata: bool,
+    item_wrap: bool,
+    item_name: str,
+    list_headers: bool,
+) -> None:
+    if rawitem is None:
+        return
+    if isinstance(rawitem, bool):
+        output.write(str(rawitem).lower())
+    elif isinstance(rawitem, (str, numbers.Number)):
+        output.write(escape_xml(str(rawitem)))
+    else:
+        _append_convert(
+            output,
+            rawitem,
+            ids,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            item_name,
+            list_headers=list_headers,
+        )
+
+
+def _append_list2xml_str(
+    output: _XMLWriter,
+    attr_type: bool,
+    attr: dict[str, Any],
+    item: Sequence[Any],
+    item_func: Callable[[str], str],
+    cdata: bool,
+    item_name: str,
+    item_wrap: bool,
+    list_headers: bool = False,
+) -> None:
+    ids: list[str] = []
+    attr = dict(attr)
+    if attr_type:
+        attr["type"] = get_xml_type(item)
+    flat = False
+    if item_name.endswith("@flat"):
+        item_name = item_name[0:-5]
+        flat = True
+
+    if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap) or list_headers:
+        _append_convert_list(
+            output,
+            item,
+            ids,
+            item_name,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            list_headers=list_headers,
+        )
+        return
+
+    output.write(f"<{item_name}{make_attrstring(attr)}>")
+    _append_convert_list(
+        output,
+        item,
+        ids,
+        item_name,
+        attr_type,
+        item_func,
+        cdata,
+        item_wrap,
+        list_headers=list_headers,
+    )
+    output.write(f"</{item_name}>")
+
+
+def _append_convert_dict(
+    output: _XMLWriter,
+    obj: dict[str, Any],
+    ids: list[str],
+    parent: str,
+    attr_type: bool,
+    item_func: Callable[[str], str],
+    cdata: bool,
+    item_wrap: bool,
+    list_headers: bool = False,
+) -> None:
+    """Append a dict as XML without allocating a joined child subtree."""
+    for key, val in obj.items():
+        attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
+        key_is_flat = isinstance(key, str) and key.endswith("@flat")
+        xml_key = key[:-5] if key_is_flat else key
+
+        key, attr = make_valid_xml_name(xml_key, attr)
+
+        if isinstance(val, bool):
+            output.write(convert_bool_valid_name(key, val, attr_type, attr))
+        elif isinstance(val, (numbers.Number, str)):
+            output.write(
+                convert_kv_valid_name(
+                    key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
+                )
+            )
+        elif hasattr(val, "isoformat"):
+            output.write(
+                convert_kv_valid_name(
+                    key=key,
+                    val=val.isoformat(),
+                    attr_type=attr_type,
+                    attr=attr,
+                    cdata=cdata,
+                )
+            )
+        elif isinstance(val, dict):
+            _append_dict2xml_str(
+                output,
+                attr_type,
+                attr,
+                val,
+                item_func,
+                cdata,
+                key,
+                item_wrap,
+                False,
+                list_headers=list_headers,
+            )
+        elif isinstance(val, Sequence):
+            _append_list2xml_str(
+                output,
+                attr_type=attr_type,
+                attr=attr,
+                item=val,
+                item_func=item_func,
+                cdata=cdata,
+                item_name=f"{key}@flat" if key_is_flat else key,
+                item_wrap=item_wrap,
+                list_headers=list_headers,
+            )
+        elif not val:
+            output.write(convert_none_valid_name(key, attr_type, attr))
+        else:
+            raise TypeError(f"Unsupported data type: {val} ({type(val).__name__})")
+
+
+def _append_convert_list(
+    output: _XMLWriter,
+    items: Sequence[Any],
+    ids: list[str] | None,
+    parent: str,
+    attr_type: bool,
+    item_func: Callable[[str], str],
+    cdata: bool,
+    item_wrap: bool,
+    list_headers: bool = False,
+) -> None:
+    """Append a list as XML without allocating a joined child subtree."""
+    item_name = item_func(parent)
     if item_name.endswith("@flat"):
         item_name = item_name[:-5]
     item_name, item_name_attr = make_valid_xml_name(item_name, {})
     scalar_key = item_name if item_wrap else parent
     scalar_key, scalar_key_attr = make_valid_xml_name(scalar_key, {})
-    this_id = None
-    if ids:
-        this_id = get_unique_id(parent)
+    this_id = get_unique_id(parent) if ids else None
 
     for i, item in enumerate(items):
         attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
@@ -567,36 +757,23 @@ def convert_list(
         if isinstance(item, bool):
             if item_name_attr:
                 attr.update(item_name_attr)
-            addline(convert_bool_valid_name(item_name, item, attr_type, attr))
-
+            output.write(convert_bool_valid_name(item_name, item, attr_type, attr))
         elif isinstance(item, (numbers.Number, str)):
             if scalar_key_attr:
                 attr.update(scalar_key_attr)
-            if item_wrap:
-                addline(
-                    convert_kv_valid_name(
-                        key=scalar_key,
-                        val=item,
-                        attr_type=attr_type,
-                        attr=attr,
-                        cdata=cdata,
-                    )
+            output.write(
+                convert_kv_valid_name(
+                    key=scalar_key,
+                    val=item,
+                    attr_type=attr_type,
+                    attr=attr,
+                    cdata=cdata,
                 )
-            else:
-                addline(
-                    convert_kv_valid_name(
-                        key=scalar_key,
-                        val=item,
-                        attr_type=attr_type,
-                        attr=attr,
-                        cdata=cdata,
-                    )
-                )
-
-        elif hasattr(item, "isoformat"):  # datetime
+            )
+        elif hasattr(item, "isoformat"):
             if item_name_attr:
                 attr.update(item_name_attr)
-            addline(
+            output.write(
                 convert_kv_valid_name(
                     key=item_name,
                     val=item.isoformat(),
@@ -605,45 +782,38 @@ def convert_list(
                     cdata=cdata,
                 )
             )
-
         elif isinstance(item, dict):
-            addline(
-                dict2xml_str(
-                    attr_type=attr_type,
-                    attr=attr,
-                    item=item,
-                    item_func=item_func,
-                    cdata=cdata,
-                    item_name=item_name,
-                    item_wrap=item_wrap,
-                    parentIsList=True,
-                    parent=parent,
-                    list_headers=list_headers
-                )
+            _append_dict2xml_str(
+                output,
+                attr_type=attr_type,
+                attr=attr,
+                item=item,
+                item_func=item_func,
+                cdata=cdata,
+                item_name=item_name,
+                item_wrap=item_wrap,
+                parentIsList=True,
+                parent=parent,
+                list_headers=list_headers,
             )
-
         elif isinstance(item, Sequence):
-            addline(
-                list2xml_str(
-                    attr_type=attr_type,
-                    attr=attr,
-                    item=item,
-                    item_func=item_func,
-                    cdata=cdata,
-                    item_name=item_name,
-                    item_wrap=item_wrap,
-                    list_headers=list_headers
-                )
+            _append_list2xml_str(
+                output,
+                attr_type=attr_type,
+                attr=attr,
+                item=item,
+                item_func=item_func,
+                cdata=cdata,
+                item_name=item_name,
+                item_wrap=item_wrap,
+                list_headers=list_headers,
             )
-
         elif item is None:
             if item_name_attr:
                 attr.update(item_name_attr)
-            addline(convert_none_valid_name(item_name, attr_type, attr))
-
+            output.write(convert_none_valid_name(item_name, attr_type, attr))
         else:
             raise TypeError(f"Unsupported data type: {item} ({type(item).__name__})")
-    return "".join(output)
 
 
 def convert_kv(
@@ -892,16 +1062,16 @@ def dicttoxml(
 
     """
     if xpath_format:
-        xml_content = convert_to_xpath31(obj)
-        output = [
-            '<?xml version="1.0" encoding="UTF-8" ?>',
-            xml_content.replace("<map", f'<map xmlns="{XPATH_FUNCTIONS_NS}"', 1)
-            if xml_content.startswith("<map")
-            else xml_content.replace("<array", f'<array xmlns="{XPATH_FUNCTIONS_NS}"', 1)
-            if xml_content.startswith("<array")
-            else f'<map xmlns="{XPATH_FUNCTIONS_NS}">{xml_content}</map>',
-        ]
-        return "".join(output).encode("utf-8")
+        output = _XMLWriter()
+        output.write('<?xml version="1.0" encoding="UTF-8" ?>')
+        tag_name = get_xpath31_tag_name(obj)
+        if tag_name in {"map", "array"}:
+            _append_xpath31(output, obj, namespace=True)
+        else:
+            output.write(f'<map xmlns="{XPATH_FUNCTIONS_NS}">')
+            _append_xpath31(output, obj)
+            output.write("</map>")
+        return output.to_bytes()
 
     namespace_str = ""
     if xml_namespaces is None:
@@ -926,17 +1096,26 @@ def dicttoxml(
             namespace_str += f' xmlns:{prefix}="{ns}"'
     if root:
         custom_root, root_attr = make_valid_xml_name(custom_root, {})
-        output_elem = convert(
-            obj, ids, attr_type, item_func, cdata, item_wrap, parent=custom_root, list_headers=list_headers
+        output = _XMLWriter()
+        output.write('<?xml version="1.0" encoding="UTF-8" ?>')
+        output.write(f"<{custom_root}{make_attrstring(root_attr)}{namespace_str}>")
+        _append_convert(
+            output,
+            obj,
+            ids,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            parent=custom_root,
+            list_headers=list_headers,
         )
-        output = (
-            f'<?xml version="1.0" encoding="UTF-8" ?>'
-            f"<{custom_root}{make_attrstring(root_attr)}{namespace_str}>"
-            f"{output_elem}</{custom_root}>"
-        )
-        del output_elem
-        return output.encode("utf-8")
-    else:
-        return convert(
+        output.write(f"</{custom_root}>")
+        return output.to_bytes()
+
+    output = _XMLWriter()
+    _append_convert(
+        output,
             obj, ids, attr_type, item_func, cdata, item_wrap, parent="", list_headers=list_headers
-        ).encode("utf-8")
+    )
+    return output.to_bytes()

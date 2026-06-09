@@ -95,6 +95,18 @@ class TestDict2xml:
             "<bike>blue</bike></vehicle>" == result
         )
 
+    # @lat: [[tests#Conversion behavior#XPath format wraps root scalars]]
+    def test_xpath_format_root_scalar_wraps_in_namespace_map(self) -> None:
+        """Test XPath root scalar output remains one namespace-qualified document."""
+        result = dicttoxml.dicttoxml("Bike", xpath_format=True)
+
+        assert result == (
+            b'<?xml version="1.0" encoding="UTF-8" ?>'
+            b'<map xmlns="http://www.w3.org/2005/xpath-functions">'
+            b"<string>Bike</string>"
+            b"</map>"
+        )
+
     def test_item_wrap_true(self) -> None:
         """Test dicttoxml with item_wrap=True."""
         data = {"bike": ["blue", "green"]}

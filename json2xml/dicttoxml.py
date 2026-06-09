@@ -159,8 +159,18 @@ def make_attrstring(attr: dict[str, Any]) -> str:
         if key == "type":
             return f' type="{val}"'
         return f' {key}="{escape_xml(val)}"'
-    attrstring = " ".join([f'{k}="{escape_xml(v)}"' for k, v in attr.items()])
+    attrstring = " ".join(f'{k}="{escape_xml(v)}"' for k, v in attr.items())
     return f" {attrstring}"
+
+
+def make_typed_attrstring(attr: dict[str, Any], xml_type: str) -> str:
+    """Create XML attributes with a type value without mutating caller attrs."""
+    if not attr:
+        return f' type="{xml_type}"'
+
+    typed_attr = dict(attr)
+    typed_attr["type"] = xml_type
+    return make_attrstring(typed_attr)
 
 
 def _is_fast_valid_xml_name(key: str) -> bool:
@@ -560,26 +570,59 @@ def _append_dict2xml_str(
 
     if attr_type:
         attr["type"] = get_xml_type(item)
-    val_attr = dict(item["@attrs"]) if "@attrs" in item else dict(attr)
-    if "@val" in item:
-        rawitem = item["@val"]
-    elif "@attrs" in item:
-        rawitem = {key: value for key, value in item.items() if key != "@attrs"}
+    has_custom_attrs = "@attrs" in item
+    if has_custom_attrs:
+        raw_attrs = item["@attrs"]
+        val_attr = raw_attrs if isinstance(raw_attrs, dict) else dict(raw_attrs)
+        rawitem = item["@val"] if "@val" in item else {
+            key: value for key, value in item.items() if key != "@attrs"
+        }
     else:
-        rawitem = item
+        val_attr = attr
+        rawitem = item.get("@val", item)
 
     if parentIsList and list_headers:
         if len(val_attr) > 0 and not item_wrap:
             output.write(f"<{parent}{make_attrstring(val_attr)}>")
         else:
             output.write(f"<{parent}>")
-        _append_rawitem(output, rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers)
+        _append_rawitem(
+            output,
+            rawitem,
+            ids,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            item_name,
+            list_headers,
+        )
         output.write(f"</{parent}>")
     elif item.get("@flat", False) or (parentIsList and not item_wrap):
-        _append_rawitem(output, rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers)
+        _append_rawitem(
+            output,
+            rawitem,
+            ids,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            item_name,
+            list_headers,
+        )
     else:
         output.write(f"<{item_name}{make_attrstring(val_attr)}>")
-        _append_rawitem(output, rawitem, ids, attr_type, item_func, cdata, item_wrap, item_name, list_headers)
+        _append_rawitem(
+            output,
+            rawitem,
+            ids,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            item_name,
+            list_headers,
+        )
         output.write(f"</{item_name}>")
 
 
@@ -597,7 +640,7 @@ def _append_rawitem(
     if rawitem is None:
         return
     if isinstance(rawitem, bool):
-        output.write(str(rawitem).lower())
+        output.write("true" if rawitem else "false")
     elif isinstance(rawitem, (str, numbers.Number)):
         output.write(escape_xml(str(rawitem)))
     else:
@@ -752,13 +795,17 @@ def _append_convert_list(
     this_id = get_unique_id(parent) if ids else None
 
     for i, item in enumerate(items):
-        attr = {} if not ids else {"id": f"{this_id}_{i + 1}"}
+        base_attr: dict[str, Any] | None = None
+        if ids:
+            base_attr = {"id": f"{this_id}_{i + 1}"}
 
         if isinstance(item, bool):
+            attr = dict(base_attr) if base_attr else {}
             if item_name_attr:
                 attr.update(item_name_attr)
             output.write(convert_bool_valid_name(item_name, item, attr_type, attr))
         elif isinstance(item, (numbers.Number, str)):
+            attr = dict(base_attr) if base_attr else {}
             if scalar_key_attr:
                 attr.update(scalar_key_attr)
             output.write(
@@ -771,6 +818,7 @@ def _append_convert_list(
                 )
             )
         elif hasattr(item, "isoformat"):
+            attr = dict(base_attr) if base_attr else {}
             if item_name_attr:
                 attr.update(item_name_attr)
             output.write(
@@ -783,6 +831,7 @@ def _append_convert_list(
                 )
             )
         elif isinstance(item, dict):
+            attr = dict(base_attr) if base_attr else {}
             _append_dict2xml_str(
                 output,
                 attr_type=attr_type,
@@ -797,6 +846,7 @@ def _append_convert_list(
                 list_headers=list_headers,
             )
         elif isinstance(item, Sequence):
+            attr = dict(base_attr) if base_attr else {}
             _append_list2xml_str(
                 output,
                 attr_type=attr_type,
@@ -809,6 +859,7 @@ def _append_convert_list(
                 list_headers=list_headers,
             )
         elif item is None:
+            attr = dict(base_attr) if base_attr else {}
             if item_name_attr:
                 attr.update(item_name_attr)
             output.write(convert_none_valid_name(item_name, attr_type, attr))
@@ -849,10 +900,7 @@ def convert_kv_valid_name(
     if hasattr(val, "isoformat") and isinstance(val, (datetime.datetime, datetime.date)):
         val = val.isoformat()
 
-    attr = dict(attr)
-    if attr_type:
-        attr["type"] = get_xml_type(val)
-    attr_string = make_attrstring(attr)
+    attr_string = make_typed_attrstring(attr, get_xml_type(val)) if attr_type else make_attrstring(attr)
     return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
 
 
@@ -877,11 +925,8 @@ def convert_bool_valid_name(
     attr: dict[str, Any],
 ) -> str:
     """Converts a boolean when the caller already validated the key."""
-    attr = dict(attr)
-    if attr_type:
-        attr["type"] = "bool"
-    attr_string = make_attrstring(attr)
-    return f"<{key}{attr_string}>{str(val).lower()}</{key}>"
+    attr_string = make_typed_attrstring(attr, "bool") if attr_type else make_attrstring(attr)
+    return f"<{key}{attr_string}>{'true' if val else 'false'}</{key}>"
 
 
 def convert_none(
@@ -902,10 +947,7 @@ def convert_none_valid_name(
     key: str, attr_type: bool, attr: dict[str, Any]
 ) -> str:
     """Converts a null value when the caller already validated the key."""
-    attr = dict(attr)
-    if attr_type:
-        attr["type"] = "null"
-    attr_string = make_attrstring(attr)
+    attr_string = make_typed_attrstring(attr, "null") if attr_type else make_attrstring(attr)
     return f"<{key}{attr_string}></{key}>"
 
 
@@ -1073,7 +1115,7 @@ def dicttoxml(
             output.write("</map>")
         return output.to_bytes()
 
-    namespace_str = ""
+    namespace_parts: list[str] = []
     if xml_namespaces is None:
         xml_namespaces = {}
     for prefix in xml_namespaces:
@@ -1081,19 +1123,20 @@ def dicttoxml(
             for schema_att in xml_namespaces[prefix]:
                 if schema_att == 'schemaInstance':
                     ns = xml_namespaces[prefix]['schemaInstance']
-                    namespace_str += f' xmlns:{prefix}="{ns}"'
+                    namespace_parts.append(f' xmlns:{prefix}="{ns}"')
                 elif schema_att == 'schemaLocation':
                     ns = xml_namespaces[prefix][schema_att]
-                    namespace_str += f' xsi:{schema_att}="{ns}"'
+                    namespace_parts.append(f' xsi:{schema_att}="{ns}"')
 
         elif prefix == 'xmlns':
             # xmns needs no prefix
             ns = xml_namespaces[prefix]
-            namespace_str += f' xmlns="{ns}"'
+            namespace_parts.append(f' xmlns="{ns}"')
 
         else:
             ns = xml_namespaces[prefix]
-            namespace_str += f' xmlns:{prefix}="{ns}"'
+            namespace_parts.append(f' xmlns:{prefix}="{ns}"')
+    namespace_str = "".join(namespace_parts)
     if root:
         custom_root, root_attr = make_valid_xml_name(custom_root, {})
         output = _XMLWriter()

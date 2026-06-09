@@ -74,6 +74,10 @@ Falsy JSON values such as empty objects, empty arrays, zero, false, and empty st
 
 Converting dictionaries that use `@attrs` and `@val` should preserve the caller's original data so objects can be reused safely.
 
+### Special attributes accept coercible pairs
+
+Attribute metadata that can be coerced with `dict()` should keep working so memory optimizations do not narrow legacy caller input.
+
 ### Invalid XML names normalize without double escaping
 
 Invalid element names should fall back to `<key name="...">` with the original name escaped exactly once in the emitted attribute.
@@ -137,6 +141,10 @@ Helpers that receive prevalidated XML names should add type metadata only to the
 ### Container helpers preserve caller attrs
 
 Dict and list element helpers should add container type metadata only to emitted XML and must not mutate caller-owned attribute dictionaries.
+
+### Typed attributes preserve caller attrs
+
+Valid-name scalar helpers should overwrite emitted type metadata while preserving caller attribute order and never mutating the input dictionary.
 
 ### XML name validity fast and cached paths
 

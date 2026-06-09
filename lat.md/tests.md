@@ -46,6 +46,10 @@ These tests pin the XML shapes that matter most for interoperability, especially
 
 XPath mode should emit the W3C XPath functions namespace and typed child elements so downstream consumers receive standards-shaped XML.
 
+### XPath format wraps root scalars
+
+XPath mode should wrap root scalar payloads in a namespace-qualified map so the output remains a single well-formed XML document.
+
 ### Item-wrap false repeats parent tag
 
 Disabling item wrapping should repeat the parent element name for primitive list items instead of producing nested `<item>` tags.

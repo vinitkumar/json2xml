@@ -782,6 +782,17 @@ class TestDict2xml:
         )
         assert data == original
 
+    # @lat: [[tests#Conversion behavior#Special attributes accept coercible pairs]]
+    def test_dicttoxml_accepts_coercible_attribute_pairs(self) -> None:
+        """Test @attrs inputs accepted by dict() keep their legacy behavior."""
+        result = dicttoxml.dicttoxml(
+            {"product": {"@attrs": [("id", "7"), ("kind", "bike")], "@val": "Road"}},
+            root=False,
+            attr_type=False,
+        )
+
+        assert result == b'<product id="7" kind="bike">Road</product>'
+
     # @lat: [[tests#Conversion behavior#Invalid XML names normalize without double escaping]]
     def test_invalid_xml_name_fallback_escapes_name_attribute_once(self) -> None:
         """Test fallback name attributes are escaped once at emission time."""
@@ -1126,7 +1137,7 @@ class TestDict2xml:
         """Invalid generated list item names should preserve the original name attribute."""
         item_name_result = dicttoxml.convert_list(
             items=[True, datetime.date(2026, 5, 27), None],
-            ids=[],
+            ids=["with_ids"],
             parent="items",
             attr_type=True,
             item_func=lambda _parent: "bad&key",
@@ -1135,7 +1146,7 @@ class TestDict2xml:
         )
         parent_name_result = dicttoxml.convert_list(
             items=[7],
-            ids=[],
+            ids=["with_ids"],
             parent="bad&parent",
             attr_type=True,
             item_func=lambda _parent: "item",
@@ -1143,10 +1154,13 @@ class TestDict2xml:
             item_wrap=False,
         )
 
-        assert '<key name="bad&amp;key" type="bool">true</key>' in item_name_result
-        assert '<key name="bad&amp;key" type="str">2026-05-27</key>' in item_name_result
-        assert '<key name="bad&amp;key" type="null"></key>' in item_name_result
-        assert parent_name_result == '<key name="bad&amp;parent" type="int">7</key>'
+        assert 'id="items_' in item_name_result
+        assert '<key id="' in item_name_result
+        assert 'name="bad&amp;key" type="bool">true</key>' in item_name_result
+        assert 'name="bad&amp;key" type="str">2026-05-27</key>' in item_name_result
+        assert 'name="bad&amp;key" type="null"></key>' in item_name_result
+        assert 'id="bad&amp;parent_' in parent_name_result
+        assert 'name="bad&amp;parent" type="int">7</key>' in parent_name_result
 
     # @lat: [[tests#Conversion behavior#Valid-name scalar helper formats dates]]
     def test_convert_kv_valid_name_formats_date_values(self) -> None:

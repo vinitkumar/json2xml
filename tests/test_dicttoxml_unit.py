@@ -113,6 +113,39 @@ def test_valid_name_helpers_keep_existing_attrs_without_attr_type() -> None:
     assert base_attrs == {"name": "invalid key"}
 
 
+# @lat: [[tests#XML helper behavior#Typed attributes preserve caller attrs]]
+def test_valid_name_helpers_replace_type_attr_without_mutating_caller_attrs() -> None:
+    base_attrs = {"type": "caller", "id": "shared"}
+
+    assert (
+        dicttoxml.convert_kv_valid_name("name", "Bike", True, base_attrs)
+        == '<name type="str" id="shared">Bike</name>'
+    )
+    assert (
+        dicttoxml.convert_bool_valid_name("active", True, True, base_attrs)
+        == '<active type="bool" id="shared">true</active>'
+    )
+    assert (
+        dicttoxml.convert_none_valid_name("empty", True, base_attrs)
+        == '<empty type="null" id="shared"></empty>'
+    )
+    assert base_attrs == {"type": "caller", "id": "shared"}
+
+    only_type = {"type": "caller"}
+    assert (
+        dicttoxml.convert_bool_valid_name("active", False, True, only_type)
+        == '<active type="bool">false</active>'
+    )
+    assert only_type == {"type": "caller"}
+
+    metadata_attrs = {"id": "shared", "name": "invalid key"}
+    assert (
+        dicttoxml.convert_none_valid_name("empty", True, metadata_attrs)
+        == '<empty id="shared" name="invalid key" type="null"></empty>'
+    )
+    assert metadata_attrs == {"id": "shared", "name": "invalid key"}
+
+
 # @lat: [[tests#XML helper behavior#Container helpers preserve caller attrs]]
 def test_container_helpers_set_type_without_mutating_caller_attrs() -> None:
     dict_attrs = {"id": "shared"}

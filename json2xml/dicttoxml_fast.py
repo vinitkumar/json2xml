@@ -121,7 +121,7 @@ def dicttoxml(
             item_wrap=item_wrap,
             item_func=item_func or _py_dicttoxml.default_item_func,
             cdata=cdata,
-            xml_namespaces=xml_namespaces or {},
+            xml_namespaces=xml_namespaces,
             list_headers=list_headers,
             xpath_format=xpath_format,
         )

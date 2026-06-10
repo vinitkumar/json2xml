@@ -153,3 +153,7 @@ XML name validation should agree across the ASCII fast path, parser-backed path,
 ### XML attribute name validation
 
 Attribute name validation should reject malformed custom attribute keys while preserving parser-accepted edge names such as underscores, hyphens, and xml-prefixed names.
+
+### Rust invalid-name attrs escape once
+
+Rust XML-name helpers should return raw invalid keys for later attribute escaping so borrowed-name optimizations cannot reintroduce double escaping.

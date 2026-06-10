@@ -44,7 +44,7 @@ The May 2026 benchmark on Apple Silicon shows the Rust extension as the best opt
 
 Reproduction docs require contributors to record machine, OS, Python, and tool availability before comparing results. `benchmark_all.py` mixes library calls and CLI subprocesses intentionally, so its Go and Zig rows include process startup overhead.
 
-The June 2026 Rust memory benchmark uses [[benchmark_memory_rust.py#main]] to compare release builds in fresh Python processes. The bytes-writer implementation cuts serializer peak RSS by about half for large outputs, with a documented throughput tradeoff.
+The June 2026 Rust memory benchmark uses [[benchmark_memory_rust.py#main]] under hyperfine to compare release builds in fresh Python processes. The bytes-writer implementation cuts serializer peak RSS by about half for large outputs, with a documented throughput tradeoff.
 
 ## Dependency security
 

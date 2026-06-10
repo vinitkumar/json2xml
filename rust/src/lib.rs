@@ -11,6 +11,9 @@ use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString};
 #[cfg(feature = "python")]
 use std::io::Write;
+
+use std::borrow::Cow;
+
 /// Escape special XML characters in a string (allocating convenience wrapper).
 #[inline]
 pub fn escape_xml(s: &str) -> String {
@@ -172,28 +175,27 @@ pub fn is_valid_xml_name(key: &str) -> bool {
 /// (unescaped) original key when a fallback is needed. Escaping of the
 /// attribute value is handled later by `make_attr_string`, so we must NOT
 /// escape here to avoid double-escaping.
-pub fn make_valid_xml_name(key: &str) -> (String, Option<(String, String)>) {
+pub fn make_valid_xml_name<'a>(
+    key: &'a str,
+) -> (Cow<'a, str>, Option<(&'static str, Cow<'a, str>)>) {
     // Already valid
     if is_valid_xml_name(key) {
-        return (key.to_string(), None);
+        return (Cow::Borrowed(key), None);
     }
 
     // Numeric key - prepend 'n'
     if key.bytes().all(|b| b.is_ascii_digit()) && !key.is_empty() {
-        return (format!("n{}", key), None);
+        return (Cow::Owned(format!("n{}", key)), None);
     }
 
     // Try replacing spaces with underscores
     let with_underscores = key.replace(' ', "_");
     if is_valid_xml_name(&with_underscores) {
-        return (with_underscores, None);
+        return (Cow::Owned(with_underscores), None);
     }
 
     // Fall back to using "key" with name attribute (raw value, escaped later)
-    (
-        "key".to_string(),
-        Some(("name".to_string(), key.to_string())),
-    )
+    (Cow::Borrowed("key"), Some(("name", Cow::Borrowed(key))))
 }
 
 /// Build an attribute string from key-value pairs (allocating convenience wrapper).
@@ -392,10 +394,10 @@ fn write_dict_contents(
     cfg: &ConvertConfig,
 ) -> PyResult<()> {
     for (key, val) in dict.iter() {
-        let key_str: String = key.str()?.extract()?;
-        let (xml_key, name_attr_pair) = make_valid_xml_name(&key_str);
-        let name_attr = name_attr_pair.as_ref().map(|(_, v)| v.as_str());
-
+        let key_py_str = key.str()?;
+        let key_str = key_py_str.to_str()?;
+        let (xml_key, name_attr_pair) = make_valid_xml_name(key_str);
+        let name_attr = name_attr_pair.as_ref().map(|(_, v)| v.as_ref());
         // Lists in dicts get special wrapping treatment
         if let Ok(list) = val.cast::<PyList>() {
             let first_is_scalar = list
@@ -755,16 +757,23 @@ mod tests {
         fn falls_back_to_key_with_name_attr() {
             let (name, attr) = make_valid_xml_name("-invalid");
             assert_eq!(name, "key");
-            assert_eq!(attr, Some(("name".to_string(), "-invalid".to_string())));
+            assert_eq!(
+                attr.as_ref().map(|(k, v)| (*k, v.as_ref())),
+                Some(("name", "-invalid"))
+            );
         }
 
         #[test]
+        // @lat: [[tests#XML helper behavior#Rust invalid-name attrs escape once]]
         fn returns_raw_key_for_invalid_names() {
             // make_valid_xml_name must return the raw key, not escaped.
             // Escaping happens later in make_attr_string to avoid double-escaping.
             let (name, attr) = make_valid_xml_name("tag&name");
             assert_eq!(name, "key");
-            assert_eq!(attr, Some(("name".to_string(), "tag&name".to_string())));
+            assert_eq!(
+                attr.as_ref().map(|(k, v)| (*k, v.as_ref())),
+                Some(("name", "tag&name"))
+            );
         }
 
         #[test]
@@ -773,7 +782,9 @@ mod tests {
             // a single level of escaping, not &amp;amp;
             let (name, attr) = make_valid_xml_name("tag&name");
             assert_eq!(name, "key");
-            let attrs = attr.map(|(k, v)| vec![(k, v)]).unwrap_or_default();
+            let attrs = attr
+                .map(|(k, v)| vec![(k.to_string(), v.into_owned())])
+                .unwrap_or_default();
             let attr_string = make_attr_string(&attrs);
             assert_eq!(attr_string, " name=\"tag&amp;name\"");
         }

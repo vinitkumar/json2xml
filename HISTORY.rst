@@ -1,4 +1,14 @@
 
+6.3.0 / 2026-06-10
+==================
+
+  * feat: reduce pure Python serializer allocations in hot dict, list, and scalar paths
+  * feat: preserve XML output semantics while reusing validated element-name and attribute work
+  * perf: lower peak memory pressure for large conversions after the 6.2.0 Rust bytes-writer release
+  * docs: add hyperfine Rust memory benchmark notes with reproduction details and the measured throughput tradeoff
+  * chore: release ``json2xml-rs`` 0.4.0 and require it from ``json2xml[fast]`` for accelerated installs
+
+
 6.2.0 / 2026-06-05
 ==================
 

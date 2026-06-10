@@ -284,8 +284,8 @@ fn write_value(
 ) -> PyResult<()> {
     // None
     if obj.is_none() {
-        write_open_tag(out, &tag, name_attr, type_attr(cfg, "null"))?;
-        write_close_tag(out, &tag)?;
+        write_open_tag(out, tag, name_attr, type_attr(cfg, "null"))?;
+        write_close_tag(out, tag)?;
         return Ok(());
     }
 
@@ -363,9 +363,9 @@ fn write_value(
         let items: Vec<Bound<'_, PyAny>> = iter.collect::<PyResult<_>>()?;
         let list = PyList::new(py, &items)?;
         if wrap_container {
-            write_open_tag(out, &tag, name_attr, type_attr(cfg, "list"))?;
+            write_open_tag(out, tag, name_attr, type_attr(cfg, "list"))?;
         }
-        write_list_contents(py, out, &list, &tag, cfg)?;
+        write_list_contents(py, out, &list, tag, cfg)?;
         if wrap_container {
             write_close_tag(out, tag)?;
         }
@@ -375,13 +375,13 @@ fn write_value(
     // Fallback: convert to string via Python's str()
     let py_str = obj.str()?;
     let s = py_str.to_str()?;
-    write_open_tag(out, &tag, name_attr, type_attr(cfg, "str"))?;
+    write_open_tag(out, tag, name_attr, type_attr(cfg, "str"))?;
     if cfg.cdata {
         write_cdata(out, s)?;
     } else {
         write_escaped_text(out, s)?;
     }
-    write_close_tag(out, &tag)?;
+    write_close_tag(out, tag)?;
     Ok(())
 }
 
@@ -460,9 +460,9 @@ fn write_list_contents(
                 } else {
                     type_attr(cfg, "dict")
                 };
-                write_open_tag(out, &dict_tag_name, None, dict_type_attr)?;
+                write_open_tag(out, dict_tag_name, None, dict_type_attr)?;
                 write_dict_contents(py, out, dict, cfg)?;
-                write_close_tag(out, &dict_tag_name)?;
+                write_close_tag(out, dict_tag_name)?;
             } else {
                 write_dict_contents(py, out, dict, cfg)?;
             }

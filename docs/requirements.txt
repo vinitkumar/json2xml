@@ -99,7 +99,7 @@ starlette==1.0.1
     # via
     #   -r requirements.in
     #   sphinx-autobuild
-tornado==6.5.5
+tornado==6.5.6
     # via -r requirements.in
 typing-extensions==4.12.2
     # via beautifulsoup4

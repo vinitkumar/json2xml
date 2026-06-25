@@ -27,10 +27,10 @@ class BackendAdapter(Protocol):
     name: str
 
     def can_handle(self, request: ConversionRequest) -> bool:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def render(self, request: ConversionRequest) -> bytes:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class BackendSelector:

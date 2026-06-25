@@ -28,9 +28,6 @@ jobs:
       matrix:
         # Pin PyPy 3.11 to the 7.3.23 build so CI keeps exercising the
         # CPython 3.11.15-compatible runtime documented in BENCHMARKS.md.
-        # Free-threaded CPython builds are scheduled only through explicit
-        # include entries whose runner labels have matching artifacts in
-        # actions/python-versions' manifest.
         python-version: [pypy-3.10, pypy-3.11-v7.3.23, '3.10', '3.11', '3.12', '3.13', '3.14', '3.14t', '3.15.0-beta.3']
         os: [
           ubuntu-latest,
@@ -41,15 +38,6 @@ jobs:
         exclude:
           - os: ubuntu-latest
             python-version: '3.14t'
-        include:
-          - os: ubuntu-latest
-            python-version: '3.15.0-beta.3t'
-          - os: windows-latest
-            python-version: '3.15.0-beta.3t'
-          - os: macos-latest
-            python-version: '3.15.0-beta.3t'
-          - os: "ubuntu-24.04-arm"
-            python-version: '3.15.0-beta.3t'
     steps:
     - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       with:

@@ -14,13 +14,17 @@ The pure Python serializer recursively maps Python values to XML elements, attri
 
 [[json2xml/dicttoxml.py#dicttoxml]] is the public serializer. It handles the XML declaration, root wrapper, namespace emission, XPath mode, and then routes nested values through helper functions such as [[json2xml/dicttoxml.py#convert]], [[json2xml/dicttoxml.py#convert_dict]], and [[json2xml/dicttoxml.py#convert_list]]. [[json2xml/dicttoxml.py#get_xml_type]] and [[json2xml/dicttoxml.py#convert]] accept broad caller input and classify unsupported values at runtime, so tests can probe failure paths without lying to the type checker. Invalid XML names are normalized by [[json2xml/dicttoxml.py#make_valid_xml_name]] instead of crashing immediately on user keys; common ASCII names use cached fast validation, while parser validation remains available for non-ASCII or unusual names. Dict and list scalar paths reuse validated element names and specialize generated type attributes so common payloads avoid repeated normalization and escaping work. Special `@attrs`/`@val` handling avoids mutating caller data.
 
-The `dicttoxml()` entry point streams normal and XPath serialization through [[json2xml/dicttoxml.py#_XMLWriter]] so recursive dict and list payloads do not allocate a complete string for each nested subtree. Public helpers such as `convert_dict()` still return strings for compatibility by delegating to the same append path, while library and CLI conversions write UTF-8 bytes incrementally and return the final `bytes` object. Attribute formatting stays centralized through `make_attrstring()`, and `@attrs`/`@val` normalization stays local to dict element handling so caller-owned metadata is never mutated.
+The `dicttoxml()` entry point now normalizes options into `SerializerConfig` and delegates document shaping to a small renderer seam inside [[json2xml/dicttoxml.py#dicttoxml]]. That keeps XPath document framing, namespace emission, and root wrapping separate from the recursive element walkers.
+
+The recursive serializer still streams normal and XPath serialization through [[json2xml/dicttoxml.py#_XMLWriter]] so dict and list payloads do not allocate a complete string for each nested subtree. Public helpers such as `convert_dict()` still return strings for compatibility by delegating to the same append path, while library and CLI conversions write UTF-8 bytes incrementally and return the final `bytes` object. Attribute formatting stays centralized through `make_attrstring()`, and `@attrs`/`@val` normalization stays local to dict element handling so caller-owned metadata is never mutated.
 
 ## Backend selection
 
 The fast-path module prefers the Rust extension when it can preserve Python semantics, and falls back to the Python serializer for unsupported features.
 
-[[json2xml/dicttoxml_fast.py#dicttoxml]] uses the Rust backend only when optional features such as `ids`, custom `item_func`, XML namespaces, XPath mode, root scalar payloads, or special `@` keys are not involved. A local stub for the optional `json2xml_rs` module keeps static analysis aligned with that fallback design, so type checking still passes when the extension is not installed. This keeps fast installs fast without letting the optimized path silently change behavior.
+[[json2xml/dicttoxml_fast.py#dicttoxml]] now normalizes each call into a shared conversion request and asks a tiny backend selector seam to choose Rust or Python. The Rust adapter accepts only requests whose semantics it can preserve, namely no `ids`, custom `item_func`, XML namespaces, XPath mode, root scalar payloads, or special `@` keys.
+
+A local stub for the optional `json2xml_rs` module keeps static analysis aligned with that fallback design, so type checking still passes when the extension is not installed. This keeps fast installs fast without letting the optimized path silently change behavior.
 
 The Rust backend writes serializer output into Python's bytes writer instead of building a Rust string and copying it across the extension boundary. This keeps the fast path's peak output memory closer to the final `bytes` object.
 
@@ -66,4 +70,4 @@ The `.github/workflows/` files declare the minimum `permissions:` scopes needed 
 
 The CLI is a thin adapter that parses options, resolves one input source, and forwards those options into the same converter used by the library API.
 
-[[json2xml/cli.py#create_parser]] defines the user-facing flags. [[json2xml/cli.py#read_input]] enforces the source priority rules, and [[json2xml/cli.py#main]] constructs [[json2xml/json2xml.py#Json2xml]] so command-line use and library use stay aligned.
+[[json2xml/cli.py#create_parser]] defines the user-facing flags. A small `CLIApplication` seam now owns source resolution, stdin parsing, conversion, and output writing, while [[json2xml/cli.py#read_input]] and [[json2xml/cli.py#main]] remain the stable wrapper functions used by tests and callers. Command-line use and library use still meet at [[json2xml/json2xml.py#Json2xml]].

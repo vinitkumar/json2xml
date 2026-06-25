@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+from pathlib import Path
 
 
 # @lat: [[tests#Performance benchmarks#Benchmark script derives interpreter paths from configurable uv base dir]]
@@ -14,9 +15,9 @@ def test_benchmark_multi_python_uses_configurable_uv_base_dir(monkeypatch) -> No
     module = importlib.reload(module)
 
     assert module.UV_PYTHON_DIR.as_posix() == "/tmp/uv-python"
-    assert module.PYTHON_VERSIONS[0]["python"] == "/tmp/uv-python/cpython-3.14.6-macos-aarch64-none/bin/python3.14"
-    assert module.PYTHON_VERSIONS[1]["python"] == "/tmp/uv-python/cpython-3.15.0b3-macos-aarch64-none/bin/python3.15"
-    assert module.PYTHON_VERSIONS[2]["python"] == "/tmp/uv-python/pypy-3.11.15-macos-aarch64-none/bin/pypy3.11"
+    assert Path(module.PYTHON_VERSIONS[0]["python"]).as_posix() == "/tmp/uv-python/cpython-3.14.6-macos-aarch64-none/bin/python3.14"
+    assert Path(module.PYTHON_VERSIONS[1]["python"]).as_posix() == "/tmp/uv-python/cpython-3.15.0b3-macos-aarch64-none/bin/python3.15"
+    assert Path(module.PYTHON_VERSIONS[2]["python"]).as_posix() == "/tmp/uv-python/pypy-3.11.15-macos-aarch64-none/bin/pypy3.11"
 
 
 # @lat: [[tests#Performance benchmarks#Benchmark script lets explicit interpreter env vars override uv defaults]]
@@ -29,6 +30,6 @@ def test_benchmark_multi_python_env_overrides_interpreter_paths(monkeypatch) -> 
     module = importlib.import_module("benchmark_multi_python")
     module = importlib.reload(module)
 
-    assert module.PYTHON_VERSIONS[0]["python"] == "/custom/python314"
-    assert module.PYTHON_VERSIONS[1]["python"] == "/custom/python315"
-    assert module.PYTHON_VERSIONS[2]["python"] == "/custom/pypy311"
+    assert Path(module.PYTHON_VERSIONS[0]["python"]).as_posix() == "/custom/python314"
+    assert Path(module.PYTHON_VERSIONS[1]["python"]).as_posix() == "/custom/python315"
+    assert Path(module.PYTHON_VERSIONS[2]["python"]).as_posix() == "/custom/pypy311"

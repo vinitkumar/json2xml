@@ -15,7 +15,10 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
+
+from .backend_selector import BackendSelector, ConversionRequest, has_special_keys
 
 RustStringTransform = Callable[[str], str]
 
@@ -48,6 +51,67 @@ def is_rust_available() -> bool:
 def get_backend() -> str:
     """Return the name of the current backend ('rust' or 'python')."""
     return "rust" if _use_rust else "python"
+
+@dataclass(frozen=True, slots=True)
+class _RustBackendAdapter:
+    """Adapter for the optional Rust backend."""
+
+    rust_dicttoxml: Callable[..., bytes] | None
+
+    name: str = "rust"
+
+    def can_handle(self, request: ConversionRequest) -> bool:
+        if not _use_rust or self.rust_dicttoxml is None:
+            return False
+
+        return not (
+            request.ids is not None
+            or request.item_func is not None
+            or request.xml_namespaces
+            or request.xpath_format
+            or not isinstance(request.obj, (dict, list))
+            or has_special_keys(request.obj)
+        )
+
+    def render(self, request: ConversionRequest) -> bytes:
+        assert self.rust_dicttoxml is not None
+        return self.rust_dicttoxml(
+            request.obj,
+            root=request.root,
+            custom_root=request.custom_root,
+            attr_type=request.attr_type,
+            item_wrap=request.item_wrap,
+            cdata=request.cdata,
+            list_headers=request.list_headers,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class _PythonBackendAdapter:
+    """Adapter for the compatibility-preserving Python backend."""
+
+    python_dicttoxml: Callable[..., bytes]
+    default_item_func: Callable[[str], str]
+
+    name: str = "python"
+
+    def can_handle(self, request: ConversionRequest) -> bool:
+        return True
+
+    def render(self, request: ConversionRequest) -> bytes:
+        return self.python_dicttoxml(
+            request.obj,
+            root=request.root,
+            custom_root=request.custom_root,
+            ids=request.ids,
+            attr_type=request.attr_type,
+            item_wrap=request.item_wrap,
+            item_func=request.item_func or self.default_item_func,
+            cdata=request.cdata,
+            xml_namespaces=request.xml_namespaces,
+            list_headers=request.list_headers,
+            xpath_format=request.xpath_format,
+        )
 
 
 # @lat: [[architecture#Backend selection]]
@@ -86,62 +150,24 @@ def dicttoxml(
     Returns:
         UTF-8 encoded XML as bytes
     """
-    # Features that require Python fallback
-    needs_python = (
-        ids is not None
-        or item_func is not None
-        or xml_namespaces
-        or xpath_format
-        or not isinstance(obj, (dict, list))
+    request = ConversionRequest(
+        obj=obj,
+        root=root,
+        custom_root=custom_root,
+        ids=ids,
+        attr_type=attr_type,
+        item_wrap=item_wrap,
+        item_func=item_func,
+        cdata=cdata,
+        xml_namespaces=xml_namespaces,
+        list_headers=list_headers,
+        xpath_format=xpath_format,
     )
-
-    # Check for special dict keys that require Python
-    if not needs_python and isinstance(obj, dict):
-        needs_python = _has_special_keys(obj)
-
-    if _use_rust and not needs_python and _rust_dicttoxml is not None:  # pragma: no cover
-        # Use fast Rust implementation
-        return _rust_dicttoxml(
-            obj,
-            root=root,
-            custom_root=custom_root,
-            attr_type=attr_type,
-            item_wrap=item_wrap,
-            cdata=cdata,
-            list_headers=list_headers,
-        )
-    else:
-        # Fall back to pure Python
-        return _py_dicttoxml.dicttoxml(
-            obj,
-            root=root,
-            custom_root=custom_root,
-            ids=ids,
-            attr_type=attr_type,
-            item_wrap=item_wrap,
-            item_func=item_func or _py_dicttoxml.default_item_func,
-            cdata=cdata,
-            xml_namespaces=xml_namespaces,
-            list_headers=list_headers,
-            xpath_format=xpath_format,
-        )
-
-
-def _has_special_keys(obj: Any) -> bool:
-    """Check if a dict contains special keys that require Python processing."""
-    if isinstance(obj, dict):
-        for key, val in obj.items():
-            if isinstance(key, str) and (
-                key.startswith("@") or key.endswith("@flat")
-            ):
-                return True
-            if _has_special_keys(val):
-                return True
-    elif isinstance(obj, list):
-        for item in obj:
-            if _has_special_keys(item):
-                return True
-    return False
+    selector = BackendSelector(
+        _RustBackendAdapter(_rust_dicttoxml),
+        _PythonBackendAdapter(_py_dicttoxml.dicttoxml, _py_dicttoxml.default_item_func),
+    )
+    return selector.render(request)
 
 
 # Re-export commonly used functions

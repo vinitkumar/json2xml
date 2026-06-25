@@ -3,9 +3,9 @@
 Multi-Python Benchmark: Compare json2xml performance across Python implementations.
 
 Compares:
-- CPython 3.14.2 (homebrew)
-- CPython 3.15.0a4 (latest alpha)
-- PyPy 3.10.16
+- CPython 3.14.6
+- CPython 3.15.0b3
+- PyPy 3.11.15
 - Go (json2xml-go)
 
 Each Python version gets its own virtual environment with json2xml installed.
@@ -24,28 +24,45 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-
 # Configuration
 BASE_DIR = Path(__file__).resolve().parent
 VENVS_DIR = BASE_DIR / ".benchmark_venvs"
 GO_CLI = Path(os.environ.get("JSON2XML_GO_CLI", "json2xml-go"))
+UV_PYTHON_DIR = Path(
+    os.environ.get("JSON2XML_UV_PYTHON_DIR", str(Path.home() / ".local/share/uv/python"))
+)
+
+
+def _uv_python_path(distribution: str, executable: str) -> str:
+    """Build a uv-managed interpreter path from a configurable base directory."""
+    return str(UV_PYTHON_DIR / distribution / "bin" / executable)
+
 
 # Python implementations to benchmark
 PYTHON_VERSIONS = [
     {
-        "name": "CPython 3.14.2",
-        "python": "/opt/homebrew/bin/python3.14",
-        "venv_name": "venv_cpython314_2",
+        "name": "CPython 3.14.6",
+        "python": os.environ.get(
+            "JSON2XML_PYTHON_CPYTHON_314_6",
+            _uv_python_path("cpython-3.14.6-macos-aarch64-none", "python3.14"),
+        ),
+        "venv_name": "venv_cpython314_6",
     },
     {
-        "name": "CPython 3.15.0a4",
-        "python": str(Path.home() / ".local/share/uv/python/cpython-3.15.0a4-macos-aarch64-none/bin/python3.15"),
-        "venv_name": "venv_cpython315a4",
+        "name": "CPython 3.15.0b3",
+        "python": os.environ.get(
+            "JSON2XML_PYTHON_CPYTHON_315_0B3",
+            _uv_python_path("cpython-3.15.0b3-macos-aarch64-none", "python3.15"),
+        ),
+        "venv_name": "venv_cpython315b3",
     },
     {
-        "name": "PyPy 3.10.16",
-        "python": str(Path.home() / ".local/share/uv/python/pypy-3.10.19-macos-aarch64-none/bin/pypy3.10"),
-        "venv_name": "venv_pypy310",
+        "name": "PyPy 3.11.15",
+        "python": os.environ.get(
+            "JSON2XML_PYTHON_PYPY_311_15",
+            _uv_python_path("pypy-3.11.15-macos-aarch64-none", "pypy3.11"),
+        ),
+        "venv_name": "venv_pypy311",
     },
 ]
 
@@ -129,7 +146,7 @@ def setup_venv(python_path: str, venv_path: Path) -> bool:
             return False
 
         # Install json2xml in the venv
-        print(f"  Installing json2xml...")
+        print("  Installing json2xml...")
         pip_path = venv_path / "bin" / "pip"
         result = subprocess.run(
             [str(pip_path), "install", "-e", str(BASE_DIR), "-q"],
@@ -276,7 +293,7 @@ def main() -> int:
         print(f"  Go (json2xml-go): {colorize('✓', Colors.GREEN)} Ready")
     else:
         print(f"  Go (json2xml-go): {colorize('✗', Colors.RED)} Not found at {GO_CLI}")
-        print(f"    Set JSON2XML_GO_CLI env var or ensure json2xml-go is in PATH")
+        print("    Set JSON2XML_GO_CLI env var or ensure json2xml-go is in PATH")
     print()
 
     if not active_pythons:
@@ -377,10 +394,10 @@ def main() -> int:
                     avg_times[name].append(result.avg_ms)
 
         # Print summary table
-        print(f"  {'Implementation':<35} {'Avg Time':>12} {'vs CPython 3.14.2':>20}")
+        print(f"  {'Implementation':<35} {'Avg Time':>12} {'vs CPython 3.14.6':>20}")
         print(f"  {'-' * 35} {'-' * 12} {'-' * 20}")
 
-        baseline_name = "CPython 3.14.2"
+        baseline_name = "CPython 3.14.6"
         baseline_avg = sum(avg_times.get(baseline_name, [0])) / len(avg_times.get(baseline_name, [1]))
 
         sorted_impls = sorted(avg_times.items(), key=lambda x: sum(x[1]) / len(x[1]))

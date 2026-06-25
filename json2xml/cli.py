@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import NoReturn
 
@@ -62,10 +63,140 @@ AUTHOR = "Vinit Kumar"
 EMAIL = "mail@vinitkumar.me"
 
 
+@dataclass(frozen=True, slots=True)
+class CLIConversionOptions:
+    """Parsed CLI options normalized for the conversion workflow."""
+
+    input_file: str | None
+    url: str | None
+    string: str | None
+    output: str | None
+    wrapper: str
+    root: bool
+    pretty: bool
+    attr_type: bool
+    item_wrap: bool
+    xpath_format: bool
+    cdata: bool
+    list_headers: bool
+
+    @classmethod
+    def from_namespace(cls, args: argparse.Namespace) -> "CLIConversionOptions":
+        return cls(
+            input_file=args.input_file,
+            url=args.url,
+            string=args.string,
+            output=args.output,
+            wrapper=args.wrapper,
+            root=args.root,
+            pretty=args.pretty,
+            attr_type=args.attr_type,
+            item_wrap=args.item_wrap,
+            xpath_format=args.xpath_format,
+            cdata=args.cdata,
+            list_headers=args.list_headers,
+        )
+
+
 def exit_with_error(message: str) -> NoReturn:
     """Print an error message and terminate CLI processing."""
     print(message, file=sys.stderr)
     raise SystemExit(1)
+
+
+class CLIApplication:
+    """Thin command adapter around input resolution, conversion, and output."""
+
+    def read_input(self, options: CLIConversionOptions) -> JSONValue:
+        if options.url:
+            try:
+                return readfromurl(options.url)
+            except URLReadError as error:
+                exit_with_error(f"Error reading from URL: {error}")
+
+        if options.string:
+            try:
+                return readfromstring(options.string)
+            except StringReadError as error:
+                exit_with_error(
+                    "Error: Invalid JSON in --string input. "
+                    "Pass a valid JSON object, array, string, number, boolean, or null. "
+                    f"({error})"
+                )
+
+        if options.input_file:
+            if options.input_file == "-":
+                return read_from_stdin()
+            if not Path(options.input_file).is_file():
+                exit_with_error(
+                    f"Error: JSON file not found: {options.input_file}. "
+                    "Check the path or use - to read JSON from stdin."
+                )
+            try:
+                return readfromjson(options.input_file)
+            except JSONReadError as error:
+                exit_with_error(
+                    f"Error: Could not parse JSON file: {options.input_file}. "
+                    f"Check that the file contains valid JSON. ({error})"
+                )
+
+        if not sys.stdin.isatty():
+            return read_from_stdin()
+
+        exit_with_error(
+            "Error: No input provided. Pass a JSON file, use - for stdin, "
+            "or provide --string/--url."
+        )
+        raise AssertionError("unreachable")
+
+    def read_from_stdin(self) -> JSONValue:
+        try:
+            json_str = sys.stdin.read().strip()
+            if not json_str:
+                exit_with_error(
+                    "Error: Empty stdin. Pipe JSON into stdin or pass a file/--string."
+                )
+            return readfromstring(json_str)
+        except StringReadError as error:
+            exit_with_error(
+                "Error: Invalid JSON from stdin. Pipe valid JSON into stdin "
+                f"or pass a file/--string. ({error})"
+            )
+
+    def convert(self, data: JSONValue, options: CLIConversionOptions) -> str | bytes:
+        converter = Json2xml(
+            data=data,
+            wrapper=options.wrapper,
+            root=options.root,
+            pretty=options.pretty,
+            attr_type=options.attr_type,
+            item_wrap=options.item_wrap,
+            xpath_format=options.xpath_format,
+            cdata=options.cdata,
+            list_headers=options.list_headers,
+        )
+        xml_output = converter.to_xml()
+        if xml_output is None:
+            raise ValueError("Empty data, no XML generated")
+        return xml_output
+
+    def write_output(self, output: str | bytes, output_file: str | None) -> None:
+        if isinstance(output, bytes):
+            output = output.decode("utf-8")
+
+        if output_file:
+            try:
+                with open(output_file, "w", encoding="utf-8") as file_obj:
+                    file_obj.write(output)
+            except OSError as error:
+                print(f"Error writing to file: {error}", file=sys.stderr)
+                sys.exit(1)
+            return
+
+        print(output)
+
+
+_APP = CLIApplication()
 
 
 # @lat: [[architecture#CLI entrypoint]]
@@ -239,152 +370,37 @@ Examples:
 
 # @lat: [[behavior#Input readers]]
 def read_input(args: argparse.Namespace) -> JSONValue:
-    """
-    Read JSON input from the specified source.
-
-    Priority: URL > String > File > Stdin
-
-    Args:
-        args: Parsed command line arguments.
-
-    Returns:
-        Parsed JSON data as dict or list.
-
-    Raises:
-        SystemExit: When no input is provided or reading fails.
-    """
-    # Priority: URL > String > File > Stdin
-    if args.url:
-        try:
-            return readfromurl(args.url)
-        except URLReadError as e:
-            exit_with_error(f"Error reading from URL: {e}")
-
-    if args.string:
-        try:
-            return readfromstring(args.string)
-        except StringReadError as e:
-            exit_with_error(
-                "Error: Invalid JSON in --string input. "
-                f"Pass a valid JSON object, array, string, number, boolean, or null. ({e})"
-            )
-
-    if args.input_file:
-        if args.input_file == "-":
-            # Read from stdin
-            return read_from_stdin()
-        if not Path(args.input_file).is_file():
-            exit_with_error(
-                f"Error: JSON file not found: {args.input_file}. "
-                "Check the path or use - to read JSON from stdin."
-            )
-        try:
-            return readfromjson(args.input_file)
-        except JSONReadError as e:
-            exit_with_error(
-                f"Error: Could not parse JSON file: {args.input_file}. "
-                f"Check that the file contains valid JSON. ({e})"
-            )
-
-    # Check if there's data on stdin
-    if not sys.stdin.isatty():
-        return read_from_stdin()
-
-    exit_with_error(
-        "Error: No input provided. Pass a JSON file, use - for stdin, "
-        "or provide --string/--url."
-    )
+    """Read JSON input from the specified source."""
+    return _APP.read_input(CLIConversionOptions.from_namespace(args))
 
 
 def read_from_stdin() -> JSONValue:
-    """
-    Read JSON from standard input.
-
-    Returns:
-        Parsed JSON data.
-
-    Raises:
-        SystemExit: When stdin is empty or contains invalid JSON.
-    """
-    try:
-        json_str = sys.stdin.read().strip()
-        if not json_str:
-            exit_with_error(
-                "Error: Empty stdin. Pipe JSON into stdin or pass a file/--string."
-            )
-        return readfromstring(json_str)
-    except StringReadError as e:
-        exit_with_error(
-            "Error: Invalid JSON from stdin. Pipe valid JSON into stdin "
-            f"or pass a file/--string. ({e})"
-        )
+    """Read JSON from standard input."""
+    return _APP.read_from_stdin()
 
 
 def write_output(output: str | bytes, output_file: str | None) -> None:
-    """
-    Write XML output to the specified destination.
-
-    Args:
-        output: XML content to write.
-        output_file: Path to output file, or None for stdout.
-    """
-    if isinstance(output, bytes):
-        output = output.decode("utf-8")
-
-    if output_file:
-        try:
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(output)
-        except OSError as e:
-            print(f"Error writing to file: {e}", file=sys.stderr)
-            sys.exit(1)
-    else:
-        print(output)
+    """Write XML output to the specified destination."""
+    _APP.write_output(output, output_file)
 
 
 def main(argv: list[str] | None = None) -> int:
-    """
-    Main entry point for the CLI.
-
-    Args:
-        argv: Command line arguments (defaults to sys.argv[1:]).
-
-    Returns:
-        Exit code (0 for success, 1 for error).
-    """
+    """Main entry point for the CLI."""
     parser = create_parser()
     args = parser.parse_args(argv)
 
-    # Read input data
     try:
         data = read_input(args)
-    except Exception as e:
-        print(f"Error reading input: {e}", file=sys.stderr)
+    except Exception as error:
+        print(f"Error reading input: {error}", file=sys.stderr)
         return 1
 
-    # Convert to XML
     try:
-        converter = Json2xml(
-            data=data,
-            wrapper=args.wrapper,
-            root=args.root,
-            pretty=args.pretty,
-            attr_type=args.attr_type,
-            item_wrap=args.item_wrap,
-            xpath_format=args.xpath_format,
-            cdata=args.cdata,
-            list_headers=args.list_headers,
-        )
-        xml_output = converter.to_xml()
-
-        if xml_output is None:
-            print("Error: Empty data, no XML generated", file=sys.stderr)
-            return 1
-
-        write_output(xml_output, args.output)
-
-    except Exception as e:
-        print(f"Error converting to XML: {e}", file=sys.stderr)
+        options = CLIConversionOptions.from_namespace(args)
+        xml_output = _APP.convert(data, options)
+        write_output(xml_output, options.output)
+    except Exception as error:
+        print(f"Error converting to XML: {error}", file=sys.stderr)
         return 1
 
     return 0

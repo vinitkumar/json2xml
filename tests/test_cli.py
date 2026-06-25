@@ -11,7 +11,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from json2xml.cli import create_parser, main, read_from_stdin, read_input, write_output
+from json2xml.cli import (
+    CLIApplication,
+    CLIConversionOptions,
+    create_parser,
+    main,
+    read_from_stdin,
+    read_input,
+    write_output,
+)
 
 if TYPE_CHECKING:
     from pytest import CaptureFixture
@@ -600,6 +608,32 @@ class TestCLIUnitTests:
 
         captured = capsys.readouterr()
         assert "No input provided" in captured.err
+
+    # @lat: [[tests#CLI failure messages#No-input guard stays total if exit helper is bypassed]]
+    def test_read_input_no_input_guard_raises_assertion_if_exit_helper_returns(self) -> None:
+        """Test the no-input branch keeps a hard failure if the exit helper is bypassed."""
+        app = CLIApplication()
+        options = CLIConversionOptions(
+            input_file=None,
+            url=None,
+            string=None,
+            output=None,
+            wrapper="all",
+            root=True,
+            pretty=True,
+            attr_type=True,
+            item_wrap=True,
+            xpath_format=False,
+            cdata=False,
+            list_headers=True,
+        )
+
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("json2xml.cli.exit_with_error", return_value=None),
+        ):
+            with pytest.raises(AssertionError, match="unreachable"):
+                app.read_input(options)
 
     def test_read_input_stdin_when_not_tty(self) -> None:
         """Test read_input reads from stdin when not a tty."""

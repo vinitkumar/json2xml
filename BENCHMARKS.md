@@ -8,7 +8,7 @@ Comprehensive performance comparison between all json2xml implementations.
 - **OS**: macOS 26.5 (Darwin 25.5.0)
 - **Python**: 3.14.4
 - **Date**: May 27, 2026
-- **CLI tools**: `json2xml-go` and `json2xml-zig` from `/Users/vinitkumar/.local/bin`
+- **CLI tools**: `json2xml-go` and `json2xml-zig` on `PATH` (the published run used a local `~/.local/bin` install)
 
 To make new runs comparable, record the same fields for your machine before
 publishing results:
@@ -62,6 +62,34 @@ which json2xml-go json2xml-zig 2>/dev/null || true
 | Very Large (323KB) | **14.4x** | **3.1x** | **2.7x** |
 
 *CLI tools have process spawn overhead (~3-6ms) which dominates for small inputs.
+
+### Multi-Python CLI Benchmark (June 25, 2026)
+
+This rerun compares the same CLI workload across uv-managed CPython 3.14.6, CPython 3.15.0b3, PyPy 3.11.15, and `json2xml-go`. The listed environment is the recorded machine for this run, not a requirement for contributors on other platforms.
+
+#### Environment
+
+- **Machine**: Apple Silicon (arm64)
+- **OS**: macOS 26.5.1 (Darwin 25.5.0)
+- **Interpreters**: CPython 3.14.6, CPython 3.15.0b3, PyPy 3.11.15
+- **Date**: June 25, 2026
+- **Go CLI**: `json2xml-go` on `PATH` (the recorded run used a local `~/.local/bin` install)
+
+#### Results
+
+| Test Case | CPython 3.14.6 | CPython 3.15.0b3 | PyPy 3.11.15 | Go |
+|-----------|----------------|------------------|--------------|----|
+| Small (47B) | 61.86ms | 47.61ms | 98.45ms | 4.46ms |
+| Medium (2.6KB) | 62.85ms | 43.41ms | 97.96ms | 4.88ms |
+| Large (323KB, 1K records) | 174.11ms | 146.74ms | 271.24ms | 62.23ms |
+| Very Large (1.62MB, 5K records) | 759.26ms | 691.53ms | 526.96ms | 269.96ms |
+
+#### Takeaways
+
+- **CPython 3.15.0b3 beat CPython 3.14.6 in every test**, from **1.14x faster on average** across the four cases.
+- **PyPy 3.11.15 still lagged on smaller inputs** because startup cost dominates, but it **overtook both CPython builds on the 5K-record case**.
+- **Go remained the fastest CLI path overall**, mainly because the conversion work dominates process startup once the payload gets large.
+- These numbers are **end-to-end subprocess timings**, not isolated serializer throughput, so interpreter startup and environment activation costs are part of the result by design.
 
 ## Key Observations
 
@@ -194,10 +222,14 @@ python benchmark_rust.py
 ### Multi-Python Version Benchmark
 
 Creates per-interpreter virtual environments under `.benchmark_venvs/` and
-compares the hard-coded Python paths in `benchmark_multi_python.py`. Edit
-`PYTHON_VERSIONS` in that script or install the listed interpreters before
-running it. Set `JSON2XML_GO_CLI=/path/to/json2xml-go` if the Go binary is not
-named `json2xml-go` on `PATH`.
+compares the configured Python interpreter paths in `benchmark_multi_python.py`.
+By default the script looks for uv-managed CPython 3.14.6, CPython 3.15.0b3,
+and PyPy 3.11.15 under `JSON2XML_UV_PYTHON_DIR` (default:
+`~/.local/share/uv/python`). Override individual interpreter paths with
+`JSON2XML_PYTHON_CPYTHON_314_6`, `JSON2XML_PYTHON_CPYTHON_315_0B3`, or
+`JSON2XML_PYTHON_PYPY_311_15` if your layout differs. Set
+`JSON2XML_GO_CLI=/path/to/json2xml-go` if the Go binary is not named
+`json2xml-go` on `PATH`.
 
 ```bash
 python benchmark_multi_python.py

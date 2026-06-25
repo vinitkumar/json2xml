@@ -60,7 +60,7 @@ Runtime dependencies are declared in `pyproject.toml` and mirrored by `uv.lock`;
 
 GitHub Actions workflows run with read-only tokens by default and use full SHA pins so third-party action updates are explicit.
 
-The `.github/workflows/` files declare the minimum `permissions:` scopes needed by each workflow, with CodeQL retaining `security-events: write` for result upload. Action references are pinned to immutable commits with the upstream tag retained in comments for reviewability, and `.github/dependabot.yml` checks the `github-actions` ecosystem weekly so those pins do not silently age.
+The `.github/workflows/` files declare the minimum `permissions:` scopes needed by each workflow, with CodeQL retaining `security-events: write` for result upload. Action references are pinned to immutable commits with the upstream tag retained in comments for reviewability, and `.github/dependabot.yml` checks the `github-actions` ecosystem weekly so those pins do not silently age. The Python test matrix pins its PyPy 3.11 job to an explicit PyPy release so CI keeps exercising the intended CPython 3.11.15-compatible runtime instead of silently drifting with runner cache updates.
 
 ## CLI entrypoint
 

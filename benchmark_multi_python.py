@@ -3,9 +3,9 @@
 Multi-Python Benchmark: Compare json2xml performance across Python implementations.
 
 Compares:
-- CPython 3.14.2 (homebrew)
-- CPython 3.15.0a4 (latest alpha)
-- PyPy 3.10.16
+- CPython 3.14.6
+- CPython 3.15.0b3
+- PyPy 3.11.15
 - Go (json2xml-go)
 
 Each Python version gets its own virtual environment with json2xml installed.
@@ -33,19 +33,19 @@ GO_CLI = Path(os.environ.get("JSON2XML_GO_CLI", "json2xml-go"))
 # Python implementations to benchmark
 PYTHON_VERSIONS = [
     {
-        "name": "CPython 3.14.2",
-        "python": "/opt/homebrew/bin/python3.14",
-        "venv_name": "venv_cpython314_2",
+        "name": "CPython 3.14.6",
+        "python": str(Path.home() / ".local/share/uv/python/cpython-3.14.6-macos-aarch64-none/bin/python3.14"),
+        "venv_name": "venv_cpython314_6",
     },
     {
-        "name": "CPython 3.15.0a4",
-        "python": str(Path.home() / ".local/share/uv/python/cpython-3.15.0a4-macos-aarch64-none/bin/python3.15"),
-        "venv_name": "venv_cpython315a4",
+        "name": "CPython 3.15.0b3",
+        "python": str(Path.home() / ".local/share/uv/python/cpython-3.15.0b3-macos-aarch64-none/bin/python3.15"),
+        "venv_name": "venv_cpython315b3",
     },
     {
-        "name": "PyPy 3.10.16",
-        "python": str(Path.home() / ".local/share/uv/python/pypy-3.10.19-macos-aarch64-none/bin/pypy3.10"),
-        "venv_name": "venv_pypy310",
+        "name": "PyPy 3.11.15",
+        "python": str(Path.home() / ".local/share/uv/python/pypy-3.11.15-macos-aarch64-none/bin/pypy3.11"),
+        "venv_name": "venv_pypy311",
     },
 ]
 
@@ -377,10 +377,10 @@ def main() -> int:
                     avg_times[name].append(result.avg_ms)
 
         # Print summary table
-        print(f"  {'Implementation':<35} {'Avg Time':>12} {'vs CPython 3.14.2':>20}")
+        print(f"  {'Implementation':<35} {'Avg Time':>12} {'vs CPython 3.14.6':>20}")
         print(f"  {'-' * 35} {'-' * 12} {'-' * 20}")
 
-        baseline_name = "CPython 3.14.2"
+        baseline_name = "CPython 3.14.6"
         baseline_avg = sum(avg_times.get(baseline_name, [0])) / len(avg_times.get(baseline_name, [1]))
 
         sorted_impls = sorted(avg_times.items(), key=lambda x: sum(x[1]) / len(x[1]))

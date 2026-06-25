@@ -46,6 +46,10 @@ Reproduction docs require contributors to record machine, OS, Python, and tool a
 
 The June 2026 Rust memory benchmark uses [[benchmark_memory_rust.py#main]] under hyperfine to compare release builds in fresh Python processes. The bytes-writer implementation cuts serializer peak RSS by about half for large outputs, with a documented throughput tradeoff.
 
+The June 2026 multi-interpreter CLI rerun uses [[benchmark_multi_python.py#main]] with per-interpreter virtual environments. On the recorded Apple Silicon run, CPython 3.15.0b3 beat CPython 3.14.6 on every case, PyPy 3.11.15 only won the largest case, and Go remained the fastest end-to-end CLI path overall.
+
+The benchmark script now tracks uv-managed current-series interpreters on Apple Silicon, namely CPython 3.14.6, CPython 3.15.0b3, and PyPy 3.11.15, so future reruns do not depend on a separate Homebrew Python install.
+
 ## Dependency security
 
 Dependency floors and lockfiles keep known vulnerable packages out of runtime and development environments.

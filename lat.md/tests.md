@@ -38,6 +38,10 @@ Running the CLI without JSON should fail with a message that tells users to pass
 
 Malformed JSON read from an existing file should mention that file path so users can distinguish file parsing failures from missing-file, string, stdin, or conversion failures.
 
+### No-input guard stays total if exit helper is bypassed
+
+The CLI no-input branch should still fail loudly with its internal assertion if the exit helper is replaced during tests or embedding, so the control flow cannot fall through silently.
+
 ## Performance benchmarks
 
 These tests pin the benchmark script configuration rules so contributors can rerun published measurements without inheriting one machine's filesystem layout.

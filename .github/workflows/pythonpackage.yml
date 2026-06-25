@@ -28,7 +28,7 @@ jobs:
       matrix:
         # Pin PyPy 3.11 to the 7.3.23 build so CI keeps exercising the
         # CPython 3.11.15-compatible runtime documented in BENCHMARKS.md.
-        python-version: [pypy-3.10, pypy-3.11-v7.3.23, '3.10', '3.11', '3.12', '3.13', '3.14', '3.14t', '3.15.0-beta.3']
+        python-version: [pypy-3.10, pypy-3.11-v7.3.23, '3.10', '3.11', '3.12', '3.13', '3.14', '3.14t', '3.15.0-beta.3', '3.15.0-beta.3t']
         os: [
           ubuntu-latest,
           windows-latest,

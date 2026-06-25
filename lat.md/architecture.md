@@ -52,7 +52,7 @@ The June 2026 Rust memory benchmark uses [[benchmark_memory_rust.py#main]] under
 
 The June 2026 multi-interpreter CLI rerun uses [[benchmark_multi_python.py#main]] with per-interpreter virtual environments. On the recorded Apple Silicon run, CPython 3.15.0b3 beat CPython 3.14.6 on every case, PyPy 3.11.15 only won the largest case, and Go remained the fastest end-to-end CLI path overall.
 
-The benchmark script now tracks uv-managed current-series interpreters on Apple Silicon, namely CPython 3.14.6, CPython 3.15.0b3, and PyPy 3.11.15, so future reruns do not depend on a separate Homebrew Python install.
+The benchmark script now tracks uv-managed current-series interpreters through a configurable `JSON2XML_UV_PYTHON_DIR` base path plus per-interpreter overrides, with the documented defaults targeting CPython 3.14.6, CPython 3.15.0b3, and PyPy 3.11.15. That keeps the published setup reproducible without hard-coding one contributor's home directory.
 
 ## Dependency security
 

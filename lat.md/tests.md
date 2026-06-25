@@ -38,6 +38,18 @@ Running the CLI without JSON should fail with a message that tells users to pass
 
 Malformed JSON read from an existing file should mention that file path so users can distinguish file parsing failures from missing-file, string, stdin, or conversion failures.
 
+## Performance benchmarks
+
+These tests pin the benchmark script configuration rules so contributors can rerun published measurements without inheriting one machine's filesystem layout.
+
+### Benchmark script derives interpreter paths from configurable uv base dir
+
+The multi-interpreter benchmark should derive default interpreter paths from `JSON2XML_UV_PYTHON_DIR` so the documented uv layout stays portable across machines.
+
+### Benchmark script lets explicit interpreter env vars override uv defaults
+
+The multi-interpreter benchmark should let per-interpreter environment variables override uv-derived defaults so unusual local layouts remain runnable without editing the script.
+
 ## Conversion behavior
 
 These tests pin the XML shapes that matter most for interoperability, especially the modes that intentionally diverge from the default serializer.
@@ -109,6 +121,14 @@ Backend metadata helpers should report whether Rust is active and name the selec
 ### Fast helper functions use Python fallback
 
 Helper exports for XML escaping and CDATA wrapping should preserve Python behavior when Rust helper callables are unavailable.
+
+### Backend selector detects Python-only payload markers
+
+The backend selector should recognize nested `@attrs`, `@val`, and `@flat` markers so Rust is skipped before semantics drift.
+
+### Backend selector fails loudly with no compatible backend
+
+If every backend rejects a conversion request, the selector should raise a clear error instead of silently returning bad output.
 
 ### Json2xml uses fast backend selection
 

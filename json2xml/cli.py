@@ -147,6 +147,7 @@ class CLIApplication:
             "Error: No input provided. Pass a JSON file, use - for stdin, "
             "or provide --string/--url."
         )
+        raise AssertionError("unreachable")
 
     def read_from_stdin(self) -> JSONValue:
         try:

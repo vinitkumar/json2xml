@@ -4,12 +4,20 @@ on:
   push:
     branches: [master, main]
     paths:
+      - 'json2xml/backend_selector.py'
+      - 'json2xml/dicttoxml.py'
+      - 'json2xml/dicttoxml_fast.py'
+      - 'json2xml/json2xml.py'
       - 'rust/**'
       - 'tests/test_rust_dicttoxml.py'
       - '.github/workflows/rust-ci.yml'
   pull_request:
     branches: [master, main]
     paths:
+      - 'json2xml/backend_selector.py'
+      - 'json2xml/dicttoxml.py'
+      - 'json2xml/dicttoxml_fast.py'
+      - 'json2xml/json2xml.py'
       - 'rust/**'
       - 'tests/test_rust_dicttoxml.py'
       - '.github/workflows/rust-ci.yml'

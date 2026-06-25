@@ -66,6 +66,8 @@ GitHub Actions workflows run with read-only tokens by default and use full SHA p
 
 The `.github/workflows/` files declare the minimum `permissions:` scopes needed by each workflow, with CodeQL retaining `security-events: write` for result upload. Action references are pinned to immutable commits with the upstream tag retained in comments for reviewability, and `.github/dependabot.yml` checks the `github-actions` ecosystem weekly so those pins do not silently age. The Python test matrix pins its PyPy 3.11 job to an explicit PyPy release so CI keeps exercising the intended CPython 3.11.15-compatible runtime instead of silently drifting with runner cache updates. It also exercises regular CPython 3.15.0b3 while leaving that beta's free-threaded builds out of CI until the runner support is less brittle.
 
+Rust extension CI triggers on Rust sources, Rust integration tests, and Python fast-path files such as [[json2xml/backend_selector.py]] and [[json2xml/dicttoxml_fast.py]]. That keeps native backend tests attached to the Python dispatch code that decides whether the accelerator is used.
+
 ## CLI entrypoint
 
 The CLI is a thin adapter that parses options, resolves one input source, and forwards those options into the same converter used by the library API.

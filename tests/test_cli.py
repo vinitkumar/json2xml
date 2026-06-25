@@ -11,7 +11,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from json2xml.cli import CLIApplication, CLIConversionOptions, create_parser, main, read_from_stdin, read_input, write_output
+from json2xml.cli import (
+    CLIApplication,
+    CLIConversionOptions,
+    create_parser,
+    main,
+    read_from_stdin,
+    read_input,
+    write_output,
+)
 
 if TYPE_CHECKING:
     from pytest import CaptureFixture

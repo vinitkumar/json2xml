@@ -24,7 +24,9 @@ class ConversionRequest:
 class BackendAdapter(Protocol):
     """Small adapter seam for conversion backends."""
 
-    name: str
+    @property
+    def name(self) -> str:
+        raise NotImplementedError  # pragma: no cover
 
     def can_handle(self, request: ConversionRequest) -> bool:
         raise NotImplementedError  # pragma: no cover

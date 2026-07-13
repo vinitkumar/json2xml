@@ -14,7 +14,6 @@ import json
 import os
 import random
 import shutil
-import string
 import subprocess
 import sys
 import tempfile
@@ -24,6 +23,7 @@ from pathlib import Path
 # Add the json2xml module to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+from benchmark_utils import Colors, colorize, format_time, random_string
 from json2xml import dicttoxml as py_dicttoxml
 
 # Try to import Rust implementation
@@ -36,25 +36,6 @@ except ImportError:
 # Check for CLI tools
 GO_AVAILABLE = shutil.which("json2xml-go") is not None
 ZIG_AVAILABLE = shutil.which("json2xml-zig") is not None
-
-
-class Colors:
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    BLUE = "\033[0;34m"
-    YELLOW = "\033[1;33m"
-    CYAN = "\033[0;36m"
-    MAGENTA = "\033[0;35m"
-    BOLD = "\033[1m"
-    NC = "\033[0m"
-
-
-def colorize(text: str, color: str) -> str:
-    return f"{color}{text}{Colors.NC}"
-
-
-def random_string(length: int = 10) -> str:
-    return "".join(random.choices(string.ascii_letters, k=length))
 
 
 def generate_test_data(num_records: int) -> list[dict]:
@@ -149,15 +130,6 @@ def benchmark_cli(cmd: str, json_file: str, iterations: int = 10, warmup: int = 
         "max": max(times),
         "result_size": result_size,
     }
-
-
-def format_time(ms: float) -> str:
-    if ms < 1:
-        return f"{ms * 1000:.2f}µs"
-    elif ms < 1000:
-        return f"{ms:.2f}ms"
-    else:
-        return f"{ms / 1000:.2f}s"
 
 
 def run_benchmark(name: str, data: dict | list, iterations: int = 10):

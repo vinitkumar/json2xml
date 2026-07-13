@@ -16,13 +16,14 @@ import json
 import os
 import random
 import shutil
-import string
 import subprocess
 import sys
 import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
+
+from benchmark_utils import Colors, colorize, format_time, random_string
 
 # Configuration
 BASE_DIR = Path(__file__).resolve().parent
@@ -65,28 +66,6 @@ PYTHON_VERSIONS = [
         "venv_name": "venv_pypy311",
     },
 ]
-
-
-# Colors for terminal output
-class Colors:
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    BLUE = "\033[0;34m"
-    YELLOW = "\033[1;33m"
-    CYAN = "\033[0;36m"
-    MAGENTA = "\033[0;35m"
-    BOLD = "\033[1m"
-    NC = "\033[0m"
-
-
-def colorize(text: str, color: str) -> str:
-    """Wrap text in color codes."""
-    return f"{color}{text}{Colors.NC}"
-
-
-def random_string(length: int = 10) -> str:
-    """Generate a random string."""
-    return "".join(random.choices(string.ascii_letters, k=length))
 
 
 def generate_test_json(num_records: int = 1000) -> str:
@@ -219,16 +198,6 @@ def run_benchmark(
         max_ms=max(times),
         success=True,
     )
-
-
-def format_time(ms: float) -> str:
-    """Format time in milliseconds."""
-    if ms < 1:
-        return f"{ms * 1000:.2f}µs"
-    elif ms < 1000:
-        return f"{ms:.2f}ms"
-    else:
-        return f"{ms / 1000:.2f}s"
 
 
 def print_header(title: str) -> None:

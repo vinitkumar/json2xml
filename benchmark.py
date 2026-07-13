@@ -14,12 +14,13 @@ from __future__ import annotations
 import json
 import os
 import random
-import string
 import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
+
+from benchmark_utils import Colors, colorize, format_time, random_string
 
 # Base directory for repo-relative defaults
 BASE_DIR = Path(__file__).resolve().parent
@@ -28,27 +29,6 @@ BASE_DIR = Path(__file__).resolve().parent
 PYTHON_CLI = [sys.executable, "-m", "json2xml.cli"]
 GO_CLI = Path(os.environ.get("JSON2XML_GO_CLI", "json2xml-go"))
 EXAMPLES_DIR = Path(os.environ.get("JSON2XML_EXAMPLES_DIR", str(BASE_DIR / "examples")))
-
-# Colors for terminal output
-class Colors:
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    BLUE = "\033[0;34m"
-    YELLOW = "\033[1;33m"
-    CYAN = "\033[0;36m"
-    BOLD = "\033[1m"
-    NC = "\033[0m"  # No Color
-
-
-def colorize(text: str, color: str) -> str:
-    """Wrap text in color codes."""
-    return f"{color}{text}{Colors.NC}"
-
-
-def random_string(length: int = 10) -> str:
-    """Generate a random string."""
-    return "".join(random.choices(string.ascii_letters, k=length))
-
 
 def generate_large_json(num_records: int = 1000) -> str:
     """Generate a large JSON file for benchmarking."""
@@ -117,16 +97,6 @@ def run_benchmark(
         "min": min(times),
         "max": max(times),
     }
-
-
-def format_time(ms: float) -> str:
-    """Format time in milliseconds."""
-    if ms < 1:
-        return f"{ms * 1000:.2f}µs"
-    elif ms < 1000:
-        return f"{ms:.2f}ms"
-    else:
-        return f"{ms / 1000:.2f}s"
 
 
 def print_header(title: str) -> None:

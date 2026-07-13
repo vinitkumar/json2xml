@@ -369,9 +369,10 @@ Examples:
 
 
 # @lat: [[behavior#Input readers]]
-def read_input(args: argparse.Namespace) -> JSONValue:
+def read_input(args: argparse.Namespace | CLIConversionOptions) -> JSONValue:
     """Read JSON input from the specified source."""
-    return _APP.read_input(CLIConversionOptions.from_namespace(args))
+    options = args if isinstance(args, CLIConversionOptions) else CLIConversionOptions.from_namespace(args)
+    return _APP.read_input(options)
 
 
 def read_from_stdin() -> JSONValue:
@@ -388,15 +389,15 @@ def main(argv: list[str] | None = None) -> int:
     """Main entry point for the CLI."""
     parser = create_parser()
     args = parser.parse_args(argv)
+    options = CLIConversionOptions.from_namespace(args)
 
     try:
-        data = read_input(args)
+        data = read_input(options)
     except Exception as error:
         print(f"Error reading input: {error}", file=sys.stderr)
         return 1
 
     try:
-        options = CLIConversionOptions.from_namespace(args)
         xml_output = _APP.convert(data, options)
         write_output(xml_output, options.output)
     except Exception as error:

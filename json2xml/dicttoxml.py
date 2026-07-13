@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime
-import logging
 import numbers
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -17,8 +16,6 @@ __lazy_modules__ = ["defusedxml.minidom"]
 # Create a safe random number generator
 _SAFE_RANDOM = SystemRandom()
 
-# Set up logging
-LOG = logging.getLogger("dicttoxml")
 _XML_ESCAPE_CHARS = frozenset("&\"'<>")
 
 

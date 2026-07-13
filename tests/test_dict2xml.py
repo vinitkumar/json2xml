@@ -1,18 +1,11 @@
 import copy
 import datetime
-import numbers
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 
 from json2xml import dicttoxml
-
-if TYPE_CHECKING:
-    from _pytest.capture import CaptureFixture
-    from _pytest.fixtures import FixtureRequest
-    from _pytest.logging import LogCaptureFixture
-
 
 class TestDict2xml:
     """Test class for dicttoxml functionality."""

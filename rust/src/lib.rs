@@ -10,9 +10,12 @@ use pyo3::prelude::*;
 #[cfg(feature = "python")]
 use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString};
 #[cfg(feature = "python")]
-use std::io::Write;
+use std::io::{BufWriter, Write};
 
 use std::borrow::Cow;
+
+#[cfg(feature = "python")]
+const OUTPUT_BUFFER_SIZE: usize = 16 * 1024;
 
 /// Escape special XML characters in a string (allocating convenience wrapper).
 #[inline]
@@ -517,27 +520,30 @@ fn dicttoxml(
     };
 
     PyBytes::new_with_writer(py, 0, |out| {
+        let mut out = BufWriter::with_capacity(OUTPUT_BUFFER_SIZE, out);
+
         if root {
-            write_str(out, "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>")?;
-            write_byte(out, b'<')?;
-            write_str(out, custom_root)?;
-            write_byte(out, b'>')?;
+            write_str(&mut out, "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>")?;
+            write_byte(&mut out, b'<')?;
+            write_str(&mut out, custom_root)?;
+            write_byte(&mut out, b'>')?;
         }
 
         if let Ok(dict) = obj.cast::<PyDict>() {
-            write_dict_contents(py, out, dict, &config)?;
+            write_dict_contents(py, &mut out, dict, &config)?;
         } else if let Ok(list) = obj.cast::<PyList>() {
-            write_list_contents(py, out, list, custom_root, &config)?;
+            write_list_contents(py, &mut out, list, custom_root, &config)?;
         } else {
-            write_value(py, out, obj, custom_root, None, &config, true)?;
+            write_value(py, &mut out, obj, custom_root, None, &config, true)?;
         }
 
         if root {
-            write_str(out, "</")?;
-            write_str(out, custom_root)?;
-            write_byte(out, b'>')?;
+            write_str(&mut out, "</")?;
+            write_str(&mut out, custom_root)?;
+            write_byte(&mut out, b'>')?;
         }
 
+        out.flush()?;
         Ok(())
     })
     .map(Bound::unbind)

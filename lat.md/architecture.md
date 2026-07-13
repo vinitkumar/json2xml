@@ -54,7 +54,7 @@ The June 2026 Rust memory benchmark uses [[benchmark_memory_rust.py#main]] under
 
 The June 2026 multi-interpreter CLI rerun uses [[benchmark_multi_python.py#main]] with per-interpreter virtual environments. On the recorded Apple Silicon run, CPython 3.15.0b3 beat CPython 3.14.6 on every case, PyPy 3.11.15 only won the largest case, and Go remained the fastest end-to-end CLI path overall.
 
-The Rust serializer's bytes-writer hot path uses monomorphized `Write` helpers instead of dynamic dispatch for each XML fragment, reducing CPU overhead while retaining direct output into the final Python bytes object and its lower peak-memory profile. A controlled CPython 3.14 benchmark improved a 5,000-record payload from 4.946 ms to 4.812 ms median while keeping the 100,000-record serializer delta effectively unchanged at about 80 MiB.
+The Rust serializer's bytes-writer hot path uses monomorphized `Write` helpers and a bounded 16 KiB buffer instead of dynamic dispatch and one output write per XML fragment, reducing CPU overhead while retaining direct output into the final Python bytes object and its lower peak-memory profile. A controlled CPython 3.14 benchmark improved a 5,000-record payload from roughly 4.8 ms to 2.4 ms median while keeping the 100,000-record serializer delta near 80 MiB.
 
 The benchmark script now tracks uv-managed current-series interpreters through a configurable `JSON2XML_UV_PYTHON_DIR` base path plus per-interpreter overrides, with the documented defaults targeting CPython 3.14.6, CPython 3.15.0b3, and PyPy 3.11.15. That keeps the published setup reproducible without hard-coding one contributor's home directory.
 

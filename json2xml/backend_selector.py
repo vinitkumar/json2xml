@@ -51,16 +51,13 @@ class BackendSelector:
 def has_special_keys(obj: Any) -> bool:
     """Return True when the payload uses Python-only special key semantics."""
     if isinstance(obj, dict):
-        for key, value in obj.items():
-            if isinstance(key, str) and (key.startswith("@") or key.endswith("@flat")):
-                return True
-            if has_special_keys(value):
-                return True
-        return False
+        return any(
+            (isinstance(key, str) and (key.startswith("@") or key.endswith("@flat")))
+            or has_special_keys(value)
+            for key, value in obj.items()
+        )
 
     if isinstance(obj, list):
-        for item in obj:
-            if has_special_keys(item):
-                return True
+        return any(has_special_keys(item) for item in obj)
 
     return False

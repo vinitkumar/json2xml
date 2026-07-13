@@ -56,12 +56,10 @@ def get_backend() -> str:
 class _RustBackendAdapter:
     """Adapter for the optional Rust backend."""
 
-    rust_dicttoxml: Callable[..., bytes] | None
-
     name: str = "rust"
 
     def can_handle(self, request: ConversionRequest) -> bool:
-        if not _use_rust or self.rust_dicttoxml is None:
+        if not _use_rust or _rust_dicttoxml is None:
             return False
 
         return not (
@@ -74,8 +72,8 @@ class _RustBackendAdapter:
         )
 
     def render(self, request: ConversionRequest) -> bytes:
-        assert self.rust_dicttoxml is not None
-        return self.rust_dicttoxml(
+        assert _rust_dicttoxml is not None
+        return _rust_dicttoxml(
             request.obj,
             root=request.root,
             custom_root=request.custom_root,
@@ -112,6 +110,12 @@ class _PythonBackendAdapter:
             list_headers=request.list_headers,
             xpath_format=request.xpath_format,
         )
+
+
+_BACKEND_SELECTOR = BackendSelector(
+    _RustBackendAdapter(),
+    _PythonBackendAdapter(_py_dicttoxml.dicttoxml, _py_dicttoxml.default_item_func),
+)
 
 
 # @lat: [[architecture#Backend selection]]
@@ -163,11 +167,7 @@ def dicttoxml(
         list_headers=list_headers,
         xpath_format=xpath_format,
     )
-    selector = BackendSelector(
-        _RustBackendAdapter(_rust_dicttoxml),
-        _PythonBackendAdapter(_py_dicttoxml.dicttoxml, _py_dicttoxml.default_item_func),
-    )
-    return selector.render(request)
+    return _BACKEND_SELECTOR.render(request)
 
 
 # Re-export commonly used functions

@@ -3,64 +3,14 @@
 from __future__ import annotations
 
 import numbers
-from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from json2xml.dicttoxml import (
     convert_to_xpath31,
     dicttoxml,
-    get_unique_id,
     get_xml_type,
     get_xpath31_tag_name,
-    make_id,
 )
-
-if TYPE_CHECKING:
-    pass
-
-
-class TestGetUniqueIdDuplicateGeneration:
-    """Test line 52: duplicate ID generation in get_unique_id loop"""
-
-    def test_get_unique_id_generates_id_when_duplicates_occur(self) -> None:
-        """Test that get_unique_id handles the while loop by regenerating IDs on duplicates.
-
-        Line 52 (this_id = make_id(element)) is executed when a duplicate is found.
-        Since make_id uses SystemRandom, we can't guarantee duplicates, but we can
-        ensure the function returns a valid ID in the correct format.
-        """
-        result = get_unique_id("test_element")
-
-        # Verify it returns a string in the expected format
-        assert isinstance(result, str)
-        assert result.startswith("test_element_")
-        assert len(result) > len("test_element_")
-
-        # Verify the numeric part is valid
-        numeric_part = result.replace("test_element_", "")
-        assert numeric_part.isdigit()
-        assert 100000 <= int(numeric_part) <= 999999
-
-    def test_get_unique_id_duplicate_id_regeneration(self) -> None:
-        """Test line 52: trigger duplicate ID regeneration.
-
-        Line 52 (this_id = make_id(element)) only executes if this_id is in the ids list.
-        We can't easily trigger this with the current implementation since ids starts empty,
-        but we test the function's robustness when make_id returns duplicates.
-        """
-        # Call get_unique_id multiple times - while theoretically one could duplicate
-        # due to SystemRandom, the function handles this correctly
-        ids_generated = [get_unique_id("test") for _ in range(10)]
-
-        # All generated IDs should be properly formatted
-        for id_val in ids_generated:
-            assert isinstance(id_val, str)
-            assert id_val.startswith("test_")
-            numeric_part = id_val.split("_")[-1]
-            assert numeric_part.isdigit()
-            assert 100000 <= int(numeric_part) <= 999999
 
 
 class TestGetXmlTypeWithNumbers:

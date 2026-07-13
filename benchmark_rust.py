@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import json
 import random
-import string
 import sys
 import time
 from pathlib import Path
+
+from benchmark_utils import Colors, colorize, format_time, random_string
 
 # Add the json2xml module to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -27,24 +28,6 @@ try:
 except ImportError:
     RUST_AVAILABLE = False
     print("WARNING: Rust extension not built. Run 'cd rust && maturin develop --release'")
-
-
-class Colors:
-    RED = "\033[0;31m"
-    GREEN = "\033[0;32m"
-    BLUE = "\033[0;34m"
-    YELLOW = "\033[1;33m"
-    CYAN = "\033[0;36m"
-    BOLD = "\033[1m"
-    NC = "\033[0m"
-
-
-def colorize(text: str, color: str) -> str:
-    return f"{color}{text}{Colors.NC}"
-
-
-def random_string(length: int = 10) -> str:
-    return "".join(random.choices(string.ascii_letters, k=length))
 
 
 def generate_test_data(num_records: int) -> list[dict]:
@@ -92,15 +75,6 @@ def benchmark(func, data, iterations: int = 10, warmup: int = 2) -> dict:
         "max": max(times),
         "result_size": len(result),
     }
-
-
-def format_time(ms: float) -> str:
-    if ms < 1:
-        return f"{ms * 1000:.2f}µs"
-    elif ms < 1000:
-        return f"{ms:.2f}ms"
-    else:
-        return f"{ms / 1000:.2f}s"
 
 
 def run_benchmark(name: str, data: dict | list, iterations: int = 10):

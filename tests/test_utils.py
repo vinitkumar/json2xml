@@ -22,11 +22,6 @@ from json2xml.utils import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from _pytest.capture import CaptureFixture
-    from _pytest.fixtures import FixtureRequest
-    from _pytest.logging import LogCaptureFixture
-    from _pytest.monkeypatch import MonkeyPatch
-
 
 class JsonTestHandler(BaseHTTPRequestHandler):
     """Tiny HTTP handler for exercising the real URL reader."""

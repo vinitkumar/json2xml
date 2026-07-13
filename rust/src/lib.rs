@@ -10,9 +10,12 @@ use pyo3::prelude::*;
 #[cfg(feature = "python")]
 use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString};
 #[cfg(feature = "python")]
-use std::io::Write;
+use std::io::{BufWriter, Write};
 
 use std::borrow::Cow;
+
+#[cfg(feature = "python")]
+const OUTPUT_BUFFER_SIZE: usize = 16 * 1024;
 
 /// Escape special XML characters in a string (allocating convenience wrapper).
 #[inline]
@@ -65,21 +68,21 @@ pub fn push_escaped_attr(out: &mut String, s: &str) {
 
 #[cfg(feature = "python")]
 #[inline]
-fn write_str(out: &mut dyn Write, s: &str) -> PyResult<()> {
+fn write_str<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
     out.write_all(s.as_bytes())?;
     Ok(())
 }
 
 #[cfg(feature = "python")]
 #[inline]
-fn write_byte(out: &mut dyn Write, b: u8) -> PyResult<()> {
+fn write_byte<W: Write + ?Sized>(out: &mut W, b: u8) -> PyResult<()> {
     out.write_all(&[b])?;
     Ok(())
 }
 
 #[cfg(feature = "python")]
 #[inline]
-fn write_escaped_text(out: &mut dyn Write, s: &str) -> PyResult<()> {
+fn write_escaped_text<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
     let mut last = 0;
     for (i, b) in s.bytes().enumerate() {
         let repl = match b {
@@ -99,13 +102,13 @@ fn write_escaped_text(out: &mut dyn Write, s: &str) -> PyResult<()> {
 
 #[cfg(feature = "python")]
 #[inline]
-fn write_escaped_attr(out: &mut dyn Write, s: &str) -> PyResult<()> {
+fn write_escaped_attr<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
     write_escaped_text(out, s)
 }
 
 #[cfg(feature = "python")]
 #[inline]
-fn write_cdata(out: &mut dyn Write, s: &str) -> PyResult<()> {
+fn write_cdata<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
     write_str(out, "<![CDATA[")?;
     let mut start = 0;
     while let Some(i) = s[start..].find("]]>") {
@@ -220,8 +223,8 @@ fn push_attrs(out: &mut String, attrs: &[(String, String)]) {
 /// Write opening tag with optional name and type attributes directly to buffer.
 #[cfg(feature = "python")]
 #[inline]
-fn write_open_tag(
-    out: &mut dyn Write,
+fn write_open_tag<W: Write + ?Sized>(
+    out: &mut W,
     tag: &str,
     name_attr: Option<&str>,
     type_attr: Option<&str>,
@@ -244,7 +247,7 @@ fn write_open_tag(
 /// Write a closing tag directly to buffer.
 #[cfg(feature = "python")]
 #[inline]
-fn write_close_tag(out: &mut dyn Write, tag: &str) -> PyResult<()> {
+fn write_close_tag<W: Write + ?Sized>(out: &mut W, tag: &str) -> PyResult<()> {
     write_str(out, "</")?;
     write_str(out, tag)?;
     write_byte(out, b'>')
@@ -273,9 +276,9 @@ fn type_attr<'a>(cfg: &ConvertConfig, ty: &'a str) -> Option<&'a str> {
 /// Single unified type-dispatch writer. Every Python value goes through here
 /// exactly once, writing directly into the shared output buffer.
 #[cfg(feature = "python")]
-fn write_value(
+fn write_value<W: Write + ?Sized>(
     py: Python<'_>,
-    out: &mut dyn Write,
+    out: &mut W,
     obj: &Bound<'_, PyAny>,
     tag: &str,
     name_attr: Option<&str>,
@@ -387,9 +390,9 @@ fn write_value(
 
 /// Write all key-value pairs of a dict into the buffer.
 #[cfg(feature = "python")]
-fn write_dict_contents(
+fn write_dict_contents<W: Write + ?Sized>(
     py: Python<'_>,
-    out: &mut dyn Write,
+    out: &mut W,
     dict: &Bound<'_, PyDict>,
     cfg: &ConvertConfig,
 ) -> PyResult<()> {
@@ -435,9 +438,9 @@ fn is_python_scalar(obj: &Bound<'_, PyAny>) -> bool {
 
 /// Write all items of a list into the buffer.
 #[cfg(feature = "python")]
-fn write_list_contents(
+fn write_list_contents<W: Write + ?Sized>(
     py: Python<'_>,
-    out: &mut dyn Write,
+    out: &mut W,
     list: &Bound<'_, PyList>,
     parent: &str,
     cfg: &ConvertConfig,
@@ -517,27 +520,30 @@ fn dicttoxml(
     };
 
     PyBytes::new_with_writer(py, 0, |out| {
+        let mut out = BufWriter::with_capacity(OUTPUT_BUFFER_SIZE, out);
+
         if root {
-            write_str(out, "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>")?;
-            write_byte(out, b'<')?;
-            write_str(out, custom_root)?;
-            write_byte(out, b'>')?;
+            write_str(&mut out, "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>")?;
+            write_byte(&mut out, b'<')?;
+            write_str(&mut out, custom_root)?;
+            write_byte(&mut out, b'>')?;
         }
 
         if let Ok(dict) = obj.cast::<PyDict>() {
-            write_dict_contents(py, out, dict, &config)?;
+            write_dict_contents(py, &mut out, dict, &config)?;
         } else if let Ok(list) = obj.cast::<PyList>() {
-            write_list_contents(py, out, list, custom_root, &config)?;
+            write_list_contents(py, &mut out, list, custom_root, &config)?;
         } else {
-            write_value(py, out, obj, custom_root, None, &config, true)?;
+            write_value(py, &mut out, obj, custom_root, None, &config, true)?;
         }
 
         if root {
-            write_str(out, "</")?;
-            write_str(out, custom_root)?;
-            write_byte(out, b'>')?;
+            write_str(&mut out, "</")?;
+            write_str(&mut out, custom_root)?;
+            write_byte(&mut out, b'>')?;
         }
 
+        out.flush()?;
         Ok(())
     })
     .map(Bound::unbind)

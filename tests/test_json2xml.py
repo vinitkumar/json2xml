@@ -2,7 +2,6 @@
 
 """Tests for `json2xml` package."""
 
-import json
 from pyexpat import ExpatError
 from typing import Any
 

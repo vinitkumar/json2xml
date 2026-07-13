@@ -1,3 +1,24 @@
+# json2xml 6.4.0 and json2xml_rs 0.4.1
+
+Released 2026-07-13.
+
+## Highlights
+
+- Added bounded 16 KiB buffering to the Rust serializer's direct Python-bytes output path.
+- Reduced the 5,000-record benchmark median from roughly 4.8 ms to 2.4 ms while keeping serializer memory near 80 MiB.
+- Kept XML output byte-for-byte identical.
+
+## Package Versions
+
+- Python package: `json2xml==6.4.0`
+- Rust accelerator package: `json2xml-rs==0.4.1`
+- Fast install: `pip install "json2xml[fast]"`
+
+## Verification
+
+The release passed the Python and Rust test suites, Rust wheel builds across supported platforms, and the Rust wheel compatibility matrix.
+
+
 # json2xml 6.3.0 and json2xml_rs 0.4.0
 
 Released 2026-06-10.

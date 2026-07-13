@@ -12,6 +12,7 @@ from json2xml.dicttoxml import (
     get_xpath31_tag_name,
 )
 
+
 class TestGetXmlTypeWithNumbers:
     """Test line 90: get_xml_type handling of numbers.Number instances"""
 

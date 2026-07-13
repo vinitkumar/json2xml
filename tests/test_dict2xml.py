@@ -7,6 +7,7 @@ from _pytest.monkeypatch import MonkeyPatch
 
 from json2xml import dicttoxml
 
+
 class TestDict2xml:
     """Test class for dicttoxml functionality."""
 

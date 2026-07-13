@@ -54,24 +54,15 @@ def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
 
 def get_unique_id(element: str) -> str:
     """
-    Generate a unique ID for a given element.
+    Generate an ID for a given element.
 
     Args:
         element (str): The element to generate an ID for.
 
     Returns:
-        str: The unique ID.
+        str: The generated ID.
     """
-    ids: list[str] = []  # initialize list of unique ids
-    this_id = make_id(element)
-    dup = True
-    while dup:
-        if this_id not in ids:
-            dup = False
-            ids.append(this_id)
-        else:  # pragma: no cover
-            this_id = make_id(element)
-    return ids[-1]
+    return make_id(element)
 
 
 ELEMENT = Union[

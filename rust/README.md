@@ -76,7 +76,7 @@ The Rust implementation is expected to be 5-15x faster than pure Python for:
 - Type dispatch (compiled match statements vs. `isinstance()` chains)
 - String building (pre-allocated buffers vs. f-string concatenation)
 
-Version 0.4.0 builds on the direct Python bytes writer with lower allocation
+Version 0.4.1 builds on the direct Python bytes writer with lower allocation
 pressure in hot serializer paths. The previous 0.3.0 release reduced the
 measured serializer RSS delta for a 100,000-record benchmark by about 49%
 compared with the earlier Rust implementation.

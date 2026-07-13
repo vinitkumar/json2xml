@@ -1,4 +1,12 @@
 
+6.4.0 / 2026-07-13
+==================
+
+  * perf: buffer Rust serializer writes in bounded 16 KiB chunks, reducing large-payload conversion time while keeping serializer memory near 80 MiB
+  * chore: release ``json2xml-rs`` 0.4.1 and require it from ``json2xml[fast]`` for accelerated installs
+  * docs: record before-and-after Rust buffering benchmarks and the unchanged XML output size
+
+
 6.3.0 / 2026-06-10
 ==================
 

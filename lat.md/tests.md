@@ -170,6 +170,8 @@ Common built-in numbers should avoid abstract-class dispatch while `Decimal`, `F
 
 Exact native JSON types should use direct hot paths while compatible numeric, string, dictionary, and sequence subclasses retain the established fallback behavior.
 
+The complete Python suite is also a 100% statement-coverage gate so these less common compatibility paths cannot silently fall out of validation.
+
 ### Valid-name helpers preserve caller attrs
 
 Helpers that receive prevalidated XML names should add type metadata only to the emitted element and must not mutate caller-owned attribute dictionaries.

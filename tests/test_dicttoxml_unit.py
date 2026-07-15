@@ -32,6 +32,14 @@ class IntSubclass(int):
     pass
 
 
+class DictSubclass(dict[str, Any]):
+    pass
+
+
+class ListSubclass(list[Any]):
+    pass
+
+
 @pytest.mark.parametrize(
     ("value", "xml_type", "is_primitive"),
     [
@@ -70,20 +78,90 @@ def test_number_classifier_preserves_supported_number_types(value: Any, expected
     assert dicttoxml._is_number(value) is expected
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (StringSubclass("value"), "str"),
+        (DictSubclass(), "dict"),
+        (ListSubclass(), "list"),
+    ],
+)
+def test_get_xml_type_preserves_container_subclasses(value: Any, expected: str) -> None:
+    assert dicttoxml.get_xml_type(value) == expected
+
+
 # @lat: [[tests#XML helper behavior#Exact-type dispatch preserves subclass fallbacks]]
 def test_exact_type_dispatch_preserves_subclass_fallbacks() -> None:
-    class DictSubclass(dict[str, Any]):
-        pass
-
-    class ListSubclass(list[Any]):
-        pass
-
     data = DictSubclass({"values": ListSubclass([IntSubclass(7)])})
 
     assert dicttoxml.dicttoxml(data) == (
         b'<?xml version="1.0" encoding="UTF-8" ?>'
         b'<root><values type="list"><item type="number">7</item></values></root>'
     )
+
+
+def test_convert_preserves_root_scalar_and_sequence_subclasses() -> None:
+    def item_func(_parent: str) -> str:
+        return "item"
+
+    assert dicttoxml.convert(IntSubclass(7), [], True, item_func, False, True) == (
+        '<item type="number">7</item>'
+    )
+    assert dicttoxml.convert(ListSubclass([1]), [], True, item_func, False, True) == (
+        '<item type="int">1</item>'
+    )
+
+
+def test_nested_subclasses_match_compatible_serializer_shapes() -> None:
+    def item_func(_parent: str) -> str:
+        return "item"
+
+    assert dicttoxml.convert_dict(
+        {"text": StringSubclass("value"), "mapping": DictSubclass({"count": 1})},
+        [],
+        "root",
+        True,
+        item_func,
+        False,
+        True,
+    ) == (
+        '<text type="str">value</text>'
+        '<mapping type="dict"><count type="int">1</count></mapping>'
+    )
+    assert dicttoxml.convert_list(
+        [DictSubclass({"count": 1}), ListSubclass([2])],
+        [],
+        "items",
+        True,
+        item_func,
+        False,
+        True,
+    ) == (
+        '<item type="dict"><count type="int">1</count></item>'
+        '<item type="list"><item type="int">2</item></item>'
+    )
+    assert dicttoxml.convert_list(
+        [IntSubclass(7)],
+        None,
+        "bad&parent",
+        True,
+        item_func,
+        False,
+        False,
+    ) == '<key name="bad&amp;parent" type="number">7</key>'
+
+
+def test_raw_attribute_values_preserve_mapping_subclasses() -> None:
+    assert dicttoxml.dict2xml_str(
+        attr_type=False,
+        attr={},
+        item={"@attrs": {"source": "api"}, "@val": DictSubclass({"count": 1})},
+        item_func=lambda _parent: "item",
+        cdata=False,
+        item_name="field",
+        item_wrap=True,
+        parentIsList=False,
+    ) == '<field source="api"><count>1</count></field>'
 
 
 @pytest.mark.parametrize(

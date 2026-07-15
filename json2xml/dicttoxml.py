@@ -114,6 +114,8 @@ def get_xml_type(val: Any) -> str:
         return "dict"
     if val_type is list or val_type is tuple:
         return "list"
+    if isinstance(val, str):
+        return "str"
     if _is_number(val):
         return "number"
     if isinstance(val, dict):

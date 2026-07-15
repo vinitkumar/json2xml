@@ -199,3 +199,7 @@ Rust XML-name helpers should return raw invalid keys for later attribute escapin
 ### Rust XML escape scanner
 
 Rust XML escaping should locate every escapable byte while allowing clean text spans to be copied in bulk, including UTF-8 text and all five XML substitutions.
+
+### Dense Rust XML escape scanning remains linear
+
+Dense inputs containing one escape class should be consumed by monotonic scanners so repeated XML substitutions cannot trigger quadratic rescanning.

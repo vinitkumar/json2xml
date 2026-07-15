@@ -34,7 +34,7 @@ The Rust extension crate targets the Rust 2024 edition and pins `rust-version` t
 
 The Cargo feature layout separates normal Rust/PyO3 tests from extension-module builds. `cargo test` uses the default `python` feature without extension-module linking, while maturin enables the `extension-module` feature for wheel builds.
 
-Release and CI workflows install the pinned Rust toolchain before building wheels or running Rust checks, so hosted runners do not silently use an older default compiler.
+Release and CI workflows install the pinned Rust toolchain before building wheels or running Rust checks, so hosted runners do not silently use an older default compiler. The macOS release build also provisions Python 3.10 explicitly so maturin emits wheels for the oldest supported interpreter even when runner images omit it.
 
 ## Release packaging
 

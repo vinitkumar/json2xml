@@ -76,10 +76,12 @@ The Rust implementation is expected to be 5-15x faster than pure Python for:
 - Type dispatch (compiled match statements vs. `isinstance()` chains)
 - String building (pre-allocated buffers vs. f-string concatenation)
 
-Version 0.4.1 builds on the direct Python bytes writer with lower allocation
-pressure in hot serializer paths. The previous 0.3.0 release reduced the
-measured serializer RSS delta for a 100,000-record benchmark by about 49%
-compared with the earlier Rust implementation.
+Version 0.4.2 uses word/SIMD-optimized searches for XML escape bytes while
+retaining the direct Python bytes writer and its bounded 16 KiB buffer. On the
+5,000-record release workload, this reduced median conversion time from
+6.007 ms to 5.632 ms (6.23%) with byte-for-byte identical output. The previous
+0.4.1 release introduced the bounded writer, building on the roughly 49% lower
+serializer RSS delta delivered in 0.3.0.
 
 ## Limitations
 

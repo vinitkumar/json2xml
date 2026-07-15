@@ -2,7 +2,7 @@
 
 ## Build/Test Commands
 - Test: `pytest -vv` (all tests) or `pytest tests/test_<name>.py -vv` (single test file)
-- Test with coverage: `pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs`
+- Test with coverage: `pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term --cov-fail-under=100 -xvs`
 - Lint: `ruff check json2xml tests`
 - Type check: `uvx ty check json2xml tests`
 - Test all Python versions: `tox`

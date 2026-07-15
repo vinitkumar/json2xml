@@ -1,6 +1,6 @@
 [package]
 name = "json2xml_rs"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2024"
 rust-version = "1.96"
 description = "Fast native JSON to XML conversion for Python"
@@ -16,6 +16,7 @@ python = ["dep:pyo3"]
 extension-module = ["python", "pyo3/extension-module"]
 
 [dependencies]
+memchr = "2.7"
 pyo3 = { version = "0.28.2", optional = true }
 
 [profile.release]

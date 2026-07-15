@@ -60,7 +60,7 @@ typecheck: ## check types with ty
 	uvx ty check json2xml tests
 
 test: ## run tests quickly with the default Python
-	pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term -xvs tests
+	pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term --cov-fail-under=100 -xvs tests
 
 test-simple: ## run tests without coverage
 	pytest -vv tests

@@ -79,6 +79,16 @@ ELEMENT = Union[
 ]
 
 
+def _is_number(value: Any) -> bool:
+    """Recognize common numbers without paying for abstract-class dispatch."""
+    value_type = type(value)
+    if value_type is bool:
+        return False
+    if value_type is int or value_type is float or value_type is complex:
+        return True
+    return isinstance(value, numbers.Number)
+
+
 def get_xml_type(val: Any) -> str:
     """
     Get the XML type of a given value.
@@ -100,7 +110,13 @@ def get_xml_type(val: Any) -> str:
         return "float"
     if val_type is bool:
         return "bool"
-    if isinstance(val, numbers.Number):
+    if val_type is dict:
+        return "dict"
+    if val_type is list or val_type is tuple:
+        return "list"
+    if isinstance(val, str):
+        return "str"
+    if _is_number(val):
         return "number"
     if isinstance(val, dict):
         return "dict"
@@ -120,7 +136,7 @@ def escape_xml(s: str | int | float | numbers.Number | None) -> str:
         str: The escaped string.
     """
     if isinstance(s, str):
-        if not _XML_ESCAPE_CHARS.intersection(s):
+        if _XML_ESCAPE_CHARS.isdisjoint(s):
             return s
         s = s.replace("&", "&amp;")
         s = s.replace('"', "&quot;")
@@ -142,12 +158,13 @@ def make_attrstring(attr: dict[str, Any]) -> str:
     """
     if not attr:
         return ""
-    validate_xml_attr_names(attr)
     if len(attr) == 1:
         key, val = next(iter(attr.items()))
         if key == "type":
             return f' type="{val}"'
+        validate_xml_attr_names(attr)
         return f' {key}="{escape_xml(val)}"'
+    validate_xml_attr_names(attr)
     attrstring = " ".join(f'{k}="{escape_xml(v)}"' for k, v in attr.items())
     return f" {attrstring}"
 
@@ -277,7 +294,7 @@ def get_xpath31_tag_name(val: Any) -> str:
         return "boolean"
     if isinstance(val, dict):
         return "map"
-    if isinstance(val, (int, float, numbers.Number)):
+    if _is_number(val):
         return "number"
     if isinstance(val, str):
         return "string"
@@ -368,7 +385,7 @@ def convert(
 
 
 def is_primitive_type(val: Any) -> bool:
-    return val is None or isinstance(val, (str, bool, numbers.Number))
+    return val is None or isinstance(val, (str, bool)) or _is_number(val)
 
 
 def dict2xml_str(
@@ -493,12 +510,45 @@ def _append_convert(
 ) -> None:
     """Append converted XML directly into output without building subtree strings."""
     item_name = item_func(parent)
+    obj_type = type(obj)
 
-    if isinstance(obj, bool):
+    # Exact built-ins stay ahead of ABC/subclass checks on this hot path. The
+    # later isinstance/_is_number branches intentionally preserve compatible
+    # str, numeric, dict, and sequence subclasses without charging native JSON
+    # values for abstract dispatch.
+    if obj_type is bool:
         output.write(convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata))
-    elif isinstance(obj, numbers.Number):
+    elif obj_type is str:
         output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
-    elif isinstance(obj, str):
+    elif obj_type is int or obj_type is float or obj_type is complex:
+        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
+    elif obj is None:
+        output.write(convert_none(key=item_name, attr_type=attr_type, cdata=cdata))
+    elif obj_type is dict:
+        _append_convert_dict(
+            output,
+            cast("dict[str, Any]", obj),
+            ids,
+            parent,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            list_headers=list_headers,
+        )
+    elif obj_type is list or obj_type is tuple:
+        _append_convert_list(
+            output,
+            obj,
+            ids,
+            parent,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            list_headers=list_headers,
+        )
+    elif isinstance(obj, str) or _is_number(obj):
         output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
     elif hasattr(obj, "isoformat") and isinstance(obj, (datetime.datetime, datetime.date)):
         output.write(
@@ -510,8 +560,6 @@ def _append_convert(
                 cdata=cdata,
             )
         )
-    elif obj is None:
-        output.write(convert_none(key=item_name, attr_type=attr_type, cdata=cdata))
     elif isinstance(obj, dict):
         _append_convert_dict(
             output,
@@ -628,9 +676,24 @@ def _append_rawitem(
 ) -> None:
     if rawitem is None:
         return
-    if isinstance(rawitem, bool):
+    rawitem_type = type(rawitem)
+    if rawitem_type is bool:
         output.write("true" if rawitem else "false")
-    elif isinstance(rawitem, (str, numbers.Number)):
+    elif rawitem_type is str or rawitem_type is int or rawitem_type is float or rawitem_type is complex:
+        output.write(escape_xml(str(rawitem)))
+    elif rawitem_type is dict or rawitem_type is list or rawitem_type is tuple:
+        _append_convert(
+            output,
+            rawitem,
+            ids,
+            attr_type,
+            item_func,
+            cdata,
+            item_wrap,
+            item_name,
+            list_headers=list_headers,
+        )
+    elif isinstance(rawitem, str) or _is_number(rawitem):
         output.write(escape_xml(str(rawitem)))
     else:
         _append_convert(
@@ -708,15 +771,47 @@ def _append_convert_dict(
 ) -> None:
     """Append a dict as XML without allocating a joined child subtree."""
     for key, val in obj.items():
+        val_type = type(val)
         attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
         key_is_flat = isinstance(key, str) and key.endswith("@flat")
         xml_key = key[:-5] if key_is_flat else key
 
         key, attr = make_valid_xml_name(xml_key, attr)
 
-        if isinstance(val, bool):
+        if val_type is bool:
             output.write(convert_bool_valid_name(key, val, attr_type, attr))
-        elif isinstance(val, (numbers.Number, str)):
+        elif val_type is str or val_type is int or val_type is float or val_type is complex:
+            output.write(
+                convert_kv_valid_name(
+                    key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
+                )
+            )
+        elif val_type is dict:
+            _append_dict2xml_str(
+                output,
+                attr_type,
+                attr,
+                val,
+                item_func,
+                cdata,
+                key,
+                item_wrap,
+                False,
+                list_headers=list_headers,
+            )
+        elif val_type is list or val_type is tuple:
+            _append_list2xml_str(
+                output,
+                attr_type=attr_type,
+                attr=attr,
+                item=val,
+                item_func=item_func,
+                cdata=cdata,
+                item_name=f"{key}@flat" if key_is_flat else key,
+                item_wrap=item_wrap,
+                list_headers=list_headers,
+            )
+        elif isinstance(val, str) or _is_number(val):
             output.write(
                 convert_kv_valid_name(
                     key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
@@ -784,16 +879,58 @@ def _append_convert_list(
     this_id = get_unique_id(parent) if ids else None
 
     for i, item in enumerate(items):
+        item_type = type(item)
         base_attr: dict[str, Any] | None = None
         if ids:
             base_attr = {"id": f"{this_id}_{i + 1}"}
 
-        if isinstance(item, bool):
+        if item_type is bool:
             attr = dict(base_attr) if base_attr else {}
             if item_name_attr:
                 attr.update(item_name_attr)
             output.write(convert_bool_valid_name(item_name, item, attr_type, attr))
-        elif isinstance(item, (numbers.Number, str)):
+        elif item_type is str or item_type is int or item_type is float or item_type is complex:
+            attr = dict(base_attr) if base_attr else {}
+            if scalar_key_attr:
+                attr.update(scalar_key_attr)
+            output.write(
+                convert_kv_valid_name(
+                    key=scalar_key,
+                    val=item,
+                    attr_type=attr_type,
+                    attr=attr,
+                    cdata=cdata,
+                )
+            )
+        elif item_type is dict:
+            attr = dict(base_attr) if base_attr else {}
+            _append_dict2xml_str(
+                output,
+                attr_type=attr_type,
+                attr=attr,
+                item=item,
+                item_func=item_func,
+                cdata=cdata,
+                item_name=item_name,
+                item_wrap=item_wrap,
+                parentIsList=True,
+                parent=parent,
+                list_headers=list_headers,
+            )
+        elif item_type is list or item_type is tuple:
+            attr = dict(base_attr) if base_attr else {}
+            _append_list2xml_str(
+                output,
+                attr_type=attr_type,
+                attr=attr,
+                item=item,
+                item_func=item_func,
+                cdata=cdata,
+                item_name=item_name,
+                item_wrap=item_wrap,
+                list_headers=list_headers,
+            )
+        elif isinstance(item, str) or _is_number(item):
             attr = dict(base_attr) if base_attr else {}
             if scalar_key_attr:
                 attr.update(scalar_key_attr)

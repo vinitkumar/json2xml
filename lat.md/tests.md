@@ -94,6 +94,10 @@ Converting dictionaries that use `@attrs` and `@val` should preserve the caller'
 
 Attribute metadata that can be coerced with `dict()` should keep working so memory optimizations do not narrow legacy caller input.
 
+### Raw attribute values preserve scalar subclasses
+
+String and numeric subclasses supplied through `@val` should serialize as escaped element text while retaining custom attributes, matching exact scalar behavior.
+
 ### Invalid XML names normalize without double escaping
 
 Invalid element names should fall back to `<key name="...">` with the original name escaped exactly once in the emitted attribute.
@@ -158,6 +162,16 @@ Custom `@attrs` keys that are not valid XML attribute names should fail explicit
 
 These tests pin low-level XML helper contracts so performance refactors keep the same serializer output and caller-side mutation behavior.
 
+### Numeric fast path preserves general Number support
+
+Common built-in numbers should avoid abstract-class dispatch while `Decimal`, `Fraction`, complex, and custom `Number` implementations remain supported.
+
+### Exact-type dispatch preserves subclass fallbacks
+
+Exact native JSON types should use direct hot paths while compatible numeric, string, dictionary, and sequence subclasses retain the established fallback behavior.
+
+The complete Python suite is also a 100% statement-coverage gate so these less common compatibility paths cannot silently fall out of validation.
+
 ### Valid-name helpers preserve caller attrs
 
 Helpers that receive prevalidated XML names should add type metadata only to the emitted element and must not mutate caller-owned attribute dictionaries.
@@ -181,3 +195,11 @@ Attribute name validation should reject malformed custom attribute keys while pr
 ### Rust invalid-name attrs escape once
 
 Rust XML-name helpers should return raw invalid keys for later attribute escaping so borrowed-name optimizations cannot reintroduce double escaping.
+
+### Rust XML escape scanner
+
+Rust XML escaping should locate every escapable byte while allowing clean text spans to be copied in bulk, including UTF-8 text and all five XML substitutions.
+
+### Dense Rust XML escape scanning remains linear
+
+Dense inputs containing one escape class should switch from bounded sparse probes to monotonic scanners so repeated XML substitutions cannot trigger quadratic rescanning.

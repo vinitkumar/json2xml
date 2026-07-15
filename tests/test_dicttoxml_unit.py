@@ -62,6 +62,25 @@ def test_number_classifier_preserves_supported_number_types(value: Any, expected
     assert dicttoxml._is_number(value) is expected
 
 
+# @lat: [[tests#XML helper behavior#Exact-type dispatch preserves subclass fallbacks]]
+def test_exact_type_dispatch_preserves_subclass_fallbacks() -> None:
+    class IntSubclass(int):
+        pass
+
+    class DictSubclass(dict[str, Any]):
+        pass
+
+    class ListSubclass(list[Any]):
+        pass
+
+    data = DictSubclass({"values": ListSubclass([IntSubclass(7)])})
+
+    assert dicttoxml.dicttoxml(data) == (
+        b'<?xml version="1.0" encoding="UTF-8" ?>'
+        b'<root><values type="list"><item type="number">7</item></values></root>'
+    )
+
+
 @pytest.mark.parametrize(
     "value",
     [

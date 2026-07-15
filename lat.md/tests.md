@@ -162,6 +162,10 @@ These tests pin low-level XML helper contracts so performance refactors keep the
 
 Common built-in numbers should avoid abstract-class dispatch while `Decimal`, `Fraction`, complex, and custom `Number` implementations remain supported.
 
+### Exact-type dispatch preserves subclass fallbacks
+
+Exact native JSON types should use direct hot paths while compatible numeric, string, dictionary, and sequence subclasses retain the established fallback behavior.
+
 ### Valid-name helpers preserve caller attrs
 
 Helpers that receive prevalidated XML names should add type metadata only to the emitted element and must not mutate caller-owned attribute dictionaries.

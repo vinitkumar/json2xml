@@ -510,6 +510,10 @@ def _append_convert(
     item_name = item_func(parent)
     obj_type = type(obj)
 
+    # Exact built-ins stay ahead of ABC/subclass checks on this hot path. The
+    # later isinstance/_is_number branches intentionally preserve compatible
+    # str, numeric, dict, and sequence subclasses without charging native JSON
+    # values for abstract dispatch.
     if obj_type is bool:
         output.write(convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata))
     elif obj_type is str:

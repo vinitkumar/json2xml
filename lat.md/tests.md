@@ -202,4 +202,4 @@ Rust XML escaping should locate every escapable byte while allowing clean text s
 
 ### Dense Rust XML escape scanning remains linear
 
-Dense inputs containing one escape class should be consumed by monotonic scanners so repeated XML substitutions cannot trigger quadratic rescanning.
+Dense inputs containing one escape class should switch from bounded sparse probes to monotonic scanners so repeated XML substitutions cannot trigger quadratic rescanning.

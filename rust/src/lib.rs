@@ -17,13 +17,23 @@ use std::borrow::Cow;
 #[cfg(feature = "python")]
 const OUTPUT_BUFFER_SIZE: usize = 16 * 1024;
 
-/// Return byte offsets of characters requiring XML escaping.
-///
-/// XML's five special bytes are ASCII, so every match is a valid UTF-8
-/// boundary. The two platform-optimized iterators each advance monotonically,
-/// keeping dense escape input linear as well as scanning clean spans quickly.
+const SPARSE_ESCAPE_SCAN_LIMIT: u8 = 4;
+
+/// Return the byte offset of the next character requiring XML escaping.
+#[inline(always)]
+fn next_xml_escape(bytes: &[u8]) -> Option<usize> {
+    let markup = memchr::memchr3(b'&', b'<', b'>', bytes);
+    let quote = memchr::memchr2(b'"', b'\'', bytes);
+    match (markup, quote) {
+        (Some(left), Some(right)) => Some(left.min(right)),
+        (Some(index), None) | (None, Some(index)) => Some(index),
+        (None, None) => None,
+    }
+}
+
+/// Return escape offsets using two monotonic platform-optimized scanners.
 #[inline]
-fn xml_escape_indices(bytes: &[u8]) -> impl Iterator<Item = usize> + '_ {
+fn monotonic_xml_escape_indices(bytes: &[u8]) -> impl Iterator<Item = usize> + '_ {
     let mut markup = memchr::memchr3_iter(b'&', b'<', b'>', bytes).peekable();
     let mut quotes = memchr::memchr2_iter(b'"', b'\'', bytes).peekable();
 
@@ -60,10 +70,24 @@ pub fn escape_xml(s: &str) -> String {
 /// Scans bytes for speed, copies clean slices in bulk.
 #[inline]
 pub fn push_escaped_text(out: &mut String, s: &str) {
+    let bytes = s.as_bytes();
     let mut last = 0;
-    for i in xml_escape_indices(s.as_bytes()) {
+    for _ in 0..SPARSE_ESCAPE_SCAN_LIMIT {
+        let Some(relative) = next_xml_escape(&bytes[last..]) else {
+            out.push_str(&s[last..]);
+            return;
+        };
+        let i = last + relative;
         out.push_str(&s[last..i]);
-        out.push_str(escape_replacement(s.as_bytes()[i]));
+        out.push_str(escape_replacement(bytes[i]));
+        last = i + 1;
+    }
+
+    let dense_start = last;
+    for relative in monotonic_xml_escape_indices(&bytes[dense_start..]) {
+        let i = dense_start + relative;
+        out.push_str(&s[last..i]);
+        out.push_str(escape_replacement(bytes[i]));
         last = i + 1;
     }
     out.push_str(&s[last..]);
@@ -92,10 +116,23 @@ fn write_byte<W: Write + ?Sized>(out: &mut W, b: u8) -> PyResult<()> {
 #[cfg(feature = "python")]
 #[inline]
 fn write_escaped_text<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
+    let bytes = s.as_bytes();
     let mut last = 0;
-    for i in xml_escape_indices(s.as_bytes()) {
+    for _ in 0..SPARSE_ESCAPE_SCAN_LIMIT {
+        let Some(relative) = next_xml_escape(&bytes[last..]) else {
+            return write_str(out, &s[last..]);
+        };
+        let i = last + relative;
         write_str(out, &s[last..i])?;
-        write_str(out, escape_replacement(s.as_bytes()[i]))?;
+        write_str(out, escape_replacement(bytes[i]))?;
+        last = i + 1;
+    }
+
+    let dense_start = last;
+    for relative in monotonic_xml_escape_indices(&bytes[dense_start..]) {
+        let i = dense_start + relative;
+        write_str(out, &s[last..i])?;
+        write_str(out, escape_replacement(bytes[i]))?;
         last = i + 1;
     }
     write_str(out, &s[last..])
@@ -833,23 +870,20 @@ mod tests {
         #[test]
         // @lat: [[tests#XML helper behavior#Rust XML escape scanner]]
         fn locates_each_escape_byte_without_splitting_utf8() {
-            assert_eq!(xml_escape_indices("plain café".as_bytes()).count(), 0);
+            assert_eq!(next_xml_escape("plain café".as_bytes()), None);
+            assert_eq!(next_xml_escape("café & tea".as_bytes()), Some(6));
             assert_eq!(
-                xml_escape_indices("café & tea".as_bytes()).collect::<Vec<_>>(),
-                [6]
-            );
-            assert_eq!(
-                xml_escape_indices(b"<&>\"'").collect::<Vec<_>>(),
+                monotonic_xml_escape_indices(b"<&>\"'").collect::<Vec<_>>(),
                 [0, 1, 2, 3, 4]
             );
-            assert_eq!(xml_escape_indices(b"safe>").collect::<Vec<_>>(), [4]);
+            assert_eq!(next_xml_escape(b"safe>"), Some(4));
         }
 
         #[test]
         // @lat: [[tests#XML helper behavior#Dense Rust XML escape scanning remains linear]]
         fn handles_dense_single_class_escape_input() {
             let dense = "&".repeat(32 * 1024);
-            let indices = xml_escape_indices(dense.as_bytes()).collect::<Vec<_>>();
+            let indices = monotonic_xml_escape_indices(dense.as_bytes()).collect::<Vec<_>>();
 
             assert_eq!(indices.len(), dense.len());
             assert_eq!(indices.first(), Some(&0));

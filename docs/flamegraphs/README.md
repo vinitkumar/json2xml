@@ -10,7 +10,7 @@ The workload serializes a deterministic 5,000-record nested payload with type at
 | --- | ---: | ---: | ---: |
 | Median conversion | 6.007 ms | 5.632 ms | 6.23% lower |
 | Mean conversion | 6.013 ms | 5.643 ms | 6.14% lower |
-| Escape scanner exclusive samples | 14.31% | 7.94% | 44.5% lower share |
+| Escape scanner exclusive samples | 14.31% | 7.97% | 44.3% lower share |
 
 ### Rust before
 

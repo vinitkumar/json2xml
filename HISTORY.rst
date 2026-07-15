@@ -1,4 +1,15 @@
 
+6.5.0 / 2026-07-15
+==================
+
+  * perf: reduce pure Python serializer time by 31.1% on the deterministic 5,000-record benchmark through exact native-type dispatch
+  * perf: release ``json2xml-rs`` 0.4.2 with hybrid SIMD/word XML escape scanning and a 6.23% benchmark reduction
+  * fix: preserve numeric, string, dictionary, and sequence subclass behavior across the optimized Python dispatch paths
+  * test: require exactly 100% statement coverage from the complete Python suite and add dense Rust XML escape scanning regression coverage
+  * chore: require ``json2xml-rs>=0.4.2`` from ``json2xml[fast]`` and validate release wheels before PyPI publication
+  * docs: add Python and Rust before/after flamegraphs, buffer-capacity measurements, and release performance notes
+
+
 6.4.0 / 2026-07-13
 ==================
 

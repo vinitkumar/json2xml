@@ -20,6 +20,10 @@ The workload serializes a deterministic 5,000-record nested payload with type at
 
 [![Rust serializer flamegraph after optimization](rust-after.svg)](rust-after.svg)
 
+### Output buffer capacity
+
+A post-optimization sweep tested 4, 8, 16, 32, 64, and 128 KiB capacities. The useful range plateaued at 16–64 KiB; an ABBA-interleaved 16-vs-32 KiB confirmation measured 5.974 ms versus 6.024 ms median, so the existing 16 KiB capacity remains the best measured choice without increasing per-call memory.
+
 ## Pure Python serializer
 
 These profiles compare the pure-Python serializer before and after native JSON type fast paths on CPython 3.15.0b3.

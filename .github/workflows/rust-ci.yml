@@ -103,10 +103,10 @@ jobs:
           python -c "from json2xml.dicttoxml_fast import get_backend; print(f'Backend: {get_backend()}')"
 
       - name: Run Rust-specific tests
-        run: pytest tests/test_rust_dicttoxml.py -v
+        run: pytest -o addopts='' tests/test_rust_dicttoxml.py -v
 
       - name: Run full test suite
-        run: pytest tests/ -v --ignore=tests/test_cli.py
+        run: pytest -o addopts='' tests/ -v --ignore=tests/test_cli.py
 
   benchmark:
     name: Performance Benchmark

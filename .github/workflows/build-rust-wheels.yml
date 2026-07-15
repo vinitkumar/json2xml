@@ -214,4 +214,4 @@ jobs:
       - name: Run tests
         run: |
           pip install -e .
-          pytest tests/test_rust_dicttoxml.py -v
+          pytest -o addopts='' tests/test_rust_dicttoxml.py -v

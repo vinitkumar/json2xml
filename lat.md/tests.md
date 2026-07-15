@@ -94,6 +94,10 @@ Converting dictionaries that use `@attrs` and `@val` should preserve the caller'
 
 Attribute metadata that can be coerced with `dict()` should keep working so memory optimizations do not narrow legacy caller input.
 
+### Raw attribute values preserve scalar subclasses
+
+String and numeric subclasses supplied through `@val` should serialize as escaped element text while retaining custom attributes, matching exact scalar behavior.
+
 ### Invalid XML names normalize without double escaping
 
 Invalid element names should fall back to `<key name="...">` with the original name escaped exactly once in the emitted attribute.

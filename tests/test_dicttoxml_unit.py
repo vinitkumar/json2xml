@@ -24,6 +24,14 @@ class CustomNumber(numbers.Number):
         return 7
 
 
+class StringSubclass(str):
+    pass
+
+
+class IntSubclass(int):
+    pass
+
+
 @pytest.mark.parametrize(
     ("value", "xml_type", "is_primitive"),
     [
@@ -64,9 +72,6 @@ def test_number_classifier_preserves_supported_number_types(value: Any, expected
 
 # @lat: [[tests#XML helper behavior#Exact-type dispatch preserves subclass fallbacks]]
 def test_exact_type_dispatch_preserves_subclass_fallbacks() -> None:
-    class IntSubclass(int):
-        pass
-
     class DictSubclass(dict[str, Any]):
         pass
 
@@ -78,6 +83,21 @@ def test_exact_type_dispatch_preserves_subclass_fallbacks() -> None:
     assert dicttoxml.dicttoxml(data) == (
         b'<?xml version="1.0" encoding="UTF-8" ?>'
         b'<root><values type="list"><item type="number">7</item></values></root>'
+    )
+
+
+@pytest.mark.parametrize(
+    ("value", "expected_text"),
+    [
+        (StringSubclass("A & B"), b"A &amp; B"),
+        (IntSubclass(7), b"7"),
+    ],
+)
+# @lat: [[tests#Conversion behavior#Raw attribute values preserve scalar subclasses]]
+def test_raw_attribute_values_preserve_scalar_subclasses(value: str | int, expected_text: bytes) -> None:
+    assert dicttoxml.dicttoxml({"field": {"@attrs": {"source": "api"}, "@val": value}}) == (
+        b'<?xml version="1.0" encoding="UTF-8" ?>'
+        b'<root><field source="api">' + expected_text + b"</field></root>"
     )
 
 

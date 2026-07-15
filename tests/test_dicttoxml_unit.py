@@ -45,6 +45,24 @@ def test_get_xml_type_and_primitive_classification(value: Any, xml_type: str, is
 
 
 @pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (1, True),
+        (3.5, True),
+        (1 + 2j, True),
+        (Decimal("1.25"), True),
+        (Fraction(3, 4), True),
+        (CustomNumber(), True),
+        (True, False),
+        ("1", False),
+    ],
+)
+# @lat: [[tests#XML helper behavior#Numeric fast path preserves general Number support]]
+def test_number_classifier_preserves_supported_number_types(value: Any, expected: bool) -> None:
+    assert dicttoxml._is_number(value) is expected
+
+
+@pytest.mark.parametrize(
     "value",
     [
         "plain text",

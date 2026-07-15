@@ -158,6 +158,10 @@ Custom `@attrs` keys that are not valid XML attribute names should fail explicit
 
 These tests pin low-level XML helper contracts so performance refactors keep the same serializer output and caller-side mutation behavior.
 
+### Numeric fast path preserves general Number support
+
+Common built-in numbers should avoid abstract-class dispatch while `Decimal`, `Fraction`, complex, and custom `Number` implementations remain supported.
+
 ### Valid-name helpers preserve caller attrs
 
 Helpers that receive prevalidated XML names should add type metadata only to the emitted element and must not mutate caller-owned attribute dictionaries.

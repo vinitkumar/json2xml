@@ -58,6 +58,8 @@ The Rust serializer's bytes-writer hot path uses monomorphized `Write` helpers a
 
 The benchmark script now tracks uv-managed current-series interpreters through a configurable `JSON2XML_UV_PYTHON_DIR` base path plus per-interpreter overrides, with the documented defaults targeting CPython 3.14.6, CPython 3.15.0b3, and PyPy 3.11.15. That keeps the published setup reproducible without hard-coding one contributor's home directory.
 
+The July 2026 CPython 3.15.0b3 flamegraph for a 5,000-record nested payload identified repeated abstract type dispatch inside [[json2xml/dicttoxml.py#_append_convert_dict]] as the pure-Python bottleneck. Exact JSON-native type paths now precede compatibility fallbacks, while [[json2xml/dicttoxml.py#_is_number]] preserves `Decimal`, `Fraction`, complex, and custom `Number` support. The fixed workload improved from 83.0 ms to 57.2 ms per conversion; a 20-loop tracing profile fell from 8.311 s and 48.17 million calls to 5.782 s and 30.13 million calls.
+
 ## Dependency security
 
 Dependency floors and lockfiles keep known vulnerable packages out of runtime and development environments.

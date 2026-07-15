@@ -1,3 +1,45 @@
+# json2xml 6.5.0
+
+Released 2026-07-15.
+
+## Highlights
+
+- Reduced pure Python serializer time by 31.1% on the deterministic 5,000-record workload by using exact native-type dispatch on hot paths while preserving subclass fallbacks.
+- Added explicit regression coverage for `Decimal`, `Fraction`, complex, custom `Number`, string, dictionary, list, and tuple subclasses.
+- Made the complete Python suite an exact 100% statement-coverage gate: 421 tests cover all 762 statements.
+- Updated `json2xml[fast]` to require the published `json2xml-rs>=0.4.2` accelerator.
+
+## Performance
+
+All profiles used uv-managed CPython 3.15.0b3 and the same deterministic 5,000-record nested payload.
+
+| Pure Python metric | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Conversion time | 83.0 ms | 57.2 ms | 31.1% lower |
+| 20-loop traced time | 8.311 s | 5.782 s | 30.4% lower |
+| Function calls | 48.17 million | 30.13 million | 37.4% fewer |
+| `isinstance` calls | 11.70 million | 2.80 million | 76.1% fewer |
+
+The Rust 0.4.2 accelerator released first and improved its paired release median from 6.007 ms to 5.632 ms, or 6.23%, with identical 4,093,244-byte output. Its hybrid scanner keeps dense XML escape input linear, and the measured 16 KiB streaming buffer remains unchanged.
+
+## Package Versions
+
+- Python package: `json2xml==6.5.0`
+- Rust accelerator: `json2xml-rs==0.4.2`
+- Fast install: `pip install "json2xml[fast]==6.5.0"`
+
+## Profiling Evidence
+
+- [Python before flamegraph](docs/flamegraphs/python315-before.svg)
+- [Python after flamegraph](docs/flamegraphs/python315-after.svg)
+- [Rust before flamegraph](docs/flamegraphs/rust-before.svg)
+- [Rust after flamegraph](docs/flamegraphs/rust-after.svg)
+
+## Verification
+
+The release passed the full cross-platform Python matrix, Rust formatting and Clippy checks, 48 Rust unit tests, 421 Python tests with exactly 100% statement coverage, and install tests against the published Rust 0.4.2 wheels.
+
+
 # json2xml_rs 0.4.2
 
 Released 2026-07-15.

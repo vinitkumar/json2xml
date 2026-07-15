@@ -60,6 +60,8 @@ The benchmark script now tracks uv-managed current-series interpreters through a
 
 The July 2026 CPython 3.15.0b3 flamegraph for a 5,000-record nested payload identified repeated abstract type dispatch inside [[json2xml/dicttoxml.py#_append_convert_dict]] as the pure-Python bottleneck. Exact JSON-native type paths now precede compatibility fallbacks, while [[json2xml/dicttoxml.py#_is_number]] preserves `Decimal`, `Fraction`, complex, and custom `Number` support. The fixed workload improved from 83.0 ms to 57.2 ms per conversion; a 20-loop tracing profile fell from 8.311 s and 48.17 million calls to 5.782 s and 30.13 million calls. The committed [before](../docs/flamegraphs/python315-before.svg) and [after](../docs/flamegraphs/python315-after.svg) flamegraphs preserve the call-tree evidence.
 
+The July 2026 native Rust flamegraph identified the scalar byte loop in the XML escape writer as the largest avoidable Rust cost. The shared scanner now uses `memchr` word/SIMD search for the five XML escape bytes and copies clean UTF-8 spans in bulk without changing the bounded bytes writer. On the same deterministic 5,000-record CPython 3.15.0b3 workload, paired release medians improved from 6.007 ms to 5.632 ms per conversion, or 6.23%, while the escape writer's exclusive native sample share fell from 14.31% to 7.94%. The committed [Rust before](../docs/flamegraphs/rust-before.svg) and [Rust after](../docs/flamegraphs/rust-after.svg) flamegraphs preserve the symbolized native-stack evidence.
+
 ## Dependency security
 
 Dependency floors and lockfiles keep known vulnerable packages out of runtime and development environments.

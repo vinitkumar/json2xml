@@ -1,4 +1,26 @@
-# CPython 3.15 serializer flamegraphs
+# Serializer flamegraphs
+
+## Rust accelerator
+
+These profiles compare the Rust serializer before and after vectorized XML escape-byte scanning on CPython 3.15.0b3.
+
+The workload serializes a deterministic 5,000-record nested payload with type attributes enabled. Samply captured symbolized native stacks for eight seconds, and Inferno rendered the SVG flamegraphs. A separate paired release benchmark used 21 rounds of 50 conversions.
+
+| Metric | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Median conversion | 6.007 ms | 5.632 ms | 6.23% lower |
+| Mean conversion | 6.013 ms | 5.643 ms | 6.14% lower |
+| Escape scanner exclusive samples | 14.31% | 7.94% | 44.5% lower share |
+
+### Rust before
+
+[![Rust serializer flamegraph before optimization](rust-before.svg)](rust-before.svg)
+
+### Rust after
+
+[![Rust serializer flamegraph after optimization](rust-after.svg)](rust-after.svg)
+
+## Pure Python serializer
 
 These profiles compare the pure-Python serializer before and after native JSON type fast paths on CPython 3.15.0b3.
 
@@ -9,10 +31,10 @@ The workload serializes a deterministic 5,000-record nested payload 20 times wit
 | Before | 8.311 s | 48.17 million | 11.70 million |
 | After | 5.782 s | 30.13 million | 2.80 million |
 
-## Before
+### Python before
 
 [![Serializer flamegraph before optimization](python315-before.svg)](python315-before.svg)
 
-## After
+### Python after
 
 [![Serializer flamegraph after optimization](python315-after.svg)](python315-after.svg)

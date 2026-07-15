@@ -16,6 +16,7 @@ python = ["dep:pyo3"]
 extension-module = ["python", "pyo3/extension-module"]
 
 [dependencies]
+memchr = "2.7"
 pyo3 = { version = "0.28.2", optional = true }
 
 [profile.release]

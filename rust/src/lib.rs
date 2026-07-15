@@ -17,6 +17,33 @@ use std::borrow::Cow;
 #[cfg(feature = "python")]
 const OUTPUT_BUFFER_SIZE: usize = 16 * 1024;
 
+/// Return the byte offset of the next character requiring XML escaping.
+///
+/// XML's five special bytes are all ASCII, so any match is also a valid UTF-8
+/// boundary. `memchr` uses platform-optimized word/SIMD scans for clean spans.
+#[inline(always)]
+fn next_xml_escape(bytes: &[u8]) -> Option<usize> {
+    let markup = memchr::memchr3(b'&', b'<', b'>', bytes);
+    let quote = memchr::memchr2(b'"', b'\'', bytes);
+    match (markup, quote) {
+        (Some(left), Some(right)) => Some(left.min(right)),
+        (Some(index), None) | (None, Some(index)) => Some(index),
+        (None, None) => None,
+    }
+}
+
+#[inline(always)]
+fn escape_replacement(byte: u8) -> &'static str {
+    match byte {
+        b'&' => "&amp;",
+        b'"' => "&quot;",
+        b'\'' => "&apos;",
+        b'<' => "&lt;",
+        b'>' => "&gt;",
+        _ => unreachable!("next_xml_escape returned a non-escape byte"),
+    }
+}
+
 /// Escape special XML characters in a string (allocating convenience wrapper).
 #[inline]
 pub fn escape_xml(s: &str) -> String {
@@ -30,17 +57,10 @@ pub fn escape_xml(s: &str) -> String {
 #[inline]
 pub fn push_escaped_text(out: &mut String, s: &str) {
     let mut last = 0;
-    for (i, b) in s.bytes().enumerate() {
-        let repl = match b {
-            b'&' => "&amp;",
-            b'"' => "&quot;",
-            b'\'' => "&apos;",
-            b'<' => "&lt;",
-            b'>' => "&gt;",
-            _ => continue,
-        };
+    while let Some(relative) = next_xml_escape(&s.as_bytes()[last..]) {
+        let i = last + relative;
         out.push_str(&s[last..i]);
-        out.push_str(repl);
+        out.push_str(escape_replacement(s.as_bytes()[i]));
         last = i + 1;
     }
     out.push_str(&s[last..]);
@@ -49,21 +69,7 @@ pub fn push_escaped_text(out: &mut String, s: &str) {
 /// Append attribute value with full XML escaping (also escapes quotes).
 #[inline]
 pub fn push_escaped_attr(out: &mut String, s: &str) {
-    let mut last = 0;
-    for (i, b) in s.bytes().enumerate() {
-        let repl = match b {
-            b'&' => "&amp;",
-            b'"' => "&quot;",
-            b'\'' => "&apos;",
-            b'<' => "&lt;",
-            b'>' => "&gt;",
-            _ => continue,
-        };
-        out.push_str(&s[last..i]);
-        out.push_str(repl);
-        last = i + 1;
-    }
-    out.push_str(&s[last..]);
+    push_escaped_text(out, s);
 }
 
 #[cfg(feature = "python")]
@@ -84,17 +90,10 @@ fn write_byte<W: Write + ?Sized>(out: &mut W, b: u8) -> PyResult<()> {
 #[inline]
 fn write_escaped_text<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
     let mut last = 0;
-    for (i, b) in s.bytes().enumerate() {
-        let repl = match b {
-            b'&' => "&amp;",
-            b'"' => "&quot;",
-            b'\'' => "&apos;",
-            b'<' => "&lt;",
-            b'>' => "&gt;",
-            _ => continue,
-        };
+    while let Some(relative) = next_xml_escape(&s.as_bytes()[last..]) {
+        let i = last + relative;
         write_str(out, &s[last..i])?;
-        write_str(out, repl)?;
+        write_str(out, escape_replacement(s.as_bytes()[i]))?;
         last = i + 1;
     }
     write_str(out, &s[last..])
@@ -828,6 +827,15 @@ mod tests {
 
     mod push_escaped_text_tests {
         use super::*;
+
+        #[test]
+        // @lat: [[tests#XML helper behavior#Rust XML escape scanner]]
+        fn locates_each_escape_byte_without_splitting_utf8() {
+            assert_eq!(next_xml_escape("plain café".as_bytes()), None);
+            assert_eq!(next_xml_escape("café & tea".as_bytes()), Some(6));
+            assert_eq!(next_xml_escape(b"<&>\"'"), Some(0));
+            assert_eq!(next_xml_escape(b"safe>"), Some(4));
+        }
 
         #[test]
         fn escapes_special_chars_in_text() {

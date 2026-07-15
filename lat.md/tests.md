@@ -185,3 +185,7 @@ Attribute name validation should reject malformed custom attribute keys while pr
 ### Rust invalid-name attrs escape once
 
 Rust XML-name helpers should return raw invalid keys for later attribute escaping so borrowed-name optimizations cannot reintroduce double escaping.
+
+### Rust XML escape scanner
+
+Rust XML escaping should locate every escapable byte while allowing clean text spans to be copied in bulk, including UTF-8 text and all five XML substitutions.

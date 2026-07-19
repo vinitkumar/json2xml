@@ -5,7 +5,7 @@ pytest>=8.4.1
 pytest-cov>=7.0.0
 pytest-xdist>=3.8.0
 coverage>=7.10.3
-ruff>=0.12.8
+ruff>=0.15.22
 setuptools>=80.9.0
 pygments>=2.20.0
 # Note: ty is run via uvx, not installed as a dependency

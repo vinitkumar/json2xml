@@ -18,6 +18,10 @@ __lazy_modules__ = ["defusedxml.minidom"]
 _SAFE_RANDOM = SystemRandom()
 
 _XML_ESCAPE_CHARS = frozenset("&\"'<>")
+# XML 1.0 permits tab (U+0009), line feed (U+000A), carriage return
+# (U+000D), and U+0020 onward, except for surrogate code points and the
+# U+FFFE/U+FFFF noncharacters. This pattern matches only the forbidden ranges:
+# disallowed C0 controls, UTF-16 surrogates, and the two BMP noncharacters.
 _XML_INVALID_CHAR_RE = re.compile(
     "[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]"
 )

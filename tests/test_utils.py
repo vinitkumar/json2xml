@@ -228,6 +228,50 @@ class TestReadFromUrl:
         with pytest.raises(URLReadError, match="credentials"):
             readfromurl("https://user:password@8.8.8.8/data.json")
 
+        with pytest.raises(URLReadError, match="include a hostname"):
+            readfromurl("https:///data.json")
+
+        with pytest.raises(URLReadError, match="not valid"):
+            readfromurl("https://8.8.8.8:not-a-port/data.json")
+
+    @patch("json2xml.utils.socket.getaddrinfo")
+    def test_readfromurl_rejects_unresolvable_hostnames(
+        self, mock_getaddrinfo: Mock
+    ) -> None:
+        """Test DNS failures are reported without attempting an HTTP request."""
+        mock_getaddrinfo.side_effect = OSError("DNS unavailable")
+
+        with pytest.raises(URLReadError, match="could not be resolved"):
+            readfromurl("https://unresolvable.example/data.json")
+
+    def test_readfromurl_rejects_invalid_response_limit(self) -> None:
+        """Test callers cannot disable the response cap with a non-positive value."""
+        with pytest.raises(URLReadError, match="positive integer"):
+            readfromurl("https://8.8.8.8/data.json", max_response_bytes=0)
+
+    @pytest.mark.parametrize(
+        ("content_length", "message"),
+        [("17", "maximum size"), ("not-a-number", "invalid Content-Length")],
+    )
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_rejects_invalid_content_lengths(
+        self,
+        mock_get_http_client: Mock,
+        content_length: str,
+        message: str,
+    ) -> None:
+        """Test declared response sizes are validated before reading the body."""
+        response = Mock(status=200, headers={"Content-Length": content_length})
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        with pytest.raises(URLReadError, match=message):
+            readfromurl("https://8.8.8.8/data.json", max_response_bytes=16)
+
+        response.read.assert_not_called()
+        response.close.assert_called_once_with()
+
     @patch("json2xml.utils._get_http_client")
     # @lat: [[tests#Input readers#URL reader limits decoded response size]]
     def test_readfromurl_limits_decoded_response_size(

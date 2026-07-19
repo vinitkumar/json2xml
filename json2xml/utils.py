@@ -89,7 +89,8 @@ def _validate_url(url: str, allow_private_networks: bool) -> None:
         except OSError as error:
             raise URLReadError("URL hostname could not be resolved") from error
         addresses = {
-            ip_address(info[4][0].split("%", 1)[0]) for info in address_info
+            ip_address(str(info[4][0]).split("%", 1)[0])
+            for info in address_info
         }
 
     if not addresses or any(not address.is_global for address in addresses):

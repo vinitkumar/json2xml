@@ -4,6 +4,7 @@
 
 from pyexpat import ExpatError
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 import xmltodict
@@ -207,6 +208,16 @@ class TestJson2xml:
         with pytest.raises(InvalidDataError) as pytest_wrapped_e:
             json2xml.Json2xml({"bad": decoded}).to_xml()
         assert pytest_wrapped_e.type == InvalidDataError
+
+    def test_pretty_print_parser_errors_are_wrapped(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Parser failures preserve the public InvalidDataError contract."""
+        parse_string = Mock(side_effect=ExpatError("malformed XML"))
+        monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
+
+        with pytest.raises(InvalidDataError):
+            json2xml.Json2xml({"valid": "data"}).to_xml()
 
     def test_read_boolean_data_from_json(self) -> None:
         """Test correct return for boolean types."""

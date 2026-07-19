@@ -26,6 +26,14 @@ These tests verify the concrete reader helpers against realistic source behavior
 
 URL input should read valid JSON over HTTP and wrap status, network, and decoding failures in `URLReadError`.
 
+### URL reader rejects unsafe destinations
+
+URL input should reject unsupported schemes, embedded credentials, and private or link-local targets unless a trusted library caller explicitly opts into private-network access.
+
+### URL reader limits decoded response size
+
+URL input should stop reading once the decoded response exceeds its configured limit so compressed or oversized remote content cannot exhaust process memory.
+
 ## CLI failure messages
 
 These tests verify common command-line failures return short messages that name the broken input source and point users at the next valid action.

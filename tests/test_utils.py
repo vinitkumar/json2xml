@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, ClassVar
 from unittest.mock import Mock, patch
 
 import pytest
+import urllib3
 
 from json2xml.utils import (
     InvalidDataError,
@@ -151,31 +152,41 @@ class TestReadFromUrl:
 
     def test_readfromurl_success(self, json_server: str) -> None:
         """Test successful URL reading."""
-        result = readfromurl(f"{json_server}/data.json")
+        result = readfromurl(
+            f"{json_server}/data.json", allow_private_networks=True
+        )
 
         assert result == {"key": "value", "number": 42}
 
     def test_readfromurl_success_with_params(self, json_server: str) -> None:
         """Test successful URL reading with parameters."""
         params = {"param1": "value1", "param2": "value2"}
-        result = readfromurl(f"{json_server}/api", params=params)
+        result = readfromurl(
+            f"{json_server}/api", params=params, allow_private_networks=True
+        )
 
         assert result == {"result": "success"}
 
     def test_readfromurl_http_error(self, json_server: str) -> None:
         """Test URL reading with HTTP error status."""
         with pytest.raises(URLReadError, match="URL is not returning correct response"):
-            readfromurl(f"{json_server}/nonexistent.json")
+            readfromurl(
+                f"{json_server}/nonexistent.json", allow_private_networks=True
+            )
 
     def test_readfromurl_server_error(self, json_server: str) -> None:
         """Test URL reading with server error status."""
         with pytest.raises(URLReadError, match="URL is not returning correct response"):
-            readfromurl(f"{json_server}/error.json")
+            readfromurl(
+                f"{json_server}/error.json", allow_private_networks=True
+            )
 
     def test_readfromurl_invalid_json_response(self, json_server: str) -> None:
         """Test URL reading with invalid JSON response."""
         with pytest.raises(URLReadError, match="URL did not return valid JSON"):
-            readfromurl(f"{json_server}/invalid.json")
+            readfromurl(
+                f"{json_server}/invalid.json", allow_private_networks=True
+            )
 
     def test_readfromurl_network_error(self) -> None:
         """Test network failures are wrapped as URLReadError."""
@@ -184,7 +195,64 @@ class TestReadFromUrl:
             port = unused_socket.getsockname()[1]
 
         with pytest.raises(URLReadError, match="URL could not be read"):
-            readfromurl(f"http://127.0.0.1:{port}/data.json")
+            readfromurl(
+                f"http://127.0.0.1:{port}/data.json", allow_private_networks=True
+            )
+
+    # @lat: [[tests#Input readers#URL reader rejects unsafe destinations]]
+    def test_readfromurl_rejects_private_networks_by_default(self) -> None:
+        """Test URL reads cannot reach private or link-local services by default."""
+        with pytest.raises(URLReadError, match="public network address"):
+            readfromurl("http://127.0.0.1/private.json")
+
+        with pytest.raises(URLReadError, match="public network address"):
+            readfromurl("http://169.254.169.254/latest/meta-data/")
+
+    @patch("json2xml.utils.socket.getaddrinfo")
+    def test_readfromurl_rejects_hostnames_resolving_to_private_networks(
+        self, mock_getaddrinfo: Mock
+    ) -> None:
+        """Test DNS names cannot bypass the private-network URL policy."""
+        mock_getaddrinfo.return_value = [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.8", 443))
+        ]
+
+        with pytest.raises(URLReadError, match="public network address"):
+            readfromurl("https://internal.example/data.json")
+
+    def test_readfromurl_rejects_unsupported_schemes_and_credentials(self) -> None:
+        """Test URL reads accept only credential-free HTTP and HTTPS URLs."""
+        with pytest.raises(URLReadError, match="HTTP or HTTPS"):
+            readfromurl("file:///etc/passwd")
+
+        with pytest.raises(URLReadError, match="credentials"):
+            readfromurl("https://user:password@8.8.8.8/data.json")
+
+    @patch("json2xml.utils._get_http_client")
+    # @lat: [[tests#Input readers#URL reader limits decoded response size]]
+    def test_readfromurl_limits_decoded_response_size(
+        self, mock_get_http_client: Mock
+    ) -> None:
+        """Test URL reads stop after the configured decoded-byte limit."""
+        response = Mock(status=200, headers={})
+        response.read.return_value = b'{"value":"payload larger than limit"}'
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        with pytest.raises(URLReadError, match="maximum size"):
+            readfromurl("https://8.8.8.8/data.json", max_response_bytes=16)
+
+        http.request.assert_called_once_with(
+            "GET",
+            "https://8.8.8.8/data.json",
+            fields=None,
+            timeout=mock_get_http_client.return_value[2],
+            retries=False,
+            redirect=False,
+            preload_content=False,
+        )
+        response.close.assert_called_once_with()
 
 
 class TestReadFromString:
@@ -284,7 +352,9 @@ class TestIntegration:
         """Test reading from URL and converting to XML."""
         from json2xml import dicttoxml
 
-        data = readfromurl(f"{json_server}/api.json")
+        data = readfromurl(
+            f"{json_server}/api.json", allow_private_networks=True
+        )
         xml_result = dicttoxml.dicttoxml(data, attr_type=False, root=False)
 
         assert b"<api>response</api>" in xml_result

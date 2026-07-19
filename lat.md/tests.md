@@ -26,6 +26,14 @@ These tests verify the concrete reader helpers against realistic source behavior
 
 URL input should read valid JSON over HTTP and wrap status, network, and decoding failures in `URLReadError`.
 
+### URL reader rejects unsafe destinations
+
+URL input should reject unsupported schemes, embedded credentials, and private or link-local targets unless a trusted library caller explicitly opts into private-network access.
+
+### URL reader limits decoded response size
+
+URL input should stop reading once the decoded response exceeds its configured limit so compressed or oversized remote content cannot exhaust process memory.
+
 ## CLI failure messages
 
 These tests verify common command-line failures return short messages that name the broken input source and point users at the next valid action.
@@ -58,6 +66,10 @@ The multi-interpreter benchmark should let per-interpreter environment variables
 
 These tests pin the XML shapes that matter most for interoperability, especially the modes that intentionally diverge from the default serializer.
 
+### Outdated Rust backends stay disabled
+
+An optional Rust accelerator is eligible only when its escape helper rejects XML 1.0 forbidden characters, preventing an older wheel from bypassing the Python serializer's validation.
+
 ### XPath format adds functions namespace
 
 XPath mode should emit the W3C XPath functions namespace and typed child elements so downstream consumers receive standards-shaped XML.
@@ -81,6 +93,10 @@ Supplying namespace prefixes and an `xsi` mapping should emit the expected `xmln
 ### Xml namespace inputs are not mutated across calls
 
 Reusing one `xml_namespaces` mapping across multiple `dicttoxml` calls should return identical XML each time so namespace declarations never accumulate on the shared dict.
+
+### Namespace metadata cannot inject attributes
+
+Namespace prefixes must be valid names and namespace values must be escaped as attribute values so quotes cannot create attacker-controlled root attributes.
 
 ### Falsy JSON values convert to XML
 
@@ -157,6 +173,18 @@ Invalid custom root names should use the serializer's existing XML-name normaliz
 ### Invalid custom attributes are rejected
 
 Custom `@attrs` keys that are not valid XML attribute names should fail explicitly because attributes have no safe metadata fallback equivalent to element `<key name="...">` output.
+
+### Custom type attributes use shared escaping
+
+Caller-provided `type` attributes must use the same XML value escaping as every other custom attribute instead of taking the internal type fast path.
+
+### Custom type attributes are validated
+
+Caller-provided `type` attribute values containing XML 1.0-forbidden characters must fail before serialization so the internal type fast path cannot bypass character validation.
+
+### XML 1.0 forbidden characters are rejected
+
+Text and CDATA output must reject every forbidden XML 1.0 boundary before raw bytes are returned, while preserving valid whitespace and non-printable characters outside those ranges.
 
 ## XML helper behavior
 

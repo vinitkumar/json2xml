@@ -32,6 +32,19 @@ Here's how to use each method:
     data = readfromjson("examples/licht.json")
     print(json2xml.Json2xml(data).to_xml())
 
+URL reads accept only credential-free HTTP(S), reject redirects and non-public
+destinations by default, and stop after 10 MiB of decoded content. Trusted
+library callers can explicitly allow a private endpoint while retaining a
+chosen response limit:
+
+.. code-block:: python
+
+    data = readfromurl(
+        "http://127.0.0.1:8000/data.json",
+        allow_private_networks=True,
+        max_response_bytes=1024 * 1024,
+    )
+
 
 Real-world Examples
 -------------------

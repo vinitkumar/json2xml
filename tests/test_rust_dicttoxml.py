@@ -68,6 +68,11 @@ class TestRustEscapeXml:
     def test_escape_unicode(self):
         assert escape_xml_py("héllo wörld 日本語") == "héllo wörld 日本語"
 
+    @pytest.mark.parametrize("invalid_char", ["\x00", "\x01", "\x0b", "\x1b", "\ufffe"])
+    def test_escape_rejects_xml_1_0_forbidden_characters(self, invalid_char: str):
+        with pytest.raises(ValueError, match="not allowed in XML 1.0"):
+            escape_xml_py(f"before{invalid_char}after")
+
 
 class TestRustWrapCdata:
     """Test the Rust wrap_cdata function."""
@@ -85,6 +90,10 @@ class TestRustWrapCdata:
 
     def test_wrap_empty(self):
         assert wrap_cdata_py("") == "<![CDATA[]]>"
+
+    def test_wrap_rejects_xml_1_0_forbidden_characters(self):
+        with pytest.raises(ValueError, match="not allowed in XML 1.0"):
+            wrap_cdata_py("before\x1bafter")
 
 
 class TestRustDicttoxml:
@@ -106,6 +115,11 @@ class TestRustDicttoxml:
         result = rust_dicttoxml(data)
         assert b">Hello World</message>" in result
         assert b'type="str"' in result
+
+    @pytest.mark.parametrize("cdata", [False, True])
+    def test_string_value_rejects_xml_1_0_forbidden_characters(self, cdata: bool):
+        with pytest.raises(ValueError, match="not allowed in XML 1.0"):
+            rust_dicttoxml({"message": "before\x01after"}, cdata=cdata)
 
     def test_integer_value(self):
         data = {"count": 42}

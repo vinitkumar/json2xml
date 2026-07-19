@@ -41,16 +41,19 @@ class Json2xml:
         Convert to xml using dicttoxml.dicttoxml and then pretty print it.
         """
         if self.data is not None:
-            xml_data = dicttoxml.dicttoxml(
-                self.data,
-                root=self.root,
-                custom_root=self.wrapper,
-                attr_type=self.attr_type,
-                item_wrap=self.item_wrap,
-                xpath_format=self.xpath_format,
-                cdata=self.cdata,
-                list_headers=self.list_headers,
-            )
+            try:
+                xml_data = dicttoxml.dicttoxml(
+                    self.data,
+                    root=self.root,
+                    custom_root=self.wrapper,
+                    attr_type=self.attr_type,
+                    item_wrap=self.item_wrap,
+                    xpath_format=self.xpath_format,
+                    cdata=self.cdata,
+                    list_headers=self.list_headers,
+                )
+            except ValueError as error:
+                raise InvalidDataError from error
             if self.pretty:
                 from pyexpat import ExpatError
 

@@ -17,6 +17,22 @@ def _force_rust_backend(monkeypatch: pytest.MonkeyPatch) -> Mock:
     return rust_backend
 
 
+# @lat: [[tests#Conversion behavior#Outdated Rust backends stay disabled]]
+@pytest.mark.parametrize(
+    ("escape", "expected"),
+    [
+        (Mock(return_value="\x00"), False),
+        (Mock(side_effect=RuntimeError("broken backend")), False),
+        (Mock(side_effect=ValueError("invalid XML")), True),
+    ],
+)
+def test_rust_backend_must_reject_invalid_xml(
+    escape: Mock, expected: bool
+) -> None:
+    """Only backends that reject XML 1.0 control characters are safe to use."""
+    assert fast_module._rejects_invalid_xml(escape) is expected
+
+
 # @lat: [[tests#Conversion behavior#Fast wrapper exposes backend metadata]]
 def test_fast_wrapper_reports_python_backend_when_rust_is_unavailable(
     monkeypatch: pytest.MonkeyPatch,

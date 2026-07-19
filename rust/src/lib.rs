@@ -19,6 +19,27 @@ const OUTPUT_BUFFER_SIZE: usize = 16 * 1024;
 
 const SPARSE_ESCAPE_SCAN_LIMIT: u8 = 4;
 
+#[inline]
+fn invalid_xml_char(s: &str) -> Option<char> {
+    s.chars().find(|character| {
+        let codepoint = u32::from(*character);
+        !matches!(codepoint, 0x9 | 0xA | 0xD | 0x20..=0xD7FF | 0xE000..=0xFFFD | 0x10000..=0x10FFFF)
+    })
+}
+
+// @lat: [[behavior#XML output safety]]
+#[cfg(feature = "python")]
+#[inline]
+fn validate_xml_chars(s: &str) -> PyResult<()> {
+    if let Some(character) = invalid_xml_char(s) {
+        return Err(PyValueError::new_err(format!(
+            "Character U+{:04X} is not allowed in XML 1.0",
+            u32::from(character)
+        )));
+    }
+    Ok(())
+}
+
 /// Return the byte offset of the next character requiring XML escaping.
 #[inline(always)]
 fn next_xml_escape(bytes: &[u8]) -> Option<usize> {
@@ -116,6 +137,7 @@ fn write_byte<W: Write + ?Sized>(out: &mut W, b: u8) -> PyResult<()> {
 #[cfg(feature = "python")]
 #[inline]
 fn write_escaped_text<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
+    validate_xml_chars(s)?;
     let bytes = s.as_bytes();
     let mut last = 0;
     for _ in 0..SPARSE_ESCAPE_SCAN_LIMIT {
@@ -147,6 +169,7 @@ fn write_escaped_attr<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
 #[cfg(feature = "python")]
 #[inline]
 fn write_cdata<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
+    validate_xml_chars(s)?;
     write_str(out, "<![CDATA[")?;
     let mut start = 0;
     while let Some(i) = s[start..].find("]]>") {
@@ -592,15 +615,17 @@ fn dicttoxml(
 /// Escapes &, ", ', <, > characters for XML.
 #[cfg(feature = "python")]
 #[pyfunction]
-fn escape_xml_py(s: &str) -> String {
-    escape_xml(s)
+fn escape_xml_py(s: &str) -> PyResult<String> {
+    validate_xml_chars(s)?;
+    Ok(escape_xml(s))
 }
 
 /// Wrap a string in CDATA section.
 #[cfg(feature = "python")]
 #[pyfunction]
-fn wrap_cdata_py(s: &str) -> String {
-    wrap_cdata(s)
+fn wrap_cdata_py(s: &str) -> PyResult<String> {
+    validate_xml_chars(s)?;
+    Ok(wrap_cdata(s))
 }
 
 /// A Python module implemented in Rust.

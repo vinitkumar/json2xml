@@ -30,12 +30,29 @@ _rust_dicttoxml: Callable[..., bytes] | None = None
 rust_escape_xml: RustStringTransform | None = None
 rust_wrap_cdata: RustStringTransform | None = None
 
+
+def _rejects_invalid_xml(escape: RustStringTransform) -> bool:
+    """Return whether an optional backend enforces XML 1.0 characters."""
+    try:
+        escape("\x00")
+    except ValueError:
+        return True
+    except Exception:
+        return False
+    return False
+
+
 try:
     from json2xml_rs import dicttoxml as _rust_dicttoxml  # pragma: no cover
     from json2xml_rs import escape_xml_py as rust_escape_xml  # pragma: no cover
     from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # pragma: no cover
-    _use_rust = True  # pragma: no cover
-    LOG.debug("Using Rust backend for dicttoxml")  # pragma: no cover
+    if _rejects_invalid_xml(rust_escape_xml):  # pragma: no cover
+        _use_rust = True  # pragma: no cover
+        LOG.debug("Using Rust backend for dicttoxml")  # pragma: no cover
+    else:  # pragma: no cover
+        LOG.warning(  # pragma: no cover
+            "Ignoring an outdated Rust backend that permits invalid XML characters"
+        )
 except ImportError:  # pragma: no cover
     LOG.debug("Rust backend not available, using pure Python")
 

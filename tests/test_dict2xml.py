@@ -89,6 +89,64 @@ class TestDict2xml:
             "<bike>blue</bike></vehicle>" == result
         )
 
+    # @lat: [[tests#Conversion behavior#Namespace metadata cannot inject attributes]]
+    def test_namespace_values_are_escaped_as_xml_attributes(self) -> None:
+        """Namespace values must not be able to inject sibling attributes."""
+        namespaces = {
+            "veh": 'urn:vehicle" injected="yes',
+            "xmlns": 'urn:default" default-injected="yes',
+            "xsi": {
+                "schemaInstance": 'urn:xsi" xsi-injected="yes',
+                "schemaLocation": 'vehicle.xsd" location-injected="yes',
+            },
+        }
+
+        result = dicttoxml.dicttoxml(
+            {"bike": "blue"}, attr_type=False, xml_namespaces=namespaces
+        )
+
+        assert b' injected="yes"' not in result
+        assert b' default-injected="yes"' not in result
+        assert b' xsi-injected="yes"' not in result
+        assert b' location-injected="yes"' not in result
+        assert b'xmlns:veh="urn:vehicle&quot; injected=&quot;yes"' in result
+        assert b'xmlns="urn:default&quot; default-injected=&quot;yes"' in result
+        assert b'xmlns:xsi="urn:xsi&quot; xsi-injected=&quot;yes"' in result
+        assert (
+            b'xsi:schemaLocation="vehicle.xsd&quot; location-injected=&quot;yes"'
+            in result
+        )
+
+    @pytest.mark.parametrize(
+        "prefix", [1, "xmlData", "bad prefix", 'bad" injected="yes']
+    )
+    def test_invalid_namespace_prefixes_are_rejected(self, prefix: Any) -> None:
+        """Namespace prefixes must be valid XML namespace names."""
+        with pytest.raises(ValueError, match="Invalid XML namespace prefix"):
+            dicttoxml.dicttoxml(
+                {"bike": "blue"},
+                attr_type=False,
+                xml_namespaces={prefix: "urn:vehicle"},
+            )
+
+    @pytest.mark.parametrize(
+        ("xsi_value", "message"),
+        [
+            ("urn:xsi", "must be a mapping"),
+            ({"schemaLocation": "vehicle.xsd"}, "requires a schemaInstance"),
+        ],
+    )
+    def test_invalid_xsi_namespace_shapes_are_rejected(
+        self, xsi_value: Any, message: str
+    ) -> None:
+        """XSI schema attributes require a well-formed namespace mapping."""
+        with pytest.raises(ValueError, match=message):
+            dicttoxml.dicttoxml(
+                {"bike": "blue"},
+                attr_type=False,
+                xml_namespaces={"xsi": xsi_value},
+            )
+
     # @lat: [[tests#Conversion behavior#XPath format wraps root scalars]]
     def test_xpath_format_root_scalar_wraps_in_namespace_map(self) -> None:
         """Test XPath root scalar output remains one namespace-qualified document."""
@@ -538,6 +596,89 @@ class TestDict2xml:
         )
 
         assert result == f'<key {attr_name}="value">payload</key>'.encode()
+
+    # @lat: [[tests#Conversion behavior#Custom type attributes use shared escaping]]
+    def test_custom_type_attribute_value_is_escaped(self) -> None:
+        """A caller-provided type attribute must not bypass value escaping."""
+        result = dicttoxml.dicttoxml(
+            {
+                "key": {
+                    "@attrs": {"type": 'safe" injected="yes'},
+                    "@val": "payload",
+                }
+            },
+            root=False,
+            attr_type=False,
+        )
+
+        assert result == (
+            b'<key type="safe&quot; injected=&quot;yes">payload</key>'
+        )
+
+    # @lat: [[tests#Conversion behavior#Custom type attributes are validated]]
+    def test_custom_type_attribute_forbidden_chars_are_rejected(self) -> None:
+        """Forbidden XML characters in caller-provided type attributes fail."""
+        with pytest.raises(ValueError, match="not allowed in XML 1.0"):
+            dicttoxml.dicttoxml(
+                {
+                    "key": {
+                        "@attrs": {"type": "before\x00after"},
+                        "@val": "payload",
+                    }
+                },
+                root=False,
+                attr_type=False,
+            )
+
+    @pytest.mark.parametrize(
+        "invalid_char",
+        [
+            "\x00",
+            "\x08",
+            "\x0b",
+            "\x0c",
+            "\x0e",
+            "\x1f",
+            "\ud800",
+            "\udfff",
+            "\ufffe",
+            "\uffff",
+        ],
+    )
+    @pytest.mark.parametrize("cdata", [False, True])
+    # @lat: [[tests#Conversion behavior#XML 1.0 forbidden characters are rejected]]
+    def test_dicttoxml_rejects_xml_1_0_forbidden_characters(
+        self, invalid_char: str, cdata: bool
+    ) -> None:
+        """XML 1.0-forbidden controls must not reach raw text or CDATA output."""
+        with pytest.raises(ValueError, match="not allowed in XML 1.0"):
+            dicttoxml.dicttoxml(
+                {"key": f"before{invalid_char}after"},
+                root=False,
+                attr_type=False,
+                cdata=cdata,
+            )
+
+    def test_dicttoxml_preserves_xml_1_0_whitespace_characters(self) -> None:
+        """Tabs, newlines, and carriage returns remain valid XML text."""
+        result = dicttoxml.dicttoxml(
+            {"key": "tab\tline\nreturn\r"}, root=False, attr_type=False
+        )
+
+        assert result == b"<key>tab\tline\nreturn\r</key>"
+
+    @pytest.mark.parametrize("valid_char", ["\x7f", "\x85"])
+    def test_dicttoxml_preserves_other_valid_nonprintable_characters(
+        self, valid_char: str
+    ) -> None:
+        """Non-printable characters outside the forbidden ranges remain valid."""
+        result = dicttoxml.dicttoxml(
+            {"key": f"before{valid_char}after"},
+            root=False,
+            attr_type=False,
+        )
+
+        assert result == f"<key>before{valid_char}after</key>".encode()
 
     def test_dicttoxml_with_xml_namespaces(self) -> None:
         """Test dicttoxml with XML namespaces."""

@@ -18,11 +18,13 @@ The `dicttoxml()` entry point now normalizes options into `SerializerConfig` and
 
 The recursive serializer still streams normal and XPath serialization through [[json2xml/dicttoxml.py#_XMLWriter]] so dict and list payloads do not allocate a complete string for each nested subtree. Public helpers such as `convert_dict()` still return strings for compatibility by delegating to the same append path, while library and CLI conversions write UTF-8 bytes incrementally and return the final `bytes` object. Attribute formatting stays centralized through `make_attrstring()`, and `@attrs`/`@val` normalization stays local to dict element handling so caller-owned metadata is never mutated.
 
+Text, CDATA, custom attributes, and namespace declarations share XML 1.0 character validation. Namespace declarations additionally validate prefixes before the renderer appends them to the root element.
+
 ## Backend selection
 
 The fast-path module prefers the Rust extension when it can preserve Python semantics, and falls back to the Python serializer for unsupported features.
 
-[[json2xml/dicttoxml_fast.py#dicttoxml]] now normalizes each call into a shared conversion request and asks a tiny backend selector seam to choose Rust or Python. The Rust adapter accepts only requests whose semantics it can preserve, namely no `ids`, custom `item_func`, XML namespaces, XPath mode, root scalar payloads, or special `@` keys.
+[[json2xml/dicttoxml_fast.py#dicttoxml]] now normalizes each call into a shared conversion request and asks a tiny backend selector seam to choose Rust or Python. The Rust adapter accepts only requests whose semantics it can preserve, namely no `ids`, custom `item_func`, XML namespaces, XPath mode, root scalar payloads, or special `@` keys. At import time, the wrapper also verifies that an installed Rust backend rejects XML 1.0 forbidden characters; outdated or broken accelerators stay disabled so the Python security boundary cannot be bypassed.
 
 The backend adapter protocol exposes its diagnostic name as a read-only property, matching the frozen adapter implementations while still allowing selector code to inspect backend metadata.
 
@@ -67,6 +69,8 @@ The July 2026 native Rust flamegraph identified the scalar byte loop in the XML 
 Dependency floors and lockfiles keep known vulnerable packages out of runtime and development environments.
 
 Runtime dependencies are declared in `pyproject.toml` and mirrored by `uv.lock`; legacy requirements inputs remain pinned for tooling that still consumes requirements files. Security fixes should update both resolver paths so `uv audit` and requirements-based installs agree.
+
+Dependabot checks the root and documentation Python dependency manifests weekly, alongside the existing GitHub Actions monitoring, so stale security pins are surfaced automatically.
 
 ## Workflow supply-chain hardening
 

@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements-dev.in
 #
-coverage==7.13.1
+coverage[toml]==7.15.2
     # via
     #   -r requirements-dev.in
     #   pytest-cov
@@ -23,19 +23,19 @@ pluggy==1.5.0
     #   pytest
     #   pytest-cov
 pygments==2.20.0
-    # via pytest
+    # via
+    #   -r requirements-dev.in
+    #   pytest
 pytest==9.0.3
     # via
     #   -r requirements-dev.in
     #   pytest-cov
     #   pytest-xdist
-pytest-cov==7.0.0
+pytest-cov==7.1.0
     # via -r requirements-dev.in
 pytest-xdist==3.8.0
     # via -r requirements-dev.in
-ruff==0.12.8
-    # via -r requirements-dev.in
-setuptools==82.0.1
+ruff==0.15.22
     # via -r requirements-dev.in
 tomli==2.4.1
     # via
@@ -45,5 +45,5 @@ typing-extensions==4.15.0
     # via exceptiongroup
 urllib3==2.7.0
     # via -r requirements.in
-xmltodict==0.14.2
+xmltodict==1.0.4
     # via -r requirements-dev.in

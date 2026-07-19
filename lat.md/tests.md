@@ -66,6 +66,10 @@ The multi-interpreter benchmark should let per-interpreter environment variables
 
 These tests pin the XML shapes that matter most for interoperability, especially the modes that intentionally diverge from the default serializer.
 
+### Outdated Rust backends stay disabled
+
+An optional Rust accelerator is eligible only when its escape helper rejects XML 1.0 forbidden characters, preventing an older wheel from bypassing the Python serializer's validation.
+
 ### XPath format adds functions namespace
 
 XPath mode should emit the W3C XPath functions namespace and typed child elements so downstream consumers receive standards-shaped XML.

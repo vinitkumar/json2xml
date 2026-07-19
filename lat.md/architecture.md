@@ -24,7 +24,7 @@ Text, CDATA, custom attributes, and namespace declarations share XML 1.0 charact
 
 The fast-path module prefers the Rust extension when it can preserve Python semantics, and falls back to the Python serializer for unsupported features.
 
-[[json2xml/dicttoxml_fast.py#dicttoxml]] now normalizes each call into a shared conversion request and asks a tiny backend selector seam to choose Rust or Python. The Rust adapter accepts only requests whose semantics it can preserve, namely no `ids`, custom `item_func`, XML namespaces, XPath mode, root scalar payloads, or special `@` keys.
+[[json2xml/dicttoxml_fast.py#dicttoxml]] now normalizes each call into a shared conversion request and asks a tiny backend selector seam to choose Rust or Python. The Rust adapter accepts only requests whose semantics it can preserve, namely no `ids`, custom `item_func`, XML namespaces, XPath mode, root scalar payloads, or special `@` keys. At import time, the wrapper also verifies that an installed Rust backend rejects XML 1.0 forbidden characters; outdated or broken accelerators stay disabled so the Python security boundary cannot be bypassed.
 
 The backend adapter protocol exposes its diagnostic name as a read-only property, matching the frozen adapter implementations while still allowing selector code to inspect backend metadata.
 

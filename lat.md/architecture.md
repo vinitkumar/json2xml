@@ -70,6 +70,8 @@ Dependency floors and lockfiles keep known vulnerable packages out of runtime an
 
 Runtime dependencies are declared in `pyproject.toml` and mirrored by `uv.lock`; legacy requirements inputs remain pinned for tooling that still consumes requirements files. Security fixes should update both resolver paths so `uv audit` and requirements-based installs agree.
 
+Dependabot checks the root and documentation Python dependency manifests weekly, alongside the existing GitHub Actions monitoring, so stale security pins are surfaced automatically.
+
 ## Workflow supply-chain hardening
 
 GitHub Actions workflows run with read-only tokens by default and use full SHA pins so third-party action updates are explicit.

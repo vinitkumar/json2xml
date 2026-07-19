@@ -103,7 +103,11 @@ def readfromurl(
     max_response_bytes: int = DEFAULT_MAX_RESPONSE_BYTES,
     allow_private_networks: bool = False,
 ) -> JSONValue:
-    """Load JSON data from a URL."""
+    """Load bounded JSON data from a public URL.
+
+    Private-network access is available only through the explicit trusted-caller
+    opt-in. Redirects and embedded credentials are always rejected.
+    """
     if (
         isinstance(max_response_bytes, bool)
         or not isinstance(max_response_bytes, int)

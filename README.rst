@@ -239,6 +239,18 @@ You can use the json2xml library in the following ways:
     data = readfromjson("examples/licht.json")
     print(json2xml.Json2xml(data).to_xml())
 
+URL reads accept only credential-free HTTP(S), reject redirects and non-public
+destinations by default, and stop after 10 MiB of decoded content. Trusted
+library callers can opt into a private endpoint or choose a smaller limit:
+
+.. code-block:: python
+
+    data = readfromurl(
+        "http://127.0.0.1:8000/data.json",
+        allow_private_networks=True,
+        max_response_bytes=1024 * 1024,
+    )
+
 
 Custom Wrappers and Indentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

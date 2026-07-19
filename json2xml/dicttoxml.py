@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime
 import numbers
-import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
@@ -18,14 +17,6 @@ __lazy_modules__ = ["defusedxml.minidom"]
 _SAFE_RANDOM = SystemRandom()
 
 _XML_ESCAPE_CHARS = frozenset("&\"'<>")
-# XML 1.0 character production: https://www.w3.org/TR/xml/#charsets
-# XML 1.0 permits tab (U+0009), line feed (U+000A), carriage return
-# (U+000D), and U+0020 onward, except for surrogate code points and the
-# U+FFFE/U+FFFF noncharacters. This pattern matches only the forbidden ranges:
-# disallowed C0 controls, UTF-16 surrogates, and the two BMP noncharacters.
-_XML_INVALID_CHAR_RE = re.compile(
-    "[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]"
-)
 
 
 class _XMLWriter:
@@ -137,12 +128,23 @@ def get_xml_type(val: Any) -> str:
 # @lat: [[behavior#XML output safety]]
 def _validate_xml_chars(value: str) -> None:
     """Reject characters excluded from the XML 1.0 Char production."""
-    invalid_match = _XML_INVALID_CHAR_RE.search(value)
-    if invalid_match is not None:
-        codepoint = ord(invalid_match.group())
-        raise ValueError(
-            f"Character U+{codepoint:04X} is not allowed in XML 1.0"
+    # XML 1.0 character production: https://www.w3.org/TR/xml/#charsets
+    # isprintable() keeps the common path in C; only strings containing a
+    # non-printable character need the explicit code-point boundary checks.
+    if not value or value.isprintable():
+        return
+
+    for character in value:
+        codepoint = ord(character)
+        is_forbidden_control = (
+            codepoint < 0x20 and codepoint not in (0x09, 0x0A, 0x0D)
         )
+        is_surrogate = 0xD800 <= codepoint <= 0xDFFF
+        is_bmp_noncharacter = codepoint in (0xFFFE, 0xFFFF)
+        if is_forbidden_control or is_surrogate or is_bmp_noncharacter:
+            raise ValueError(
+                f"Character U+{codepoint:04X} is not allowed in XML 1.0"
+            )
 
 
 def escape_xml(s: str | int | float | numbers.Number | None) -> str:

@@ -630,7 +630,21 @@ class TestDict2xml:
                 attr_type=False,
             )
 
-    @pytest.mark.parametrize("invalid_char", ["\x00", "\x01", "\x0b", "\x1b", "\ufffe"])
+    @pytest.mark.parametrize(
+        "invalid_char",
+        [
+            "\x00",
+            "\x08",
+            "\x0b",
+            "\x0c",
+            "\x0e",
+            "\x1f",
+            "\ud800",
+            "\udfff",
+            "\ufffe",
+            "\uffff",
+        ],
+    )
     @pytest.mark.parametrize("cdata", [False, True])
     # @lat: [[tests#Conversion behavior#XML 1.0 forbidden characters are rejected]]
     def test_dicttoxml_rejects_xml_1_0_forbidden_characters(
@@ -652,6 +666,19 @@ class TestDict2xml:
         )
 
         assert result == b"<key>tab\tline\nreturn\r</key>"
+
+    @pytest.mark.parametrize("valid_char", ["\x7f", "\x85"])
+    def test_dicttoxml_preserves_other_valid_nonprintable_characters(
+        self, valid_char: str
+    ) -> None:
+        """Non-printable characters outside the forbidden ranges remain valid."""
+        result = dicttoxml.dicttoxml(
+            {"key": f"before{valid_char}after"},
+            root=False,
+            attr_type=False,
+        )
+
+        assert result == f"<key>before{valid_char}after</key>".encode()
 
     def test_dicttoxml_with_xml_namespaces(self) -> None:
         """Test dicttoxml with XML namespaces."""

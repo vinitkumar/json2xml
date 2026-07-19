@@ -184,7 +184,7 @@ Caller-provided `type` attribute values containing XML 1.0-forbidden characters 
 
 ### XML 1.0 forbidden characters are rejected
 
-Text and CDATA output must reject forbidden XML 1.0 control characters before raw bytes are returned, while preserving valid tab, newline, and carriage-return characters.
+Text and CDATA output must reject every forbidden XML 1.0 boundary before raw bytes are returned, while preserving valid whitespace and non-printable characters outside those ranges.
 
 ## XML helper behavior
 

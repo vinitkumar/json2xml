@@ -10,5 +10,5 @@ autodoc==0.5.0
 
 tornado==6.5.7
 jinja2==3.1.6
-idna==3.15
+idna==3.18
 starlette==1.3.1

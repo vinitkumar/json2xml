@@ -18,6 +18,7 @@ __lazy_modules__ = ["defusedxml.minidom"]
 _SAFE_RANDOM = SystemRandom()
 
 _XML_ESCAPE_CHARS = frozenset("&\"'<>")
+# XML 1.0 character production: https://www.w3.org/TR/xml/#charsets
 # XML 1.0 permits tab (U+0009), line feed (U+000A), carriage return
 # (U+000D), and U+0020 onward, except for surrogate code points and the
 # U+FFFE/U+FFFF noncharacters. This pattern matches only the forbidden ranges:

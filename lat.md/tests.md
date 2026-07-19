@@ -90,6 +90,10 @@ Supplying namespace prefixes and an `xsi` mapping should emit the expected `xmln
 
 Reusing one `xml_namespaces` mapping across multiple `dicttoxml` calls should return identical XML each time so namespace declarations never accumulate on the shared dict.
 
+### Namespace metadata cannot inject attributes
+
+Namespace prefixes must be valid names and namespace values must be escaped as attribute values so quotes cannot create attacker-controlled root attributes.
+
 ### Falsy JSON values convert to XML
 
 Falsy JSON values such as empty objects, empty arrays, zero, false, and empty strings should convert through the public API instead of being treated as missing data.
@@ -165,6 +169,14 @@ Invalid custom root names should use the serializer's existing XML-name normaliz
 ### Invalid custom attributes are rejected
 
 Custom `@attrs` keys that are not valid XML attribute names should fail explicitly because attributes have no safe metadata fallback equivalent to element `<key name="...">` output.
+
+### Custom type attributes use shared escaping
+
+Caller-provided `type` attributes must use the same XML value escaping as every other custom attribute instead of taking the internal type fast path.
+
+### XML 1.0 forbidden characters are rejected
+
+Text and CDATA output must reject forbidden XML 1.0 control characters before raw bytes are returned, while preserving valid tab, newline, and carriage-return characters.
 
 ## XML helper behavior
 

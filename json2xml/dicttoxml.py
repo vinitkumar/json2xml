@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import numbers
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
@@ -17,6 +18,9 @@ __lazy_modules__ = ["defusedxml.minidom"]
 _SAFE_RANDOM = SystemRandom()
 
 _XML_ESCAPE_CHARS = frozenset("&\"'<>")
+_XML_INVALID_CHAR_RE = re.compile(
+    "[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]"
+)
 
 
 class _XMLWriter:
@@ -125,6 +129,17 @@ def get_xml_type(val: Any) -> str:
     return type(val).__name__
 
 
+# @lat: [[behavior#XML output safety]]
+def _validate_xml_chars(value: str) -> None:
+    """Reject characters excluded from the XML 1.0 Char production."""
+    invalid_match = _XML_INVALID_CHAR_RE.search(value)
+    if invalid_match is not None:
+        codepoint = ord(invalid_match.group())
+        raise ValueError(
+            f"Character U+{codepoint:04X} is not allowed in XML 1.0"
+        )
+
+
 def escape_xml(s: str | int | float | numbers.Number | None) -> str:
     """
     Escape a string for use in XML.
@@ -135,15 +150,15 @@ def escape_xml(s: str | int | float | numbers.Number | None) -> str:
     Returns:
         str: The escaped string.
     """
-    if isinstance(s, str):
-        if _XML_ESCAPE_CHARS.isdisjoint(s):
-            return s
-        s = s.replace("&", "&amp;")
-        s = s.replace('"', "&quot;")
-        s = s.replace("'", "&apos;")
-        s = s.replace("<", "&lt;")
-        s = s.replace(">", "&gt;")
-    return str(s)
+    value = s if isinstance(s, str) else str(s)
+    _validate_xml_chars(value)
+    if _XML_ESCAPE_CHARS.isdisjoint(value):
+        return value
+    value = value.replace("&", "&amp;")
+    value = value.replace('"', "&quot;")
+    value = value.replace("'", "&apos;")
+    value = value.replace("<", "&lt;")
+    return value.replace(">", "&gt;")
 
 
 def make_attrstring(attr: dict[str, Any]) -> str:
@@ -161,7 +176,7 @@ def make_attrstring(attr: dict[str, Any]) -> str:
     if len(attr) == 1:
         key, val = next(iter(attr.items()))
         if key == "type":
-            return f' type="{val}"'
+            return f' type="{escape_xml(val)}"'
         validate_xml_attr_names(attr)
         return f' {key}="{escape_xml(val)}"'
     validate_xml_attr_names(attr)
@@ -263,8 +278,10 @@ def make_valid_xml_name(key: str, attr: dict[str, Any]) -> tuple[str, dict[str, 
 
 def wrap_cdata(s: str | int | float | numbers.Number) -> str:
     """Wraps a string into CDATA sections"""
-    s = str(s).replace("]]>", "]]]]><![CDATA[>")
-    return "<![CDATA[" + s + "]]>"
+    value = str(s)
+    _validate_xml_chars(value)
+    value = value.replace("]]>", "]]]]><![CDATA[>")
+    return "<![CDATA[" + value + "]]>"
 
 
 def default_item_func(parent: str) -> str:
@@ -1113,6 +1130,7 @@ class _XPathDocumentRenderer:
         return output.to_bytes()
 
 
+# @lat: [[behavior#XML output safety]]
 class _NamespaceFormatter:
     """Keep namespace emission and schema-attribute quirks in one place."""
 
@@ -1122,21 +1140,38 @@ class _NamespaceFormatter:
             return ""
 
         namespace_parts: list[str] = []
-        for prefix in xml_namespaces:
+        for prefix, namespace_value in xml_namespaces.items():
             if prefix == "xsi":
-                for schema_att in xml_namespaces[prefix]:
+                if not isinstance(namespace_value, dict):
+                    raise ValueError("The xsi namespace value must be a mapping")
+                if (
+                    "schemaLocation" in namespace_value
+                    and "schemaInstance" not in namespace_value
+                ):
+                    raise ValueError(
+                        "xsi schemaLocation requires a schemaInstance namespace"
+                    )
+                for schema_att in namespace_value:
                     if schema_att == "schemaInstance":
                         namespace_parts.append(
-                            f' xmlns:{prefix}="{xml_namespaces[prefix]["schemaInstance"]}"'
+                            f' xmlns:{prefix}="{escape_xml(namespace_value[schema_att])}"'
                         )
                     elif schema_att == "schemaLocation":
                         namespace_parts.append(
-                            f' xsi:{schema_att}="{xml_namespaces[prefix][schema_att]}"'
+                            f' xsi:{schema_att}="{escape_xml(namespace_value[schema_att])}"'
                         )
             elif prefix == "xmlns":
-                namespace_parts.append(f' xmlns="{xml_namespaces[prefix]}"')
+                namespace_parts.append(f' xmlns="{escape_xml(namespace_value)}"')
             else:
-                namespace_parts.append(f' xmlns:{prefix}="{xml_namespaces[prefix]}"')
+                if (
+                    not isinstance(prefix, str)
+                    or prefix.lower().startswith("xml")
+                    or not key_is_valid_xml(prefix)
+                ):
+                    raise ValueError(f"Invalid XML namespace prefix: {prefix}")
+                namespace_parts.append(
+                    f' xmlns:{prefix}="{escape_xml(namespace_value)}"'
+                )
         return "".join(namespace_parts)
 
 

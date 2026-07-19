@@ -18,6 +18,8 @@ The `dicttoxml()` entry point now normalizes options into `SerializerConfig` and
 
 The recursive serializer still streams normal and XPath serialization through [[json2xml/dicttoxml.py#_XMLWriter]] so dict and list payloads do not allocate a complete string for each nested subtree. Public helpers such as `convert_dict()` still return strings for compatibility by delegating to the same append path, while library and CLI conversions write UTF-8 bytes incrementally and return the final `bytes` object. Attribute formatting stays centralized through `make_attrstring()`, and `@attrs`/`@val` normalization stays local to dict element handling so caller-owned metadata is never mutated.
 
+Text, CDATA, custom attributes, and namespace declarations share XML 1.0 character validation. Namespace declarations additionally validate prefixes before the renderer appends them to the root element.
+
 ## Backend selection
 
 The fast-path module prefers the Rust extension when it can preserve Python semantics, and falls back to the Python serializer for unsupported features.

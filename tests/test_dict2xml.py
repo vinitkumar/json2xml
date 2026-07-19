@@ -615,6 +615,21 @@ class TestDict2xml:
             b'<key type="safe&quot; injected=&quot;yes">payload</key>'
         )
 
+    # @lat: [[tests#Conversion behavior#Custom type attributes are validated]]
+    def test_custom_type_attribute_forbidden_chars_are_rejected(self) -> None:
+        """Forbidden XML characters in caller-provided type attributes fail."""
+        with pytest.raises(ValueError, match="not allowed in XML 1.0"):
+            dicttoxml.dicttoxml(
+                {
+                    "key": {
+                        "@attrs": {"type": "before\x00after"},
+                        "@val": "payload",
+                    }
+                },
+                root=False,
+                attr_type=False,
+            )
+
     @pytest.mark.parametrize("invalid_char", ["\x00", "\x01", "\x0b", "\x1b", "\ufffe"])
     @pytest.mark.parametrize("cdata", [False, True])
     # @lat: [[tests#Conversion behavior#XML 1.0 forbidden characters are rejected]]

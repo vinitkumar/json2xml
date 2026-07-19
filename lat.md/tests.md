@@ -178,6 +178,10 @@ Custom `@attrs` keys that are not valid XML attribute names should fail explicit
 
 Caller-provided `type` attributes must use the same XML value escaping as every other custom attribute instead of taking the internal type fast path.
 
+### Custom type attributes are validated
+
+Caller-provided `type` attribute values containing XML 1.0-forbidden characters must fail before serialization so the internal type fast path cannot bypass character validation.
+
 ### XML 1.0 forbidden characters are rejected
 
 Text and CDATA output must reject forbidden XML 1.0 control characters before raw bytes are returned, while preserving valid tab, newline, and carriage-return characters.

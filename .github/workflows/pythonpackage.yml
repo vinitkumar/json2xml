@@ -22,6 +22,11 @@ concurrency:
 
 jobs:
   test:
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      FLAKINESS_PROJECT: vinitkumar/json2xml
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -67,7 +72,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv pip install --system -e .
-        uv pip install --system pytest pytest-xdist pytest-cov xmltodict
+        uv pip install --system pytest pytest-xdist pytest-cov xmltodict pytest-flakiness
 
     - name: Create coverage directory
       run: mkdir -p coverage/reports

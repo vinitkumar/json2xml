@@ -1,6 +1,5 @@
 from typing import Any
 
-
 def dicttoxml(
     obj: Any,
     root: bool = True,

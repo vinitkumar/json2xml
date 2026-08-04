@@ -34,6 +34,22 @@ URL input should reject unsupported schemes, embedded credentials, and private o
 
 URL input should stop reading once the decoded response exceeds its configured limit so compressed or oversized remote content cannot exhaust process memory.
 
+### URL reader bounds encoded response size
+
+Compressed URL input should honor valid `Content-Length` values and cap undeclared encoded bytes so network I/O remains bounded independently of decoded output size.
+
+### URL reader requires a boolean private-network opt-in
+
+Private-network access should require an actual boolean so truthy strings or numbers cannot silently disable destination validation.
+
+### URL reader wraps invalid Unicode hostnames
+
+Malformed IDNA hostnames should raise `URLReadError` so hostname encoding failures preserve the public URL-reader error contract.
+
+### URL reader pins validated DNS addresses
+
+Public URL reads should connect to a validated resolved address while preserving the original Host header and TLS hostname so DNS rebinding cannot redirect the connection.
+
 ## CLI failure messages
 
 These tests verify common command-line failures return short messages that name the broken input source and point users at the next valid action.

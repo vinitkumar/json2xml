@@ -8,13 +8,13 @@ The input helpers convert files, strings, URLs, and stdin into Python data struc
 
 [[json2xml/utils.py#readfromjson]] wraps file and JSON decoding failures in `JSONReadError`. [[json2xml/utils.py#readfromstring]] rejects non-string inputs and malformed JSON with `StringReadError`.
 
-[[json2xml/utils.py#readfromurl]] lazily initializes the HTTP client, performs a bounded GET request, and raises `URLReadError` for network, status, size, decoding, and JSON failures.
+[[json2xml/utils.py#readfromurl]] lazily initializes the HTTP client, performs a bounded GET request, and raises `URLReadError` for hostname encoding, network, status, size, decoding, and JSON failures.
 
 ## URL security boundaries
 
 Remote JSON reads default to public, credential-free HTTP(S) targets and bounded decoded responses so callers do not accidentally expose internal services or unlimited memory.
 
-[[json2xml/utils.py#readfromurl]] disables redirects, rejects non-global resolved addresses, and reads at most 10 MiB after content decoding. Trusted library callers can explicitly opt into private-network access while retaining the response limit.
+[[json2xml/utils.py#readfromurl]] disables redirects, rejects non-global resolved addresses, and pins each public request to a validated address while retaining the original Host header and TLS hostname. It incrementally decodes gzip and deflate bodies with 10 MiB encoded and decoded limits, honors valid `Content-Length` values, and rejects unsupported encodings. Trusted library callers can opt into private-network access only with an actual boolean while retaining the response limits.
 
 ## User examples
 

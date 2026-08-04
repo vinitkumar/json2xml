@@ -1,10 +1,12 @@
 """Test module for json2xml.utils functionality."""
+import gzip
 import json
 import socket
 import tempfile
 import threading
+import zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -220,6 +222,140 @@ class TestReadFromUrl:
         with pytest.raises(URLReadError, match="public network address"):
             readfromurl("https://internal.example/data.json")
 
+    # @lat: [[tests#Input readers#URL reader pins validated DNS addresses]]
+    @pytest.mark.parametrize(
+        (
+            "url",
+            "validated_address",
+            "expected_port",
+            "expected_host",
+            "expected_pool_kwargs",
+            "uses_dns",
+        ),
+        [
+            (
+                "https://rebind.example/data.json?existing=yes",
+                "93.184.216.34",
+                443,
+                "rebind.example",
+                {
+                    "assert_hostname": "rebind.example",
+                    "server_hostname": "rebind.example",
+                },
+                True,
+            ),
+            (
+                "http://rebind.example/data.json?existing=yes",
+                "93.184.216.34",
+                80,
+                "rebind.example",
+                None,
+                True,
+            ),
+            (
+                "https://[2606:4700:4700::1111]:8443/data.json?existing=yes",
+                "2606:4700:4700::1111",
+                8443,
+                "[2606:4700:4700::1111]:8443",
+                {
+                    "assert_hostname": "2606:4700:4700::1111",
+                    "server_hostname": "2606:4700:4700::1111",
+                },
+                False,
+            ),
+        ],
+        ids=["https-default-port", "http-default-port", "https-ipv6"],
+    )
+    @patch("json2xml.utils._get_http_client")
+    @patch("json2xml.utils.socket.getaddrinfo")
+    def test_readfromurl_pins_validated_address_with_correct_authority(
+        self,
+        mock_getaddrinfo: Mock,
+        mock_get_http_client: Mock,
+        url: str,
+        validated_address: str,
+        expected_port: int,
+        expected_host: str,
+        expected_pool_kwargs: dict[str, str] | None,
+        uses_dns: bool,
+    ) -> None:
+        """Test pinned HTTP(S), default ports, and IPv6 authority handling."""
+        mock_getaddrinfo.return_value = [
+            (
+                socket.AF_INET,
+                socket.SOCK_STREAM,
+                6,
+                "",
+                (validated_address, expected_port),
+            )
+        ]
+        response = Mock(status=200, headers={"Content-Length": "11"})
+        response.read.return_value = b'{"ok":true}'
+        pool = Mock()
+        pool.request.return_value = response
+        http = Mock()
+        http.connection_from_host.return_value = pool
+        timeout = Mock()
+        mock_get_http_client.return_value = (urllib3, http, timeout)
+
+        result = readfromurl(url, params={"added": "yes"})
+
+        assert result == {"ok": True}
+        http.request.assert_not_called()
+        http.connection_from_host.assert_called_once_with(
+            validated_address,
+            port=expected_port,
+            scheme="https" if url.startswith("https:") else "http",
+            pool_kwargs=expected_pool_kwargs,
+        )
+        pool.request.assert_called_once_with(
+            "GET",
+            "/data.json?existing=yes",
+            fields={"added": "yes"},
+            headers={"Host": expected_host},
+            timeout=timeout,
+            retries=False,
+            redirect=False,
+            preload_content=False,
+        )
+        if uses_dns:
+            mock_getaddrinfo.assert_called_once()
+        else:
+            mock_getaddrinfo.assert_not_called()
+        response.close.assert_called_once_with()
+
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_uses_direct_request_for_private_network_opt_in(
+        self, mock_get_http_client: Mock
+    ) -> None:
+        """Test trusted private-network reads retain the complete request URL."""
+        url = "https://private.example/data.json?existing=yes"
+        response = Mock(status=200, headers={"Content-Length": "11"})
+        response.read.return_value = b'{"ok":true}'
+        http = Mock()
+        http.request.return_value = response
+        timeout = Mock()
+        mock_get_http_client.return_value = (urllib3, http, timeout)
+
+        result = readfromurl(
+            url,
+            params={"added": "yes"},
+            allow_private_networks=True,
+        )
+
+        assert result == {"ok": True}
+        http.connection_from_host.assert_not_called()
+        http.request.assert_called_once_with(
+            "GET",
+            url,
+            fields={"added": "yes"},
+            timeout=timeout,
+            retries=False,
+            redirect=False,
+            preload_content=False,
+        )
+        response.close.assert_called_once_with()
+
     def test_readfromurl_rejects_unsupported_schemes_and_credentials(self) -> None:
         """Test URL reads accept only credential-free HTTP and HTTPS URLs."""
         with pytest.raises(URLReadError, match="HTTP or HTTPS"):
@@ -244,6 +380,46 @@ class TestReadFromUrl:
         with pytest.raises(URLReadError, match="could not be resolved"):
             readfromurl("https://unresolvable.example/data.json")
 
+    # @lat: [[tests#Input readers#URL reader wraps invalid Unicode hostnames]]
+    @patch("json2xml.utils.socket.getaddrinfo")
+    def test_readfromurl_wraps_invalid_unicode_hostnames(
+        self, mock_getaddrinfo: Mock
+    ) -> None:
+        """Test malformed IDNA hostnames preserve the URL reader error contract."""
+        mock_getaddrinfo.side_effect = UnicodeError("invalid IDNA label")
+
+        with pytest.raises(URLReadError, match="could not be resolved"):
+            readfromurl("https://invalid-unicode.example/data.json")
+
+    @patch("json2xml.utils._get_http_client")
+    @patch("json2xml.utils.socket.getaddrinfo")
+    def test_readfromurl_wraps_idna_failure_when_building_pinned_request(
+        self, mock_getaddrinfo: Mock, mock_get_http_client: Mock
+    ) -> None:
+        """Test IDNA failure after resolution still raises URLReadError."""
+        mock_getaddrinfo.return_value = [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
+        ]
+        http = Mock()
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        with pytest.raises(URLReadError, match="could not be resolved"):
+            readfromurl("https://\ud800.example/data.json")
+
+        http.connection_from_host.assert_not_called()
+
+    # @lat: [[tests#Input readers#URL reader requires a boolean private-network opt-in]]
+    @pytest.mark.parametrize("allow_private_networks", ["false", 1, None])
+    def test_readfromurl_rejects_non_boolean_private_network_opt_in(
+        self, allow_private_networks: object
+    ) -> None:
+        """Test only an actual boolean can opt into private-network access."""
+        with pytest.raises(URLReadError, match="must be a boolean"):
+            readfromurl(
+                "http://127.0.0.1/private.json",
+                allow_private_networks=cast(Any, allow_private_networks),
+            )
+
     def test_readfromurl_rejects_invalid_response_limit(self) -> None:
         """Test callers cannot disable the response cap with a non-positive value."""
         with pytest.raises(URLReadError, match="positive integer"):
@@ -251,7 +427,11 @@ class TestReadFromUrl:
 
     @pytest.mark.parametrize(
         ("content_length", "message"),
-        [("17", "maximum size"), ("not-a-number", "invalid Content-Length")],
+        [
+            ("17", "maximum size"),
+            ("not-a-number", "invalid Content-Length"),
+            ("-1", "invalid Content-Length"),
+        ],
     )
     @patch("json2xml.utils._get_http_client")
     def test_readfromurl_rejects_invalid_content_lengths(
@@ -267,25 +447,237 @@ class TestReadFromUrl:
         mock_get_http_client.return_value = (urllib3, http, Mock())
 
         with pytest.raises(URLReadError, match=message):
-            readfromurl("https://8.8.8.8/data.json", max_response_bytes=16)
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                max_response_bytes=16,
+                allow_private_networks=True,
+            )
 
         response.read.assert_not_called()
         response.close.assert_called_once_with()
+
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_limits_uncompressed_response_without_length(
+        self, mock_get_http_client: Mock
+    ) -> None:
+        """Test an undeclared uncompressed body cannot exceed the byte limit."""
+        response = Mock(status=200, headers={})
+        response.read.return_value = b"x" * 17
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        with pytest.raises(URLReadError, match="maximum size"):
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                max_response_bytes=16,
+                allow_private_networks=True,
+            )
+
+        response.read.assert_called_once_with(17, decode_content=False)
+
+    @pytest.mark.parametrize(
+        ("encoding", "compressed"),
+        [
+            pytest.param(
+                "gzip",
+                gzip.compress(b'{"ok":true}', mtime=0),
+                id="gzip",
+            ),
+            pytest.param(
+                "deflate",
+                zlib.compress(b'{"ok":true}'),
+                id="zlib-deflate",
+            ),
+            pytest.param(
+                "deflate",
+                (lambda compressor: compressor.compress(b'{"ok":true}') + compressor.flush())(
+                    zlib.compressobj(wbits=-zlib.MAX_WBITS)
+                ),
+                id="raw-deflate",
+            ),
+        ],
+    )
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_decodes_supported_compression_incrementally(
+        self,
+        mock_get_http_client: Mock,
+        encoding: str,
+        compressed: bytes,
+    ) -> None:
+        """Test bounded decoding preserves supported compressed responses."""
+        response = Mock(status=200, headers={"Content-Encoding": encoding})
+        response.read.side_effect = [compressed, b""]
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        result = readfromurl(
+            "https://8.8.8.8/data.json",
+            allow_private_networks=True,
+        )
+
+        assert result == {"ok": True}
+
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_respects_compressed_content_length(
+        self, mock_get_http_client: Mock
+    ) -> None:
+        """Test a declared compressed size bounds raw response reads."""
+        compressed = gzip.compress(b'{"ok":true}', mtime=0)
+        response = Mock(
+            status=200,
+            headers={
+                "Content-Encoding": "gzip",
+                "Content-Length": str(len(compressed)),
+            },
+        )
+        response.read.side_effect = [compressed]
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        result = readfromurl(
+            "https://8.8.8.8/data.json",
+            allow_private_networks=True,
+        )
+
+        assert result == {"ok": True}
+        response.read.assert_called_once_with(
+            len(compressed),
+            decode_content=False,
+        )
+
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_rejects_compressed_body_over_declared_length(
+        self, mock_get_http_client: Mock
+    ) -> None:
+        """Test compressed reads reject bytes beyond the declared length."""
+        compressed = gzip.compress(b'{"ok":true}', mtime=0)
+        response = Mock(
+            status=200,
+            headers={"Content-Encoding": "gzip", "Content-Length": "1"},
+        )
+        response.read.return_value = compressed
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        with pytest.raises(URLReadError, match="declared Content-Length"):
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                allow_private_networks=True,
+            )
+
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_rejects_incomplete_compressed_body(
+        self, mock_get_http_client: Mock
+    ) -> None:
+        """Test compressed reads reject EOF before the declared length."""
+        compressed = gzip.compress(b'{"ok":true}', mtime=0)
+        response = Mock(
+            status=200,
+            headers={
+                "Content-Encoding": "gzip",
+                "Content-Length": str(len(compressed)),
+            },
+        )
+        response.read.side_effect = [compressed[:10], b""]
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        with pytest.raises(URLReadError, match="did not match Content-Length"):
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                allow_private_networks=True,
+            )
+
+    # @lat: [[tests#Input readers#URL reader bounds encoded response size]]
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_caps_compressed_bytes_without_content_length(
+        self, mock_get_http_client: Mock
+    ) -> None:
+        """Test compressed input is bounded even when decoded output is small."""
+        compressed = gzip.compress(b'{"ok":true}', mtime=0)
+        response = Mock(status=200, headers={"Content-Encoding": "gzip"})
+        response.read.side_effect = [compressed]
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        with pytest.raises(URLReadError, match="maximum size"):
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                max_response_bytes=16,
+                allow_private_networks=True,
+            )
+
+        response.read.assert_called_once_with(17, decode_content=False)
+
+    @pytest.mark.parametrize(
+        ("encoding", "compressed"),
+        [
+            pytest.param("br", b"unsupported", id="unsupported"),
+            pytest.param("gzip", b"not a gzip stream", id="invalid-gzip"),
+            pytest.param("deflate", b"x", id="invalid-short-deflate"),
+            pytest.param(
+                "gzip",
+                gzip.compress(b'{"ok":true}', mtime=0)[:-8],
+                id="truncated-gzip",
+            ),
+            pytest.param(
+                "gzip",
+                gzip.compress(b'{"ok":true}', mtime=0) + b"trailing data",
+                id="trailing-gzip",
+            ),
+        ],
+    )
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_rejects_unsafe_or_invalid_compression(
+        self,
+        mock_get_http_client: Mock,
+        encoding: str,
+        compressed: bytes,
+    ) -> None:
+        """Test unsafe or malformed compressed responses fail closed."""
+        response = Mock(status=200, headers={"Content-Encoding": encoding})
+        response.read.side_effect = [compressed, b""]
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        with pytest.raises(URLReadError, match="compressed|Content-Encoding"):
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                allow_private_networks=True,
+            )
 
     @patch("json2xml.utils._get_http_client")
     # @lat: [[tests#Input readers#URL reader limits decoded response size]]
     def test_readfromurl_limits_decoded_response_size(
         self, mock_get_http_client: Mock
     ) -> None:
-        """Test URL reads stop after the configured decoded-byte limit."""
-        response = Mock(status=200, headers={})
-        response.read.return_value = b'{"value":"payload larger than limit"}'
+        """Test compressed URL reads stop at the configured decoded-byte limit."""
+        compressed = gzip.compress(
+            b'{"value":"' + (b"x" * 10_000) + b'"}',
+            mtime=0,
+        )
+        response = Mock(
+            status=200,
+            headers={"Content-Encoding": "gzip"},
+        )
+        response.read.side_effect = [compressed, b""]
         http = Mock()
         http.request.return_value = response
         mock_get_http_client.return_value = (urllib3, http, Mock())
 
         with pytest.raises(URLReadError, match="maximum size"):
-            readfromurl("https://8.8.8.8/data.json", max_response_bytes=16)
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                max_response_bytes=128,
+                allow_private_networks=True,
+            )
 
         http.request.assert_called_once_with(
             "GET",
@@ -296,6 +688,7 @@ class TestReadFromUrl:
             redirect=False,
             preload_content=False,
         )
+        response.read.assert_called_once_with(129, decode_content=False)
         response.close.assert_called_once_with()
 
 

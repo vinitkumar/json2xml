@@ -174,6 +174,10 @@ If every backend rejects a conversion request, the selector should raise a clear
 
 The public `Json2xml` wrapper should delegate through the fast backend selector so regular library and CLI conversions can use the Rust accelerator when installed.
 
+### Json2xml return types match pretty mode
+
+The public wrapper should return Unicode text for pretty output and UTF-8 bytes for compact output so callers can rely on the documented `to_xml()` type contract.
+
 ### Special keys force Python fallback
 
 Special dictionary keys such as `@attrs` and `@val` should bypass the Rust callable so the Python serializer can preserve legacy attribute semantics.

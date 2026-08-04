@@ -121,10 +121,7 @@ def _request_url(
         return http.request("GET", parsed.geturl(), **request_options)
 
     assert parsed.hostname is not None
-    try:
-        hostname = parsed.hostname.encode("idna").decode("ascii")
-    except UnicodeError as error:
-        raise URLReadError("URL hostname could not be resolved") from error
+    hostname = parsed.hostname.encode("idna").decode("ascii")
 
     port = parsed.port or (443 if parsed.scheme == "https" else 80)
     authority = f"[{hostname}]" if ":" in hostname else hostname
@@ -195,22 +192,14 @@ def _read_response_data(response: Any, max_response_bytes: int) -> bytes:
                 response_data.extend(decoded_chunk)
                 if len(response_data) > max_response_bytes:
                     raise URLReadError("URL response exceeds maximum size")
-                unconsumed = decoder.unconsumed_tail
-                if unconsumed == pending:
-                    raise URLReadError("URL returned invalid compressed data")
-                pending = unconsumed
+                pending = decoder.unconsumed_tail
             compressed_chunk = response.read(
                 COMPRESSED_READ_CHUNK_BYTES,
                 decode_content=False,
             )
-
-        remaining_bytes = max_response_bytes + 1 - len(response_data)
-        response_data.extend(decoder.flush(remaining_bytes))
     except zlib.error as error:
         raise URLReadError("URL returned invalid compressed data") from error
 
-    if len(response_data) > max_response_bytes:
-        raise URLReadError("URL response exceeds maximum size")
     if not decoder.eof or decoder.unused_data:
         raise URLReadError("URL returned invalid compressed data")
     return bytes(response_data)

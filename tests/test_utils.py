@@ -6,7 +6,7 @@ import tempfile
 import threading
 import zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -316,7 +316,7 @@ class TestReadFromUrl:
         with pytest.raises(URLReadError, match="must be a boolean"):
             readfromurl(
                 "http://127.0.0.1/private.json",
-                allow_private_networks=allow_private_networks,  # type: ignore[arg-type]
+                allow_private_networks=cast(Any, allow_private_networks),
             )
 
     def test_readfromurl_rejects_invalid_response_limit(self) -> None:
@@ -350,6 +350,26 @@ class TestReadFromUrl:
 
         response.read.assert_not_called()
         response.close.assert_called_once_with()
+
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_limits_uncompressed_response_without_length(
+        self, mock_get_http_client: Mock
+    ) -> None:
+        """Test an undeclared uncompressed body cannot exceed the byte limit."""
+        response = Mock(status=200, headers={})
+        response.read.return_value = b"x" * 17
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        with pytest.raises(URLReadError, match="maximum size"):
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                max_response_bytes=16,
+                allow_private_networks=True,
+            )
+
+        response.read.assert_called_once_with(17, decode_content=False)
 
     @pytest.mark.parametrize(
         ("encoding", "compressed"),

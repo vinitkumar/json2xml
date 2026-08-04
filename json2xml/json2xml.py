@@ -11,17 +11,16 @@ from .utils import InvalidDataError
 class Json2xml:
     """Configure conversion of a decoded JSON value to XML.
 
-    Args:
-        data: The decoded JSON value. ``None`` represents absent input; other falsy values
-            are serialized.
-        wrapper: The root element name used when ``root`` is enabled.
-        root: Include the XML declaration and root element.
-        pretty: Reparse and indent the serialized XML, returning text instead of bytes.
-        attr_type: Add each value's JSON type as an XML attribute.
-        item_wrap: Wrap list members in ``<item>`` elements.
-        xpath_format: Emit the W3C XPath 3.1 JSON-to-XML representation.
-        cdata: Wrap string values in CDATA sections.
-        list_headers: Repeat the parent element for nested dictionary items in lists.
+    :param data: The decoded JSON value. ``None`` represents absent input; other falsy values
+        are serialized.
+    :param wrapper: The root element name used when ``root`` is enabled.
+    :param root: Include the XML declaration and root element.
+    :param pretty: Reparse and indent the serialized XML, returning text instead of bytes.
+    :param attr_type: Add each value's JSON type as an XML attribute.
+    :param item_wrap: Wrap list members in ``<item>`` elements.
+    :param xpath_format: Emit the W3C XPath 3.1 JSON-to-XML representation.
+    :param cdata: Wrap string values in CDATA sections.
+    :param list_headers: Repeat the parent element for nested dictionary items in lists.
     """
     def __init__(
         self,
@@ -50,13 +49,10 @@ class Json2xml:
     def to_xml(self) -> Any | None:
         """Serialize the configured JSON value.
 
-        Returns:
-            Pretty-printed XML text when ``pretty`` is enabled, UTF-8 encoded XML bytes
+        :return: Pretty-printed XML text when ``pretty`` is enabled, UTF-8 encoded XML bytes
             otherwise, or ``None`` when the configured data is ``None``.
-
-        Raises:
-            InvalidDataError: If serialization rejects the data or pretty-print parsing
-                finds malformed XML.
+        :raises InvalidDataError: If serialization rejects the data or pretty-print parsing finds
+            malformed XML.
         """
         if self.data is not None:
             try:

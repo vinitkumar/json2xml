@@ -46,7 +46,7 @@ class Json2xml:
 
     # @lat: [[behavior#Conversion output]]
     # @lat: [[behavior#Invalid XML payloads]]
-    def to_xml(self) -> Any | None:
+    def to_xml(self) -> bytes | str | None:
         """Serialize the configured JSON value.
 
         :return: Pretty-printed XML text when ``pretty`` is enabled, UTF-8 encoded XML bytes

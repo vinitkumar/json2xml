@@ -5,7 +5,7 @@ import json
 import socket
 from ipaddress import ip_address
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import SplitResult, urlsplit, urlunsplit
 
 __lazy_modules__ = ["urllib3"]
 
@@ -59,8 +59,10 @@ def readfromjson(filename: str) -> JSONValue:
 
 
 # @lat: [[behavior#URL security boundaries]]
-def _validate_url(url: str, allow_private_networks: bool) -> None:
-    """Reject URL forms that can escape the intended public HTTP boundary."""
+def _validate_url(
+    url: str, allow_private_networks: bool
+) -> tuple[SplitResult, str | None]:
+    """Validate a URL and return the public address the request must use."""
     try:
         parsed = urlsplit(url)
         port = parsed.port
@@ -74,11 +76,11 @@ def _validate_url(url: str, allow_private_networks: bool) -> None:
     if parsed.hostname is None:
         raise URLReadError("URL must include a hostname")
     if allow_private_networks:
-        return
+        return parsed, None
 
     hostname = parsed.hostname
     try:
-        addresses = {ip_address(hostname)}
+        addresses = [ip_address(hostname)]
     except ValueError:
         try:
             address_info = socket.getaddrinfo(
@@ -88,13 +90,63 @@ def _validate_url(url: str, allow_private_networks: bool) -> None:
             )
         except (OSError, UnicodeError) as error:
             raise URLReadError("URL hostname could not be resolved") from error
-        addresses = {
+        addresses = [
             ip_address(str(info[4][0]).split("%", 1)[0])
             for info in address_info
-        }
+        ]
 
     if not addresses or any(not address.is_global for address in addresses):
         raise URLReadError("URL must resolve only to a public network address")
+    return parsed, str(addresses[0])
+
+
+def _request_url(
+    http: Any,
+    parsed: SplitResult,
+    validated_address: str | None,
+    params: dict[str, str] | None,
+    timeout: Any,
+) -> Any:
+    """Issue a GET directly to the validated address when one is required."""
+    request_options = {
+        "fields": params,
+        "timeout": timeout,
+        "retries": False,
+        "redirect": False,
+        "preload_content": False,
+    }
+    if validated_address is None:
+        return http.request("GET", parsed.geturl(), **request_options)
+
+    assert parsed.hostname is not None
+    try:
+        hostname = parsed.hostname.encode("idna").decode("ascii")
+    except UnicodeError as error:
+        raise URLReadError("URL hostname could not be resolved") from error
+
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    authority = f"[{hostname}]" if ":" in hostname else hostname
+    if parsed.port is not None:
+        authority = f"{authority}:{parsed.port}"
+    pool_kwargs = None
+    if parsed.scheme == "https":
+        pool_kwargs = {
+            "assert_hostname": hostname,
+            "server_hostname": hostname,
+        }
+    pool = http.connection_from_host(
+        validated_address,
+        port=port,
+        scheme=parsed.scheme,
+        pool_kwargs=pool_kwargs,
+    )
+    request_target = urlunsplit(("", "", parsed.path or "/", parsed.query, ""))
+    return pool.request(
+        "GET",
+        request_target,
+        headers={"Host": authority},
+        **request_options,
+    )
 
 
 def readfromurl(
@@ -117,19 +169,17 @@ def readfromurl(
         or max_response_bytes <= 0
     ):
         raise URLReadError("Maximum response size must be a positive integer")
-    _validate_url(url, allow_private_networks)
+    parsed, validated_address = _validate_url(url, allow_private_networks)
 
     urllib3, http, timeout = _get_http_client()
     response = None
     try:
-        response = http.request(
-            "GET",
-            url,
-            fields=params,
-            timeout=timeout,
-            retries=False,
-            redirect=False,
-            preload_content=False,
+        response = _request_url(
+            http,
+            parsed,
+            validated_address,
+            params,
+            timeout,
         )
         if response.status != 200:
             raise URLReadError("URL is not returning correct response")

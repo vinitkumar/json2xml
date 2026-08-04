@@ -220,6 +220,56 @@ class TestReadFromUrl:
         with pytest.raises(URLReadError, match="public network address"):
             readfromurl("https://internal.example/data.json")
 
+    # @lat: [[tests#Input readers#URL reader pins validated DNS addresses]]
+    @patch("json2xml.utils._get_http_client")
+    @patch("json2xml.utils.socket.getaddrinfo")
+    def test_readfromurl_pins_validated_dns_address(
+        self, mock_getaddrinfo: Mock, mock_get_http_client: Mock
+    ) -> None:
+        """Test the HTTP connection cannot resolve a validated hostname again."""
+        mock_getaddrinfo.return_value = [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 8443))
+        ]
+        response = Mock(
+            status=200,
+            headers={"Content-Length": "11"},
+        )
+        response.read.return_value = b'{"ok":true}'
+        pool = Mock()
+        pool.request.return_value = response
+        http = Mock()
+        http.connection_from_host.return_value = pool
+        timeout = Mock()
+        mock_get_http_client.return_value = (urllib3, http, timeout)
+
+        result = readfromurl(
+            "https://rebind.example:8443/data.json?existing=yes",
+            params={"added": "yes"},
+        )
+
+        assert result == {"ok": True}
+        http.request.assert_not_called()
+        http.connection_from_host.assert_called_once_with(
+            "93.184.216.34",
+            port=8443,
+            scheme="https",
+            pool_kwargs={
+                "assert_hostname": "rebind.example",
+                "server_hostname": "rebind.example",
+            },
+        )
+        pool.request.assert_called_once_with(
+            "GET",
+            "/data.json?existing=yes",
+            fields={"added": "yes"},
+            headers={"Host": "rebind.example:8443"},
+            timeout=timeout,
+            retries=False,
+            redirect=False,
+            preload_content=False,
+        )
+        response.close.assert_called_once_with()
+
     def test_readfromurl_rejects_unsupported_schemes_and_credentials(self) -> None:
         """Test URL reads accept only credential-free HTTP and HTTPS URLs."""
         with pytest.raises(URLReadError, match="HTTP or HTTPS"):
@@ -290,7 +340,11 @@ class TestReadFromUrl:
         mock_get_http_client.return_value = (urllib3, http, Mock())
 
         with pytest.raises(URLReadError, match=message):
-            readfromurl("https://8.8.8.8/data.json", max_response_bytes=16)
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                max_response_bytes=16,
+                allow_private_networks=True,
+            )
 
         response.read.assert_not_called()
         response.close.assert_called_once_with()
@@ -308,7 +362,11 @@ class TestReadFromUrl:
         mock_get_http_client.return_value = (urllib3, http, Mock())
 
         with pytest.raises(URLReadError, match="maximum size"):
-            readfromurl("https://8.8.8.8/data.json", max_response_bytes=16)
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                max_response_bytes=16,
+                allow_private_networks=True,
+            )
 
         http.request.assert_called_once_with(
             "GET",

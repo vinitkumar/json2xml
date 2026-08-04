@@ -42,6 +42,10 @@ Private-network access should require an actual boolean so truthy strings or num
 
 Malformed IDNA hostnames should raise `URLReadError` so hostname encoding failures preserve the public URL-reader error contract.
 
+### URL reader pins validated DNS addresses
+
+Public URL reads should connect to a validated resolved address while preserving the original Host header and TLS hostname so DNS rebinding cannot redirect the connection.
+
 ## CLI failure messages
 
 These tests verify common command-line failures return short messages that name the broken input source and point users at the next valid action.

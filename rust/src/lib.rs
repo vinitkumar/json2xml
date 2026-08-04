@@ -1,7 +1,7 @@
-//! Fast native JSON to XML conversion for Python
+//! Optional native JSON-to-XML backend for Python.
 //!
-//! This module provides a high-performance Rust implementation of dicttoxml
-//! that can be used as a drop-in replacement for the pure Python version.
+//! The Python selector uses this crate only for dict/list requests whose options it can
+//! preserve. Unsupported features remain on the compatibility-focused Python serializer.
 
 #[cfg(feature = "python")]
 use pyo3::exceptions::PyValueError;
@@ -17,6 +17,8 @@ use std::borrow::Cow;
 #[cfg(feature = "python")]
 const OUTPUT_BUFFER_SIZE: usize = 16 * 1024;
 
+// Restarted searches have lower setup cost for sparse escapes. After four matches, the
+// monotonic iterators keep dense inputs linear instead of repeatedly scanning the same bytes.
 const SPARSE_ESCAPE_SCAN_LIMIT: u8 = 4;
 
 #[inline]
@@ -41,6 +43,9 @@ fn validate_xml_chars(s: &str) -> PyResult<()> {
 }
 
 /// Return the byte offset of the next character requiring XML escaping.
+///
+/// Every searched byte is ASCII, so a match is always a valid boundary in the original UTF-8
+/// string.
 #[inline(always)]
 fn next_xml_escape(bytes: &[u8]) -> Option<usize> {
     let markup = memchr::memchr3(b'&', b'<', b'>', bytes);
@@ -79,7 +84,10 @@ fn escape_replacement(byte: u8) -> &'static str {
     }
 }
 
-/// Escape special XML characters in a string (allocating convenience wrapper).
+/// Escape the five XML-special characters into a newly allocated string.
+///
+/// This low-level helper does not validate the XML 1.0 Char production; the Python export
+/// validates before calling it.
 #[inline]
 pub fn escape_xml(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + s.len() / 10);
@@ -87,8 +95,10 @@ pub fn escape_xml(s: &str) -> String {
     out
 }
 
-/// Append text content with XML escaping matching the Python implementation.
-/// Scans bytes for speed, copies clean slices in bulk.
+/// Append text content with the five-character escaping used by the Python implementation.
+///
+/// This low-level helper assumes `s` already satisfies the XML 1.0 Char production. It scans
+/// bytes for speed and copies clean UTF-8 slices in bulk.
 #[inline]
 pub fn push_escaped_text(out: &mut String, s: &str) {
     let bytes = s.as_bytes();
@@ -182,7 +192,10 @@ fn write_cdata<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
     write_str(out, "]]>")
 }
 
-/// Wrap content in CDATA section (allocating convenience wrapper).
+/// Wrap content in a newly allocated CDATA section.
+///
+/// Embedded `]]>` terminators are split across adjacent CDATA sections. This low-level helper
+/// does not validate the XML 1.0 Char production; the Python export validates before calling it.
 #[inline]
 pub fn wrap_cdata(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + 12);
@@ -191,6 +204,8 @@ pub fn wrap_cdata(s: &str) -> String {
 }
 
 /// Append a CDATA section directly to the buffer.
+///
+/// The caller must validate XML characters before using the emitted section in a document.
 #[inline]
 pub fn push_cdata(out: &mut String, s: &str) {
     out.push_str("<![CDATA[");
@@ -462,7 +477,8 @@ fn write_dict_contents<W: Write + ?Sized>(
         let key_str = key_py_str.to_str()?;
         let (xml_key, name_attr_pair) = make_valid_xml_name(key_str);
         let name_attr = name_attr_pair.as_ref().map(|(_, v)| v.as_ref());
-        // Lists in dicts get special wrapping treatment
+        // Python's historical list shape depends only on the first member. Preserve that rule
+        // for mixed lists rather than reclassifying the container from every value.
         if let Ok(list) = val.cast::<PyList>() {
             let first_is_scalar = list
                 .get_item(0)
@@ -506,6 +522,8 @@ fn write_list_contents<W: Write + ?Sized>(
     parent: &str,
     cfg: &ConvertConfig,
 ) -> PyResult<()> {
+    // `list_headers` changes the tag policy only for dictionary members; primitive members
+    // continue to follow `item_wrap`.
     let scalar_tag_name = if cfg.item_wrap { "item" } else { parent };
     let dict_tag_name = if cfg.list_headers {
         parent
@@ -537,21 +555,27 @@ fn write_list_contents<W: Write + ?Sized>(
     Ok(())
 }
 
-/// Convert a Python dict/list to XML bytes.
+/// Convert a Python value to UTF-8 encoded XML bytes.
 ///
-/// This is a high-performance Rust implementation of dicttoxml.
+/// The direct extension accepts scalars and iterables, while the automatic backend selector
+/// dispatches only supported dict/list requests here.
 ///
 /// Args:
-///     obj: The Python object to convert (dict or list)
-///     root: Whether to include XML declaration and root element (default: True)
-///     custom_root: The name of the root element (default: "root")
-///     attr_type: Whether to include type attributes (default: True)
-///     item_wrap: Whether to wrap list items in <item> tags (default: True)
-///     cdata: Whether to wrap string values in CDATA sections (default: False)
-///     list_headers: Whether to repeat parent tag for each list item (default: False)
+///     obj: The Python object to convert.
+///     root: Whether to include the XML declaration and root element (default: True).
+///     custom_root: The name of the root element (default: "root").
+///     attr_type: Whether to include type attributes (default: True).
+///     item_wrap: Whether to wrap list items in `<item>` tags (default: True).
+///     cdata: Whether to wrap string values in CDATA sections (default: False).
+///     list_headers: Suppress the outer list container and repeat the parent tag for nested
+///         dictionary items; primitive tags continue to follow `item_wrap` (default: False).
 ///
 /// Returns:
-///     bytes: The XML representation of the input object
+///     bytes: The XML representation of the input object.
+///
+/// Raises:
+///     ValueError: If `custom_root` is not a supported XML name or data contains characters
+///         excluded by XML 1.0.
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(signature = (obj, root=true, custom_root="root", attr_type=true, item_wrap=true, cdata=false, list_headers=false))]
@@ -580,6 +604,8 @@ fn dicttoxml(
         list_headers,
     };
 
+    // Stream into Python-owned bytes storage to avoid a complete Rust String and cross-language
+    // copy. The bounded buffer coalesces the serializer's many small writes.
     PyBytes::new_with_writer(py, 0, |out| {
         let mut out = BufWriter::with_capacity(OUTPUT_BUFFER_SIZE, out);
 

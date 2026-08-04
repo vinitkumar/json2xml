@@ -240,8 +240,10 @@ You can use the json2xml library in the following ways:
     print(json2xml.Json2xml(data).to_xml())
 
 URL reads accept only credential-free HTTP(S), reject redirects and non-public
-destinations by default, and stop after 10 MiB of decoded content. Trusted
-library callers can opt into a private endpoint or choose a smaller limit:
+destinations by default, pin public connections to their validated DNS address,
+and stop after 10 MiB of decoded content. Gzip and deflate responses are decoded
+incrementally; other content encodings are rejected. Trusted library callers can
+opt into a private endpoint with the boolean ``True`` or choose a smaller limit:
 
 .. code-block:: python
 

@@ -12,3 +12,5 @@ tornado==6.5.7
 jinja2==3.1.6
 idna==3.18
 starlette==1.3.1
+
+requests>=2.34.2

@@ -70,6 +70,10 @@ Dependency floors and lockfiles keep known vulnerable packages out of runtime an
 
 Runtime dependencies are declared in `pyproject.toml` and mirrored by `uv.lock`; legacy requirements inputs remain pinned for tooling that still consumes requirements files. Security fixes should update both resolver paths so `uv audit` and requirements-based installs agree.
 
+The Rust accelerator requires PyO3 0.29.1 or newer in the 0.29 series, excluding releases affected by GHSA-36hh-v3qg-5jq4's out-of-bounds list and tuple iterator reads.
+
+Documentation builds declare Requests 2.34.2 as their minimum and regenerate `docs/requirements.txt` with pip-tools so transitive Sphinx resolution cannot select an older release.
+
 Dependabot checks the root and documentation Python dependency manifests weekly, alongside the existing GitHub Actions monitoring, so stale security pins are surfaced automatically.
 
 ## Workflow supply-chain hardening

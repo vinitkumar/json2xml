@@ -61,13 +61,11 @@ def readfromjson(filename: str) -> JSONValue:
 
 
 # @lat: [[behavior#URL security boundaries]]
-def _validate_url(
-    url: str, allow_private_networks: bool
-) -> tuple[SplitResult, str | None]:
-    """Validate a URL and return the public address the request must use."""
+def _validate_url(url: str) -> SplitResult:
+    """Validate the URL form without performing network access."""
     try:
         parsed = urlsplit(url)
-        port = parsed.port
+        _ = parsed.port
     except (TypeError, ValueError) as error:
         raise URLReadError("URL is not valid") from error
 
@@ -77,17 +75,26 @@ def _validate_url(
         raise URLReadError("URL must not contain credentials")
     if parsed.hostname is None:
         raise URLReadError("URL must include a hostname")
-    if allow_private_networks:
-        return parsed, None
+    return parsed
 
+
+def _resolve_validated_address(
+    parsed: SplitResult, allow_private_networks: bool
+) -> str | None:
+    """Resolve and validate the public address used for the connection."""
+    if allow_private_networks:
+        return None
+
+    assert parsed.hostname is not None
     hostname = parsed.hostname
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
     try:
         addresses = [ip_address(hostname)]
     except ValueError:
         try:
             address_info = socket.getaddrinfo(
                 hostname,
-                port or (443 if parsed.scheme == "https" else 80),
+                port,
                 type=socket.SOCK_STREAM,
             )
         except (OSError, UnicodeError) as error:
@@ -99,29 +106,22 @@ def _validate_url(
 
     if not addresses or any(not address.is_global for address in addresses):
         raise URLReadError("URL must resolve only to a public network address")
-    return parsed, str(addresses[0])
+    return str(addresses[0])
 
 
-def _request_url(
+def _request_via_validated_address(
     http: Any,
     parsed: SplitResult,
-    validated_address: str | None,
+    validated_address: str,
     params: dict[str, str] | None,
     timeout: Any,
 ) -> Any:
-    """Issue a GET directly to the validated address when one is required."""
-    request_options = {
-        "fields": params,
-        "timeout": timeout,
-        "retries": False,
-        "redirect": False,
-        "preload_content": False,
-    }
-    if validated_address is None:
-        return http.request("GET", parsed.geturl(), **request_options)
-
+    """Issue a GET directly to an address already validated as public."""
     assert parsed.hostname is not None
-    hostname = parsed.hostname.encode("idna").decode("ascii")
+    try:
+        hostname = parsed.hostname.encode("idna").decode("ascii")
+    except UnicodeError as error:
+        raise URLReadError("URL hostname could not be resolved") from error
 
     port = parsed.port or (443 if parsed.scheme == "https" else 80)
     authority = f"[{hostname}]" if ":" in hostname else hostname
@@ -143,8 +143,23 @@ def _request_url(
     return pool.request(
         "GET",
         request_target,
+        fields=params,
         headers={"Host": authority},
-        **request_options,
+        timeout=timeout,
+        retries=False,
+        redirect=False,
+        preload_content=False,
+    )
+
+
+def _has_zlib_header(data: bytes) -> bool:
+    """Return whether bytes begin with an RFC 1950 zlib header."""
+    if len(data) < 2:
+        return False
+    compression_method, flags = data[0], data[1]
+    return (
+        compression_method & 0x0F == 8
+        and (compression_method << 8 | flags) % 31 == 0
     )
 
 
@@ -153,19 +168,69 @@ def _compression_decoder(encoding: str, first_chunk: bytes) -> Any:
     if encoding in {"gzip", "x-gzip"}:
         return zlib.decompressobj(16 + zlib.MAX_WBITS)
     if encoding == "deflate":
-        has_zlib_header = (
-            len(first_chunk) >= 2
-            and first_chunk[0] & 0x0F == 8
-            and (first_chunk[0] << 8 | first_chunk[1]) % 31 == 0
+        window_bits = (
+            zlib.MAX_WBITS if _has_zlib_header(first_chunk) else -zlib.MAX_WBITS
         )
-        return zlib.decompressobj(
-            zlib.MAX_WBITS if has_zlib_header else -zlib.MAX_WBITS
-        )
+        return zlib.decompressobj(window_bits)
     raise URLReadError(f"Unsupported Content-Encoding: {encoding}")
 
 
-def _read_response_data(response: Any, max_response_bytes: int) -> bytes:
-    """Read a response without allowing decoded output above the limit."""
+def _decompress_with_limit(
+    response: Any,
+    decoder: Any,
+    first_chunk: bytes,
+    max_response_bytes: int,
+    content_length: int | None,
+) -> bytes:
+    """Decode a compressed body with encoded and decoded byte limits."""
+    response_data = bytearray()
+    compressed_bytes = len(first_chunk)
+    compressed_chunk = first_chunk
+    try:
+        while compressed_chunk:
+            if compressed_bytes > max_response_bytes:
+                raise URLReadError("URL response exceeds maximum size")
+            if content_length is not None and compressed_bytes > content_length:
+                raise URLReadError("URL response exceeds declared Content-Length")
+
+            pending = compressed_chunk
+            while pending:
+                remaining_bytes = max_response_bytes + 1 - len(response_data)
+                decoded_chunk = decoder.decompress(pending, remaining_bytes)
+                response_data.extend(decoded_chunk)
+                if len(response_data) > max_response_bytes:
+                    raise URLReadError("URL response exceeds maximum size")
+                pending = decoder.unconsumed_tail
+
+            if content_length is not None and compressed_bytes == content_length:
+                break
+            compressed_bytes_max = (
+                content_length
+                if content_length is not None
+                else max_response_bytes + 1
+            )
+            read_size = min(
+                COMPRESSED_READ_CHUNK_BYTES,
+                compressed_bytes_max - compressed_bytes,
+            )
+            compressed_chunk = response.read(read_size, decode_content=False)
+            compressed_bytes += len(compressed_chunk)
+    except zlib.error as error:
+        raise URLReadError("URL returned invalid compressed data") from error
+
+    if content_length is not None and compressed_bytes != content_length:
+        raise URLReadError("URL response did not match Content-Length")
+    if not decoder.eof or decoder.unused_data:
+        raise URLReadError("URL returned invalid compressed data")
+    return bytes(response_data)
+
+
+def _read_response_data(
+    response: Any,
+    max_response_bytes: int,
+    content_length: int | None,
+) -> bytes:
+    """Read a response without allowing encoded or decoded output above the limit."""
     encoding = response.headers.get("Content-Encoding", "").strip().lower()
     if encoding in {"", "identity"}:
         response_data = response.read(
@@ -176,33 +241,37 @@ def _read_response_data(response: Any, max_response_bytes: int) -> bytes:
             raise URLReadError("URL response exceeds maximum size")
         return response_data
 
+    compressed_bytes_max = (
+        content_length if content_length is not None else max_response_bytes + 1
+    )
     first_chunk = response.read(
-        COMPRESSED_READ_CHUNK_BYTES,
+        min(COMPRESSED_READ_CHUNK_BYTES, compressed_bytes_max),
         decode_content=False,
     )
     decoder = _compression_decoder(encoding, first_chunk)
-    response_data = bytearray()
-    compressed_chunk = first_chunk
-    try:
-        while compressed_chunk:
-            pending = compressed_chunk
-            while pending:
-                remaining_bytes = max_response_bytes + 1 - len(response_data)
-                decoded_chunk = decoder.decompress(pending, remaining_bytes)
-                response_data.extend(decoded_chunk)
-                if len(response_data) > max_response_bytes:
-                    raise URLReadError("URL response exceeds maximum size")
-                pending = decoder.unconsumed_tail
-            compressed_chunk = response.read(
-                COMPRESSED_READ_CHUNK_BYTES,
-                decode_content=False,
-            )
-    except zlib.error as error:
-        raise URLReadError("URL returned invalid compressed data") from error
+    return _decompress_with_limit(
+        response,
+        decoder,
+        first_chunk,
+        max_response_bytes,
+        content_length,
+    )
 
-    if not decoder.eof or decoder.unused_data:
-        raise URLReadError("URL returned invalid compressed data")
-    return bytes(response_data)
+
+def _validated_content_length(response: Any, max_response_bytes: int) -> int | None:
+    """Parse and bound a declared encoded response length."""
+    content_length = response.headers.get("Content-Length")
+    if content_length is None:
+        return None
+    try:
+        parsed_length = int(content_length)
+    except ValueError as error:
+        raise URLReadError("URL returned an invalid Content-Length") from error
+    if parsed_length < 0:
+        raise URLReadError("URL returned an invalid Content-Length")
+    if parsed_length > max_response_bytes:
+        raise URLReadError("URL response exceeds maximum size")
+    return parsed_length
 
 
 def readfromurl(
@@ -225,30 +294,45 @@ def readfromurl(
         or max_response_bytes <= 0
     ):
         raise URLReadError("Maximum response size must be a positive integer")
-    parsed, validated_address = _validate_url(url, allow_private_networks)
+    parsed = _validate_url(url)
+    validated_address = _resolve_validated_address(
+        parsed,
+        allow_private_networks,
+    )
 
     urllib3, http, timeout = _get_http_client()
     response = None
     try:
-        response = _request_url(
-            http,
-            parsed,
-            validated_address,
-            params,
-            timeout,
-        )
+        if validated_address is None:
+            response = http.request(
+                "GET",
+                parsed.geturl(),
+                fields=params,
+                timeout=timeout,
+                retries=False,
+                redirect=False,
+                preload_content=False,
+            )
+        else:
+            response = _request_via_validated_address(
+                http,
+                parsed,
+                validated_address,
+                params,
+                timeout,
+            )
         if response.status != 200:
             raise URLReadError("URL is not returning correct response")
 
-        content_length = response.headers.get("Content-Length")
-        if content_length is not None:
-            try:
-                if int(content_length) > max_response_bytes:
-                    raise URLReadError("URL response exceeds maximum size")
-            except ValueError as error:
-                raise URLReadError("URL returned an invalid Content-Length") from error
-
-        response_data = _read_response_data(response, max_response_bytes)
+        content_length = _validated_content_length(
+            response,
+            max_response_bytes,
+        )
+        response_data = _read_response_data(
+            response,
+            max_response_bytes,
+            content_length,
+        )
     except urllib3.exceptions.HTTPError as error:
         raise URLReadError("URL could not be read") from error
     finally:

@@ -241,9 +241,10 @@ You can use the json2xml library in the following ways:
 
 URL reads accept only credential-free HTTP(S), reject redirects and non-public
 destinations by default, pin public connections to their validated DNS address,
-and stop after 10 MiB of decoded content. Gzip and deflate responses are decoded
-incrementally; other content encodings are rejected. Trusted library callers can
-opt into a private endpoint with the boolean ``True`` or choose a smaller limit:
+and stop after 10 MiB of encoded or decoded content. Gzip and deflate responses
+honor ``Content-Length`` and are decoded incrementally; other content encodings
+are rejected. Trusted library callers can opt into a private endpoint with the
+boolean ``True`` or choose a smaller limit:
 
 .. code-block:: python
 

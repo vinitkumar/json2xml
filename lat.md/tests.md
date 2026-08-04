@@ -34,6 +34,10 @@ URL input should reject unsupported schemes, embedded credentials, and private o
 
 URL input should stop reading once the decoded response exceeds its configured limit so compressed or oversized remote content cannot exhaust process memory.
 
+### URL reader bounds encoded response size
+
+Compressed URL input should honor valid `Content-Length` values and cap undeclared encoded bytes so network I/O remains bounded independently of decoded output size.
+
 ### URL reader requires a boolean private-network opt-in
 
 Private-network access should require an actual boolean so truthy strings or numbers cannot silently disable destination validation.

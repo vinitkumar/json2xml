@@ -3,14 +3,14 @@
 ## Security
 
 - Public URL reads now pin connections to a validated DNS address while preserving the requested Host header and HTTPS certificate hostname, preventing DNS-rebinding bypasses of private-network blocking.
-- Gzip and deflate responses are decoded incrementally with bounded zlib output, so compressed bodies cannot allocate beyond `max_response_bytes` before rejection.
+- Gzip and deflate responses honor valid `Content-Length` values and are decoded incrementally with bounded encoded input and zlib output, so compressed bodies cannot consume unbounded network I/O or memory before rejection.
 - `allow_private_networks` accepts only `True` or `False`; strings, numbers, and other values now raise `URLReadError` instead of relying on truthiness.
 - Malformed Unicode hostnames now consistently raise `URLReadError` when IDNA encoding or DNS resolution fails.
 
 ## Migration guidance
 
 - URL reads continue to reject redirects and private, loopback, link-local, and other non-global destinations by default. Trusted callers that intentionally read a private endpoint must pass `allow_private_networks=True` as an actual boolean.
-- Decoded URL responses remain limited to 10 MiB by default. Set `max_response_bytes` explicitly when a trusted endpoint needs a different positive limit.
+- Encoded and decoded URL responses are limited to 10 MiB by default. Set `max_response_bytes` explicitly when a trusted endpoint needs a different positive limit.
 - URL response compression is limited to `gzip`, `x-gzip`, `deflate`, and `identity`. Servers returning Brotli, Zstandard, stacked encodings, or malformed compressed streams must be reconfigured or read outside `readfromurl()`.
 - XML 1.0-forbidden characters are now rejected instead of being serialized. Low-level serializer functions raise `ValueError`; `Json2xml.to_xml()` raises `InvalidDataError`.
 

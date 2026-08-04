@@ -17,7 +17,7 @@ extension-module = ["python", "pyo3/extension-module"]
 
 [dependencies]
 memchr = "2.7"
-pyo3 = { version = "0.28.2", optional = true }
+pyo3 = { version = "0.29.1", optional = true }
 
 [profile.release]
 lto = true

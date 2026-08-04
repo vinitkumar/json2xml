@@ -42,7 +42,7 @@ Release and CI workflows install the pinned Rust toolchain before building wheel
 
 Package releases keep the Python wrapper and Rust accelerator requirements aligned so optional fast installs receive compatible wheels.
 
-The Python package version lives in `pyproject.toml` and `json2xml/__init__.py`. The Rust accelerator version lives in both `rust/Cargo.toml` and `rust/pyproject.toml`, and the Python `fast` extra should require the Rust package version that contains any expected accelerator behavior. Release notes live in `HISTORY.rst`, with the current release also summarized in `RELEASE_NOTES.md` for tag and PyPI copy.
+The Python package version lives in `pyproject.toml` and `json2xml/__init__.py`. The Rust accelerator version lives in both `rust/Cargo.toml` and `rust/pyproject.toml`, and the Python `fast` extra should require the Rust package version that contains any expected accelerator behavior. Publish and verify the Rust package before updating that Python requirement and lockfile. Release notes live in `HISTORY.rst`, with the current release also summarized in `RELEASE_NOTES.md` for tag and PyPI copy.
 
 ## Performance benchmarks
 

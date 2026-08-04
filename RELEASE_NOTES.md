@@ -1,3 +1,26 @@
+# json2xml_rs 0.4.3
+
+Released 2026-08-05.
+
+## Highlights
+
+- Rejects XML 1.0-forbidden characters in serialized text, attributes, CDATA, and the exported `escape_xml_py()` and `wrap_cdata_py()` helpers instead of emitting invalid XML.
+- Gives the Python package a compatible accelerator that passes its XML-safety probe, restoring automatic Rust dispatch for supported payloads.
+- Updates PyO3 from 0.28.2 to 0.29.1 while preserving the existing Python 3.9+ package contract and wheel matrix.
+
+## Migration guidance
+
+Inputs containing forbidden XML 1.0 characters now raise `ValueError`. Remove or replace those characters before conversion; callers must not depend on invalid XML being emitted.
+
+## Package Version
+
+- Rust accelerator: `json2xml-rs==0.4.3`
+
+## Verification
+
+The release is gated on Rust formatting, Clippy with warnings denied, Rust unit tests, the full Python suite, and built-wheel tests for Linux, macOS, and Windows before PyPI publication.
+
+
 # Unreleased
 
 ## Security
@@ -16,7 +39,7 @@
 
 ## Release prerequisite
 
-Publish a compatible accelerator version newer than `json2xml-rs==0.4.2`, then raise the `json2xml[fast]` and `uv.lock` minimum to that published version. Until then, the compatibility probe safely disables 0.4.2 and uses the Python backend.
+Publish `json2xml-rs==0.4.3`, then raise the `json2xml[fast]` and `uv.lock` minimum to that published version. Until then, the compatibility probe safely disables 0.4.2 and uses the Python backend.
 
 
 # json2xml 6.5.0

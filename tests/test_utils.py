@@ -244,6 +244,17 @@ class TestReadFromUrl:
         with pytest.raises(URLReadError, match="could not be resolved"):
             readfromurl("https://unresolvable.example/data.json")
 
+    # @lat: [[tests#Input readers#URL reader wraps invalid Unicode hostnames]]
+    @patch("json2xml.utils.socket.getaddrinfo")
+    def test_readfromurl_wraps_invalid_unicode_hostnames(
+        self, mock_getaddrinfo: Mock
+    ) -> None:
+        """Test malformed IDNA hostnames preserve the URL reader error contract."""
+        mock_getaddrinfo.side_effect = UnicodeError("invalid IDNA label")
+
+        with pytest.raises(URLReadError, match="could not be resolved"):
+            readfromurl("https://invalid-unicode.example/data.json")
+
     # @lat: [[tests#Input readers#URL reader requires a boolean private-network opt-in]]
     @pytest.mark.parametrize("allow_private_networks", ["false", 1, None])
     def test_readfromurl_rejects_non_boolean_private_network_opt_in(

@@ -86,7 +86,7 @@ def _validate_url(url: str, allow_private_networks: bool) -> None:
                 port or (443 if parsed.scheme == "https" else 80),
                 type=socket.SOCK_STREAM,
             )
-        except OSError as error:
+        except (OSError, UnicodeError) as error:
             raise URLReadError("URL hostname could not be resolved") from error
         addresses = {
             ip_address(str(info[4][0]).split("%", 1)[0])

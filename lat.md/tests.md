@@ -38,6 +38,10 @@ URL input should stop reading once the decoded response exceeds its configured l
 
 Private-network access should require an actual boolean so truthy strings or numbers cannot silently disable destination validation.
 
+### URL reader wraps invalid Unicode hostnames
+
+Malformed IDNA hostnames should raise `URLReadError` so hostname encoding failures preserve the public URL-reader error contract.
+
 ## CLI failure messages
 
 These tests verify common command-line failures return short messages that name the broken input source and point users at the next valid action.

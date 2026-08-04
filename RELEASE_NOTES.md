@@ -1,3 +1,40 @@
+# json2xml 6.5.1
+
+Released 2026-08-05.
+
+## Highlights
+
+- Pins public URL connections to the validated DNS address while preserving the requested Host header and TLS certificate hostname, preventing DNS-rebinding bypasses of private-network blocking.
+- Bounds encoded input and incremental gzip or deflate output so compressed responses cannot consume unbounded network I/O or memory before rejection.
+- Rejects XML 1.0-forbidden characters consistently across the Python serializer and the newly published Rust accelerator instead of emitting invalid XML.
+- Updates `json2xml[fast]` to require the compatible `json2xml-rs>=0.4.3` release.
+
+## Security
+
+- URL reads reject redirects and private, loopback, link-local, and other non-global destinations by default, including destinations reached through DNS rebinding.
+- Encoded and decoded response bodies are independently limited to 10 MiB by default.
+- Only `gzip`, `x-gzip`, `deflate`, and `identity` content encodings are accepted; malformed or stacked encodings are rejected.
+- `allow_private_networks` accepts only `True` or `False`, avoiding truthiness-based policy bypasses.
+- Malformed Unicode hostnames consistently raise `URLReadError` when IDNA encoding or DNS resolution fails.
+
+## Migration guidance
+
+- Trusted callers that intentionally read private endpoints must pass `allow_private_networks=True` as an actual boolean.
+- Set `max_response_bytes` explicitly when a trusted endpoint needs a positive response limit other than the 10 MiB default.
+- Servers returning Brotli, Zstandard, stacked encodings, or malformed compressed streams must be reconfigured or read outside `readfromurl()`.
+- Inputs containing forbidden XML 1.0 characters now fail validation. Low-level serializer functions raise `ValueError`; `Json2xml.to_xml()` raises `InvalidDataError`.
+
+## Package Versions
+
+- Python package: `json2xml==6.5.1`
+- Rust accelerator: `json2xml-rs==0.4.3`
+- Fast install: `pip install "json2xml[fast]==6.5.1"`
+
+## Verification
+
+The release passed 496 tests with 100% statement coverage, Ruff, ty, sdist and wheel builds, Twine metadata checks, and an isolated install against the published `json2xml-rs==0.4.3` wheel. The pull request also runs the complete cross-platform Python matrix before merge.
+
+
 # json2xml_rs 0.4.3
 
 Released 2026-08-05.
@@ -18,28 +55,7 @@ Inputs containing forbidden XML 1.0 characters now raise `ValueError`. Remove or
 
 ## Verification
 
-The release is gated on Rust formatting, Clippy with warnings denied, Rust unit tests, the full Python suite, and built-wheel tests for Linux, macOS, and Windows before PyPI publication.
-
-
-# Unreleased
-
-## Security
-
-- Public URL reads now pin connections to a validated DNS address while preserving the requested Host header and HTTPS certificate hostname, preventing DNS-rebinding bypasses of private-network blocking.
-- Gzip and deflate responses honor valid `Content-Length` values and are decoded incrementally with bounded encoded input and zlib output, so compressed bodies cannot consume unbounded network I/O or memory before rejection.
-- `allow_private_networks` accepts only `True` or `False`; strings, numbers, and other values now raise `URLReadError` instead of relying on truthiness.
-- Malformed Unicode hostnames now consistently raise `URLReadError` when IDNA encoding or DNS resolution fails.
-
-## Migration guidance
-
-- URL reads continue to reject redirects and private, loopback, link-local, and other non-global destinations by default. Trusted callers that intentionally read a private endpoint must pass `allow_private_networks=True` as an actual boolean.
-- Encoded and decoded URL responses are limited to 10 MiB by default. Set `max_response_bytes` explicitly when a trusted endpoint needs a different positive limit.
-- URL response compression is limited to `gzip`, `x-gzip`, `deflate`, and `identity`. Servers returning Brotli, Zstandard, stacked encodings, or malformed compressed streams must be reconfigured or read outside `readfromurl()`.
-- XML 1.0-forbidden characters are now rejected instead of being serialized. Low-level serializer functions raise `ValueError`; `Json2xml.to_xml()` raises `InvalidDataError`.
-
-## Release prerequisite
-
-Publish `json2xml-rs==0.4.3`, then raise the `json2xml[fast]` and `uv.lock` minimum to that published version. Until then, the compatibility probe safely disables 0.4.2 and uses the Python backend.
+The release passed Rust formatting, Clippy with warnings denied, 48 Rust unit tests, and built-wheel tests across Linux, macOS, Windows, CPython 3.9-3.15, free-threaded builds, and PyPy before PyPI publication.
 
 
 # json2xml 6.5.0

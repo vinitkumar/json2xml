@@ -1,4 +1,15 @@
 
+6.5.1 / 2026-08-05
+==================
+
+  * security: pin URL connections to validated DNS addresses to prevent DNS-rebinding bypasses of private-network blocking
+  * security: bound encoded and decoded compressed responses to prevent gzip and deflate resource-exhaustion attacks
+  * fix: reject XML 1.0-forbidden characters consistently across Python and Rust serializers instead of emitting invalid XML
+  * fix: require an actual boolean for ``allow_private_networks`` and normalize malformed-hostname failures as ``URLReadError``
+  * chore: release ``json2xml-rs`` 0.4.3 first and require it from ``json2xml[fast]`` for XML-safe accelerated installs
+  * docs: document URL safety controls, XML validation behavior, migration guidance, and the Rust-first release sequence
+
+
 6.5.0 / 2026-07-15
 ==================
 

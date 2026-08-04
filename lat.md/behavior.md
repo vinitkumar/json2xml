@@ -14,7 +14,7 @@ The input helpers convert files, strings, URLs, and stdin into Python data struc
 
 Remote JSON reads default to public, credential-free HTTP(S) targets and bounded decoded responses so callers do not accidentally expose internal services or unlimited memory.
 
-[[json2xml/utils.py#readfromurl]] disables redirects, rejects non-global resolved addresses, and pins each public request to a validated address while retaining the original Host header and TLS hostname. It reads at most 10 MiB after content decoding. Trusted library callers can opt into private-network access only with an actual boolean while retaining the response limit.
+[[json2xml/utils.py#readfromurl]] disables redirects, rejects non-global resolved addresses, and pins each public request to a validated address while retaining the original Host header and TLS hostname. It incrementally decodes gzip and deflate bodies into a 10 MiB bounded output and rejects unsupported encodings. Trusted library callers can opt into private-network access only with an actual boolean while retaining the response limit.
 
 ## User examples
 

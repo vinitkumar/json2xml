@@ -1,8 +1,10 @@
 """Test module for json2xml.utils functionality."""
+import gzip
 import json
 import socket
 import tempfile
 import threading
+import zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import TYPE_CHECKING, ClassVar
 from unittest.mock import Mock, patch
@@ -349,14 +351,81 @@ class TestReadFromUrl:
         response.read.assert_not_called()
         response.close.assert_called_once_with()
 
+    @pytest.mark.parametrize(
+        ("encoding", "compressed"),
+        [
+            ("gzip", gzip.compress(b'{"ok":true}')),
+            ("deflate", zlib.compress(b'{"ok":true}')),
+            (
+                "deflate",
+                (lambda compressor: compressor.compress(b'{"ok":true}') + compressor.flush())(
+                    zlib.compressobj(wbits=-zlib.MAX_WBITS)
+                ),
+            ),
+        ],
+    )
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_decodes_supported_compression_incrementally(
+        self,
+        mock_get_http_client: Mock,
+        encoding: str,
+        compressed: bytes,
+    ) -> None:
+        """Test bounded decoding preserves supported compressed responses."""
+        response = Mock(status=200, headers={"Content-Encoding": encoding})
+        response.read.side_effect = [compressed, b""]
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        result = readfromurl(
+            "https://8.8.8.8/data.json",
+            allow_private_networks=True,
+        )
+
+        assert result == {"ok": True}
+
+    @pytest.mark.parametrize(
+        ("encoding", "compressed"),
+        [
+            ("br", b"unsupported"),
+            ("gzip", b"not a gzip stream"),
+            ("gzip", gzip.compress(b'{"ok":true}')[:-8]),
+            ("gzip", gzip.compress(b'{"ok":true}') + b"trailing data"),
+        ],
+    )
+    @patch("json2xml.utils._get_http_client")
+    def test_readfromurl_rejects_unsafe_or_invalid_compression(
+        self,
+        mock_get_http_client: Mock,
+        encoding: str,
+        compressed: bytes,
+    ) -> None:
+        """Test unsafe or malformed compressed responses fail closed."""
+        response = Mock(status=200, headers={"Content-Encoding": encoding})
+        response.read.side_effect = [compressed, b""]
+        http = Mock()
+        http.request.return_value = response
+        mock_get_http_client.return_value = (urllib3, http, Mock())
+
+        with pytest.raises(URLReadError, match="compressed|Content-Encoding"):
+            readfromurl(
+                "https://8.8.8.8/data.json",
+                allow_private_networks=True,
+            )
+
     @patch("json2xml.utils._get_http_client")
     # @lat: [[tests#Input readers#URL reader limits decoded response size]]
     def test_readfromurl_limits_decoded_response_size(
         self, mock_get_http_client: Mock
     ) -> None:
-        """Test URL reads stop after the configured decoded-byte limit."""
-        response = Mock(status=200, headers={})
-        response.read.return_value = b'{"value":"payload larger than limit"}'
+        """Test compressed URL reads stop at the configured decoded-byte limit."""
+        compressed = gzip.compress(b'{"value":"' + (b"x" * 1_000_000) + b'"}')
+        response = Mock(
+            status=200,
+            headers={"Content-Encoding": "gzip"},
+        )
+        response.read.side_effect = [compressed, b""]
         http = Mock()
         http.request.return_value = response
         mock_get_http_client.return_value = (urllib3, http, Mock())
@@ -377,6 +446,7 @@ class TestReadFromUrl:
             redirect=False,
             preload_content=False,
         )
+        response.read.assert_called_once_with(64 * 1024, decode_content=False)
         response.close.assert_called_once_with()
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import socket
+import zlib
 from ipaddress import ip_address
 from typing import Any
 from urllib.parse import SplitResult, urlsplit, urlunsplit
@@ -13,6 +14,7 @@ from .types import JSONValue
 
 DEFAULT_URL_TIMEOUT: Any | None = None
 DEFAULT_MAX_RESPONSE_BYTES = 10 * 1024 * 1024
+COMPRESSED_READ_CHUNK_BYTES = 64 * 1024
 _HTTP: Any | None = None
 
 
@@ -149,6 +151,71 @@ def _request_url(
     )
 
 
+def _compression_decoder(encoding: str, first_chunk: bytes) -> Any:
+    """Create a bounded-output decoder for supported content encodings."""
+    if encoding in {"gzip", "x-gzip"}:
+        return zlib.decompressobj(16 + zlib.MAX_WBITS)
+    if encoding == "deflate":
+        has_zlib_header = (
+            len(first_chunk) >= 2
+            and first_chunk[0] & 0x0F == 8
+            and (first_chunk[0] << 8 | first_chunk[1]) % 31 == 0
+        )
+        return zlib.decompressobj(
+            zlib.MAX_WBITS if has_zlib_header else -zlib.MAX_WBITS
+        )
+    raise URLReadError(f"Unsupported Content-Encoding: {encoding}")
+
+
+def _read_response_data(response: Any, max_response_bytes: int) -> bytes:
+    """Read a response without allowing decoded output above the limit."""
+    encoding = response.headers.get("Content-Encoding", "").strip().lower()
+    if encoding in {"", "identity"}:
+        response_data = response.read(
+            max_response_bytes + 1,
+            decode_content=False,
+        )
+        if len(response_data) > max_response_bytes:
+            raise URLReadError("URL response exceeds maximum size")
+        return response_data
+
+    first_chunk = response.read(
+        COMPRESSED_READ_CHUNK_BYTES,
+        decode_content=False,
+    )
+    decoder = _compression_decoder(encoding, first_chunk)
+    response_data = bytearray()
+    compressed_chunk = first_chunk
+    try:
+        while compressed_chunk:
+            pending = compressed_chunk
+            while pending:
+                remaining_bytes = max_response_bytes + 1 - len(response_data)
+                decoded_chunk = decoder.decompress(pending, remaining_bytes)
+                response_data.extend(decoded_chunk)
+                if len(response_data) > max_response_bytes:
+                    raise URLReadError("URL response exceeds maximum size")
+                unconsumed = decoder.unconsumed_tail
+                if unconsumed == pending:
+                    raise URLReadError("URL returned invalid compressed data")
+                pending = unconsumed
+            compressed_chunk = response.read(
+                COMPRESSED_READ_CHUNK_BYTES,
+                decode_content=False,
+            )
+
+        remaining_bytes = max_response_bytes + 1 - len(response_data)
+        response_data.extend(decoder.flush(remaining_bytes))
+    except zlib.error as error:
+        raise URLReadError("URL returned invalid compressed data") from error
+
+    if len(response_data) > max_response_bytes:
+        raise URLReadError("URL response exceeds maximum size")
+    if not decoder.eof or decoder.unused_data:
+        raise URLReadError("URL returned invalid compressed data")
+    return bytes(response_data)
+
+
 def readfromurl(
     url: str,
     params: dict[str, str] | None = None,
@@ -192,9 +259,7 @@ def readfromurl(
             except ValueError as error:
                 raise URLReadError("URL returned an invalid Content-Length") from error
 
-        response_data = response.read(max_response_bytes + 1, decode_content=True)
-        if len(response_data) > max_response_bytes:
-            raise URLReadError("URL response exceeds maximum size")
+        response_data = _read_response_data(response, max_response_bytes)
     except urllib3.exceptions.HTTPError as error:
         raise URLReadError("URL could not be read") from error
     finally:

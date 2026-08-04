@@ -34,6 +34,10 @@ URL input should reject unsupported schemes, embedded credentials, and private o
 
 URL input should stop reading once the decoded response exceeds its configured limit so compressed or oversized remote content cannot exhaust process memory.
 
+### URL reader requires a boolean private-network opt-in
+
+Private-network access should require an actual boolean so truthy strings or numbers cannot silently disable destination validation.
+
 ## CLI failure messages
 
 These tests verify common command-line failures return short messages that name the broken input source and point users at the next valid action.

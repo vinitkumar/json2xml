@@ -244,6 +244,18 @@ class TestReadFromUrl:
         with pytest.raises(URLReadError, match="could not be resolved"):
             readfromurl("https://unresolvable.example/data.json")
 
+    # @lat: [[tests#Input readers#URL reader requires a boolean private-network opt-in]]
+    @pytest.mark.parametrize("allow_private_networks", ["false", 1, None])
+    def test_readfromurl_rejects_non_boolean_private_network_opt_in(
+        self, allow_private_networks: object
+    ) -> None:
+        """Test only an actual boolean can opt into private-network access."""
+        with pytest.raises(URLReadError, match="must be a boolean"):
+            readfromurl(
+                "http://127.0.0.1/private.json",
+                allow_private_networks=allow_private_networks,  # type: ignore[arg-type]
+            )
+
     def test_readfromurl_rejects_invalid_response_limit(self) -> None:
         """Test callers cannot disable the response cap with a non-positive value."""
         with pytest.raises(URLReadError, match="positive integer"):

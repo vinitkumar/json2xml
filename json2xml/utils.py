@@ -109,6 +109,8 @@ def readfromurl(
     Private-network access is available only through the explicit trusted-caller
     opt-in. Redirects and embedded credentials are always rejected.
     """
+    if not isinstance(allow_private_networks, bool):
+        raise URLReadError("allow_private_networks must be a boolean")
     if (
         isinstance(max_response_bytes, bool)
         or not isinstance(max_response_bytes, int)

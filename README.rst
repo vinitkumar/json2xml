@@ -429,7 +429,7 @@ Using Make (recommended):
 
     make test          # Run tests with coverage
     make lint          # Run linting with ruff
-    make typecheck     # Run type checking with mypy
+    make typecheck     # Run type checking with ty
     make check-all     # Run all checks (lint, typecheck, test)
 
 Using the development script:
@@ -447,7 +447,7 @@ Using tools directly:
 
     pytest --cov=json2xml --cov-report=term -xvs tests -n auto
     ruff check json2xml tests
-    mypy json2xml tests
+    uvx ty check json2xml tests
 
 **Rust Extension Development**
 

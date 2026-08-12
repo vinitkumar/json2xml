@@ -38,6 +38,12 @@ The Cargo feature layout separates normal Rust/PyO3 tests from extension-module 
 
 Release and CI workflows install the pinned Rust toolchain before building wheels or running Rust checks, so hosted runners do not silently use an older default compiler. The macOS release build also provisions Python 3.10 explicitly so maturin emits wheels for the oldest supported interpreter even when runner images omit it.
 
+## Development checks
+
+Make-based lint, type-check, and Python test targets run through uv's locked development environment so results do not depend on globally installed tools or optional extensions.
+
+The shared `UV_RUN` command installs the `dev` extra from `uv.lock`. The type-check target overlays `ty`, while test targets use the same isolated dependency set and leave Rust extension integration to its dedicated workflow.
+
 ## Release packaging
 
 Package releases keep the Python wrapper and Rust accelerator requirements aligned so optional fast installs receive compatible wheels.

@@ -3,7 +3,7 @@
 """Tests for `json2xml` package."""
 
 from pyexpat import ExpatError
-from typing import Any
+from typing import Any, TypedDict
 from unittest.mock import Mock
 
 import pytest
@@ -18,6 +18,14 @@ from json2xml.utils import (
     readfromjson,
     readfromstring,
 )
+
+
+class _ConversionLimits(TypedDict, total=False):
+    """Keyword limits accepted by ``Json2xml`` resource-bound tests."""
+
+    max_depth: int
+    max_items: int
+    max_output_bytes: int
 
 
 class TestJson2xml:
@@ -267,7 +275,7 @@ class TestJson2xml:
         ],
     )
     def test_conversion_resource_limits(
-        self, data: Any, limits: dict[str, int]
+        self, data: Any, limits: _ConversionLimits
     ) -> None:
         """Depth, item, and conservative output budgets reject work before rendering."""
         with pytest.raises(InvalidDataError):

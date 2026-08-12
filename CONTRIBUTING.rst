@@ -96,7 +96,7 @@ Ready to contribute? Here's how to set up `json2xml` for local development.
     
     # Or individually:
     $ ruff check json2xml tests
-    $ mypy json2xml tests
+    $ uvx ty check json2xml tests
     $ pytest tests/
 
 6. Commit your changes and push your branch to GitHub::

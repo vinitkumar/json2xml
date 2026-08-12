@@ -178,6 +178,10 @@ The public `Json2xml` wrapper should delegate through the fast backend selector 
 
 The public wrapper should return Unicode text for pretty output and UTF-8 bytes for compact output so callers can rely on the documented `to_xml()` type contract.
 
+### Compact output is the safe default
+
+Default library conversion should return serializer bytes without building a second DOM copy, while pretty printing remains available through an explicit opt-in.
+
 ### Special keys force Python fallback
 
 Special dictionary keys such as `@attrs` and `@val` should bypass the Rust callable so the Python serializer can preserve legacy attribute semantics.

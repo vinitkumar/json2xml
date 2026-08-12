@@ -421,6 +421,7 @@ class TestCLIUnitTests:
         parser = create_parser()
         assert parser is not None
         assert parser.prog == "json2xml-py"
+        assert parser.parse_args(["-s", "{}"]).pretty is False
 
     def test_create_parser_parses_all_args(self) -> None:
         """Test parser handles all argument combinations."""

@@ -8,7 +8,7 @@ Usage:
 Flags:
     -w, --wrapper string    Wrapper element name (default "all")
     -r, --root              Include root element (default true)
-    -p, --pretty            Pretty print output (default true)
+    -p, --pretty            Pretty print output (default false)
     -t, --type              Include type attributes (default true)
     -i, --item-wrap         Wrap list items in <item> elements (default true)
     -x, --xpath             Use XPath 3.1 json-to-xml format
@@ -295,8 +295,8 @@ Examples:
         "--pretty",
         dest="pretty",
         action="store_true",
-        default=True,
-        help="Pretty print output (default: true)",
+        default=False,
+        help="Pretty print output (default: false)",
     )
     conv_group.add_argument(
         "--no-pretty",

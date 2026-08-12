@@ -100,7 +100,7 @@ The ``Json2xml`` class accepts the following parameters:
 * ``data`` - The JSON data (dict or list) to convert
 * ``wrapper`` (default: ``"all"``) - Custom root element name
 * ``root`` (default: ``True``) - Whether to include the XML declaration and root element
-* ``pretty`` (default: ``True``) - Whether to pretty-print the XML output
+* ``pretty`` (default: ``False``) - Whether to pretty-print the XML output
 * ``attr_type`` (default: ``True``) - Whether to include type attributes on elements
 * ``item_wrap`` (default: ``True``) - Whether to wrap list items in ``<item>`` tags
 * ``xpath_format`` (default: ``False``) - Whether to use XPath 3.1 compliant output format
@@ -109,7 +109,7 @@ The ``Json2xml`` class accepts the following parameters:
 Custom Wrappers and Indentation
 -------------------------------
 
-By default, a wrapper ``all`` and ``pretty=True`` is set. You can customize these:
+By default, a wrapper ``all`` and compact output (``pretty=False``) are set. Pretty printing can be enabled explicitly:
 
 .. code-block:: python
 

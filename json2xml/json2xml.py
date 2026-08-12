@@ -27,7 +27,7 @@ class Json2xml:
         data: JSONValue = None,
         wrapper: str = "all",
         root: bool = True,
-        pretty: bool = True,
+        pretty: bool = False,
         attr_type: bool = True,
         item_wrap: bool = True,
         xpath_format: bool = False,

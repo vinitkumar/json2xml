@@ -258,7 +258,7 @@ boolean ``True`` or choose a smaller limit:
 Custom Wrappers and Indentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, a wrapper `all` and pretty `True` is set. However, you can easily change this in your code like this:
+By default, a wrapper `all` and compact output (``pretty=False``) are set. Pretty printing can be enabled explicitly:
 
 .. code-block:: python
 
@@ -528,7 +528,7 @@ The ``json2xml-py`` command-line tool provides an easy way to convert JSON to XM
     Conversion Options:
       -w, --wrapper string    Wrapper element name (default "all")
       -r, --root              Include root element (default true)
-      -p, --pretty            Pretty print output (default true)
+      -p, --pretty            Pretty print output (default false)
       -t, --type              Include type attributes (default true)
       -i, --item-wrap         Wrap list items in <item> elements (default true)
       -x, --xpath             Use XPath 3.1 json-to-xml format

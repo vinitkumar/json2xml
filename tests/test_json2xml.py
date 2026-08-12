@@ -74,6 +74,20 @@ class TestJson2xml:
         dict_from_xml = xmltodict.parse(xmldata)
         assert isinstance(dict_from_xml["all"], dict)
 
+    # @lat: [[tests#Conversion behavior#Compact output is the safe default]]
+    def test_json_to_xml_defaults_to_compact_output(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Default conversion avoids reparsing attacker-controlled output into a DOM."""
+        parse_string = Mock(side_effect=AssertionError("pretty parser should not run"))
+        monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
+
+        xmldata = json2xml.Json2xml({"name": "Ada"}).to_xml()
+
+        assert isinstance(xmldata, bytes)
+        assert b'<name type="str">Ada</name>' in xmldata
+        parse_string.assert_not_called()
+
     def test_json_to_xml_empty_data_conversion(self) -> None:
         data = None
         xmldata = json2xml.Json2xml(data).to_xml()
@@ -217,7 +231,7 @@ class TestJson2xml:
         monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
 
         with pytest.raises(InvalidDataError):
-            json2xml.Json2xml({"valid": "data"}).to_xml()
+            json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
 
     def test_read_boolean_data_from_json(self) -> None:
         """Test correct return for boolean types."""

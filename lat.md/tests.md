@@ -190,6 +190,8 @@ Opt-in pretty printing should reject an exponential entity-expansion payload bef
 
 Conversion should reject excessive nesting, item counts, and conservative output estimates before serialization, then enforce the exact byte limit on compact and pretty results.
 
+Limit validation rejects booleans, non-integers, and non-positive values. Tests cover preflight estimates, exact backend bytes, and indentation added only by pretty output.
+
 ### Pretty printing avoids DOM reparsing
 
 Pretty output should use bounded lexical indentation over trusted serializer output instead of constructing a second DOM, rejecting unterminated, mismatched, or unclosed markup.

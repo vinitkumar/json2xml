@@ -90,15 +90,17 @@ def _pretty_xml(xml_data: bytes, max_output_bytes: int) -> str:
     has_inline_content = False
     open_elements: list[str] = []
     for token in tokens:
-        if not token:
-            continue
         if not token.startswith("<"):
             if token.strip():
+                if not open_elements:
+                    raise InvalidDataError("Malformed XML generated")
                 lines[-1] += token
                 output_bytes += len(token.encode("utf-8"))
                 has_inline_content = True
             continue
         if token.startswith("<![CDATA["):
+            if not open_elements:
+                raise InvalidDataError("Malformed XML generated")
             lines[-1] += token
             output_bytes += len(token.encode("utf-8"))
             has_inline_content = True
@@ -134,10 +136,7 @@ def _pretty_xml(xml_data: bytes, max_output_bytes: int) -> str:
             raise InvalidDataError("XML output size limit exceeded")
     if open_elements or depth != 0:
         raise InvalidDataError("Malformed XML generated")
-    result = "\n".join(lines) + "\n"
-    if len(result.encode("utf-8")) > max_output_bytes:
-        raise InvalidDataError("XML output size limit exceeded")
-    return result
+    return "\n".join(lines) + "\n"
 
 
 # @lat: [[architecture#Core pipeline]]

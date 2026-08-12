@@ -205,60 +205,97 @@ CPython 3.15.0rc1 Follow-up
 
 uv 0.12.3 downloaded and managed the exact ``cpython-3.15.0rc1-macos-aarch64-none`` build. The follow-up uses the same payloads, modes, warmups, sample counts, worker isolation, and ABBA ordering.
 
+uv 0.11.24 did not yet list rc1, so it was updated to 0.12.3. That release downloaded the exact 26.2 MiB Apple Silicon build and verified its version before measurement.
+
+.. code-block:: bash
+
+   uv self update
+   uv python list 3.15 --all-versions
+   uv run --isolated --managed-python \
+     --python cpython-3.15.0rc1-macos-aarch64-none python --version
+
+Each result is ``median [p25, p75]``. The narrow hardened ranges contrast with the wider old DOM-pretty ranges on larger payloads.
+
 .. list-table::
    :header-rows: 1
-   :widths: 24 18 20 20 18
+   :widths: 17 14 27 27 15
 
    * - Workload
      - Mode
-     - Pre-hardening
-     - Hardened master
+     - Pre-hardening median [p25, p75]
+     - Hardened median [p25, p75]
      - Change
    * - Small
      - Default
-     - 24.7µs
-     - 6.2µs
+     - 24.7µs [24.6, 25.0]
+     - 6.2µs [6.2, 6.3]
      - **74.8% faster**
    * - Small
      - Compact
-     - 4.4µs
-     - 6.4µs
+     - 4.4µs [4.4, 4.4]
+     - 6.4µs [6.3, 6.4]
      - **44.0% slower**
    * - Small
      - Pretty
-     - 24.7µs
-     - 14.8µs
+     - 24.7µs [24.5, 24.8]
+     - 14.8µs [14.7, 14.9]
      - **40.0% faster**
    * - 100 records
      - Default
-     - 7.13ms
-     - 1.75ms
+     - 7.13ms [6.65, 8.50]
+     - 1.75ms [1.74, 1.76]
      - **75.5% faster**
    * - 100 records
      - Compact
-     - 1.09ms
-     - 1.75ms
+     - 1.09ms [1.09, 1.11]
+     - 1.75ms [1.74, 1.79]
      - **60.3% slower**
    * - 100 records
      - Pretty
-     - 6.85ms
-     - 4.96ms
+     - 6.85ms [6.61, 8.47]
+     - 4.96ms [4.90, 5.03]
      - **27.5% faster**
    * - 1,000 records
      - Default
-     - 88.01ms
-     - 17.24ms
+     - 88.01ms [62.86, 100.53]
+     - 17.24ms [17.17, 17.30]
      - **80.4% faster**
    * - 1,000 records
      - Compact
-     - 10.90ms
-     - 17.21ms
+     - 10.90ms [10.87, 10.98]
+     - 17.21ms [17.15, 17.28]
      - **57.8% slower**
    * - 1,000 records
      - Pretty
-     - 88.83ms
-     - 50.46ms
+     - 88.83ms [63.04, 102.21]
+     - 50.46ms [49.61, 51.15]
      - **43.2% faster**
+
+Output Checks
+^^^^^^^^^^^^^
+
+Compact output stayed byte-for-byte identical across revisions. Default and pretty sizes differ because default now returns compact bytes and lexical formatting replaces ``minidom`` formatting.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 22 30 30
+
+   * - Workload
+     - Compact bytes, both
+     - Default type/bytes, before → after
+     - Pretty type/bytes, before → after
+   * - Small
+     - 134
+     - ``str``/142 → ``bytes``/134
+     - ``str``/142 → ``str``/146
+   * - 100 records
+     - 57,049
+     - ``str``/64,551 → ``bytes``/57,049
+     - ``str``/64,551 → ``str``/69,952
+   * - 1,000 records
+     - 571,005
+     - ``str``/646,007 → ``bytes``/571,005
+     - ``str``/646,007 → ``str``/700,008
 
 Default calls are roughly 4-5x faster because they now return compact serializer bytes. Explicit pretty output is 27-42% faster because lexical indentation replaces DOM parsing.
 

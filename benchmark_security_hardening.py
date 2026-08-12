@@ -113,18 +113,8 @@ def _worker(source: Path, mode: str, records: int, loops: int) -> None:
     )
 
 
-def _run(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        command,
-        cwd=cwd,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-
-
 def _resolve_revision(repo: Path, revision: str) -> str:
-    result = _run(
+    result = subprocess.run(
         [
             "git",
             "rev-parse",
@@ -132,7 +122,11 @@ def _resolve_revision(repo: Path, revision: str) -> str:
             "--end-of-options",
             f"{revision}^{{commit}}",
         ],
-        repo,
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+        shell=False,
     )
     return result.stdout.strip()
 
@@ -145,7 +139,7 @@ def _invoke_worker(
     records: int,
     loops: int,
 ) -> dict[str, Any]:
-    result = _run(
+    result = subprocess.run(
         [
             sys.executable,
             str(script),
@@ -159,7 +153,11 @@ def _invoke_worker(
             "--loops",
             str(loops),
         ],
-        repo,
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+        shell=False,
     )
     return json.loads(result.stdout)
 
@@ -276,9 +274,15 @@ def _print_report(report: dict[str, Any]) -> None:
 
 def run_benchmark(before_revision: str, after_revision: str) -> dict[str, Any]:
     script = Path(__file__).resolve()
-    repo = Path(
-        _run(["git", "rev-parse", "--show-toplevel"], script.parent).stdout.strip()
+    repo_result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        cwd=script.parent,
+        check=True,
+        capture_output=True,
+        text=True,
+        shell=False,
     )
+    repo = Path(repo_result.stdout.strip())
     revisions = {
         BEFORE: _resolve_revision(repo, before_revision),
         AFTER: _resolve_revision(repo, after_revision),
@@ -290,7 +294,7 @@ def run_benchmark(before_revision: str, after_revision: str) -> dict[str, Any]:
         added: list[Path] = []
         try:
             for label in (BEFORE, AFTER):
-                _run(
+                subprocess.run(
                     [
                         "git",
                         "worktree",
@@ -299,7 +303,11 @@ def run_benchmark(before_revision: str, after_revision: str) -> dict[str, Any]:
                         str(sources[label]),
                         revisions[label],
                     ],
-                    repo,
+                    cwd=repo,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    shell=False,
                 )
                 added.append(sources[label])
 
@@ -318,6 +326,7 @@ def run_benchmark(before_revision: str, after_revision: str) -> dict[str, Any]:
                     check=False,
                     capture_output=True,
                     text=True,
+                    shell=False,
                 )
 
     return {

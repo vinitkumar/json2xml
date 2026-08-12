@@ -90,6 +90,10 @@ The public-wrapper benchmark should run mirrored ABBA and BAAB worker orders wit
 
 The public-wrapper benchmark should retain the documented small, 100-record, and 1,000-record loop counts in default, compact, and pretty modes.
 
+### Security benchmark subprocess commands stay structured
+
+Every harness subprocess should use an inline argv list with shell parsing explicitly disabled so dynamic values cannot become command syntax and static security audits can verify the boundary.
+
 ## Conversion behavior
 
 These tests pin the XML shapes that matter most for interoperability, especially the modes that intentionally diverge from the default serializer.

@@ -110,6 +110,8 @@ The payload generator is deterministic by construction: record fields are derive
 
 It resolves both revisions to full commit IDs, creates detached temporary worktrees, and launches a fresh Python process for every worker. Each ABBA/BAAB pass contributes two workers per revision; two passes × 17 samples produce the documented 68 samples per revision and workload/mode cell.
 
+Every child process receives an argv list with shell parsing disabled. User-supplied revision text is placed after Git's `--end-of-options` marker, and only the resulting full commit ID is passed to `git worktree add`; shell escaping is neither needed nor used.
+
 #### CPython Results
 
 Each timing is the median public-API conversion time. “Faster” and “slower” compare hardened `master` with the pre-hardening revision.

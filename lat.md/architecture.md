@@ -62,6 +62,8 @@ The August 2026 public-wrapper benchmark uses [[benchmark_security_hardening.py#
 
 Its [[benchmark_security_hardening.py#make_payload]] generator derives every field from a record index, while four workers × 17 samples give each revision 68 observations per cell. Raw JSON includes every timing plus output type, byte count, and SHA-256.
 
+Harness subprocesses use inline argv lists with shell parsing disabled. Revision arguments follow Git's end-of-options marker, and worktrees receive only full commit IDs resolved by Git.
+
 Default calls improved 74-80% and pretty calls 27-42%, while explicit compact calls regressed 45-61% from the resource-budget scan.
 
 An identical uv-managed CPython 3.15.0rc1 follow-up confirmed the result: default calls improved 75-80%, pretty calls improved 28-43%, and compact calls regressed 44-60%.

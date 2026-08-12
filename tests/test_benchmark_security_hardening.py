@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import ast
 from collections import Counter
+from pathlib import Path
 
 import benchmark_security_hardening as benchmark
 
@@ -55,3 +57,28 @@ def test_security_benchmark_covers_every_published_cell() -> None:
     assert benchmark._mode_kwargs("default") == {}
     assert benchmark._mode_kwargs("compact") == {"pretty": False}
     assert benchmark._mode_kwargs("pretty") == {"pretty": True}
+
+
+# @lat: [[tests#Performance benchmarks#Security benchmark subprocess commands stay structured]]
+def test_security_benchmark_subprocess_commands_stay_structured() -> None:
+    source = Path(benchmark.__file__).read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    subprocess_calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "subprocess"
+        and node.func.attr == "run"
+    ]
+
+    assert subprocess_calls
+    for call in subprocess_calls:
+        assert call.args and isinstance(call.args[0], ast.List)
+        shell_keyword = next(
+            (keyword for keyword in call.keywords if keyword.arg == "shell"), None
+        )
+        assert shell_keyword is not None
+        assert isinstance(shell_keyword.value, ast.Constant)
+        assert shell_keyword.value.value is False

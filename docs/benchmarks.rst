@@ -147,6 +147,8 @@ The deterministic benchmark used small, 100-record, and 1,000-record nested payl
 
 The committed harness contains the exact payloads, loop counts, worker order, timing code, and UTF-8 output checks. It creates detached temporary worktrees for both revisions and launches fresh workers in mirrored ABBA and BAAB orders. Two passes provide four workers per revision; 17 samples per worker yield 68 samples per revision and cell after five warmups per worker.
 
+Every child process receives an argv list with shell parsing disabled. User-supplied revision text follows Git's ``--end-of-options`` marker, and only the resulting full commit ID is passed to ``git worktree add``; no shell escaping is required.
+
 .. list-table::
    :header-rows: 1
    :widths: 24 18 20 20 18

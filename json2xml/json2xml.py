@@ -72,11 +72,12 @@ class Json2xml:
                 # Keep parser imports off the compact-output path, which returns serializer bytes directly.
                 from pyexpat import ExpatError
 
+                from defusedxml import DefusedXmlException
                 from defusedxml.minidom import parseString
 
                 try:
                     result = parseString(xml_data).toprettyxml(encoding="UTF-8").decode()
-                except ExpatError:
+                except (DefusedXmlException, ExpatError):
                     raise InvalidDataError
                 return result
             return xml_data

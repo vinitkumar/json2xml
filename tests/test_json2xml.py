@@ -8,6 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 import xmltodict
+from defusedxml import DefusedXmlException
 
 from json2xml import json2xml
 from json2xml.utils import (
@@ -228,6 +229,17 @@ class TestJson2xml:
     ) -> None:
         """Parser failures preserve the public InvalidDataError contract."""
         parse_string = Mock(side_effect=ExpatError("malformed XML"))
+        monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
+
+        with pytest.raises(InvalidDataError):
+            json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
+
+    # @lat: [[tests#Conversion behavior#Pretty printing rejects unsafe XML constructs]]
+    def test_pretty_print_defusedxml_errors_are_wrapped(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Hardened-parser rejections preserve the public InvalidDataError contract."""
+        parse_string = Mock(side_effect=DefusedXmlException("unsafe XML construct"))
         monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
 
         with pytest.raises(InvalidDataError):

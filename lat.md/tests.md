@@ -182,6 +182,10 @@ The public wrapper should return Unicode text for pretty output and UTF-8 bytes 
 
 Default library conversion should return serializer bytes without building a second DOM copy, while pretty printing remains available through an explicit opt-in.
 
+### Pretty printing rejects unsafe XML constructs
+
+Opt-in pretty printing should use the hardened defusedxml parser and translate its unsafe-construct rejections into the converter's public invalid-data error.
+
 ### Special keys force Python fallback
 
 Special dictionary keys such as `@attrs` and `@val` should bypass the Rust callable so the Python serializer can preserve legacy attribute semantics.

@@ -1,10 +1,127 @@
+from collections.abc import Mapping, Sequence
 from typing import Any
-
-__lazy_modules__ = ["defusedxml.minidom", "pyexpat"]
 
 from . import dicttoxml_fast as dicttoxml
 from .types import JSONValue
 from .utils import InvalidDataError
+
+DEFAULT_MAX_DEPTH = 100
+DEFAULT_MAX_ITEMS = 100_000
+DEFAULT_MAX_OUTPUT_BYTES = 10 * 1024 * 1024
+
+
+def _positive_limit(name: str, value: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
+def _validate_conversion_budget(
+    data: JSONValue, max_depth: int, max_items: int, max_output_bytes: int
+) -> None:
+    """Reject inputs whose structure or conservative encoded size exceeds a limit."""
+    stack: list[tuple[Any, int]] = [(data, 0)]
+    items = 0
+    estimated_bytes = 128
+    while stack:
+        value, depth = stack.pop()
+        items += 1
+        if items > max_items:
+            raise InvalidDataError("JSON item limit exceeded")
+        if depth > max_depth:
+            raise InvalidDataError("JSON nesting depth limit exceeded")
+        if isinstance(value, Mapping):
+            estimated_bytes += 256 * len(value)
+            for key, child in value.items():
+                estimated_bytes += 6 * len(str(key).encode("utf-8"))
+                stack.append((child, depth + 1))
+        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+            estimated_bytes += 128 * len(value)
+            stack.extend((child, depth + 1) for child in value)
+        else:
+            estimated_bytes += 6 * len(str(value).encode("utf-8")) + 128
+        if estimated_bytes > max_output_bytes:
+            raise InvalidDataError("XML output size limit exceeded")
+
+
+def _pretty_xml(xml_data: bytes, max_output_bytes: int) -> str:
+    """Indent generated XML without constructing or reparsing a DOM."""
+    text = xml_data.decode("utf-8")
+    if "<!DOCTYPE" in text.upper() or "<!ENTITY" in text.upper():
+        raise InvalidDataError("Unsafe XML declaration rejected")
+    tokens: list[str] = []
+    position = 0
+    while position < len(text):
+        opening = text.find("<", position)
+        if opening < 0:
+            tokens.append(text[position:])
+            break
+        if opening > position:
+            tokens.append(text[position:opening])
+        if text.startswith("<![CDATA[", opening):
+            closing = text.find("]]>", opening) + 3
+        elif text.startswith("<!--", opening):
+            closing = text.find("-->", opening) + 3
+        else:
+            quote: str | None = None
+            closing = opening + 1
+            while closing < len(text):
+                char = text[closing]
+                if char in {'"', "'"}:
+                    quote = None if quote == char else char if quote is None else quote
+                elif char == ">" and quote is None:
+                    closing += 1
+                    break
+                closing += 1
+        if closing <= 2 or closing > len(text):
+            raise InvalidDataError("Malformed XML generated")
+        tokens.append(text[opening:closing])
+        position = closing
+
+    lines: list[str] = []
+    depth = 0
+    output_bytes = 0
+    has_inline_content = False
+    for token in tokens:
+        if not token:
+            continue
+        if not token.startswith("<"):
+            if token.strip():
+                lines[-1] += token
+                output_bytes += len(token.encode("utf-8"))
+                has_inline_content = True
+            continue
+        if token.startswith("<![CDATA["):
+            lines[-1] += token
+            output_bytes += len(token.encode("utf-8"))
+            has_inline_content = True
+            continue
+        closing_tag = token.startswith("</")
+        markup = token.startswith("<?") or token.startswith("<!--")
+        self_closing = token.endswith("/>") or markup or token.startswith("<![CDATA[")
+        if closing_tag:
+            depth -= 1
+            if lines and has_inline_content:
+                lines[-1] += token
+                output_bytes += len(token.encode("utf-8"))
+                has_inline_content = False
+            else:
+                line = "  " * depth + token
+                lines.append(line)
+                output_bytes += len(line.encode("utf-8")) + 1
+        else:
+            line = "  " * depth + token
+            lines.append(line)
+            output_bytes += len(line.encode("utf-8")) + 1
+            if not self_closing:
+                depth += 1
+            has_inline_content = False
+        if output_bytes > max_output_bytes:
+            raise InvalidDataError("XML output size limit exceeded")
+    result = "\n".join(lines) + "\n"
+    if len(result.encode("utf-8")) > max_output_bytes:
+        raise InvalidDataError("XML output size limit exceeded")
+    return result
 
 
 # @lat: [[architecture#Core pipeline]]
@@ -15,12 +132,15 @@ class Json2xml:
         are serialized.
     :param wrapper: The root element name used when ``root`` is enabled.
     :param root: Include the XML declaration and root element.
-    :param pretty: Reparse and indent the serialized XML, returning text instead of bytes.
+    :param pretty: Indent serialized XML without a DOM, returning text instead of bytes.
     :param attr_type: Add each value's JSON type as an XML attribute.
     :param item_wrap: Wrap list members in ``<item>`` elements.
     :param xpath_format: Emit the W3C XPath 3.1 JSON-to-XML representation.
     :param cdata: Wrap string values in CDATA sections.
     :param list_headers: Repeat the parent element for nested dictionary items in lists.
+    :param max_depth: Maximum JSON container nesting depth.
+    :param max_items: Maximum total number of JSON values and containers.
+    :param max_output_bytes: Maximum compact or pretty UTF-8 XML size.
     """
     def __init__(
         self,
@@ -33,6 +153,9 @@ class Json2xml:
         xpath_format: bool = False,
         cdata: bool = False,
         list_headers: bool = False,
+        max_depth: int = DEFAULT_MAX_DEPTH,
+        max_items: int = DEFAULT_MAX_ITEMS,
+        max_output_bytes: int = DEFAULT_MAX_OUTPUT_BYTES,
     ):
         self.data = data
         self.pretty = pretty
@@ -43,6 +166,9 @@ class Json2xml:
         self.xpath_format = xpath_format
         self.cdata = cdata
         self.list_headers = list_headers
+        self.max_depth = _positive_limit("max_depth", max_depth)
+        self.max_items = _positive_limit("max_items", max_items)
+        self.max_output_bytes = _positive_limit("max_output_bytes", max_output_bytes)
 
     # @lat: [[behavior#Conversion output]]
     # @lat: [[behavior#Invalid XML payloads]]
@@ -51,10 +177,13 @@ class Json2xml:
 
         :return: Pretty-printed XML text when ``pretty`` is enabled, UTF-8 encoded XML bytes
             otherwise, or ``None`` when the configured data is ``None``.
-        :raises InvalidDataError: If serialization rejects the data or pretty-print parsing finds
-            malformed XML.
+        :raises InvalidDataError: If a conversion limit is exceeded or serialization/formatting
+            rejects the data.
         """
         if self.data is not None:
+            _validate_conversion_budget(
+                self.data, self.max_depth, self.max_items, self.max_output_bytes
+            )
             try:
                 xml_data = dicttoxml.dicttoxml(
                     self.data,
@@ -68,17 +197,9 @@ class Json2xml:
                 )
             except ValueError as error:
                 raise InvalidDataError from error
+            if len(xml_data) > self.max_output_bytes:
+                raise InvalidDataError("XML output size limit exceeded")
             if self.pretty:
-                # Keep parser imports off the compact-output path, which returns serializer bytes directly.
-                from pyexpat import ExpatError
-
-                from defusedxml import DefusedXmlException
-                from defusedxml.minidom import parseString
-
-                try:
-                    result = parseString(xml_data).toprettyxml(encoding="UTF-8").decode()
-                except (DefusedXmlException, ExpatError):
-                    raise InvalidDataError
-                return result
+                return _pretty_xml(xml_data, self.max_output_bytes)
             return xml_data
         return None

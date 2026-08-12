@@ -6,7 +6,7 @@ This file documents the main execution paths that turn JSON input into XML outpu
 
 The standard pipeline reads JSON into Python objects, passes that data through [[json2xml/json2xml.py#Json2xml]], and delegates serialization through the fast backend selector in [[json2xml/dicttoxml_fast.py#dicttoxml]].
 
-Library callers usually construct [[json2xml/json2xml.py#Json2xml]] with decoded JSON data. CLI callers reach the same conversion path through [[json2xml/cli.py#read_input]], which resolves the input source before creating the converter. Pretty output is produced by reparsing the generated XML so callers get indented text when requested.
+Library callers usually construct [[json2xml/json2xml.py#Json2xml]] with decoded JSON data. CLI callers reach the same bounded conversion path through [[json2xml/cli.py#read_input]]. Pretty output is indented lexically without constructing a DOM.
 
 ## Conversion engine
 

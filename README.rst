@@ -260,6 +260,10 @@ Custom Wrappers and Indentation
 
 By default, a wrapper `all` and compact output (``pretty=False``) are set. Pretty printing can be enabled explicitly:
 
+Conversions also default to a nesting limit of 100, an item limit of 100,000,
+and a 10 MiB XML output limit. Pass ``max_depth``, ``max_items``, or
+``max_output_bytes`` to choose smaller budgets for untrusted workloads.
+
 .. code-block:: python
 
     from json2xml import json2xml

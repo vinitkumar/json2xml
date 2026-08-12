@@ -40,9 +40,9 @@ When `xpath_format=True`, [[json2xml/dicttoxml.py#dicttoxml]] delegates payload 
 
 ## Invalid XML payloads
 
-Opt-in pretty printing acts as a validation step, because the formatter reparses the generated XML before returning it.
+Opt-in pretty printing indents trusted serializer output without constructing a second XML DOM.
 
-[[json2xml/json2xml.py#Json2xml#to_xml]] imports the hardened `defusedxml.minidom.parseString` only for pretty output, then reparses before `toprettyxml`. Malformed XML and unsafe constructs rejected by defusedxml are exposed as `InvalidDataError`.
+[[json2xml/json2xml.py#Json2xml#to_xml]] rejects excessive depth, item counts, conservative output estimates, and exact encoded output sizes. Its lexical formatter rejects malformed markup, DTDs, and entities while enforcing the pretty-output byte limit.
 
 ## XML output safety
 

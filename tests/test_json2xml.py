@@ -223,21 +223,53 @@ class TestJson2xml:
             json2xml.Json2xml({"bad": decoded}).to_xml()
         assert pytest_wrapped_e.type == InvalidDataError
 
-    def test_pretty_print_parser_errors_are_wrapped(
+    def test_pretty_print_rejects_malformed_generated_xml(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Parser failures preserve the public InvalidDataError contract."""
-        parse_string = Mock(side_effect=ExpatError("malformed XML"))
-        monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
+        """The streaming formatter rejects unterminated generated markup."""
+        monkeypatch.setattr(
+            "json2xml.json2xml.dicttoxml.dicttoxml",
+            Mock(return_value=b"<root><broken"),
+        )
 
         with pytest.raises(InvalidDataError):
             json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
+
+    # @lat: [[tests#Conversion behavior#Conversion resource limits]]
+    @pytest.mark.parametrize(
+        ("data", "limits"),
+        [
+            ({"a": {"b": {"c": 1}}}, {"max_depth": 2}),
+            ([1, 2, 3], {"max_items": 3}),
+            ({"value": "x" * 100}, {"max_output_bytes": 100}),
+        ],
+    )
+    def test_conversion_resource_limits(
+        self, data: Any, limits: dict[str, int]
+    ) -> None:
+        """Depth, item, and conservative output budgets reject work before rendering."""
+        with pytest.raises(InvalidDataError):
+            json2xml.Json2xml(data, **limits).to_xml()
+
+    # @lat: [[tests#Conversion behavior#Pretty printing avoids DOM reparsing]]
+    def test_pretty_print_does_not_reparse_a_dom(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Pretty output uses bounded lexical indentation without an XML DOM parser."""
+        parse_string = Mock(side_effect=AssertionError("DOM parser must not run"))
+        monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
+
+        result = json2xml.Json2xml({"name": "Ada"}, pretty=True).to_xml()
+
+        assert isinstance(result, str)
+        assert "\n  <name" in result
+        parse_string.assert_not_called()
 
     # @lat: [[tests#Conversion behavior#Pretty printing rejects unsafe XML constructs]]
     def test_pretty_print_rejects_entity_expansion_payload(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """The real hardened parser rejects exponential entities before expansion."""
+        """The bounded formatter rejects exponential entities before expansion."""
         entity_declarations = ['<!ENTITY lol0 "lol">']
         for level in range(1, 10):
             references = f"&lol{level - 1};" * 10

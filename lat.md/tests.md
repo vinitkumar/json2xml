@@ -184,7 +184,15 @@ Default library conversion should return serializer bytes without building a sec
 
 ### Pretty printing rejects unsafe XML constructs
 
-Opt-in pretty printing should reject an exponential entity-expansion payload with the hardened defusedxml parser and expose its rejection as the converter's public invalid-data error.
+Opt-in pretty printing should reject an exponential entity-expansion payload before indentation and expose the rejection as the converter's public invalid-data error.
+
+### Conversion resource limits
+
+Conversion should reject excessive nesting, item counts, and conservative output estimates before serialization, then enforce the exact byte limit on compact and pretty results.
+
+### Pretty printing avoids DOM reparsing
+
+Pretty output should use bounded lexical indentation over trusted serializer output instead of constructing a second in-memory XML DOM.
 
 ### Special keys force Python fallback
 

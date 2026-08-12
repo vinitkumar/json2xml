@@ -91,6 +91,46 @@ This rerun compares the same CLI workload across uv-managed CPython 3.14.6, CPyt
 - **Go remained the fastest CLI path overall**, mainly because the conversion work dominates process startup once the payload gets large.
 - These numbers are **end-to-end subprocess timings**, not isolated serializer throughput, so interpreter startup and environment activation costs are part of the result by design.
 
+### Security Hardening Benchmark (August 12, 2026)
+
+This comparison measures the public `Json2xml(...).to_xml()` path before and after conversion limits, lexical pretty printing, and compact output by default were added.
+
+It compares pre-hardening commit `826439f` with hardened `master` at `48dfd38`. The direct `dicttoxml` serializer did not change between these revisions, so `benchmark_all.py` would not expose the wrapper cost.
+
+#### Method
+
+- Apple Silicon, macOS 26.6.1, CPython 3.14.6.
+- Deterministic small, 100-record, and 1,000-record nested payloads.
+- Default, explicit `pretty=False`, and explicit `pretty=True` calls.
+- Five warmups per worker and 68 timed samples per cell across four fresh workers per revision.
+- Revisions were interleaved in ABBA order to reduce thermal and scheduler bias.
+
+#### CPython Results
+
+Each timing is the median public-API conversion time. “Faster” and “slower” compare hardened `master` with the pre-hardening revision.
+
+| Workload | Mode | Pre-hardening | Hardened master | Change |
+|----------|------|--------------:|----------------:|-------:|
+| Small | Default | 24.1µs | 6.3µs | **74.0% faster** |
+| Small | Compact | 4.4µs | 6.4µs | **44.9% slower** |
+| Small | Pretty | 24.3µs | 15.1µs | **38.0% faster** |
+| 100 records | Default | 7.07ms | 1.80ms | **74.6% faster** |
+| 100 records | Compact | 1.14ms | 1.83ms | **60.6% slower** |
+| 100 records | Pretty | 6.87ms | 5.04ms | **26.7% faster** |
+| 1,000 records | Default | 86.79ms | 17.44ms | **79.9% faster** |
+| 1,000 records | Compact | 10.92ms | 17.40ms | **59.3% slower** |
+| 1,000 records | Pretty | 85.03ms | 49.26ms | **42.1% faster** |
+
+#### Interpretation
+
+Default calls are roughly 4-5x faster because they now return compact serializer bytes instead of building pretty output. This comparison includes the intentional default-output contract change.
+
+Explicit pretty output is 27-42% faster because bounded lexical indentation replaces DOM parsing. Its formatting and encoded size differ from the old `minidom` output.
+
+Explicit compact output is 45-61% slower. Compact bytes were identical across revisions, and the serializer was unchanged, isolating the regression mainly to the new full-input resource-budget scan.
+
+PyPy 3.10.16 corroborated the tradeoff: default calls were 73-87% faster, pretty calls were 42-72% faster, and compact calls were 31-35% slower.
+
 ## Key Observations
 
 ### 1. Rust Extension is the Best Choice for Python Users 🦀

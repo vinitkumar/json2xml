@@ -8,7 +8,6 @@ from unittest.mock import Mock
 
 import pytest
 import xmltodict
-from defusedxml import DefusedXmlException
 
 from json2xml import json2xml
 from json2xml.utils import (

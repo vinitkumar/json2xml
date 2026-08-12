@@ -62,6 +62,8 @@ The August 2026 public-wrapper benchmark compares pre-hardening `826439f` with h
 
 Default calls improved 74-80% and pretty calls 27-42%, while explicit compact calls regressed 45-61% from the resource-budget scan.
 
+An identical uv-managed CPython 3.15.0rc1 follow-up confirmed the result: default calls improved 75-80%, pretty calls improved 28-43%, and compact calls regressed 44-60%.
+
 The June 2026 Rust memory benchmark uses [[benchmark_memory_rust.py#main]] under hyperfine to compare release builds in fresh Python processes. The bytes-writer implementation cuts serializer peak RSS by about half for large outputs, with a documented throughput tradeoff.
 
 The June 2026 multi-interpreter CLI rerun uses [[benchmark_multi_python.py#main]] with per-interpreter virtual environments. On the recorded Apple Silicon run, CPython 3.15.0rc1 beat CPython 3.14.6 on every case, PyPy 3.11.15 only won the largest case, and Go remained the fastest end-to-end CLI path overall.

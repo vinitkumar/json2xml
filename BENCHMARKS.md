@@ -99,7 +99,8 @@ It compares pre-hardening commit `826439f` with hardened `master` at `48dfd38`. 
 
 #### Method
 
-- Apple Silicon, macOS 26.6.1, CPython 3.14.6.
+- Apple Silicon and macOS 26.6.1, with CPython 3.14.6 for the primary run.
+- CPython 3.15.0rc1 follow-up downloaded and managed by uv 0.12.3.
 - Deterministic small, 100-record, and 1,000-record nested payloads.
 - Default, explicit `pretty=False`, and explicit `pretty=True` calls.
 - Five warmups per worker and 68 timed samples per cell across four fresh workers per revision.
@@ -121,6 +122,22 @@ Each timing is the median public-API conversion time. “Faster” and “slower
 | 1,000 records | Compact | 10.92ms | 17.40ms | **59.3% slower** |
 | 1,000 records | Pretty | 85.03ms | 49.26ms | **42.1% faster** |
 
+#### CPython 3.15.0rc1 Results
+
+The rc1 follow-up uses the same payloads, modes, warmups, sample counts, worker isolation, and ABBA revision ordering as the CPython 3.14.6 run.
+
+| Workload | Mode | Pre-hardening | Hardened master | Change |
+|----------|------|--------------:|----------------:|-------:|
+| Small | Default | 24.7µs | 6.2µs | **74.8% faster** |
+| Small | Compact | 4.4µs | 6.4µs | **44.0% slower** |
+| Small | Pretty | 24.7µs | 14.8µs | **40.0% faster** |
+| 100 records | Default | 7.13ms | 1.75ms | **75.5% faster** |
+| 100 records | Compact | 1.09ms | 1.75ms | **60.3% slower** |
+| 100 records | Pretty | 6.85ms | 4.96ms | **27.5% faster** |
+| 1,000 records | Default | 88.01ms | 17.24ms | **80.4% faster** |
+| 1,000 records | Compact | 10.90ms | 17.21ms | **57.8% slower** |
+| 1,000 records | Pretty | 88.83ms | 50.46ms | **43.2% faster** |
+
 #### Interpretation
 
 Default calls are roughly 4-5x faster because they now return compact serializer bytes instead of building pretty output. This comparison includes the intentional default-output contract change.
@@ -128,6 +145,8 @@ Default calls are roughly 4-5x faster because they now return compact serializer
 Explicit pretty output is 27-42% faster because bounded lexical indentation replaces DOM parsing. Its formatting and encoded size differ from the old `minidom` output.
 
 Explicit compact output is 45-61% slower. Compact bytes were identical across revisions, and the serializer was unchanged, isolating the regression mainly to the new full-input resource-budget scan.
+
+CPython 3.15.0rc1 reproduces the same tradeoff: default and pretty output improve substantially, while explicit compact conversion pays for the security scan.
 
 PyPy 3.10.16 corroborated the tradeoff: default calls were 73-87% faster, pretty calls were 42-72% faster, and compact calls were 31-35% slower.
 

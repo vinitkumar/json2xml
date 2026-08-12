@@ -141,7 +141,7 @@ Security Hardening Benchmark
 
 This August 12, 2026 comparison measures the public ``Json2xml(...).to_xml()`` path before and after conversion limits, lexical pretty printing, and compact output by default were added.
 
-It compares pre-hardening commit ``826439f`` with hardened ``master`` at ``48dfd38`` on Apple Silicon, macOS 26.6.1, and CPython 3.14.6.
+It compares pre-hardening commit ``826439f`` with hardened ``master`` at ``48dfd38`` on Apple Silicon and macOS 26.6.1. The primary run used CPython 3.14.6.
 
 The deterministic benchmark used small, 100-record, and 1,000-record nested payloads. Each cell reports the median of 68 timed samples across four fresh workers per revision, interleaved in ABBA order after five warmups.
 
@@ -200,9 +200,71 @@ The deterministic benchmark used small, 100-record, and 1,000-record nested payl
      - 49.26ms
      - **42.1% faster**
 
+CPython 3.15.0rc1 Follow-up
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+uv 0.12.3 downloaded and managed the exact ``cpython-3.15.0rc1-macos-aarch64-none`` build. The follow-up uses the same payloads, modes, warmups, sample counts, worker isolation, and ABBA ordering.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 24 18 20 20 18
+
+   * - Workload
+     - Mode
+     - Pre-hardening
+     - Hardened master
+     - Change
+   * - Small
+     - Default
+     - 24.7µs
+     - 6.2µs
+     - **74.8% faster**
+   * - Small
+     - Compact
+     - 4.4µs
+     - 6.4µs
+     - **44.0% slower**
+   * - Small
+     - Pretty
+     - 24.7µs
+     - 14.8µs
+     - **40.0% faster**
+   * - 100 records
+     - Default
+     - 7.13ms
+     - 1.75ms
+     - **75.5% faster**
+   * - 100 records
+     - Compact
+     - 1.09ms
+     - 1.75ms
+     - **60.3% slower**
+   * - 100 records
+     - Pretty
+     - 6.85ms
+     - 4.96ms
+     - **27.5% faster**
+   * - 1,000 records
+     - Default
+     - 88.01ms
+     - 17.24ms
+     - **80.4% faster**
+   * - 1,000 records
+     - Compact
+     - 10.90ms
+     - 17.21ms
+     - **57.8% slower**
+   * - 1,000 records
+     - Pretty
+     - 88.83ms
+     - 50.46ms
+     - **43.2% faster**
+
 Default calls are roughly 4-5x faster because they now return compact serializer bytes. Explicit pretty output is 27-42% faster because lexical indentation replaces DOM parsing.
 
 Explicit compact output is 45-61% slower. Its bytes were identical and the serializer was unchanged, isolating the regression mainly to the new full-input resource-budget scan.
+
+CPython 3.15.0rc1 reproduces the same tradeoff: default and pretty output improve substantially, while explicit compact conversion pays for the security scan.
 
 PyPy 3.10.16 corroborated the tradeoff: default calls were 73-87% faster, pretty calls were 42-72% faster, and compact calls were 31-35% slower.
 

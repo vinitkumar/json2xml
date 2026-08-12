@@ -184,7 +184,7 @@ Default library conversion should return serializer bytes without building a sec
 
 ### Pretty printing rejects unsafe XML constructs
 
-Opt-in pretty printing should use the hardened defusedxml parser and translate its unsafe-construct rejections into the converter's public invalid-data error.
+Opt-in pretty printing should reject an exponential entity-expansion payload with the hardened defusedxml parser and expose its rejection as the converter's public invalid-data error.
 
 ### Special keys force Python fallback
 

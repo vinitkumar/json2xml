@@ -235,12 +235,23 @@ class TestJson2xml:
             json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
 
     # @lat: [[tests#Conversion behavior#Pretty printing rejects unsafe XML constructs]]
-    def test_pretty_print_defusedxml_errors_are_wrapped(
+    def test_pretty_print_rejects_entity_expansion_payload(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Hardened-parser rejections preserve the public InvalidDataError contract."""
-        parse_string = Mock(side_effect=DefusedXmlException("unsafe XML construct"))
-        monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
+        """The real hardened parser rejects exponential entities before expansion."""
+        entity_declarations = ['<!ENTITY lol0 "lol">']
+        for level in range(1, 10):
+            references = f"&lol{level - 1};" * 10
+            entity_declarations.append(f'<!ENTITY lol{level} "{references}">')
+        malicious_xml = (
+            '<?xml version="1.0"?>'
+            f'<!DOCTYPE lolz [{"".join(entity_declarations)}]>'
+            '<lolz>&lol9;</lolz>'
+        ).encode()
+        monkeypatch.setattr(
+            "json2xml.json2xml.dicttoxml.dicttoxml",
+            Mock(return_value=malicious_xml),
+        )
 
         with pytest.raises(InvalidDataError):
             json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()

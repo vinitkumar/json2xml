@@ -235,6 +235,27 @@ class TestJson2xml:
         with pytest.raises(InvalidDataError):
             json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
 
+    @pytest.mark.parametrize(
+        "malformed_xml",
+        [
+            b"<root><child></root>",
+            b"<root>",
+            b"<root><![CDATA[unterminated</root>",
+            b"<root><!-- unterminated</root>",
+        ],
+    )
+    def test_pretty_print_rejects_unbalanced_generated_xml(
+        self, monkeypatch: pytest.MonkeyPatch, malformed_xml: bytes
+    ) -> None:
+        """Lexical indentation rejects mismatched, unclosed, and unterminated markup."""
+        monkeypatch.setattr(
+            "json2xml.json2xml.dicttoxml.dicttoxml",
+            Mock(return_value=malformed_xml),
+        )
+
+        with pytest.raises(InvalidDataError, match="Malformed XML generated"):
+            json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
+
     # @lat: [[tests#Conversion behavior#Conversion resource limits]]
     @pytest.mark.parametrize(
         ("data", "limits"),

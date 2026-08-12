@@ -192,7 +192,7 @@ Conversion should reject excessive nesting, item counts, and conservative output
 
 ### Pretty printing avoids DOM reparsing
 
-Pretty output should use bounded lexical indentation over trusted serializer output instead of constructing a second in-memory XML DOM.
+Pretty output should use bounded lexical indentation over trusted serializer output instead of constructing a second DOM, rejecting unterminated, mismatched, or unclosed markup.
 
 ### Special keys force Python fallback
 

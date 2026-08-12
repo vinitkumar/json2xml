@@ -59,21 +59,27 @@ def _pretty_xml(xml_data: bytes, max_output_bytes: int) -> str:
         if opening > position:
             tokens.append(text[position:opening])
         if text.startswith("<![CDATA[", opening):
-            closing = text.find("]]>", opening) + 3
+            terminator = text.find("]]>", opening)
+            closing = terminator + 3 if terminator >= 0 else -1
         elif text.startswith("<!--", opening):
-            closing = text.find("-->", opening) + 3
+            terminator = text.find("-->", opening)
+            closing = terminator + 3 if terminator >= 0 else -1
         else:
             quote: str | None = None
             closing = opening + 1
+            terminated = False
             while closing < len(text):
                 char = text[closing]
                 if char in {'"', "'"}:
                     quote = None if quote == char else char if quote is None else quote
                 elif char == ">" and quote is None:
                     closing += 1
+                    terminated = True
                     break
                 closing += 1
-        if closing <= 2 or closing > len(text):
+            if not terminated:
+                closing = -1
+        if closing < 0 or closing > len(text):
             raise InvalidDataError("Malformed XML generated")
         tokens.append(text[opening:closing])
         position = closing
@@ -82,6 +88,7 @@ def _pretty_xml(xml_data: bytes, max_output_bytes: int) -> str:
     depth = 0
     output_bytes = 0
     has_inline_content = False
+    open_elements: list[str] = []
     for token in tokens:
         if not token:
             continue
@@ -100,6 +107,9 @@ def _pretty_xml(xml_data: bytes, max_output_bytes: int) -> str:
         markup = token.startswith("<?") or token.startswith("<!--")
         self_closing = token.endswith("/>") or markup or token.startswith("<![CDATA[")
         if closing_tag:
+            element_name = token[2:-1].strip()
+            if not open_elements or open_elements.pop() != element_name:
+                raise InvalidDataError("Malformed XML generated")
             depth -= 1
             if lines and has_inline_content:
                 lines[-1] += token
@@ -114,10 +124,16 @@ def _pretty_xml(xml_data: bytes, max_output_bytes: int) -> str:
             lines.append(line)
             output_bytes += len(line.encode("utf-8")) + 1
             if not self_closing:
+                element_name = token[1:].split(None, 1)[0].rstrip(">")
+                if not element_name or token.startswith("<!"):
+                    raise InvalidDataError("Malformed XML generated")
+                open_elements.append(element_name)
                 depth += 1
             has_inline_content = False
         if output_bytes > max_output_bytes:
             raise InvalidDataError("XML output size limit exceeded")
+    if open_elements or depth != 0:
+        raise InvalidDataError("Malformed XML generated")
     result = "\n".join(lines) + "\n"
     if len(result.encode("utf-8")) > max_output_bytes:
         raise InvalidDataError("XML output size limit exceeded")

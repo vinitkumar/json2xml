@@ -78,6 +78,18 @@ The multi-interpreter benchmark should derive default interpreter paths from `JS
 
 The multi-interpreter benchmark should let per-interpreter environment variables override uv-derived defaults so unusual local layouts remain runnable without editing the script.
 
+### Security benchmark payloads stay deterministic
+
+The public-wrapper benchmark should build the documented small and index-derived nested record payloads exactly so reruns use identical inputs without an external random seed.
+
+### Security benchmark schedule yields 68 samples
+
+The public-wrapper benchmark should run mirrored ABBA and BAAB worker orders with 17 samples per worker, yielding 68 balanced observations for each revision and cell.
+
+### Security benchmark covers every published cell
+
+The public-wrapper benchmark should retain the documented small, 100-record, and 1,000-record loop counts in default, compact, and pretty modes.
+
 ## Conversion behavior
 
 These tests pin the XML shapes that matter most for interoperability, especially the modes that intentionally diverge from the default serializer.

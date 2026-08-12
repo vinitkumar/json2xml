@@ -58,7 +58,9 @@ The May 2026 benchmark on Apple Silicon shows the Rust extension as the best opt
 
 Reproduction docs require contributors to record machine, OS, Python, and tool availability before comparing results. `benchmark_all.py` mixes library calls and CLI subprocesses intentionally, so its Go and Zig rows include process startup overhead.
 
-The August 2026 public-wrapper benchmark compares pre-hardening `826439f` with hardened `48dfd38` using ABBA-interleaved CPython 3.14 samples.
+The August 2026 public-wrapper benchmark uses [[benchmark_security_hardening.py#main]] to compare pre-hardening `826439f` with hardened `48dfd38` using fresh ABBA/BAAB-interleaved workers.
+
+Its [[benchmark_security_hardening.py#make_payload]] generator derives every field from a record index, while four workers × 17 samples give each revision 68 observations per cell. Raw JSON includes every timing plus output type, byte count, and SHA-256.
 
 Default calls improved 74-80% and pretty calls 27-42%, while explicit compact calls regressed 45-61% from the resource-budget scan.
 

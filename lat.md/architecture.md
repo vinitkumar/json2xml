@@ -6,7 +6,7 @@ This file documents the main execution paths that turn JSON input into XML outpu
 
 The standard pipeline reads JSON into Python objects, passes that data through [[json2xml/json2xml.py#Json2xml]], and delegates serialization through the fast backend selector in [[json2xml/dicttoxml_fast.py#dicttoxml]].
 
-Library callers usually construct [[json2xml/json2xml.py#Json2xml]] with decoded JSON data. CLI callers reach the same conversion path through [[json2xml/cli.py#read_input]], which resolves the input source before creating the converter. Pretty output is produced by reparsing the generated XML so callers get indented text when requested.
+Library callers usually construct [[json2xml/json2xml.py#Json2xml]] with decoded JSON data. CLI callers reach the same bounded conversion path through [[json2xml/cli.py#read_input]]. Pretty output is indented lexically without constructing a DOM.
 
 ## Conversion engine
 
@@ -37,6 +37,12 @@ The Rust extension crate targets the Rust 2024 edition and pins `rust-version` t
 The Cargo feature layout separates normal Rust/PyO3 tests from extension-module builds. `cargo test` uses the default `python` feature without extension-module linking, while maturin enables the `extension-module` feature for wheel builds.
 
 Release and CI workflows install the pinned Rust toolchain before building wheels or running Rust checks, so hosted runners do not silently use an older default compiler. The macOS release build also provisions Python 3.10 explicitly so maturin emits wheels for the oldest supported interpreter even when runner images omit it.
+
+## Development checks
+
+Make-based lint, type-check, and Python test targets run through uv's locked development environment so results do not depend on globally installed tools or optional extensions.
+
+The shared `UV_RUN` command installs the `dev` extra from `uv.lock`. The type-check target overlays `ty`, while test targets use the same isolated dependency set and leave Rust extension integration to its dedicated workflow.
 
 ## Release packaging
 

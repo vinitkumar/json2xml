@@ -25,6 +25,7 @@ endef
 export PRINT_HELP_PYSCRIPT
 
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
+UV_RUN := uv run --locked --extra dev
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
@@ -51,19 +52,19 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr coverage/
 
 lint: ## check style with ruff
-	ruff check json2xml tests
+	$(UV_RUN) ruff check json2xml tests
 
 lint-fix: ## automatically fix ruff issues
-	ruff check --fix json2xml tests
+	$(UV_RUN) ruff check --fix json2xml tests
 
 typecheck: ## check types with ty
-	uvx ty check json2xml tests
+	$(UV_RUN) --with ty ty check json2xml tests
 
-test: ## run tests quickly with the default Python
-	pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term --cov-fail-under=100 -xvs tests
+test: ## run tests with the locked development environment
+	$(UV_RUN) pytest --cov=json2xml --cov-report=xml:coverage/reports/coverage.xml --cov-report=term --cov-fail-under=100 -xvs tests
 
 test-simple: ## run tests without coverage
-	pytest -vv tests
+	$(UV_RUN) pytest -vv tests
 
 test-rust: ## run Rust tests
 	cd rust && cargo test

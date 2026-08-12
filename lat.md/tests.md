@@ -178,6 +178,24 @@ The public `Json2xml` wrapper should delegate through the fast backend selector 
 
 The public wrapper should return Unicode text for pretty output and UTF-8 bytes for compact output so callers can rely on the documented `to_xml()` type contract.
 
+### Compact output is the safe default
+
+Default library conversion should return serializer bytes without building a second DOM copy, while pretty printing remains available through an explicit opt-in.
+
+### Pretty printing rejects unsafe XML constructs
+
+Opt-in pretty printing should reject an exponential entity-expansion payload before indentation and expose the rejection as the converter's public invalid-data error.
+
+### Conversion resource limits
+
+Conversion should reject excessive nesting, item counts, and conservative output estimates before serialization, then enforce the exact byte limit on compact and pretty results.
+
+Limit validation rejects booleans, non-integers, and non-positive values. Tests cover preflight estimates, exact backend bytes, and indentation added only by pretty output.
+
+### Pretty printing avoids DOM reparsing
+
+Pretty output should use bounded lexical indentation over trusted serializer output instead of constructing a second DOM, rejecting unterminated, mismatched, or unclosed markup.
+
 ### Special keys force Python fallback
 
 Special dictionary keys such as `@attrs` and `@val` should bypass the Rust callable so the Python serializer can preserve legacy attribute semantics.

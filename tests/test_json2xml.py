@@ -3,13 +3,14 @@
 """Tests for `json2xml` package."""
 
 from pyexpat import ExpatError
-from typing import Any
+from typing import Any, TypedDict
 from unittest.mock import Mock
 
 import pytest
 import xmltodict
 
 from json2xml import json2xml
+from json2xml.json2xml import _positive_limit, _pretty_xml
 from json2xml.utils import (
     InvalidDataError,
     JSONReadError,
@@ -17,6 +18,14 @@ from json2xml.utils import (
     readfromjson,
     readfromstring,
 )
+
+
+class _ConversionLimits(TypedDict, total=False):
+    """Keyword limits accepted by ``Json2xml`` resource-bound tests."""
+
+    max_depth: int
+    max_items: int
+    max_output_bytes: int
 
 
 class TestJson2xml:
@@ -73,6 +82,20 @@ class TestJson2xml:
         xmldata = json2xml.Json2xml(data).to_xml()
         dict_from_xml = xmltodict.parse(xmldata)
         assert isinstance(dict_from_xml["all"], dict)
+
+    # @lat: [[tests#Conversion behavior#Compact output is the safe default]]
+    def test_json_to_xml_defaults_to_compact_output(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Default conversion avoids reparsing attacker-controlled output into a DOM."""
+        parse_string = Mock(side_effect=AssertionError("pretty parser should not run"))
+        monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
+
+        xmldata = json2xml.Json2xml({"name": "Ada"}).to_xml()
+
+        assert isinstance(xmldata, bytes)
+        assert b'<name type="str">Ada</name>' in xmldata
+        parse_string.assert_not_called()
 
     def test_json_to_xml_empty_data_conversion(self) -> None:
         data = None
@@ -209,15 +232,161 @@ class TestJson2xml:
             json2xml.Json2xml({"bad": decoded}).to_xml()
         assert pytest_wrapped_e.type == InvalidDataError
 
-    def test_pretty_print_parser_errors_are_wrapped(
+    def test_pretty_print_rejects_malformed_generated_xml(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Parser failures preserve the public InvalidDataError contract."""
-        parse_string = Mock(side_effect=ExpatError("malformed XML"))
-        monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
+        """The streaming formatter rejects unterminated generated markup."""
+        monkeypatch.setattr(
+            "json2xml.json2xml.dicttoxml.dicttoxml",
+            Mock(return_value=b"<root><broken"),
+        )
 
         with pytest.raises(InvalidDataError):
-            json2xml.Json2xml({"valid": "data"}).to_xml()
+            json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
+
+    @pytest.mark.parametrize(
+        "malformed_xml",
+        [
+            b"<root><child></root>",
+            b"<root>",
+            b"<root><![CDATA[unterminated</root>",
+            b"<root><!-- unterminated</root>",
+        ],
+    )
+    def test_pretty_print_rejects_unbalanced_generated_xml(
+        self, monkeypatch: pytest.MonkeyPatch, malformed_xml: bytes
+    ) -> None:
+        """Lexical indentation rejects mismatched, unclosed, and unterminated markup."""
+        monkeypatch.setattr(
+            "json2xml.json2xml.dicttoxml.dicttoxml",
+            Mock(return_value=malformed_xml),
+        )
+
+        with pytest.raises(InvalidDataError, match="Malformed XML generated"):
+            json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
+
+    # @lat: [[tests#Conversion behavior#Conversion resource limits]]
+    @pytest.mark.parametrize(
+        ("data", "limits"),
+        [
+            ({"a": {"b": {"c": 1}}}, {"max_depth": 2}),
+            ([1, 2, 3], {"max_items": 3}),
+            ({"value": "x" * 100}, {"max_output_bytes": 100}),
+        ],
+    )
+    def test_conversion_resource_limits(
+        self, data: Any, limits: _ConversionLimits
+    ) -> None:
+        """Depth, item, and conservative output budgets reject work before rendering."""
+        with pytest.raises(InvalidDataError):
+            json2xml.Json2xml(data, **limits).to_xml()
+
+    @pytest.mark.parametrize("value", [0, -1, True, 1.5, "10"])
+    def test_conversion_resource_limits_require_positive_integers(
+        self, value: Any
+    ) -> None:
+        """Every public conversion budget rejects booleans and non-positive/non-integers."""
+        with pytest.raises(ValueError, match="max_depth must be a positive integer"):
+            json2xml.Json2xml({}, max_depth=value)  # type: ignore[arg-type]
+
+    def test_positive_limit_accepts_positive_integer(self) -> None:
+        """The common limit validator returns valid integer budgets unchanged."""
+        assert _positive_limit("limit", 1) == 1
+
+    def test_exact_compact_output_limit_is_enforced_after_backend_render(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Backend output cannot bypass the exact encoded-byte limit."""
+        monkeypatch.setattr(
+            "json2xml.json2xml.dicttoxml.dicttoxml",
+            Mock(return_value=b"x" * 201),
+        )
+
+        with pytest.raises(InvalidDataError, match="XML output size limit exceeded"):
+            json2xml.Json2xml({}, max_output_bytes=200).to_xml()
+
+    def test_pretty_output_limit_counts_indentation(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Pretty-only whitespace is included in the exact output byte budget."""
+        compact = b"<r>" * 10 + b"</r>" * 10
+        monkeypatch.setattr(
+            "json2xml.json2xml.dicttoxml.dicttoxml", Mock(return_value=compact)
+        )
+
+        with pytest.raises(InvalidDataError, match="XML output size limit exceeded"):
+            json2xml.Json2xml({}, pretty=True, max_output_bytes=200).to_xml()
+
+    def test_pretty_formatter_handles_supported_markup(self) -> None:
+        """Declaration, quoted attributes, comments, CDATA, and empty tags stay intact."""
+        xml = (
+            b'<?xml version="1.0"?><root attr=">">'
+            b"<!--note--><value><![CDATA[a<b]]></value><empty/></root>"
+        )
+
+        result = _pretty_xml(xml, 1_000)
+
+        assert '<root attr=">">' in result
+        assert "  <!--note-->" in result
+        assert "<value><![CDATA[a<b]]></value>" in result
+        assert "  <empty/>" in result
+
+    def test_pretty_formatter_rejects_trailing_text_and_unknown_declarations(
+        self
+    ) -> None:
+        """Text outside the root and unsupported declarations cannot be formatted as XML."""
+        with pytest.raises(InvalidDataError, match="Malformed XML generated"):
+            _pretty_xml(b"<root/>trailing", 1_000)
+        with pytest.raises(InvalidDataError, match="Malformed XML generated"):
+            _pretty_xml(b"<!unsupported><root/>", 1_000)
+        with pytest.raises(InvalidDataError, match="Malformed XML generated"):
+            _pretty_xml(b"<![CDATA[outside-root]]><root/>", 1_000)
+
+    @pytest.mark.parametrize(
+        "unsafe_xml", [b"<!DOCTYPE root><root/>", b"<!ENTITY x 'x'><root/>"]
+    )
+    def test_pretty_formatter_rejects_unsafe_declarations(
+        self, unsafe_xml: bytes
+    ) -> None:
+        """DTD and entity declarations are rejected case-insensitively."""
+        with pytest.raises(InvalidDataError, match="Unsafe XML declaration rejected"):
+            _pretty_xml(unsafe_xml.lower(), 1_000)
+
+    # @lat: [[tests#Conversion behavior#Pretty printing avoids DOM reparsing]]
+    def test_pretty_print_does_not_reparse_a_dom(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Pretty output uses bounded lexical indentation without an XML DOM parser."""
+        parse_string = Mock(side_effect=AssertionError("DOM parser must not run"))
+        monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
+
+        result = json2xml.Json2xml({"name": "Ada"}, pretty=True).to_xml()
+
+        assert isinstance(result, str)
+        assert "\n  <name" in result
+        parse_string.assert_not_called()
+
+    # @lat: [[tests#Conversion behavior#Pretty printing rejects unsafe XML constructs]]
+    def test_pretty_print_rejects_entity_expansion_payload(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The bounded formatter rejects exponential entities before expansion."""
+        entity_declarations = ['<!ENTITY lol0 "lol">']
+        for level in range(1, 10):
+            references = f"&lol{level - 1};" * 10
+            entity_declarations.append(f'<!ENTITY lol{level} "{references}">')
+        malicious_xml = (
+            '<?xml version="1.0"?>'
+            f'<!DOCTYPE lolz [{"".join(entity_declarations)}]>'
+            '<lolz>&lol9;</lolz>'
+        ).encode()
+        monkeypatch.setattr(
+            "json2xml.json2xml.dicttoxml.dicttoxml",
+            Mock(return_value=malicious_xml),
+        )
+
+        with pytest.raises(InvalidDataError):
+            json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
 
     def test_read_boolean_data_from_json(self) -> None:
         """Test correct return for boolean types."""

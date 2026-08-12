@@ -100,16 +100,22 @@ The ``Json2xml`` class accepts the following parameters:
 * ``data`` - The JSON data (dict or list) to convert
 * ``wrapper`` (default: ``"all"``) - Custom root element name
 * ``root`` (default: ``True``) - Whether to include the XML declaration and root element
-* ``pretty`` (default: ``True``) - Whether to pretty-print the XML output
+* ``pretty`` (default: ``False``) - Whether to pretty-print the XML output
 * ``attr_type`` (default: ``True``) - Whether to include type attributes on elements
 * ``item_wrap`` (default: ``True``) - Whether to wrap list items in ``<item>`` tags
 * ``xpath_format`` (default: ``False``) - Whether to use XPath 3.1 compliant output format
+* ``max_depth`` (default: ``100``) - Maximum JSON container nesting depth
+* ``max_items`` (default: ``100000``) - Maximum number of JSON values and containers
+* ``max_output_bytes`` (default: ``10485760``) - Maximum UTF-8 XML output size
+
+All three conversion limits must be positive integers. They apply to both compact and
+pretty output; callers may choose smaller limits for untrusted workloads.
 
 
 Custom Wrappers and Indentation
 -------------------------------
 
-By default, a wrapper ``all`` and ``pretty=True`` is set. You can customize these:
+By default, a wrapper ``all`` and compact output (``pretty=False``) are set. Pretty printing can be enabled explicitly:
 
 .. code-block:: python
 

@@ -258,7 +258,11 @@ boolean ``True`` or choose a smaller limit:
 Custom Wrappers and Indentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, a wrapper `all` and pretty `True` is set. However, you can easily change this in your code like this:
+By default, a wrapper `all` and compact output (``pretty=False``) are set. Pretty printing can be enabled explicitly:
+
+Conversions also default to a nesting limit of 100, an item limit of 100,000,
+and a 10 MiB XML output limit. Pass ``max_depth``, ``max_items``, or
+``max_output_bytes`` to choose smaller budgets for untrusted workloads.
 
 .. code-block:: python
 
@@ -425,7 +429,7 @@ Using Make (recommended):
 
     make test          # Run tests with coverage
     make lint          # Run linting with ruff
-    make typecheck     # Run type checking with mypy
+    make typecheck     # Run type checking with ty
     make check-all     # Run all checks (lint, typecheck, test)
 
 Using the development script:
@@ -443,7 +447,7 @@ Using tools directly:
 
     pytest --cov=json2xml --cov-report=term -xvs tests -n auto
     ruff check json2xml tests
-    mypy json2xml tests
+    uvx ty check json2xml tests
 
 **Rust Extension Development**
 
@@ -528,7 +532,7 @@ The ``json2xml-py`` command-line tool provides an easy way to convert JSON to XM
     Conversion Options:
       -w, --wrapper string    Wrapper element name (default "all")
       -r, --root              Include root element (default true)
-      -p, --pretty            Pretty print output (default true)
+      -p, --pretty            Pretty print output (default false)
       -t, --type              Include type attributes (default true)
       -i, --item-wrap         Wrap list items in <item> elements (default true)
       -x, --xpath             Use XPath 3.1 json-to-xml format

@@ -2,7 +2,8 @@
 name = "json2xml_rs-fuzz"
 version = "0.0.0"
 publish = false
-edition = "2021"
+edition = "2024"
+rust-version = "1.98"
 
 [package.metadata]
 cargo-fuzz = true

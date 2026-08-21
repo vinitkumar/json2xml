@@ -18,6 +18,6 @@ Set one of `LAT_LLM_KEY`, `LAT_LLM_KEY_FILE`, or `LAT_LLM_KEY_HELPER` before rel
 
 ## Repository hygiene
 
-Local agent and editor directories are treated as machine-specific workspace state, not project knowledge or source.
+Local agent and editor scratch directories are treated as machine-specific workspace state, while repository-scoped skills are versioned developer workflow.
 
-The repository ignores `.codex`, `.pi`, and `.cursor` so local agent tooling does not pollute diffs or become part of the documented code surface. Keep durable design notes in `lat.md/` instead of those scratch directories.
+The repository ignores `.codex`, `.pi`, and `.cursor` so local agent tooling does not pollute diffs or become part of the documented code surface. Skills under `.agents/skills/` are the exception: they apply only within this repository and may encode its maintenance workflow. Keep durable product design notes in `lat.md/` rather than in agent scratch directories or skill instructions.

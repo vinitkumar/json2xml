@@ -1,3 +1,41 @@
+# json2xml 7.0.0
+
+Released 2026-08-23.
+
+## Highlights
+
+- Makes compact UTF-8 `bytes` the default output for the Python API and CLI, avoiding a second XML formatting pass on the common path.
+- Generates explicit pretty output during serialization instead of re-tokenizing completed XML, improving measured pretty conversion time by 46-53%.
+- Enforces output limits against the exact generated UTF-8 bytes so valid payloads are no longer rejected by a conservative size estimate.
+- Requires the independently published `json2xml-rs>=0.5.0`, whose native capability gate preserves byte-for-byte parity with the Python serializer.
+- Fixes malformed rootless `list_headers` output, inconsistent date-like values, unsupported falsy objects serialized as null, and caller attribute dictionaries being mutated.
+
+## Breaking changes and migration guidance
+
+- `Json2xml(...).to_xml()` now returns compact `bytes` by default. Pass `pretty=True` to retain pretty Unicode `str` output, or decode compact output explicitly when text is required.
+- The CLI now writes compact XML by default. Pass `--pretty` to retain indented output.
+- Unsupported falsy objects now raise `TypeError` instead of silently serializing as XML null. Convert such values to a supported JSON-native type before serialization.
+- Pretty output keeps empty elements such as `<h type="null"></h>` on one line because indentation is generated from serializer structure rather than reconstructed from markup.
+
+## Correctness and performance
+
+- The Rust selector admits only payloads whose names and values the native backend reproduces exactly; unsupported inputs continue through Python without losing functionality.
+- Conversion depth and item limits remain preflight checks, while compact and pretty byte limits include the exact emitted markup, indentation, and trailing newline.
+- `datetime.time` and other date-like values now serialize consistently at the root, in dictionaries, and in lists.
+- ASCII XML attribute-name validation avoids constructing a DOM for the common case.
+- The Rust 1,000-record capability gate improved from 1.14 ms to 0.09 ms, reducing the complete accelerated conversion from 1.51 ms to 0.49 ms.
+
+## Package Versions
+
+- Python package: `json2xml==7.0.0`
+- Rust accelerator: `json2xml-rs==0.5.0`
+- Fast install: `pip install "json2xml[fast]==7.0.0"`
+
+## Verification
+
+The release passed Ruff, ty, 596 Python tests with 100% statement coverage, Rust formatting, Clippy with warnings denied, 47 Rust unit tests, package builds, and the complete hosted Python and Rust compatibility matrices. The published Rust 0.5.0 wheel was also installed and smoke-tested before the Python dependency floor was raised.
+
+
 # json2xml_rs 0.5.0
 
 Released 2026-08-23.

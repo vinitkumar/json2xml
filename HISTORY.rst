@@ -1,7 +1,8 @@
 
-Next
-====
+7.0.0 / 2026-08-23
+==================
 
+  * breaking: make compact UTF-8 ``bytes`` the default public and CLI output; callers that require pretty Unicode text must pass ``pretty=True`` or ``--pretty``
   * fix: normalize the parent name a ``list_headers`` dict member borrows, so a rootless list of dictionaries no longer emits the malformed empty tag ``<>``
   * fix: make the optional Rust backend byte-identical to the Python serializer for every payload it accepts, correcting CDATA on numbers, nested list shapes, list member tag names, ``type="dict"`` under ``list_headers``, and names beginning with ``xml``
   * fix: keep payloads the Rust backend cannot reproduce exactly -- non-JSON-native values, parser-resolved key names, and normalized root names -- on the Python serializer
@@ -14,6 +15,7 @@ Next
   * refactor: dispatch every element writer through a single type classifier
   * docs: record the string-returning public converters as a retained compatibility surface
   * perf: indent pretty output while serializing instead of re-tokenizing generated XML, roughly halving pretty conversion time and removing the last XML parsing path from the library
+  * chore: release ``json2xml-rs`` 0.5.0 first and require it from ``json2xml[fast]`` for parity-safe accelerated installs
   * chore: align local pytest, pre-commit, release, and Rust CI configuration with the supported toolchain
   * chore: move benchmark scripts under ``benchmarks/`` and make ``pyproject.toml`` plus ``uv.lock`` the only dependency declaration
 

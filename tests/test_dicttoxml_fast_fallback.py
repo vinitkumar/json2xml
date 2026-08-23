@@ -9,14 +9,22 @@ import pytest
 
 import json2xml.dicttoxml_fast as fast_module
 from json2xml import dicttoxml as py_dicttoxml
-from json2xml.backend_selector import ConversionRequest
+from json2xml.backend_selector import ConversionRequest, rust_renders_identically
 
 
 def _force_rust_backend(monkeypatch: pytest.MonkeyPatch) -> Mock:
-    """Install a fake Rust backend so tests can exercise selection logic without PyO3."""
+    """Install a fake Rust backend so tests can exercise selection logic without PyO3.
+
+    The payload gate is part of that backend, so it is stubbed with its pure-Python
+    reference; without it the adapter would correctly refuse every request and these tests
+    would exercise nothing.
+    """
     rust_backend = Mock(return_value=b"<rust/>")
     monkeypatch.setattr(fast_module, "_use_rust", True)
     monkeypatch.setattr(fast_module, "_rust_dicttoxml", rust_backend)
+    monkeypatch.setattr(
+        fast_module, "_rust_payload_is_supported", rust_renders_identically
+    )
     return rust_backend
 
 

@@ -8,6 +8,7 @@ Next
   * perf: validate common ASCII XML attribute names without constructing a DOM
   * fix: serialize date-like values consistently at the root, which previously rejected ``datetime.time`` while accepting it inside dicts and lists
   * refactor: dispatch every element writer through a single type classifier
+  * docs: record the string-returning public converters as a retained compatibility surface
   * perf: indent pretty output while serializing instead of re-tokenizing generated XML, roughly halving pretty conversion time and removing the last XML parsing path from the library
   * chore: align local pytest, pre-commit, release, and Rust CI configuration with the supported toolchain
   * chore: move benchmark scripts under ``benchmarks/`` and make ``pyproject.toml`` plus ``uv.lock`` the only dependency declaration

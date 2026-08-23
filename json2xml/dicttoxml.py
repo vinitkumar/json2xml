@@ -521,7 +521,12 @@ def convert(
     list_headers: bool = False,
 ) -> str:
     """Routes the elements of an object to the right function to convert them
-    based on their data type"""
+    based on their data type.
+
+    Retained as public API for downstream callers. No code inside this
+    library calls it; conversion goes through the streaming ``_append_*``
+    functions, which this delegates to so behavior cannot diverge.
+    """
     output = _XMLWriter()
     _append_convert(
         output,
@@ -553,8 +558,11 @@ def dict2xml_str(
     parent: str = "",
     list_headers: bool = False,
 ) -> str:
-    """
-    parse dict2xml
+    """Convert a dict into an XML string.
+
+    Retained as public API for downstream callers. No code inside this
+    library calls it; conversion goes through the streaming ``_append_*``
+    functions, which this delegates to so behavior cannot diverge.
     """
     output = _XMLWriter()
     _append_dict2xml_str(
@@ -583,6 +591,12 @@ def list2xml_str(
     item_wrap: bool,
     list_headers: bool = False,
 ) -> str:
+    """Convert a list into an XML string.
+
+    Retained as public API for downstream callers. No code inside this
+    library calls it; conversion goes through the streaming ``_append_*``
+    functions, which this delegates to so behavior cannot diverge.
+    """
     output = _XMLWriter()
     _append_list2xml_str(
         output,
@@ -608,7 +622,12 @@ def convert_dict(
     item_wrap: bool,
     list_headers: bool = False
 ) -> str:
-    """Converts a dict into an XML string."""
+    """Converts a dict into an XML string.
+
+    Retained as public API for downstream callers. No code inside this
+    library calls it; conversion goes through the streaming ``_append_*``
+    functions, which this delegates to so behavior cannot diverge.
+    """
     output = _XMLWriter()
     _append_convert_dict(
         output,
@@ -634,7 +653,12 @@ def convert_list(
     item_wrap: bool,
     list_headers: bool = False,
 ) -> str:
-    """Converts a list into an XML string."""
+    """Converts a list into an XML string.
+
+    Retained as public API for downstream callers. No code inside this
+    library calls it; conversion goes through the streaming ``_append_*``
+    functions, which this delegates to so behavior cannot diverge.
+    """
     output = _XMLWriter()
     _append_convert_list(
         output,

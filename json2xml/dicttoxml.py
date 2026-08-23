@@ -37,7 +37,10 @@ class _XMLWriter:
 
     def write(self, value: str) -> None:
         encoded = value.encode("utf-8")
-        if self._max_output_bytes is not None and self._buffer.tell() + len(encoded) > self._max_output_bytes:
+        if (
+            self._max_output_bytes is not None
+            and self._buffer.tell() + len(encoded) > self._max_output_bytes
+        ):
             raise ValueError("XML output size limit exceeded")
         self._buffer.write(encoded)
 
@@ -483,11 +486,15 @@ def _append_xpath31(
     if tag_name == "null":
         output.element(f"<null{namespace_attr}{key_attr}/>")
     elif tag_name == "boolean":
-        output.element(f"<boolean{namespace_attr}{key_attr}>{str(obj).lower()}</boolean>")
+        output.element(
+            f"<boolean{namespace_attr}{key_attr}>{str(obj).lower()}</boolean>"
+        )
     elif tag_name == "number":
         output.element(f"<number{namespace_attr}{key_attr}>{obj}</number>")
     elif tag_name == "string":
-        output.element(f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>")
+        output.element(
+            f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>"
+        )
     elif tag_name == "map":
         output.start(f"<map{namespace_attr}{key_attr}>")
         for key, val in obj.items():
@@ -499,7 +506,9 @@ def _append_xpath31(
             _append_xpath31(output, item)
         output.end("</array>")
     else:
-        output.element(f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>")
+        output.element(
+            f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>"
+        )
 
 
 def convert(
@@ -682,9 +691,15 @@ def _append_convert(
     kind = _classify(obj)
 
     if kind == _KIND_SCALAR:
-        output.element(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
+        output.element(
+            convert_kv(
+                key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
+            )
+        )
     elif kind == _KIND_BOOL:
-        output.element(convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata))
+        output.element(
+            convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata)
+        )
     elif kind == _KIND_DICT:
         _append_convert_dict(
             output,
@@ -748,7 +763,11 @@ def _append_dict2xml_str(
     if has_custom_attrs:
         raw_attrs = item["@attrs"]
         val_attr = raw_attrs if isinstance(raw_attrs, dict) else dict(raw_attrs)
-        rawitem = item["@val"] if "@val" in item else {key: value for key, value in item.items() if key != "@attrs"}
+        rawitem = (
+            item["@val"]
+            if "@val" in item
+            else {key: value for key, value in item.items() if key != "@attrs"}
+        )
     else:
         val_attr = attr
         rawitem = item.get("@val", item)
@@ -852,7 +871,11 @@ def _append_list2xml_str(
         item_name = item_name[0:-5]
         flat = True
 
-    if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap) or list_headers:
+    if (
+        flat
+        or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap)
+        or list_headers
+    ):
         _append_convert_list(
             output,
             item,
@@ -902,7 +925,11 @@ def _append_convert_dict(
         key, attr = make_valid_xml_name(xml_key, attr)
 
         if kind == _KIND_SCALAR:
-            output.element(convert_kv_valid_name(key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata))
+            output.element(
+                convert_kv_valid_name(
+                    key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
+                )
+            )
         elif kind == _KIND_BOOL:
             output.element(convert_bool_valid_name(key, val, attr_type, attr))
         elif kind == _KIND_DICT:
@@ -1045,13 +1072,17 @@ def convert_kv(
     key, attr = make_valid_xml_name(key, attr)
 
     # Convert datetime to isoformat string
-    if hasattr(val, "isoformat") and isinstance(val, (datetime.datetime, datetime.date)):
+    if hasattr(val, "isoformat") and isinstance(
+        val, (datetime.datetime, datetime.date)
+    ):
         val = val.isoformat()
 
     if attr_type:
         attr["type"] = get_xml_type(val)
     attr_string = make_attrstring(attr)
-    return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    return (
+        f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    )
 
 
 def convert_kv_valid_name(
@@ -1062,14 +1093,28 @@ def convert_kv_valid_name(
     cdata: bool = False,
 ) -> str:
     """Converts a scalar into an XML element when the caller already validated the key."""
-    if hasattr(val, "isoformat") and isinstance(val, (datetime.datetime, datetime.date)):
+    if hasattr(val, "isoformat") and isinstance(
+        val, (datetime.datetime, datetime.date)
+    ):
         val = val.isoformat()
 
-    attr_string = make_typed_attrstring(attr, get_xml_type(val)) if attr_type else make_attrstring(attr)
-    return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    attr_string = (
+        make_typed_attrstring(attr, get_xml_type(val))
+        if attr_type
+        else make_attrstring(attr)
+    )
+    return (
+        f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    )
 
 
-def convert_bool(key: str, val: bool, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False) -> str:
+def convert_bool(
+    key: str,
+    val: bool,
+    attr_type: bool,
+    attr: dict[str, Any] | None = None,
+    cdata: bool = False,
+) -> str:
     """Converts a boolean into an XML element"""
     attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
@@ -1087,11 +1132,15 @@ def convert_bool_valid_name(
     attr: dict[str, Any],
 ) -> str:
     """Converts a boolean when the caller already validated the key."""
-    attr_string = make_typed_attrstring(attr, "bool") if attr_type else make_attrstring(attr)
+    attr_string = (
+        make_typed_attrstring(attr, "bool") if attr_type else make_attrstring(attr)
+    )
     return f"<{key}{attr_string}>{'true' if val else 'false'}</{key}>"
 
 
-def convert_none(key: str, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False) -> str:
+def convert_none(
+    key: str, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
+) -> str:
     """Converts a null value into an XML element"""
     attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
@@ -1104,7 +1153,9 @@ def convert_none(key: str, attr_type: bool, attr: dict[str, Any] | None = None, 
 
 def convert_none_valid_name(key: str, attr_type: bool, attr: dict[str, Any]) -> str:
     """Converts a null value when the caller already validated the key."""
-    attr_string = make_typed_attrstring(attr, "null") if attr_type else make_attrstring(attr)
+    attr_string = (
+        make_typed_attrstring(attr, "null") if attr_type else make_attrstring(attr)
+    )
     return f"<{key}{attr_string}></{key}>"
 
 
@@ -1160,19 +1211,34 @@ class _NamespaceFormatter:
             if prefix == "xsi":
                 if not isinstance(namespace_value, dict):
                     raise ValueError("The xsi namespace value must be a mapping")
-                if "schemaLocation" in namespace_value and "schemaInstance" not in namespace_value:
-                    raise ValueError("xsi schemaLocation requires a schemaInstance namespace")
+                if (
+                    "schemaLocation" in namespace_value
+                    and "schemaInstance" not in namespace_value
+                ):
+                    raise ValueError(
+                        "xsi schemaLocation requires a schemaInstance namespace"
+                    )
                 for schema_att in namespace_value:
                     if schema_att == "schemaInstance":
-                        namespace_parts.append(f' xmlns:{prefix}="{escape_xml(namespace_value[schema_att])}"')
+                        namespace_parts.append(
+                            f' xmlns:{prefix}="{escape_xml(namespace_value[schema_att])}"'
+                        )
                     elif schema_att == "schemaLocation":
-                        namespace_parts.append(f' xsi:{schema_att}="{escape_xml(namespace_value[schema_att])}"')
+                        namespace_parts.append(
+                            f' xsi:{schema_att}="{escape_xml(namespace_value[schema_att])}"'
+                        )
             elif prefix == "xmlns":
                 namespace_parts.append(f' xmlns="{escape_xml(namespace_value)}"')
             else:
-                if not isinstance(prefix, str) or prefix.lower().startswith("xml") or not key_is_valid_xml(prefix):
+                if (
+                    not isinstance(prefix, str)
+                    or prefix.lower().startswith("xml")
+                    or not key_is_valid_xml(prefix)
+                ):
                     raise ValueError(f"Invalid XML namespace prefix: {prefix}")
-                namespace_parts.append(f' xmlns:{prefix}="{escape_xml(namespace_value)}"')
+                namespace_parts.append(
+                    f' xmlns:{prefix}="{escape_xml(namespace_value)}"'
+                )
         return "".join(namespace_parts)
 
 

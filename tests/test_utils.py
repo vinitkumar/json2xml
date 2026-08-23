@@ -164,7 +164,9 @@ class TestReadFromUrl:
     def test_readfromurl_success_with_params(self, json_server: str) -> None:
         """Test successful URL reading with parameters."""
         params = {"param1": "value1", "param2": "value2"}
-        result = readfromurl(f"{json_server}/api", params=params, allow_private_networks=True)
+        result = readfromurl(
+            f"{json_server}/api", params=params, allow_private_networks=True
+        )
 
         assert result == {"result": "success"}
 
@@ -190,7 +192,9 @@ class TestReadFromUrl:
             port = unused_socket.getsockname()[1]
 
         with pytest.raises(URLReadError, match="URL could not be read"):
-            readfromurl(f"http://127.0.0.1:{port}/data.json", allow_private_networks=True)
+            readfromurl(
+                f"http://127.0.0.1:{port}/data.json", allow_private_networks=True
+            )
 
     # @lat: [[tests#Input readers#URL reader rejects unsafe destinations]]
     def test_readfromurl_rejects_private_networks_by_default(self) -> None:
@@ -202,9 +206,13 @@ class TestReadFromUrl:
             readfromurl("http://169.254.169.254/latest/meta-data/")
 
     @patch("json2xml.utils.socket.getaddrinfo")
-    def test_readfromurl_rejects_hostnames_resolving_to_private_networks(self, mock_getaddrinfo: Mock) -> None:
+    def test_readfromurl_rejects_hostnames_resolving_to_private_networks(
+        self, mock_getaddrinfo: Mock
+    ) -> None:
         """Test DNS names cannot bypass the private-network URL policy."""
-        mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.8", 443))]
+        mock_getaddrinfo.return_value = [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("10.0.0.8", 443))
+        ]
 
         with pytest.raises(URLReadError, match="public network address"):
             readfromurl("https://internal.example/data.json")
@@ -312,7 +320,9 @@ class TestReadFromUrl:
         response.close.assert_called_once_with()
 
     @patch("json2xml.utils._get_http_client")
-    def test_readfromurl_uses_direct_request_for_private_network_opt_in(self, mock_get_http_client: Mock) -> None:
+    def test_readfromurl_uses_direct_request_for_private_network_opt_in(
+        self, mock_get_http_client: Mock
+    ) -> None:
         """Test trusted private-network reads retain the complete request URL."""
         url = "https://private.example/data.json?existing=yes"
         response = Mock(status=200, headers={"Content-Length": "11"})
@@ -356,7 +366,9 @@ class TestReadFromUrl:
             readfromurl("https://8.8.8.8:not-a-port/data.json")
 
     @patch("json2xml.utils.socket.getaddrinfo")
-    def test_readfromurl_rejects_unresolvable_hostnames(self, mock_getaddrinfo: Mock) -> None:
+    def test_readfromurl_rejects_unresolvable_hostnames(
+        self, mock_getaddrinfo: Mock
+    ) -> None:
         """Test DNS failures are reported without attempting an HTTP request."""
         mock_getaddrinfo.side_effect = OSError("DNS unavailable")
 
@@ -365,7 +377,9 @@ class TestReadFromUrl:
 
     # @lat: [[tests#Input readers#URL reader wraps invalid Unicode hostnames]]
     @patch("json2xml.utils.socket.getaddrinfo")
-    def test_readfromurl_wraps_invalid_unicode_hostnames(self, mock_getaddrinfo: Mock) -> None:
+    def test_readfromurl_wraps_invalid_unicode_hostnames(
+        self, mock_getaddrinfo: Mock
+    ) -> None:
         """Test malformed IDNA hostnames preserve the URL reader error contract."""
         mock_getaddrinfo.side_effect = UnicodeError("invalid IDNA label")
 
@@ -378,7 +392,9 @@ class TestReadFromUrl:
         self, mock_getaddrinfo: Mock, mock_get_http_client: Mock
     ) -> None:
         """Test IDNA failure after resolution still raises URLReadError."""
-        mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+        mock_getaddrinfo.return_value = [
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
+        ]
         http = Mock()
         mock_get_http_client.return_value = (urllib3, http, Mock())
 
@@ -389,7 +405,9 @@ class TestReadFromUrl:
 
     # @lat: [[tests#Input readers#URL reader requires a boolean private-network opt-in]]
     @pytest.mark.parametrize("allow_private_networks", ["false", 1, None])
-    def test_readfromurl_rejects_non_boolean_private_network_opt_in(self, allow_private_networks: object) -> None:
+    def test_readfromurl_rejects_non_boolean_private_network_opt_in(
+        self, allow_private_networks: object
+    ) -> None:
         """Test only an actual boolean can opt into private-network access."""
         with pytest.raises(URLReadError, match="must be a boolean"):
             readfromurl(
@@ -434,7 +452,9 @@ class TestReadFromUrl:
         response.close.assert_called_once_with()
 
     @patch("json2xml.utils._get_http_client")
-    def test_readfromurl_limits_uncompressed_response_without_length(self, mock_get_http_client: Mock) -> None:
+    def test_readfromurl_limits_uncompressed_response_without_length(
+        self, mock_get_http_client: Mock
+    ) -> None:
         """Test an undeclared uncompressed body cannot exceed the byte limit."""
         response = Mock(status=200, headers={})
         response.read.return_value = b"x" * 17
@@ -466,9 +486,11 @@ class TestReadFromUrl:
             ),
             pytest.param(
                 "deflate",
-                (lambda compressor: compressor.compress(b'{"ok":true}') + compressor.flush())(
-                    zlib.compressobj(wbits=-zlib.MAX_WBITS)
-                ),
+                (
+                    lambda compressor: (
+                        compressor.compress(b'{"ok":true}') + compressor.flush()
+                    )
+                )(zlib.compressobj(wbits=-zlib.MAX_WBITS)),
                 id="raw-deflate",
             ),
         ],
@@ -495,7 +517,9 @@ class TestReadFromUrl:
         assert result == {"ok": True}
 
     @patch("json2xml.utils._get_http_client")
-    def test_readfromurl_respects_compressed_content_length(self, mock_get_http_client: Mock) -> None:
+    def test_readfromurl_respects_compressed_content_length(
+        self, mock_get_http_client: Mock
+    ) -> None:
         """Test a declared compressed size bounds raw response reads."""
         compressed = gzip.compress(b'{"ok":true}', mtime=0)
         response = Mock(
@@ -522,7 +546,9 @@ class TestReadFromUrl:
         )
 
     @patch("json2xml.utils._get_http_client")
-    def test_readfromurl_rejects_compressed_body_over_declared_length(self, mock_get_http_client: Mock) -> None:
+    def test_readfromurl_rejects_compressed_body_over_declared_length(
+        self, mock_get_http_client: Mock
+    ) -> None:
         """Test compressed reads reject bytes beyond the declared length."""
         compressed = gzip.compress(b'{"ok":true}', mtime=0)
         response = Mock(
@@ -541,7 +567,9 @@ class TestReadFromUrl:
             )
 
     @patch("json2xml.utils._get_http_client")
-    def test_readfromurl_rejects_incomplete_compressed_body(self, mock_get_http_client: Mock) -> None:
+    def test_readfromurl_rejects_incomplete_compressed_body(
+        self, mock_get_http_client: Mock
+    ) -> None:
         """Test compressed reads reject EOF before the declared length."""
         compressed = gzip.compress(b'{"ok":true}', mtime=0)
         response = Mock(
@@ -564,7 +592,9 @@ class TestReadFromUrl:
 
     # @lat: [[tests#Input readers#URL reader bounds encoded response size]]
     @patch("json2xml.utils._get_http_client")
-    def test_readfromurl_caps_compressed_bytes_without_content_length(self, mock_get_http_client: Mock) -> None:
+    def test_readfromurl_caps_compressed_bytes_without_content_length(
+        self, mock_get_http_client: Mock
+    ) -> None:
         """Test compressed input is bounded even when decoded output is small."""
         compressed = gzip.compress(b'{"ok":true}', mtime=0)
         response = Mock(status=200, headers={"Content-Encoding": "gzip"})
@@ -622,7 +652,9 @@ class TestReadFromUrl:
 
     @patch("json2xml.utils._get_http_client")
     # @lat: [[tests#Input readers#URL reader limits decoded response size]]
-    def test_readfromurl_limits_decoded_response_size(self, mock_get_http_client: Mock) -> None:
+    def test_readfromurl_limits_decoded_response_size(
+        self, mock_get_http_client: Mock
+    ) -> None:
         """Test compressed URL reads stop at the configured decoded-byte limit."""
         compressed = gzip.compress(
             b'{"value":"' + (b"x" * 10_000) + b'"}',
@@ -676,7 +708,10 @@ class TestReadFromString:
         """Test reading complex JSON object."""
         json_string = '{"users": [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}], "total": 2}'
         result = readfromstring(json_string)
-        expected = {"users": [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}], "total": 2}
+        expected = {
+            "users": [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}],
+            "total": 2,
+        }
         assert result == expected
 
     def test_readfromstring_invalid_type_int(self) -> None:

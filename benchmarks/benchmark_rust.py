@@ -29,7 +29,9 @@ try:
     RUST_AVAILABLE = True
 except ImportError:
     RUST_AVAILABLE = False
-    print("WARNING: Rust extension not built. Run 'cd rust && maturin develop --release'")
+    print(
+        "WARNING: Rust extension not built. Run 'cd rust && maturin develop --release'"
+    )
 
 
 def generate_test_data(num_records: int) -> list[dict]:
@@ -210,7 +212,12 @@ def main():
 
         print(f"\nPython total time: {format_time(total_py)}")
         print(f"Rust total time:   {format_time(total_rust)}")
-        print(colorize(f"\nOverall: Rust is {overall_speedup:.2f}x faster than Python", Colors.GREEN + Colors.BOLD))
+        print(
+            colorize(
+                f"\nOverall: Rust is {overall_speedup:.2f}x faster than Python",
+                Colors.GREEN + Colors.BOLD,
+            )
+        )
     else:
         print("\nRust extension not available for comparison.")
         print("Build with: cd rust && maturin develop --release")

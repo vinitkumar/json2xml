@@ -30,7 +30,11 @@ from benchmark_utils import Colors, colorize, format_time, random_string
 BASE_DIR = Path(__file__).resolve().parent
 VENVS_DIR = BASE_DIR / ".benchmark_venvs"
 GO_CLI = Path(os.environ.get("JSON2XML_GO_CLI", "json2xml-go"))
-UV_PYTHON_DIR = Path(os.environ.get("JSON2XML_UV_PYTHON_DIR", str(Path.home() / ".local/share/uv/python")))
+UV_PYTHON_DIR = Path(
+    os.environ.get(
+        "JSON2XML_UV_PYTHON_DIR", str(Path.home() / ".local/share/uv/python")
+    )
+)
 
 
 def _uv_python_path(distribution: str, executable: str) -> str:
@@ -117,7 +121,9 @@ def setup_venv(python_path: str, venv_path: Path) -> bool:
             text=True,
         )
         if result.returncode != 0:
-            print(f"  {colorize('✗', Colors.RED)} Failed to create venv: {result.stderr}")
+            print(
+                f"  {colorize('✗', Colors.RED)} Failed to create venv: {result.stderr}"
+            )
             return False
 
         # Install json2xml in the venv
@@ -130,7 +136,9 @@ def setup_venv(python_path: str, venv_path: Path) -> bool:
             cwd=str(BASE_DIR),
         )
         if result.returncode != 0:
-            print(f"  {colorize('✗', Colors.RED)} Failed to install json2xml: {result.stderr}")
+            print(
+                f"  {colorize('✗', Colors.RED)} Failed to install json2xml: {result.stderr}"
+            )
             return False
 
     return True
@@ -203,7 +211,9 @@ def print_header(title: str) -> None:
     print(colorize("=" * 70, Colors.BLUE))
 
 
-def print_table_row(name: str, result: BenchmarkResult, baseline_ms: float | None = None) -> None:
+def print_table_row(
+    name: str, result: BenchmarkResult, baseline_ms: float | None = None
+) -> None:
     """Print a formatted table row."""
     if not result.success:
         print(f"  {name:<35} {colorize('FAILED', Colors.RED)}: {result.error}")
@@ -292,7 +302,9 @@ def main() -> int:
         print(f"  Small:      {len(small_json):,} bytes")
         print(f"  Medium:     {medium_json_file.stat().st_size:,} bytes")
         print(f"  Large:      {large_json_file.stat().st_size:,} bytes (1000 records)")
-        print(f"  Very Large: {very_large_json_file.stat().st_size:,} bytes (5000 records)")
+        print(
+            f"  Very Large: {very_large_json_file.stat().st_size:,} bytes (5000 records)"
+        )
         print()
 
         iterations = 10
@@ -334,7 +346,9 @@ def main() -> int:
             # Find baseline (first successful Python result)
             baseline_ms = None
             for py_config in active_pythons:
-                if results.get(py_config["name"], BenchmarkResult("", 0, 0, 0, False)).success:
+                if results.get(
+                    py_config["name"], BenchmarkResult("", 0, 0, 0, False)
+                ).success:
                     baseline_ms = results[py_config["name"]].avg_ms
                     break
 
@@ -367,7 +381,9 @@ def main() -> int:
         print(f"  {'-' * 35} {'-' * 12} {'-' * 20}")
 
         baseline_name = "CPython 3.14.6"
-        baseline_avg = sum(avg_times.get(baseline_name, [0])) / len(avg_times.get(baseline_name, [1]))
+        baseline_avg = sum(avg_times.get(baseline_name, [0])) / len(
+            avg_times.get(baseline_name, [1])
+        )
 
         sorted_impls = sorted(avg_times.items(), key=lambda x: sum(x[1]) / len(x[1]))
 

@@ -54,7 +54,9 @@ def generate_large_json(num_records: int = 1000) -> str:
     return json.dumps(data)
 
 
-def run_benchmark(cmd: list[str], iterations: int = 10, warmup: int = 2) -> dict[str, float]:
+def run_benchmark(
+    cmd: list[str], iterations: int = 10, warmup: int = 2
+) -> dict[str, float]:
     """
     Run a benchmark for the given command.
 
@@ -120,7 +122,9 @@ def main() -> int:
 
     if not GO_CLI.exists():
         print(colorize(f"Error: Go binary not found at {GO_CLI}", Colors.RED))
-        print("Please build it first: cd json2xml-go && go build -o json2xml-go ./cmd/json2xml-go")
+        print(
+            "Please build it first: cd json2xml-go && go build -o json2xml-go ./cmd/json2xml-go"
+        )
         return 1
 
     print(colorize("✓ Prerequisites met", Colors.GREEN))
@@ -152,7 +156,9 @@ def main() -> int:
         print(f"  Small:      {len(small_json)} bytes (inline)")
         print(f"  Medium:     {medium_json_file.stat().st_size:,} bytes")
         print(f"  Large:      {large_json_file.stat().st_size:,} bytes (1000 records)")
-        print(f"  Very Large: {very_large_json_file.stat().st_size:,} bytes (5000 records)")
+        print(
+            f"  Very Large: {very_large_json_file.stat().st_size:,} bytes (5000 records)"
+        )
         print()
 
         # Benchmark: Small JSON (inline string)
@@ -216,7 +222,12 @@ def main() -> int:
     total_go = sum(r["go"]["avg"] for r in results.values())
     if total_go > 0:
         overall_speedup = total_py / total_go
-        print(colorize(f"Overall: Go is {overall_speedup:.1f}x faster than Python", Colors.GREEN + Colors.BOLD))
+        print(
+            colorize(
+                f"Overall: Go is {overall_speedup:.1f}x faster than Python",
+                Colors.GREEN + Colors.BOLD,
+            )
+        )
 
     print()
     print(colorize("=" * 50, Colors.BLUE))

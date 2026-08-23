@@ -87,7 +87,10 @@ def test_fast_wrapper_enforces_output_limit_for_rust_backend(
     [
         ({"ids": [1]}, b'id="'),
         ({"item_func": lambda parent: "entry"}, b"<entry"),
-        ({"xml_namespaces": {"demo": "https://example.com/demo"}}, b'xmlns:demo="https://example.com/demo"'),
+        (
+            {"xml_namespaces": {"demo": "https://example.com/demo"}},
+            b'xmlns:demo="https://example.com/demo"',
+        ),
         ({"xpath_format": True}, b'xmlns="http://www.w3.org/2005/xpath-functions"'),
     ],
 )
@@ -112,7 +115,9 @@ def test_fast_wrapper_falls_back_to_python_for_special_keys(
     """Special @attrs/@val keys require Python processing even when Rust is installed."""
     rust_backend = _force_rust_backend(monkeypatch)
 
-    result = fast_module.dicttoxml({"records": [{"record": {"@attrs": {"id": "7"}, "@val": "Ada"}}]})
+    result = fast_module.dicttoxml(
+        {"records": [{"record": {"@attrs": {"id": "7"}, "@val": "Ada"}}]}
+    )
 
     assert b'id="7"' in result
     assert b">Ada</record>" in result

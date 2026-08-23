@@ -17,7 +17,9 @@ def _positive_limit(name: str, value: int) -> int:
     return value
 
 
-def _validate_conversion_budget(data: JSONValue, max_depth: int, max_items: int) -> None:
+def _validate_conversion_budget(
+    data: JSONValue, max_depth: int, max_items: int
+) -> None:
     """Reject inputs whose nesting depth or item count exceeds a limit."""
     stack: list[tuple[Any, int]] = [(data, 0)]
     items = 0
@@ -31,7 +33,9 @@ def _validate_conversion_budget(data: JSONValue, max_depth: int, max_items: int)
         if isinstance(value, Mapping):
             for child in value.values():
                 stack.append((child, depth + 1))
-        elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        elif isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
             stack.extend((child, depth + 1) for child in value)
 
 

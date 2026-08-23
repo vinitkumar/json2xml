@@ -108,7 +108,9 @@ def benchmark_rust(data, iterations: int = 10, warmup: int = 2) -> dict | None:
     }
 
 
-def benchmark_cli(cmd: str, json_file: str, iterations: int = 10, warmup: int = 2) -> dict | None:
+def benchmark_cli(
+    cmd: str, json_file: str, iterations: int = 10, warmup: int = 2
+) -> dict | None:
     """Benchmark CLI tool (Go or Zig)."""
     # Warmup
     for _ in range(warmup):
@@ -208,7 +210,9 @@ def main():
 
     print(colorize("\nAvailable implementations:", Colors.YELLOW))
     print(f"  • Python:  {colorize('✓', Colors.GREEN)} (pure Python)")
-    print(f"  • Rust:    {colorize('✓', Colors.GREEN) if RUST_AVAILABLE else colorize('✗', Colors.RED)} (json2xml-rs)")
+    print(
+        f"  • Rust:    {colorize('✓', Colors.GREEN) if RUST_AVAILABLE else colorize('✗', Colors.RED)} (json2xml-rs)"
+    )
     print(
         f"  • Go:      {colorize('✓', Colors.GREEN) if GO_AVAILABLE else colorize('✗', Colors.RED)} (json2xml-go CLI)"
     )
@@ -275,9 +279,21 @@ def main():
 
     for name, results in all_results.items():
         py_time = format_time(results.get("python", {}).get("avg", 0))
-        rust_time = format_time(results.get("rust", {}).get("avg", 0)) if results.get("rust") else "N/A"
-        go_time = format_time(results.get("go", {}).get("avg", 0)) if results.get("go") else "N/A"
-        zig_time = format_time(results.get("zig", {}).get("avg", 0)) if results.get("zig") else "N/A"
+        rust_time = (
+            format_time(results.get("rust", {}).get("avg", 0))
+            if results.get("rust")
+            else "N/A"
+        )
+        go_time = (
+            format_time(results.get("go", {}).get("avg", 0))
+            if results.get("go")
+            else "N/A"
+        )
+        zig_time = (
+            format_time(results.get("zig", {}).get("avg", 0))
+            if results.get("zig")
+            else "N/A"
+        )
         print(f"{name:<25} {py_time:>12} {rust_time:>12} {go_time:>12} {zig_time:>12}")
 
     # Speedup comparison
@@ -290,9 +306,15 @@ def main():
 
     for name, results in all_results.items():
         py_avg = results.get("python", {}).get("avg", 1)
-        rust_speedup = f"{py_avg / results['rust']['avg']:.1f}x" if results.get("rust") else "N/A"
-        go_speedup = f"{py_avg / results['go']['avg']:.1f}x" if results.get("go") else "N/A"
-        zig_speedup = f"{py_avg / results['zig']['avg']:.1f}x" if results.get("zig") else "N/A"
+        rust_speedup = (
+            f"{py_avg / results['rust']['avg']:.1f}x" if results.get("rust") else "N/A"
+        )
+        go_speedup = (
+            f"{py_avg / results['go']['avg']:.1f}x" if results.get("go") else "N/A"
+        )
+        zig_speedup = (
+            f"{py_avg / results['zig']['avg']:.1f}x" if results.get("zig") else "N/A"
+        )
         print(f"{name:<25} {rust_speedup:>12} {go_speedup:>12} {zig_speedup:>12}")
 
     # Overall winner

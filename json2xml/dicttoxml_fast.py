@@ -103,7 +103,10 @@ class _RustBackendAdapter:
             cdata=request.cdata,
             list_headers=request.list_headers,
         )
-        if request.max_output_bytes is not None and len(output) > request.max_output_bytes:
+        if (
+            request.max_output_bytes is not None
+            and len(output) > request.max_output_bytes
+        ):
             raise ValueError("XML output size limit exceeded")
         return output
 

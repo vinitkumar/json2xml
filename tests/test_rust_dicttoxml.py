@@ -13,8 +13,13 @@ import pytest
 
 # Check if Rust extension is available
 try:
-    from json2xml_rs import dicttoxml as rust_dicttoxml  # type: ignore[import-not-found]
-    from json2xml_rs import escape_xml_py, wrap_cdata_py  # type: ignore[import-not-found]
+    from json2xml_rs import (
+        dicttoxml as rust_dicttoxml,  # type: ignore[import-not-found]
+    )
+    from json2xml_rs import (  # type: ignore[import-not-found]
+        escape_xml_py,
+        wrap_cdata_py,
+    )
 
     RUST_AVAILABLE = True
 except ImportError:
@@ -37,7 +42,9 @@ from json2xml.dicttoxml_fast import (
 )
 
 # Skip all tests if Rust is not available
-pytestmark = pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not installed")
+pytestmark = pytest.mark.skipif(
+    not RUST_AVAILABLE, reason="Rust extension not installed"
+)
 
 
 class TestRustEscapeXml:
@@ -325,7 +332,10 @@ class TestRustVsPythonCompatibility:
 
     def test_complex_nested_matches(self):
         data = {
-            "users": [{"name": "Alice", "scores": [90, 85, 88]}, {"name": "Bob", "scores": [75, 80, 82]}],
+            "users": [
+                {"name": "Alice", "scores": [90, 85, 88]},
+                {"name": "Bob", "scores": [75, 80, 82]},
+            ],
             "metadata": {"count": 2, "active": True},
         }
         rust, python = self.compare_outputs(data)
@@ -573,7 +583,12 @@ class TestFastDicttoxmlHelpers:
 
     def test_special_keys_deep_in_list(self):
         """Test special keys detection in deeply nested list structures."""
-        data = {"outer": [{"normal": "value"}, {"nested": {"@attrs": {"class": "test"}, "@val": "content"}}]}
+        data = {
+            "outer": [
+                {"normal": "value"},
+                {"nested": {"@attrs": {"class": "test"}, "@val": "content"}},
+            ]
+        }
         result = fast_dicttoxml(data)
         assert b'class="test"' in result
 

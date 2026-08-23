@@ -75,7 +75,7 @@ lint.ignore = [
     "E701",  # multiple statements on one line (colon)
     "F401",  # module imported but unused
 ]
-line-length = 119
+line-length = 88
 lint.select = [
     "I",
     "E",

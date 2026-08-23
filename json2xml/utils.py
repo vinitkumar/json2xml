@@ -83,7 +83,9 @@ def _validate_url(url: str) -> SplitResult:
     return parsed
 
 
-def _resolve_validated_address(parsed: SplitResult, allow_private_networks: bool) -> str | None:
+def _resolve_validated_address(
+    parsed: SplitResult, allow_private_networks: bool
+) -> str | None:
     """Resolve and validate the public address used for the connection."""
     if allow_private_networks:
         return None
@@ -102,7 +104,9 @@ def _resolve_validated_address(parsed: SplitResult, allow_private_networks: bool
             )
         except (OSError, UnicodeError) as error:
             raise URLReadError("URL hostname could not be resolved") from error
-        addresses = [ip_address(str(info[4][0]).split("%", 1)[0]) for info in address_info]
+        addresses = [
+            ip_address(str(info[4][0]).split("%", 1)[0]) for info in address_info
+        ]
 
     if not addresses or any(not address.is_global for address in addresses):
         raise URLReadError("URL must resolve only to a public network address")
@@ -157,7 +161,9 @@ def _has_zlib_header(data: bytes) -> bool:
     if len(data) < 2:
         return False
     compression_method, flags = data[0], data[1]
-    return compression_method & 0x0F == 8 and (compression_method << 8 | flags) % 31 == 0
+    return (
+        compression_method & 0x0F == 8 and (compression_method << 8 | flags) % 31 == 0
+    )
 
 
 def _compression_decoder(encoding: str, first_chunk: bytes) -> Any:
@@ -165,7 +171,9 @@ def _compression_decoder(encoding: str, first_chunk: bytes) -> Any:
     if encoding in {"gzip", "x-gzip"}:
         return zlib.decompressobj(16 + zlib.MAX_WBITS)
     if encoding == "deflate":
-        window_bits = zlib.MAX_WBITS if _has_zlib_header(first_chunk) else -zlib.MAX_WBITS
+        window_bits = (
+            zlib.MAX_WBITS if _has_zlib_header(first_chunk) else -zlib.MAX_WBITS
+        )
         return zlib.decompressobj(window_bits)
     raise URLReadError(f"Unsupported Content-Encoding: {encoding}")
 
@@ -199,7 +207,9 @@ def _decompress_with_limit(
 
             if content_length is not None and compressed_bytes == content_length:
                 break
-            compressed_bytes_max = content_length if content_length is not None else max_response_bytes + 1
+            compressed_bytes_max = (
+                content_length if content_length is not None else max_response_bytes + 1
+            )
             read_size = min(
                 COMPRESSED_READ_CHUNK_BYTES,
                 compressed_bytes_max - compressed_bytes,
@@ -232,7 +242,9 @@ def _read_response_data(
             raise URLReadError("URL response exceeds maximum size")
         return response_data
 
-    compressed_bytes_max = content_length if content_length is not None else max_response_bytes + 1
+    compressed_bytes_max = (
+        content_length if content_length is not None else max_response_bytes + 1
+    )
     first_chunk = response.read(
         min(COMPRESSED_READ_CHUNK_BYTES, compressed_bytes_max),
         decode_content=False,
@@ -277,7 +289,11 @@ def readfromurl(
     """
     if not isinstance(allow_private_networks, bool):
         raise URLReadError("allow_private_networks must be a boolean")
-    if isinstance(max_response_bytes, bool) or not isinstance(max_response_bytes, int) or max_response_bytes <= 0:
+    if (
+        isinstance(max_response_bytes, bool)
+        or not isinstance(max_response_bytes, int)
+        or max_response_bytes <= 0
+    ):
         raise URLReadError("Maximum response size must be a positive integer")
     parsed = _validate_url(url)
     validated_address = _resolve_validated_address(

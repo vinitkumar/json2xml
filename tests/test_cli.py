@@ -519,7 +519,9 @@ class TestCLIUnitTests:
         captured = capsys.readouterr()
         assert "Error" in captured.err
 
-    def test_main_returns_error_for_empty_data(self, capsys: CaptureFixture[str]) -> None:
+    def test_main_returns_error_for_empty_data(
+        self, capsys: CaptureFixture[str]
+    ) -> None:
         """Test main returns error when converter returns None."""
         with patch("json2xml.cli.Json2xml") as mock_converter:
             mock_instance = MagicMock()
@@ -532,7 +534,9 @@ class TestCLIUnitTests:
         captured = capsys.readouterr()
         assert "Empty data" in captured.err
 
-    def test_main_handles_conversion_exception(self, capsys: CaptureFixture[str]) -> None:
+    def test_main_handles_conversion_exception(
+        self, capsys: CaptureFixture[str]
+    ) -> None:
         """Test main handles exceptions during conversion."""
         with patch("json2xml.cli.Json2xml") as mock_converter:
             mock_converter.side_effect = ValueError("Conversion failed")
@@ -623,7 +627,9 @@ class TestCLIUnitTests:
         captured = capsys.readouterr()
         assert "JSON file not found" in captured.err
 
-    def test_read_input_existing_json_file_parse_error(self, capsys: CaptureFixture[str]) -> None:
+    def test_read_input_existing_json_file_parse_error(
+        self, capsys: CaptureFixture[str]
+    ) -> None:
         """Test read_input keeps parse failures distinct from missing file failures."""
         from json2xml.utils import JSONReadError
 
@@ -666,7 +672,9 @@ class TestCLIUnitTests:
         assert "No input provided" in captured.err
 
     # @lat: [[tests#CLI failure messages#No-input guard stays total if exit helper is bypassed]]
-    def test_read_input_no_input_guard_raises_assertion_if_exit_helper_returns(self) -> None:
+    def test_read_input_no_input_guard_raises_assertion_if_exit_helper_returns(
+        self,
+    ) -> None:
         """Test the no-input branch keeps a hard failure if the exit helper is bypassed."""
         app = CLIApplication()
         options = CLIConversionOptions(
@@ -785,7 +793,9 @@ class TestCLIUnitTests:
             assert result == {"from": "stdin"}
             mock_stdin.assert_called_once()
 
-    def test_main_handles_generic_read_exception(self, capsys: CaptureFixture[str]) -> None:
+    def test_main_handles_generic_read_exception(
+        self, capsys: CaptureFixture[str]
+    ) -> None:
         """Test main handles generic exceptions from read_input."""
         with patch("json2xml.cli.read_input") as mock_read:
             mock_read.side_effect = RuntimeError("Unexpected error")

@@ -54,7 +54,8 @@ def has_special_keys(obj: Any) -> bool:
     """Return True when the payload uses Python-only special key semantics."""
     if isinstance(obj, dict):
         return any(
-            (isinstance(key, str) and (key.startswith("@") or key.endswith("@flat"))) or has_special_keys(value)
+            (isinstance(key, str) and (key.startswith("@") or key.endswith("@flat")))
+            or has_special_keys(value)
             for key, value in obj.items()
         )
 

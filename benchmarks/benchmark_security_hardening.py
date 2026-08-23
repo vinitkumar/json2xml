@@ -195,7 +195,9 @@ def _benchmark_cell(
 
     for order in WORKER_ORDERS:
         for label in order:
-            worker_result = _invoke_worker(script, repo, sources[label], mode, records, loops)
+            worker_result = _invoke_worker(
+                script, repo, sources[label], mode, records, loops
+            )
             samples[label].extend(worker_result["samples_ns"])
             output = worker_result["output"]
             if label in outputs and output != outputs[label]:
@@ -207,7 +209,9 @@ def _benchmark_cell(
     if len(samples[BEFORE]) != 68 or len(samples[AFTER]) != 68:
         raise RuntimeError("benchmark schedule did not produce 68 samples per revision")
 
-    change_percent = (after["median_ns"] - before["median_ns"]) / before["median_ns"] * 100
+    change_percent = (
+        (after["median_ns"] - before["median_ns"]) / before["median_ns"] * 100
+    )
     return {
         "workload": workload,
         "records": records,
@@ -235,9 +239,13 @@ def _print_report(report: dict[str, Any]) -> None:
     print(f"Python: {report['environment']['python'].splitlines()[0]}")
     print(f"Executable: {report['environment']['executable']}")
     print(f"Platform: {report['environment']['platform']}")
-    print(f"Revisions: {report['revisions']['before']} (before) -> {report['revisions']['after']} (after)")
+    print(
+        f"Revisions: {report['revisions']['before']} (before) -> {report['revisions']['after']} (after)"
+    )
     print()
-    print("| Workload | Mode | Before median [p25, p75] | After median [p25, p75] | Change |")
+    print(
+        "| Workload | Mode | Before median [p25, p75] | After median [p25, p75] | Change |"
+    )
     print("|---|---|---:|---:|---:|")
     for cell in report["cells"]:
         before = cell["before"]
@@ -251,7 +259,9 @@ def _print_report(report: dict[str, Any]) -> None:
             f"{cell['change_percent']:+.1f}% |"
         )
     print()
-    print("| Workload | Mode | Before type/bytes/SHA-256 | After type/bytes/SHA-256 | Identical |")
+    print(
+        "| Workload | Mode | Before type/bytes/SHA-256 | After type/bytes/SHA-256 | Identical |"
+    )
     print("|---|---|---|---|---:|")
     for cell in report["cells"]:
         before = cell["before"]["output"]
@@ -358,7 +368,12 @@ def _parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = _parser().parse_args()
     if args.worker:
-        if args.source is None or args.mode is None or args.records is None or args.loops is None:
+        if (
+            args.source is None
+            or args.mode is None
+            or args.records is None
+            or args.loops is None
+        ):
             raise SystemExit("worker mode requires source, mode, records, and loops")
         _worker(args.source, args.mode, args.records, args.loops)
         return
@@ -366,7 +381,9 @@ def main() -> None:
     report = run_benchmark(args.before, args.after)
     _print_report(report)
     if args.output_json is not None:
-        args.output_json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        args.output_json.write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
         print(f"\nRaw samples written to {args.output_json}")
 
 

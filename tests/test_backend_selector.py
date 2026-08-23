@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from json2xml.backend_selector import BackendSelector, ConversionRequest, has_special_keys
+from json2xml.backend_selector import (
+    BackendSelector,
+    ConversionRequest,
+    has_special_keys,
+)
 
 
 class _NeverBackend:

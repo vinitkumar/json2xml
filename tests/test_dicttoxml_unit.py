@@ -57,7 +57,9 @@ class ListSubclass(list[Any]):
         ([], "list", False),
     ],
 )
-def test_get_xml_type_and_primitive_classification(value: Any, xml_type: str, is_primitive: bool) -> None:
+def test_get_xml_type_and_primitive_classification(
+    value: Any, xml_type: str, is_primitive: bool
+) -> None:
     assert dicttoxml.get_xml_type(value) == xml_type
     assert dicttoxml.is_primitive_type(value) is is_primitive
 
@@ -76,7 +78,9 @@ def test_get_xml_type_and_primitive_classification(value: Any, xml_type: str, is
     ],
 )
 # @lat: [[tests#XML helper behavior#Numeric fast path preserves general Number support]]
-def test_number_classifier_preserves_supported_number_types(value: Any, expected: bool) -> None:
+def test_number_classifier_preserves_supported_number_types(
+    value: Any, expected: bool
+) -> None:
     assert dicttoxml._is_number(value) is expected
 
 
@@ -109,7 +113,10 @@ def test_date_like_values_serialize_identically_in_every_position() -> None:
 
     assert expected in dicttoxml.dicttoxml({"t": moment})
     assert expected in dicttoxml.dicttoxml([moment])
-    assert dicttoxml.dicttoxml(moment, root=False, attr_type=False) == b"<item>12:30:00</item>"
+    assert (
+        dicttoxml.dicttoxml(moment, root=False, attr_type=False)
+        == b"<item>12:30:00</item>"
+    )
 
 
 def test_falsy_unsupported_objects_raise_instead_of_becoming_null() -> None:
@@ -125,8 +132,12 @@ def test_convert_preserves_root_scalar_and_sequence_subclasses() -> None:
     def item_func(_parent: str) -> str:
         return "item"
 
-    assert dicttoxml.convert(IntSubclass(7), [], True, item_func, False, True) == ('<item type="number">7</item>')
-    assert dicttoxml.convert(ListSubclass([1]), [], True, item_func, False, True) == ('<item type="int">1</item>')
+    assert dicttoxml.convert(IntSubclass(7), [], True, item_func, False, True) == (
+        '<item type="number">7</item>'
+    )
+    assert dicttoxml.convert(ListSubclass([1]), [], True, item_func, False, True) == (
+        '<item type="int">1</item>'
+    )
 
 
 def test_nested_subclasses_match_compatible_serializer_shapes() -> None:
@@ -141,7 +152,9 @@ def test_nested_subclasses_match_compatible_serializer_shapes() -> None:
         item_func,
         False,
         True,
-    ) == ('<text type="str">value</text><mapping type="dict"><count type="int">1</count></mapping>')
+    ) == (
+        '<text type="str">value</text><mapping type="dict"><count type="int">1</count></mapping>'
+    )
     assert dicttoxml.convert_list(
         [DictSubclass({"count": 1}), ListSubclass([2])],
         [],
@@ -150,7 +163,9 @@ def test_nested_subclasses_match_compatible_serializer_shapes() -> None:
         item_func,
         False,
         True,
-    ) == ('<item type="dict"><count type="int">1</count></item><item type="list"><item type="int">2</item></item>')
+    ) == (
+        '<item type="dict"><count type="int">1</count></item><item type="list"><item type="int">2</item></item>'
+    )
     assert (
         dicttoxml.convert_list(
             [IntSubclass(7)],
@@ -189,9 +204,15 @@ def test_raw_attribute_values_preserve_mapping_subclasses() -> None:
     ],
 )
 # @lat: [[tests#Conversion behavior#Raw attribute values preserve scalar subclasses]]
-def test_raw_attribute_values_preserve_scalar_subclasses(value: str | int, expected_text: bytes) -> None:
-    assert dicttoxml.dicttoxml({"field": {"@attrs": {"source": "api"}, "@val": value}}) == (
-        b'<?xml version="1.0" encoding="UTF-8" ?><root><field source="api">' + expected_text + b"</field></root>"
+def test_raw_attribute_values_preserve_scalar_subclasses(
+    value: str | int, expected_text: bytes
+) -> None:
+    assert dicttoxml.dicttoxml(
+        {"field": {"@attrs": {"source": "api"}, "@val": value}}
+    ) == (
+        b'<?xml version="1.0" encoding="UTF-8" ?><root><field source="api">'
+        + expected_text
+        + b"</field></root>"
     )
 
 
@@ -225,7 +246,9 @@ def test_escape_xml_matches_full_replacement_chain(value: str) -> None:
         ({"type": "str", "id": 1}, ' type="str" id="1"'),
     ],
 )
-def test_make_attrstring_pins_spacing_and_order(attrs: dict[str, Any], expected: str) -> None:
+def test_make_attrstring_pins_spacing_and_order(
+    attrs: dict[str, Any], expected: str
+) -> None:
     assert dicttoxml.make_attrstring(attrs) == expected
 
 
@@ -234,7 +257,8 @@ def test_valid_name_helpers_set_type_without_mutating_caller_attrs() -> None:
     base_attrs = {"id": "shared"}
 
     assert (
-        dicttoxml.convert_kv_valid_name("name", "Bike", True, base_attrs) == '<name id="shared" type="str">Bike</name>'
+        dicttoxml.convert_kv_valid_name("name", "Bike", True, base_attrs)
+        == '<name id="shared" type="str">Bike</name>'
     )
     assert base_attrs == {"id": "shared"}
 
@@ -244,7 +268,10 @@ def test_valid_name_helpers_set_type_without_mutating_caller_attrs() -> None:
     )
     assert base_attrs == {"id": "shared"}
 
-    assert dicttoxml.convert_none_valid_name("empty", True, base_attrs) == '<empty id="shared" type="null"></empty>'
+    assert (
+        dicttoxml.convert_none_valid_name("empty", True, base_attrs)
+        == '<empty id="shared" type="null"></empty>'
+    )
     assert base_attrs == {"id": "shared"}
 
 
@@ -268,9 +295,18 @@ def test_public_scalar_helpers_do_not_mutate_caller_attrs() -> None:
 def test_valid_name_helpers_keep_existing_attrs_without_attr_type() -> None:
     base_attrs = {"name": "invalid key"}
 
-    assert dicttoxml.convert_kv_valid_name("key", "Bike", False, base_attrs) == '<key name="invalid key">Bike</key>'
-    assert dicttoxml.convert_bool_valid_name("key", True, False, base_attrs) == '<key name="invalid key">true</key>'
-    assert dicttoxml.convert_none_valid_name("key", False, base_attrs) == '<key name="invalid key"></key>'
+    assert (
+        dicttoxml.convert_kv_valid_name("key", "Bike", False, base_attrs)
+        == '<key name="invalid key">Bike</key>'
+    )
+    assert (
+        dicttoxml.convert_bool_valid_name("key", True, False, base_attrs)
+        == '<key name="invalid key">true</key>'
+    )
+    assert (
+        dicttoxml.convert_none_valid_name("key", False, base_attrs)
+        == '<key name="invalid key"></key>'
+    )
     assert base_attrs == {"name": "invalid key"}
 
 
@@ -279,17 +315,24 @@ def test_valid_name_helpers_replace_type_attr_without_mutating_caller_attrs() ->
     base_attrs = {"type": "caller", "id": "shared"}
 
     assert (
-        dicttoxml.convert_kv_valid_name("name", "Bike", True, base_attrs) == '<name type="str" id="shared">Bike</name>'
+        dicttoxml.convert_kv_valid_name("name", "Bike", True, base_attrs)
+        == '<name type="str" id="shared">Bike</name>'
     )
     assert (
         dicttoxml.convert_bool_valid_name("active", True, True, base_attrs)
         == '<active type="bool" id="shared">true</active>'
     )
-    assert dicttoxml.convert_none_valid_name("empty", True, base_attrs) == '<empty type="null" id="shared"></empty>'
+    assert (
+        dicttoxml.convert_none_valid_name("empty", True, base_attrs)
+        == '<empty type="null" id="shared"></empty>'
+    )
     assert base_attrs == {"type": "caller", "id": "shared"}
 
     only_type = {"type": "caller"}
-    assert dicttoxml.convert_bool_valid_name("active", False, True, only_type) == '<active type="bool">false</active>'
+    assert (
+        dicttoxml.convert_bool_valid_name("active", False, True, only_type)
+        == '<active type="bool">false</active>'
+    )
     assert only_type == {"type": "caller"}
 
     metadata_attrs = {"id": "shared", "name": "invalid key"}
@@ -385,7 +428,9 @@ def test_xml_attribute_name_validation_accepts_only_parser_valid_names(
     assert first == cases
     assert second == cases
     assert parse_string.call_count == 4
-    dicttoxml.validate_xml_attr_names({key: "value" for key, is_valid in cases.items() if is_valid})
+    dicttoxml.validate_xml_attr_names(
+        {key: "value" for key, is_valid in cases.items() if is_valid}
+    )
     for key, is_valid in cases.items():
         if not is_valid:
             with pytest.raises(ValueError, match="Invalid XML attribute name"):

@@ -6,6 +6,8 @@ Next
   * fix: reject unsupported falsy objects consistently instead of serializing them as null
   * fix: keep public scalar converter attribute dictionaries unchanged
   * perf: validate common ASCII XML attribute names without constructing a DOM
+  * fix: serialize date-like values consistently at the root, which previously rejected ``datetime.time`` while accepting it inside dicts and lists
+  * refactor: dispatch every element writer through a single type classifier
   * chore: align local pytest, pre-commit, release, and Rust CI configuration with the supported toolchain
   * chore: move benchmark scripts under ``benchmarks/`` and make ``pyproject.toml`` plus ``uv.lock`` the only dependency declaration
 

@@ -248,6 +248,10 @@ These tests pin low-level XML helper contracts so performance refactors keep the
 
 Common built-in numbers should avoid abstract-class dispatch while `Decimal`, `Fraction`, complex, and custom `Number` implementations remain supported.
 
+### Date-like values serialize the same in every position
+
+Objects exposing `isoformat` should serialize identically as a root value, a dict value, and a list item, because one classifier decides the kind for all three writers.
+
 ### Exact-type dispatch preserves subclass fallbacks
 
 Exact native JSON types should use direct hot paths while compatible subclasses retain fallback behavior and unsupported objects raise consistently regardless of truthiness.

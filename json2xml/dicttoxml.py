@@ -81,6 +81,7 @@ ELEMENT = Union[
     Sequence[Any],
     datetime.datetime,
     datetime.date,
+    datetime.time,
     None,
     dict[str, Any],
 ]
@@ -94,6 +95,51 @@ def _is_number(value: Any) -> bool:
     if value_type is int or value_type is float or value_type is complex:
         return True
     return isinstance(value, numbers.Number)
+
+
+# Serialization kinds shared by every element writer below. Keeping the type
+# decision in one place means adding or changing a supported type is a single
+# edit instead of four parallel ones.
+_KIND_BOOL = 0
+_KIND_SCALAR = 1
+_KIND_NONE = 2
+_KIND_DICT = 3
+_KIND_SEQUENCE = 4
+_KIND_DATETIME = 5
+_KIND_UNSUPPORTED = 6
+
+_EXACT_KINDS: dict[type, int] = {
+    bool: _KIND_BOOL,
+    str: _KIND_SCALAR,
+    int: _KIND_SCALAR,
+    float: _KIND_SCALAR,
+    complex: _KIND_SCALAR,
+    type(None): _KIND_NONE,
+    dict: _KIND_DICT,
+    list: _KIND_SEQUENCE,
+    tuple: _KIND_SEQUENCE,
+}
+
+
+def _classify(value: Any) -> int:
+    """Return the serialization kind for a value.
+
+    The exact-type dict lookup keeps native JSON values off abstract dispatch,
+    and the isinstance ladder below preserves the established fallback order
+    for string, numeric, date-like, mapping, and sequence subclasses.
+    """
+    kind = _EXACT_KINDS.get(type(value))
+    if kind is not None:
+        return kind
+    if isinstance(value, str) or _is_number(value):
+        return _KIND_SCALAR
+    if hasattr(value, "isoformat"):
+        return _KIND_DATETIME
+    if isinstance(value, dict):
+        return _KIND_DICT
+    if isinstance(value, Sequence):
+        return _KIND_SEQUENCE
+    return _KIND_UNSUPPORTED
 
 
 def get_xml_type(val: Any) -> str:
@@ -545,21 +591,13 @@ def _append_convert(
 ) -> None:
     """Append converted XML directly into output without building subtree strings."""
     item_name = item_func(parent)
-    obj_type = type(obj)
+    kind = _classify(obj)
 
-    # Exact built-ins stay ahead of ABC/subclass checks on this hot path. The
-    # later isinstance/_is_number branches intentionally preserve compatible
-    # str, numeric, dict, and sequence subclasses without charging native JSON
-    # values for abstract dispatch.
-    if obj_type is bool:
+    if kind == _KIND_SCALAR:
+        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
+    elif kind == _KIND_BOOL:
         output.write(convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata))
-    elif obj_type is str:
-        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
-    elif obj_type is int or obj_type is float or obj_type is complex:
-        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
-    elif obj is None:
-        output.write(convert_none(key=item_name, attr_type=attr_type, cdata=cdata))
-    elif obj_type is dict:
+    elif kind == _KIND_DICT:
         _append_convert_dict(
             output,
             cast("dict[str, Any]", obj),
@@ -571,7 +609,7 @@ def _append_convert(
             item_wrap,
             list_headers=list_headers,
         )
-    elif obj_type is list or obj_type is tuple:
+    elif kind == _KIND_SEQUENCE:
         _append_convert_list(
             output,
             obj,
@@ -583,9 +621,9 @@ def _append_convert(
             item_wrap,
             list_headers=list_headers,
         )
-    elif isinstance(obj, str) or _is_number(obj):
-        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
-    elif hasattr(obj, "isoformat") and isinstance(obj, (datetime.datetime, datetime.date)):
+    elif kind == _KIND_NONE:
+        output.write(convert_none(key=item_name, attr_type=attr_type, cdata=cdata))
+    elif kind == _KIND_DATETIME:
         output.write(
             convert_kv(
                 key=item_name,
@@ -594,30 +632,6 @@ def _append_convert(
                 attr={},
                 cdata=cdata,
             )
-        )
-    elif isinstance(obj, dict):
-        _append_convert_dict(
-            output,
-            cast("dict[str, Any]", obj),
-            ids,
-            parent,
-            attr_type,
-            item_func,
-            cdata,
-            item_wrap,
-            list_headers=list_headers,
-        )
-    elif isinstance(obj, Sequence):
-        _append_convert_list(
-            output,
-            obj,
-            ids,
-            parent,
-            attr_type,
-            item_func,
-            cdata,
-            item_wrap,
-            list_headers=list_headers,
         )
     else:
         raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
@@ -709,28 +723,16 @@ def _append_rawitem(
     item_name: str,
     list_headers: bool,
 ) -> None:
-    if rawitem is None:
+    kind = _classify(rawitem)
+    if kind == _KIND_NONE:
         return
-    rawitem_type = type(rawitem)
-    if rawitem_type is bool:
+    if kind == _KIND_SCALAR:
+        output.write(escape_xml(str(rawitem)))
+    elif kind == _KIND_BOOL:
         output.write("true" if rawitem else "false")
-    elif rawitem_type is str or rawitem_type is int or rawitem_type is float or rawitem_type is complex:
-        output.write(escape_xml(str(rawitem)))
-    elif rawitem_type is dict or rawitem_type is list or rawitem_type is tuple:
-        _append_convert(
-            output,
-            rawitem,
-            ids,
-            attr_type,
-            item_func,
-            cdata,
-            item_wrap,
-            item_name,
-            list_headers=list_headers,
-        )
-    elif isinstance(rawitem, str) or _is_number(rawitem):
-        output.write(escape_xml(str(rawitem)))
     else:
+        # Containers, date-like values, and unsupported objects all round-trip
+        # through the element writer, which raises for anything it cannot map.
         _append_convert(
             output,
             rawitem,
@@ -806,22 +808,22 @@ def _append_convert_dict(
 ) -> None:
     """Append a dict as XML without allocating a joined child subtree."""
     for key, val in obj.items():
-        val_type = type(val)
+        kind = _classify(val)
         attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
         key_is_flat = isinstance(key, str) and key.endswith("@flat")
         xml_key = key[:-5] if key_is_flat else key
 
         key, attr = make_valid_xml_name(xml_key, attr)
 
-        if val_type is bool:
-            output.write(convert_bool_valid_name(key, val, attr_type, attr))
-        elif val_type is str or val_type is int or val_type is float or val_type is complex:
+        if kind == _KIND_SCALAR:
             output.write(
                 convert_kv_valid_name(
                     key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
                 )
             )
-        elif val_type is dict:
+        elif kind == _KIND_BOOL:
+            output.write(convert_bool_valid_name(key, val, attr_type, attr))
+        elif kind == _KIND_DICT:
             _append_dict2xml_str(
                 output,
                 attr_type,
@@ -834,7 +836,7 @@ def _append_convert_dict(
                 False,
                 list_headers=list_headers,
             )
-        elif val_type is list or val_type is tuple:
+        elif kind == _KIND_SEQUENCE:
             _append_list2xml_str(
                 output,
                 attr_type=attr_type,
@@ -846,13 +848,9 @@ def _append_convert_dict(
                 item_wrap=item_wrap,
                 list_headers=list_headers,
             )
-        elif isinstance(val, str) or _is_number(val):
-            output.write(
-                convert_kv_valid_name(
-                    key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
-                )
-            )
-        elif hasattr(val, "isoformat"):
+        elif kind == _KIND_NONE:
+            output.write(convert_none_valid_name(key, attr_type, attr))
+        elif kind == _KIND_DATETIME:
             output.write(
                 convert_kv_valid_name(
                     key=key,
@@ -862,33 +860,6 @@ def _append_convert_dict(
                     cdata=cdata,
                 )
             )
-        elif isinstance(val, dict):
-            _append_dict2xml_str(
-                output,
-                attr_type,
-                attr,
-                val,
-                item_func,
-                cdata,
-                key,
-                item_wrap,
-                False,
-                list_headers=list_headers,
-            )
-        elif isinstance(val, Sequence):
-            _append_list2xml_str(
-                output,
-                attr_type=attr_type,
-                attr=attr,
-                item=val,
-                item_func=item_func,
-                cdata=cdata,
-                item_name=f"{key}@flat" if key_is_flat else key,
-                item_wrap=item_wrap,
-                list_headers=list_headers,
-            )
-        elif val is None:
-            output.write(convert_none_valid_name(key, attr_type, attr))
         else:
             raise TypeError(f"Unsupported data type: {val} ({type(val).__name__})")
 
@@ -914,18 +885,11 @@ def _append_convert_list(
     this_id = get_unique_id(parent) if ids else None
 
     for i, item in enumerate(items):
-        item_type = type(item)
-        base_attr: dict[str, Any] | None = None
-        if ids:
-            base_attr = {"id": f"{this_id}_{i + 1}"}
+        kind = _classify(item)
+        attr: dict[str, Any] = {"id": f"{this_id}_{i + 1}"} if ids else {}
 
-        if item_type is bool:
-            attr = dict(base_attr) if base_attr else {}
-            if item_name_attr:
-                attr.update(item_name_attr)
-            output.write(convert_bool_valid_name(item_name, item, attr_type, attr))
-        elif item_type is str or item_type is int or item_type is float or item_type is complex:
-            attr = dict(base_attr) if base_attr else {}
+        if kind == _KIND_SCALAR:
+            # Scalars are named for the parent when items are not wrapped.
             if scalar_key_attr:
                 attr.update(scalar_key_attr)
             output.write(
@@ -937,8 +901,11 @@ def _append_convert_list(
                     cdata=cdata,
                 )
             )
-        elif item_type is dict:
-            attr = dict(base_attr) if base_attr else {}
+        elif kind == _KIND_BOOL:
+            if item_name_attr:
+                attr.update(item_name_attr)
+            output.write(convert_bool_valid_name(item_name, item, attr_type, attr))
+        elif kind == _KIND_DICT:
             _append_dict2xml_str(
                 output,
                 attr_type=attr_type,
@@ -952,8 +919,7 @@ def _append_convert_list(
                 parent=parent,
                 list_headers=list_headers,
             )
-        elif item_type is list or item_type is tuple:
-            attr = dict(base_attr) if base_attr else {}
+        elif kind == _KIND_SEQUENCE:
             _append_list2xml_str(
                 output,
                 attr_type=attr_type,
@@ -965,21 +931,11 @@ def _append_convert_list(
                 item_wrap=item_wrap,
                 list_headers=list_headers,
             )
-        elif isinstance(item, str) or _is_number(item):
-            attr = dict(base_attr) if base_attr else {}
-            if scalar_key_attr:
-                attr.update(scalar_key_attr)
-            output.write(
-                convert_kv_valid_name(
-                    key=scalar_key,
-                    val=item,
-                    attr_type=attr_type,
-                    attr=attr,
-                    cdata=cdata,
-                )
-            )
-        elif hasattr(item, "isoformat"):
-            attr = dict(base_attr) if base_attr else {}
+        elif kind == _KIND_NONE:
+            if item_name_attr:
+                attr.update(item_name_attr)
+            output.write(convert_none_valid_name(item_name, attr_type, attr))
+        elif kind == _KIND_DATETIME:
             if item_name_attr:
                 attr.update(item_name_attr)
             output.write(
@@ -991,39 +947,6 @@ def _append_convert_list(
                     cdata=cdata,
                 )
             )
-        elif isinstance(item, dict):
-            attr = dict(base_attr) if base_attr else {}
-            _append_dict2xml_str(
-                output,
-                attr_type=attr_type,
-                attr=attr,
-                item=item,
-                item_func=item_func,
-                cdata=cdata,
-                item_name=item_name,
-                item_wrap=item_wrap,
-                parentIsList=True,
-                parent=parent,
-                list_headers=list_headers,
-            )
-        elif isinstance(item, Sequence):
-            attr = dict(base_attr) if base_attr else {}
-            _append_list2xml_str(
-                output,
-                attr_type=attr_type,
-                attr=attr,
-                item=item,
-                item_func=item_func,
-                cdata=cdata,
-                item_name=item_name,
-                item_wrap=item_wrap,
-                list_headers=list_headers,
-            )
-        elif item is None:
-            attr = dict(base_attr) if base_attr else {}
-            if item_name_attr:
-                attr.update(item_name_attr)
-            output.write(convert_none_valid_name(item_name, attr_type, attr))
         else:
             raise TypeError(f"Unsupported data type: {item} ({type(item).__name__})")
 

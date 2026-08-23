@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import numbers
 from decimal import Decimal
 from fractions import Fraction
@@ -99,6 +100,16 @@ def test_exact_type_dispatch_preserves_subclass_fallbacks() -> None:
         b'<?xml version="1.0" encoding="UTF-8" ?>'
         b'<root><values type="list"><item type="number">7</item></values></root>'
     )
+
+
+# @lat: [[tests#Type dispatch#Date-like values serialize the same in every position]]
+def test_date_like_values_serialize_identically_in_every_position() -> None:
+    moment = datetime.time(12, 30)
+    expected = b"12:30:00"
+
+    assert expected in dicttoxml.dicttoxml({"t": moment})
+    assert expected in dicttoxml.dicttoxml([moment])
+    assert dicttoxml.dicttoxml(moment, root=False, attr_type=False) == b"<item>12:30:00</item>"
 
 
 def test_falsy_unsupported_objects_raise_instead_of_becoming_null() -> None:

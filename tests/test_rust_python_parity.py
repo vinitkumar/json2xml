@@ -215,3 +215,46 @@ def test_randomized_payloads_render_identically() -> None:
             ), f"backend divergence for {data!r} with {options!r}"
             compared += 1
     assert compared > 500, f"differential coverage collapsed to {compared} comparisons"
+
+
+# @lat: [[tests#Rust backend parity#Native and Python gates agree]]
+@requires_rust
+def test_native_and_python_gates_agree() -> None:
+    """The native gate is an optimization, so it must decide exactly as Python does.
+
+    A disagreement in either direction is a correctness bug: admitting too much routes a
+    payload the writer cannot reproduce, and admitting too little silently drops the fast
+    path.
+    """
+    from json2xml.dicttoxml_fast import _rust_payload_is_supported
+
+    assert _rust_payload_is_supported is not None
+
+    fixtures: list[Any] = [
+        {},
+        [],
+        {"a": 1},
+        [1, 2],
+        {"a": [{"b": [None, True, 1.5, "s"]}]},
+        {"a": (1, 2)},
+        {"a": Decimal("1")},
+        {"a": datetime.date(2026, 1, 1)},
+        {"a": {1, 2}},
+        {"ns:x": 1},
+        {"名前": 1},
+        {"trail ": 1},
+        {"": 1},
+        {"@attrs": 1},
+        {"x@flat": 1},
+        {1: "int key"},
+        {None: "none key"},
+        [[[{"deep": Decimal("1")}]]],
+        {"a": [1, [2, [3, {"b": (4,)}]]]},
+    ]
+    for data in fixtures:
+        assert _rust_payload_is_supported(data) == rust_renders_identically(data), data
+
+    rng = random.Random(4242)
+    for _ in range(400):
+        data = _random_payload(rng)
+        assert _rust_payload_is_supported(data) == rust_renders_identically(data), data

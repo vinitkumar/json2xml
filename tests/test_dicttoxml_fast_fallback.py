@@ -8,6 +8,8 @@ from unittest.mock import Mock
 import pytest
 
 import json2xml.dicttoxml_fast as fast_module
+from json2xml import dicttoxml as py_dicttoxml
+from json2xml.backend_selector import ConversionRequest
 
 
 def _force_rust_backend(monkeypatch: pytest.MonkeyPatch) -> Mock:
@@ -163,3 +165,35 @@ def test_fast_helper_functions_use_python_fallback(
 
     assert fast_module.escape_xml("Ada & <XML>") == "Ada &amp; &lt;XML&gt;"
     assert fast_module.wrap_cdata("Ada <XML>") == "<![CDATA[Ada <XML>]]>"
+
+
+def test_backend_without_the_payload_gate_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An extension predating the payload gate also predates the output parity fixes.
+
+    Such a build would render admitted payloads differently from the Python serializer, so
+    the adapter must decline every request rather than trust it.
+    """
+    _force_rust_backend(monkeypatch)
+    monkeypatch.setattr(fast_module, "_rust_payload_is_supported", None)
+
+    adapter = fast_module._RustBackendAdapter()
+    request = ConversionRequest(
+        obj={"a": 1},
+        root=True,
+        custom_root="root",
+        ids=None,
+        attr_type=True,
+        item_wrap=True,
+        item_func=None,
+        cdata=False,
+        xml_namespaces=None,
+        list_headers=False,
+        xpath_format=False,
+        max_output_bytes=None,
+        indent=None,
+    )
+
+    assert adapter.can_handle(request) is False
+    assert fast_module.dicttoxml({"a": 1}) == py_dicttoxml.dicttoxml({"a": 1})

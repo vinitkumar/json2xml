@@ -22,7 +22,6 @@ from typing import Any
 from .backend_selector import (
     BackendSelector,
     ConversionRequest,
-    rust_renders_identically,
     rust_renders_root_identically,
 )
 
@@ -33,6 +32,8 @@ LOG = logging.getLogger("dicttoxml_fast")
 # Try to import the Rust implementation
 _use_rust = False
 _rust_dicttoxml: Callable[..., bytes] | None = None
+# The payload gate walks the whole input, so run it natively when the extension provides it.
+_rust_payload_is_supported: Callable[[Any], bool] | None = None
 rust_escape_xml: RustStringTransform | None = None
 rust_wrap_cdata: RustStringTransform | None = None
 
@@ -51,6 +52,9 @@ def _rejects_invalid_xml(escape: RustStringTransform) -> bool:
 try:
     from json2xml_rs import dicttoxml as _rust_dicttoxml  # pragma: no cover
     from json2xml_rs import escape_xml_py as rust_escape_xml  # pragma: no cover
+    from json2xml_rs import (  # pragma: no cover
+        payload_is_supported as _rust_payload_is_supported,
+    )
     from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # pragma: no cover
 
     if _rejects_invalid_xml(rust_escape_xml):  # pragma: no cover
@@ -61,7 +65,9 @@ try:
             "Ignoring an outdated Rust backend that permits invalid XML characters"
         )
 except ImportError:  # pragma: no cover
-    LOG.debug("Rust backend not available, using pure Python")
+    # Builds before payload_is_supported existed also predate the output parity fixes, so a
+    # failed import of any name here correctly leaves the Python serializer in charge.
+    LOG.debug("Rust backend not available or too old, using pure Python")
 
 # Import the pure Python implementation as fallback.
 import json2xml.dicttoxml as _py_dicttoxml  # noqa: E402
@@ -84,7 +90,11 @@ class _RustBackendAdapter:
     name: str = "rust"
 
     def can_handle(self, request: ConversionRequest) -> bool:
-        if not _use_rust or _rust_dicttoxml is None:
+        if (
+            not _use_rust
+            or _rust_dicttoxml is None
+            or _rust_payload_is_supported is None
+        ):
             return False
 
         return not (
@@ -95,7 +105,9 @@ class _RustBackendAdapter:
             or request.indent is not None
             or not isinstance(request.obj, (dict, list))
             or not rust_renders_root_identically(request.root, request.custom_root)
-            or not rust_renders_identically(request.obj)
+            # The native walk keeps this gate from costing more than the conversion it
+            # guards; rust_renders_identically is its pure-Python reference.
+            or not _rust_payload_is_supported(request.obj)
         )
 
     def render(self, request: ConversionRequest) -> bytes:

@@ -8,7 +8,7 @@ use pyo3::exceptions::PyValueError;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 #[cfg(feature = "python")]
-use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString};
+use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
 #[cfg(feature = "python")]
 use std::io::{BufWriter, Write};
 
@@ -708,6 +708,74 @@ fn dicttoxml(
     .map(Bound::unbind)
 }
 
+/// Return true when a key names the same element in both implementations.
+///
+/// Mirrors `_rust_renders_key_identically` in `json2xml/backend_selector.py`.
+#[cfg(feature = "python")]
+fn key_renders_identically(key: &Bound<'_, PyAny>) -> bool {
+    let Ok(py_str) = key.cast_exact::<PyString>() else {
+        return false;
+    };
+    let Ok(text) = py_str.to_str() else {
+        return false;
+    };
+    if text.is_empty() || text.starts_with('@') || text.ends_with("@flat") {
+        return false;
+    }
+    if !text.is_ascii() || text.contains(':') {
+        return false;
+    }
+    // A trailing space is the one case Python's parser probe accepts but the fast path
+    // rejects, because the probe document tolerates space before the tag close.
+    !text.as_bytes()[text.len() - 1].is_ascii_whitespace()
+}
+
+/// Return true when a payload stays inside the subset this backend renders identically.
+///
+/// This is the native form of `rust_renders_identically`; the selector calls it before
+/// dispatching so the walk does not cost a Python-level traversal of the whole payload.
+/// Types are matched exactly, because Python classifies subclasses through isinstance
+/// fallbacks that this writer does not reproduce.
+#[cfg(feature = "python")]
+#[pyfunction]
+fn payload_is_supported(obj: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut stack: Vec<Bound<'_, PyAny>> = vec![obj.clone()];
+
+    while let Some(value) = stack.pop() {
+        if value.is_none()
+            || value.is_exact_instance_of::<PyString>()
+            || value.is_exact_instance_of::<PyBool>()
+            || value.is_exact_instance_of::<PyInt>()
+            || value.is_exact_instance_of::<PyFloat>()
+        {
+            continue;
+        }
+        if let Ok(dict) = value.cast_exact::<PyDict>() {
+            for (key, child) in dict.iter() {
+                if !key_renders_identically(&key) {
+                    return Ok(false);
+                }
+                stack.push(child);
+            }
+            continue;
+        }
+        if let Ok(list) = value.cast_exact::<PyList>() {
+            for item in list.iter() {
+                stack.push(item);
+            }
+            continue;
+        }
+        if let Ok(tuple) = value.cast_exact::<PyTuple>() {
+            for item in tuple.iter() {
+                stack.push(item);
+            }
+            continue;
+        }
+        return Ok(false);
+    }
+    Ok(true)
+}
+
 /// Fast XML string escaping.
 ///
 /// Escapes &, ", ', <, > characters for XML.
@@ -731,6 +799,7 @@ fn wrap_cdata_py(s: &str) -> PyResult<String> {
 #[pymodule]
 fn json2xml_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(dicttoxml, m)?)?;
+    m.add_function(wrap_pyfunction!(payload_is_supported, m)?)?;
     m.add_function(wrap_pyfunction!(escape_xml_py, m)?)?;
     m.add_function(wrap_pyfunction!(wrap_cdata_py, m)?)?;
     Ok(())

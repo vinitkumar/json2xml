@@ -93,7 +93,7 @@ This rerun compares the same CLI workload across uv-managed CPython 3.14.6, CPyt
 
 ### Security Hardening Benchmark (August 12, 2026)
 
-This comparison measures the public `Json2xml(...).to_xml()` path before and after conversion limits, lexical pretty printing, and compact output by default were added.
+This comparison measures the public `Json2xml(...).to_xml()` path before and after conversion limits, lexical pretty printing, and compact output by default were added. It is kept as a dated record; the pretty-output figures were superseded on August 23, 2026, when indentation moved into the serializer and the lexical formatter was removed.
 
 It compares pre-hardening commit `826439f` with hardened `master` at `48dfd38`. The direct `dicttoxml` serializer did not change between these revisions, so `benchmarks/benchmark_all.py` would not expose the wrapper cost.
 
@@ -179,13 +179,53 @@ The compact-output SHA-256 values are `013c28cd992bb5caa9a3c357a492ab47ccf00ad47
 
 Default calls are roughly 4-5x faster because they now return compact serializer bytes instead of building pretty output. This comparison includes the intentional default-output contract change.
 
-Explicit pretty output is 27-42% faster because bounded lexical indentation replaces DOM parsing. Its formatting and encoded size differ from the old `minidom` output.
+Explicit pretty output was 27-42% faster in this run because bounded lexical indentation replaced DOM parsing, and its formatting and encoded size differ from the old `minidom` output. The later change below removed that formatter entirely.
 
 Explicit compact output is 45-61% slower. Compact bytes were identical across revisions, and the serializer was unchanged, isolating the regression mainly to the new full-input resource-budget scan.
 
 CPython 3.15.0rc1 reproduces the same tradeoff: default and pretty output improve substantially, while explicit compact conversion pays for the security scan.
 
 PyPy 3.10.16 corroborated the tradeoff: default calls were 73-87% faster, pretty calls were 42-72% faster, and compact calls were 31-35% slower.
+
+## Generation-Time Pretty Printing Benchmark
+
+This August 23, 2026 comparison supersedes the lexical-formatter results above for
+pretty output. It measures the same public `Json2xml(...).to_xml()` path before and
+after indentation moved into the serializer itself.
+
+Previously `pretty=True` serialized compact XML and then re-tokenized that output to
+insert indentation, a second full pass over generated markup. The serializer now
+receives an indent unit and emits indentation as it writes, so the tokenizer is gone
+and no XML is parsed at any point.
+
+It compares `78ea9ea` with `7b29472` on Apple Silicon and macOS 26.6.1 using CPython
+3.14.6, driven by the same `benchmarks/benchmark_security_hardening.py` harness,
+payloads, worker order, and 68-samples-per-cell methodology described above.
+
+| Workload | Mode | Before median [p25, p75] | After median [p25, p75] | Change |
+|---|---|---:|---:|---:|
+| Small | Default | 6.4us [6.4, 6.5] | 6.5us [6.5, 6.6] | 1.5% slower |
+| Small | Compact | 6.5us [6.4, 6.5] | 6.6us [6.6, 6.7] | 2.3% slower |
+| Small | Pretty | 15.2us [15.1, 15.3] | 8.2us [8.1, 8.2] | **46.2% faster** |
+| 100 records | Default | 1.69ms [1.68, 1.70] | 1.68ms [1.68, 1.70] | 0.4% faster |
+| 100 records | Compact | 1.68ms [1.67, 1.69] | 1.69ms [1.68, 1.71] | 0.5% slower |
+| 100 records | Pretty | 4.86ms [4.81, 4.90] | 2.36ms [2.35, 2.37] | **51.4% faster** |
+| 1,000 records | Default | 16.75ms [16.63, 16.88] | 16.55ms [16.44, 16.69] | 1.2% faster |
+| 1,000 records | Compact | 16.64ms [16.59, 16.73] | 16.76ms [16.57, 16.87] | 0.7% slower |
+| 1,000 records | Pretty | 49.40ms [48.70, 49.90] | 23.18ms [23.00, 23.37] | **53.1% faster** |
+
+Pretty conversion is roughly twice as fast, and the gain grows with payload size
+because the removed pass was proportional to output length. Compact and default calls
+move within measurement noise, which is the intended result: the compact writer keeps
+its previous hot path and treats the structural calls as plain writes.
+
+### Generation-Time Output Checks
+
+All nine cells produced identical SHA-256 values before and after, pretty output
+included, so the speedup is not paid for with changed output. Note that these payloads
+contain no null values or empty containers; an empty element such as
+`<a type="null"></a>` is the one case whose pretty layout did change, since the old
+tokenizer split it across two lines.
 
 ## Key Observations
 

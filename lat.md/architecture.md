@@ -68,6 +68,8 @@ Default calls improved 74-80% and pretty calls 27-42%, while explicit compact ca
 
 An identical uv-managed CPython 3.15.0rc1 follow-up confirmed the result: default calls improved 75-80%, pretty calls improved 28-43%, and compact calls regressed 44-60%.
 
+The August 2026 generation-time pretty-printing rerun compares `78ea9ea` with `7b29472` using the same harness. Moving indentation into the serializer made pretty conversion 46-53% faster, with the gain growing by payload size because the removed re-tokenizing pass was proportional to output length. Default and compact calls moved within noise, and all nine cells kept identical output SHA-256 values.
+
 The detailed record includes interquartile ranges, exact uv and interpreter provenance, and output checks showing that compact bytes remained identical across revisions.
 
 The June 2026 Rust memory benchmark uses [[benchmarks/benchmark_memory_rust.py#main]] under hyperfine to compare release builds in fresh Python processes. The bytes-writer implementation cuts serializer peak RSS by about half for large outputs, with a documented throughput tradeoff.

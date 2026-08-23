@@ -7,7 +7,7 @@ different JSON sizes.
 
 Environment variables:
     JSON2XML_GO_CLI: Path to the json2xml-go binary (default: json2xml-go in PATH)
-    JSON2XML_EXAMPLES_DIR: Path to examples directory (default: ./examples relative to script)
+    JSON2XML_EXAMPLES_DIR: Path to examples directory (default: ./examples in repository)
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from pathlib import Path
 from benchmark_utils import Colors, colorize, format_time, random_string
 
 # Base directory for repo-relative defaults
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Paths - configurable via environment variables
 PYTHON_CLI = [sys.executable, "-m", "json2xml.cli"]

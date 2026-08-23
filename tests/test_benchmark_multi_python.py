@@ -42,3 +42,15 @@ def test_benchmark_multi_python_env_overrides_interpreter_paths(monkeypatch) -> 
     assert Path(module.PYTHON_VERSIONS[0]["python"]).as_posix() == "/custom/python314"
     assert Path(module.PYTHON_VERSIONS[1]["python"]).as_posix() == "/custom/python315"
     assert Path(module.PYTHON_VERSIONS[2]["python"]).as_posix() == "/custom/pypy311"
+
+
+# @lat: [[tests#Performance benchmarks#Moved benchmark scripts retain repository-relative paths]]
+def test_moved_benchmark_scripts_use_repository_root() -> None:
+    benchmark = importlib.import_module("benchmark")
+    multi_python = importlib.import_module("benchmark_multi_python")
+    repository_root = Path(__file__).resolve().parents[1]
+
+    assert benchmark.BASE_DIR == repository_root
+    assert benchmark.EXAMPLES_DIR == repository_root / "examples"
+    assert multi_python.BASE_DIR == repository_root
+    assert multi_python.VENVS_DIR == repository_root / "benchmarks" / ".benchmark_venvs"

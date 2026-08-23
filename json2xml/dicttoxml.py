@@ -101,8 +101,9 @@ class _IndentingXMLWriter(_XMLWriter):
         self._inline = False
 
     def to_bytes(self) -> bytes:
-        data = super().to_bytes()
-        return data + b"\n" if data else data
+        if self._buffer.tell():
+            super().write("\n")
+        return super().to_bytes()
 
 
 def _make_writer(max_output_bytes: int | None, indent: str | None) -> _XMLWriter:

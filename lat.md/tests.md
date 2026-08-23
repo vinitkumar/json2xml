@@ -78,6 +78,10 @@ The multi-interpreter benchmark should derive default interpreter paths from `JS
 
 The multi-interpreter benchmark should let per-interpreter environment variables override uv-derived defaults so unusual local layouts remain runnable without editing the script.
 
+### Moved benchmark scripts retain repository-relative paths
+
+Benchmark scripts stored under `benchmarks/` should resolve package metadata and example fixtures from the repository root while keeping generated benchmark environments inside the benchmark directory.
+
 ### Security benchmark payloads stay deterministic
 
 The public-wrapper benchmark should build the documented small and index-derived nested record payloads exactly so reruns use identical inputs without an external random seed.
@@ -202,7 +206,7 @@ Default library conversion should return serializer bytes without building a sec
 
 Conversion should reject excessive nesting and item counts before serialization, then enforce exact generated-byte limits without rejecting valid compact output based on an estimate.
 
-Limit validation rejects booleans, non-integers, and non-positive values. Tests cover exact backend bytes and the indentation that pretty output adds to that same budget.
+Limit validation rejects booleans, non-integers, and non-positive values. Tests cover exact backend bytes and all pretty whitespace, including indentation and the trailing newline, in that same budget.
 
 ### Pretty printing avoids DOM reparsing
 

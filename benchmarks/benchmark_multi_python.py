@@ -27,8 +27,9 @@ from pathlib import Path
 from benchmark_utils import Colors, colorize, format_time, random_string
 
 # Configuration
-BASE_DIR = Path(__file__).resolve().parent
-VENVS_DIR = BASE_DIR / ".benchmark_venvs"
+BENCHMARKS_DIR = Path(__file__).resolve().parent
+BASE_DIR = BENCHMARKS_DIR.parent
+VENVS_DIR = BENCHMARKS_DIR / ".benchmark_venvs"
 GO_CLI = Path(os.environ.get("JSON2XML_GO_CLI", "json2xml-go"))
 UV_PYTHON_DIR = Path(
     os.environ.get(

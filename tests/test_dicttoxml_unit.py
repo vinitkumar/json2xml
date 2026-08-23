@@ -125,12 +125,8 @@ def test_convert_preserves_root_scalar_and_sequence_subclasses() -> None:
     def item_func(_parent: str) -> str:
         return "item"
 
-    assert dicttoxml.convert(IntSubclass(7), [], True, item_func, False, True) == (
-        '<item type="number">7</item>'
-    )
-    assert dicttoxml.convert(ListSubclass([1]), [], True, item_func, False, True) == (
-        '<item type="int">1</item>'
-    )
+    assert dicttoxml.convert(IntSubclass(7), [], True, item_func, False, True) == ('<item type="number">7</item>')
+    assert dicttoxml.convert(ListSubclass([1]), [], True, item_func, False, True) == ('<item type="int">1</item>')
 
 
 def test_nested_subclasses_match_compatible_serializer_shapes() -> None:
@@ -145,10 +141,7 @@ def test_nested_subclasses_match_compatible_serializer_shapes() -> None:
         item_func,
         False,
         True,
-    ) == (
-        '<text type="str">value</text>'
-        '<mapping type="dict"><count type="int">1</count></mapping>'
-    )
+    ) == ('<text type="str">value</text><mapping type="dict"><count type="int">1</count></mapping>')
     assert dicttoxml.convert_list(
         [DictSubclass({"count": 1}), ListSubclass([2])],
         [],
@@ -157,32 +150,35 @@ def test_nested_subclasses_match_compatible_serializer_shapes() -> None:
         item_func,
         False,
         True,
-    ) == (
-        '<item type="dict"><count type="int">1</count></item>'
-        '<item type="list"><item type="int">2</item></item>'
+    ) == ('<item type="dict"><count type="int">1</count></item><item type="list"><item type="int">2</item></item>')
+    assert (
+        dicttoxml.convert_list(
+            [IntSubclass(7)],
+            None,
+            "bad&parent",
+            True,
+            item_func,
+            False,
+            False,
+        )
+        == '<key name="bad&amp;parent" type="number">7</key>'
     )
-    assert dicttoxml.convert_list(
-        [IntSubclass(7)],
-        None,
-        "bad&parent",
-        True,
-        item_func,
-        False,
-        False,
-    ) == '<key name="bad&amp;parent" type="number">7</key>'
 
 
 def test_raw_attribute_values_preserve_mapping_subclasses() -> None:
-    assert dicttoxml.dict2xml_str(
-        attr_type=False,
-        attr={},
-        item={"@attrs": {"source": "api"}, "@val": DictSubclass({"count": 1})},
-        item_func=lambda _parent: "item",
-        cdata=False,
-        item_name="field",
-        item_wrap=True,
-        parentIsList=False,
-    ) == '<field source="api"><count>1</count></field>'
+    assert (
+        dicttoxml.dict2xml_str(
+            attr_type=False,
+            attr={},
+            item={"@attrs": {"source": "api"}, "@val": DictSubclass({"count": 1})},
+            item_func=lambda _parent: "item",
+            cdata=False,
+            item_name="field",
+            item_wrap=True,
+            parentIsList=False,
+        )
+        == '<field source="api"><count>1</count></field>'
+    )
 
 
 @pytest.mark.parametrize(
@@ -195,8 +191,7 @@ def test_raw_attribute_values_preserve_mapping_subclasses() -> None:
 # @lat: [[tests#Conversion behavior#Raw attribute values preserve scalar subclasses]]
 def test_raw_attribute_values_preserve_scalar_subclasses(value: str | int, expected_text: bytes) -> None:
     assert dicttoxml.dicttoxml({"field": {"@attrs": {"source": "api"}, "@val": value}}) == (
-        b'<?xml version="1.0" encoding="UTF-8" ?>'
-        b'<root><field source="api">' + expected_text + b"</field></root>"
+        b'<?xml version="1.0" encoding="UTF-8" ?><root><field source="api">' + expected_text + b"</field></root>"
     )
 
 
@@ -239,8 +234,7 @@ def test_valid_name_helpers_set_type_without_mutating_caller_attrs() -> None:
     base_attrs = {"id": "shared"}
 
     assert (
-        dicttoxml.convert_kv_valid_name("name", "Bike", True, base_attrs)
-        == '<name id="shared" type="str">Bike</name>'
+        dicttoxml.convert_kv_valid_name("name", "Bike", True, base_attrs) == '<name id="shared" type="str">Bike</name>'
     )
     assert base_attrs == {"id": "shared"}
 
@@ -250,10 +244,7 @@ def test_valid_name_helpers_set_type_without_mutating_caller_attrs() -> None:
     )
     assert base_attrs == {"id": "shared"}
 
-    assert (
-        dicttoxml.convert_none_valid_name("empty", True, base_attrs)
-        == '<empty id="shared" type="null"></empty>'
-    )
+    assert dicttoxml.convert_none_valid_name("empty", True, base_attrs) == '<empty id="shared" type="null"></empty>'
     assert base_attrs == {"id": "shared"}
 
 
@@ -277,10 +268,7 @@ def test_public_scalar_helpers_do_not_mutate_caller_attrs() -> None:
 def test_valid_name_helpers_keep_existing_attrs_without_attr_type() -> None:
     base_attrs = {"name": "invalid key"}
 
-    assert (
-        dicttoxml.convert_kv_valid_name("key", "Bike", False, base_attrs)
-        == '<key name="invalid key">Bike</key>'
-    )
+    assert dicttoxml.convert_kv_valid_name("key", "Bike", False, base_attrs) == '<key name="invalid key">Bike</key>'
     assert dicttoxml.convert_bool_valid_name("key", True, False, base_attrs) == '<key name="invalid key">true</key>'
     assert dicttoxml.convert_none_valid_name("key", False, base_attrs) == '<key name="invalid key"></key>'
     assert base_attrs == {"name": "invalid key"}
@@ -291,24 +279,17 @@ def test_valid_name_helpers_replace_type_attr_without_mutating_caller_attrs() ->
     base_attrs = {"type": "caller", "id": "shared"}
 
     assert (
-        dicttoxml.convert_kv_valid_name("name", "Bike", True, base_attrs)
-        == '<name type="str" id="shared">Bike</name>'
+        dicttoxml.convert_kv_valid_name("name", "Bike", True, base_attrs) == '<name type="str" id="shared">Bike</name>'
     )
     assert (
         dicttoxml.convert_bool_valid_name("active", True, True, base_attrs)
         == '<active type="bool" id="shared">true</active>'
     )
-    assert (
-        dicttoxml.convert_none_valid_name("empty", True, base_attrs)
-        == '<empty type="null" id="shared"></empty>'
-    )
+    assert dicttoxml.convert_none_valid_name("empty", True, base_attrs) == '<empty type="null" id="shared"></empty>'
     assert base_attrs == {"type": "caller", "id": "shared"}
 
     only_type = {"type": "caller"}
-    assert (
-        dicttoxml.convert_bool_valid_name("active", False, True, only_type)
-        == '<active type="bool">false</active>'
-    )
+    assert dicttoxml.convert_bool_valid_name("active", False, True, only_type) == '<active type="bool">false</active>'
     assert only_type == {"type": "caller"}
 
     metadata_attrs = {"id": "shared", "name": "invalid key"}
@@ -324,27 +305,33 @@ def test_container_helpers_set_type_without_mutating_caller_attrs() -> None:
     dict_attrs = {"id": "shared"}
     list_attrs = {"id": "shared"}
 
-    assert dicttoxml.dict2xml_str(
-        attr_type=True,
-        attr=dict_attrs,
-        item={"name": "Bike"},
-        item_func=lambda _parent: "item",
-        cdata=False,
-        item_name="product",
-        item_wrap=True,
-        parentIsList=False,
-    ) == '<product id="shared" type="dict"><name type="str">Bike</name></product>'
+    assert (
+        dicttoxml.dict2xml_str(
+            attr_type=True,
+            attr=dict_attrs,
+            item={"name": "Bike"},
+            item_func=lambda _parent: "item",
+            cdata=False,
+            item_name="product",
+            item_wrap=True,
+            parentIsList=False,
+        )
+        == '<product id="shared" type="dict"><name type="str">Bike</name></product>'
+    )
     assert dict_attrs == {"id": "shared"}
 
-    assert dicttoxml.list2xml_str(
-        attr_type=True,
-        attr=list_attrs,
-        item=["Bike"],
-        item_func=lambda _parent: "item",
-        cdata=False,
-        item_name="products",
-        item_wrap=True,
-    ) == '<products id="shared" type="list"><item type="str">Bike</item></products>'
+    assert (
+        dicttoxml.list2xml_str(
+            attr_type=True,
+            attr=list_attrs,
+            item=["Bike"],
+            item_func=lambda _parent: "item",
+            cdata=False,
+            item_name="products",
+            item_wrap=True,
+        )
+        == '<products id="shared" type="list"><item type="str">Bike</item></products>'
+    )
     assert list_attrs == {"id": "shared"}
 
 

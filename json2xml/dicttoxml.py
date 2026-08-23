@@ -37,10 +37,7 @@ class _XMLWriter:
 
     def write(self, value: str) -> None:
         encoded = value.encode("utf-8")
-        if (
-            self._max_output_bytes is not None
-            and self._buffer.tell() + len(encoded) > self._max_output_bytes
-        ):
+        if self._max_output_bytes is not None and self._buffer.tell() + len(encoded) > self._max_output_bytes:
             raise ValueError("XML output size limit exceeded")
         self._buffer.write(encoded)
 
@@ -110,7 +107,6 @@ def _make_writer(max_output_bytes: int | None, indent: str | None) -> _XMLWriter
     if indent is None:
         return _XMLWriter(max_output_bytes)
     return _IndentingXMLWriter(max_output_bytes, indent)
-
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -261,15 +257,11 @@ def _validate_xml_chars(value: str) -> None:
 
     for character in value:
         codepoint = ord(character)
-        is_forbidden_control = (
-            codepoint < 0x20 and codepoint not in (0x09, 0x0A, 0x0D)
-        )
+        is_forbidden_control = codepoint < 0x20 and codepoint not in (0x09, 0x0A, 0x0D)
         is_surrogate = 0xD800 <= codepoint <= 0xDFFF
         is_bmp_noncharacter = codepoint in (0xFFFE, 0xFFFF)
         if is_forbidden_control or is_surrogate or is_bmp_noncharacter:
-            raise ValueError(
-                f"Character U+{codepoint:04X} is not allowed in XML 1.0"
-            )
+            raise ValueError(f"Character U+{codepoint:04X} is not allowed in XML 1.0")
 
 
 def escape_xml(s: str | int | float | numbers.Number | None) -> str:
@@ -620,7 +612,7 @@ def convert_dict(
     item_func: Callable[[str], str],
     cdata: bool,
     item_wrap: bool,
-    list_headers: bool = False
+    list_headers: bool = False,
 ) -> str:
     """Converts a dict into an XML string.
 
@@ -690,9 +682,7 @@ def _append_convert(
     kind = _classify(obj)
 
     if kind == _KIND_SCALAR:
-        output.element(
-            convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata)
-        )
+        output.element(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
     elif kind == _KIND_BOOL:
         output.element(convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata))
     elif kind == _KIND_DICT:
@@ -758,9 +748,7 @@ def _append_dict2xml_str(
     if has_custom_attrs:
         raw_attrs = item["@attrs"]
         val_attr = raw_attrs if isinstance(raw_attrs, dict) else dict(raw_attrs)
-        rawitem = item["@val"] if "@val" in item else {
-            key: value for key, value in item.items() if key != "@attrs"
-        }
+        rawitem = item["@val"] if "@val" in item else {key: value for key, value in item.items() if key != "@attrs"}
     else:
         val_attr = attr
         rawitem = item.get("@val", item)
@@ -914,11 +902,7 @@ def _append_convert_dict(
         key, attr = make_valid_xml_name(xml_key, attr)
 
         if kind == _KIND_SCALAR:
-            output.element(
-                convert_kv_valid_name(
-                    key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
-                )
-            )
+            output.element(convert_kv_valid_name(key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata))
         elif kind == _KIND_BOOL:
             output.element(convert_bool_valid_name(key, val, attr_type, attr))
         elif kind == _KIND_DICT:
@@ -1085,9 +1069,7 @@ def convert_kv_valid_name(
     return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
 
 
-def convert_bool(
-    key: str, val: bool, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
-) -> str:
+def convert_bool(key: str, val: bool, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False) -> str:
     """Converts a boolean into an XML element"""
     attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
@@ -1109,9 +1091,7 @@ def convert_bool_valid_name(
     return f"<{key}{attr_string}>{'true' if val else 'false'}</{key}>"
 
 
-def convert_none(
-    key: str, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
-) -> str:
+def convert_none(key: str, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False) -> str:
     """Converts a null value into an XML element"""
     attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
@@ -1122,9 +1102,7 @@ def convert_none(
     return f"<{key}{attr_string}></{key}>"
 
 
-def convert_none_valid_name(
-    key: str, attr_type: bool, attr: dict[str, Any]
-) -> str:
+def convert_none_valid_name(key: str, attr_type: bool, attr: dict[str, Any]) -> str:
     """Converts a null value when the caller already validated the key."""
     attr_string = make_typed_attrstring(attr, "null") if attr_type else make_attrstring(attr)
     return f"<{key}{attr_string}></{key}>"
@@ -1182,34 +1160,19 @@ class _NamespaceFormatter:
             if prefix == "xsi":
                 if not isinstance(namespace_value, dict):
                     raise ValueError("The xsi namespace value must be a mapping")
-                if (
-                    "schemaLocation" in namespace_value
-                    and "schemaInstance" not in namespace_value
-                ):
-                    raise ValueError(
-                        "xsi schemaLocation requires a schemaInstance namespace"
-                    )
+                if "schemaLocation" in namespace_value and "schemaInstance" not in namespace_value:
+                    raise ValueError("xsi schemaLocation requires a schemaInstance namespace")
                 for schema_att in namespace_value:
                     if schema_att == "schemaInstance":
-                        namespace_parts.append(
-                            f' xmlns:{prefix}="{escape_xml(namespace_value[schema_att])}"'
-                        )
+                        namespace_parts.append(f' xmlns:{prefix}="{escape_xml(namespace_value[schema_att])}"')
                     elif schema_att == "schemaLocation":
-                        namespace_parts.append(
-                            f' xsi:{schema_att}="{escape_xml(namespace_value[schema_att])}"'
-                        )
+                        namespace_parts.append(f' xsi:{schema_att}="{escape_xml(namespace_value[schema_att])}"')
             elif prefix == "xmlns":
                 namespace_parts.append(f' xmlns="{escape_xml(namespace_value)}"')
             else:
-                if (
-                    not isinstance(prefix, str)
-                    or prefix.lower().startswith("xml")
-                    or not key_is_valid_xml(prefix)
-                ):
+                if not isinstance(prefix, str) or prefix.lower().startswith("xml") or not key_is_valid_xml(prefix):
                     raise ValueError(f"Invalid XML namespace prefix: {prefix}")
-                namespace_parts.append(
-                    f' xmlns:{prefix}="{escape_xml(namespace_value)}"'
-                )
+                namespace_parts.append(f' xmlns:{prefix}="{escape_xml(namespace_value)}"')
         return "".join(namespace_parts)
 
 

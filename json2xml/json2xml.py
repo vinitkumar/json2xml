@@ -17,9 +17,7 @@ def _positive_limit(name: str, value: int) -> int:
     return value
 
 
-def _validate_conversion_budget(
-    data: JSONValue, max_depth: int, max_items: int
-) -> None:
+def _validate_conversion_budget(data: JSONValue, max_depth: int, max_items: int) -> None:
     """Reject inputs whose nesting depth or item count exceeds a limit."""
     stack: list[tuple[Any, int]] = [(data, 0)]
     items = 0
@@ -55,6 +53,7 @@ class Json2xml:
     :param max_items: Maximum total number of JSON values and containers.
     :param max_output_bytes: Maximum compact or pretty UTF-8 XML size.
     """
+
     def __init__(
         self,
         data: JSONValue = None,

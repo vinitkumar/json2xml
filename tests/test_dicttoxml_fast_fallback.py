@@ -1,4 +1,5 @@
 """Tests for optional Rust backend selection in dicttoxml_fast."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -26,9 +27,7 @@ def _force_rust_backend(monkeypatch: pytest.MonkeyPatch) -> Mock:
         (Mock(side_effect=ValueError("invalid XML")), True),
     ],
 )
-def test_rust_backend_must_reject_invalid_xml(
-    escape: Mock, expected: bool
-) -> None:
+def test_rust_backend_must_reject_invalid_xml(escape: Mock, expected: bool) -> None:
     """Only backends that reject XML 1.0 control characters are safe to use."""
     assert fast_module._rejects_invalid_xml(escape) is expected
 
@@ -113,9 +112,7 @@ def test_fast_wrapper_falls_back_to_python_for_special_keys(
     """Special @attrs/@val keys require Python processing even when Rust is installed."""
     rust_backend = _force_rust_backend(monkeypatch)
 
-    result = fast_module.dicttoxml(
-        {"records": [{"record": {"@attrs": {"id": "7"}, "@val": "Ada"}}]}
-    )
+    result = fast_module.dicttoxml({"records": [{"record": {"@attrs": {"id": "7"}, "@val": "Ada"}}]})
 
     assert b'id="7"' in result
     assert b">Ada</record>" in result

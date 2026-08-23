@@ -1,4 +1,5 @@
 """Tests for the json2xml CLI."""
+
 from __future__ import annotations
 
 import io
@@ -84,9 +85,13 @@ class TestCLI:
 
             result = subprocess.run(
                 [
-                    sys.executable, "-m", "json2xml.cli",
-                    "-s", '{"test": "data"}',
-                    "-o", str(output_file),
+                    sys.executable,
+                    "-m",
+                    "json2xml.cli",
+                    "-s",
+                    '{"test": "data"}',
+                    "-o",
+                    str(output_file),
                 ],
                 capture_output=True,
                 text=True,
@@ -102,9 +107,13 @@ class TestCLI:
         """Test -w/--wrapper flag for custom wrapper element."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"name": "John"}',
-                "-w", "root",
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"name": "John"}',
+                "-w",
+                "root",
             ],
             capture_output=True,
             text=True,
@@ -116,8 +125,11 @@ class TestCLI:
         """Test --no-root flag."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"name": "John"}',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"name": "John"}',
                 "--no-root",
             ],
             capture_output=True,
@@ -131,8 +143,11 @@ class TestCLI:
         """Test --no-pretty flag disables pretty printing."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"name": "John"}',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"name": "John"}',
                 "--no-pretty",
             ],
             capture_output=True,
@@ -150,8 +165,11 @@ class TestCLI:
         """Test --no-type flag excludes type attributes."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"name": "John", "age": 30}',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"name": "John", "age": 30}',
                 "--no-type",
             ],
             capture_output=True,
@@ -165,8 +183,11 @@ class TestCLI:
         """Test -x/--xpath flag for XPath 3.1 format."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"name": "John"}',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"name": "John"}',
                 "-x",
             ],
             capture_output=True,
@@ -215,8 +236,11 @@ class TestCLI:
         """Test handling of JSON array input."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '[1, 2, 3]',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                "[1, 2, 3]",
             ],
             capture_output=True,
             text=True,
@@ -241,8 +265,11 @@ class TestCLI:
         """Test -c/--cdata flag wraps string values in CDATA sections."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"message": "Hello <World>"}',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"message": "Hello <World>"}',
                 "-c",
             ],
             capture_output=True,
@@ -255,8 +282,11 @@ class TestCLI:
         """Test -l/--list-headers flag repeats headers for each list item."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"items": [1, 2, 3]}',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"items": [1, 2, 3]}',
                 "-l",
             ],
             capture_output=True,
@@ -293,8 +323,11 @@ class TestCLI:
         """Test --no-item-wrap flag disables wrapping list items."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '[1, 2, 3]',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                "[1, 2, 3]",
                 "--no-item-wrap",
             ],
             capture_output=True,
@@ -341,9 +374,13 @@ class TestCLI:
 
             result = subprocess.run(
                 [
-                    sys.executable, "-m", "json2xml.cli",
-                    "-s", '{"test": "data"}',
-                    "-o", str(output_path / "subdir" / "file.xml"),
+                    sys.executable,
+                    "-m",
+                    "json2xml.cli",
+                    "-s",
+                    '{"test": "data"}',
+                    "-o",
+                    str(output_path / "subdir" / "file.xml"),
                 ],
                 capture_output=True,
                 text=True,
@@ -356,8 +393,11 @@ class TestCLI:
         """Test handling of JSON boolean values."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"active": true, "deleted": false}',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"active": true, "deleted": false}',
             ],
             capture_output=True,
             text=True,
@@ -370,8 +410,11 @@ class TestCLI:
         """Test handling of JSON null values."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"value": null}',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"value": null}',
             ],
             capture_output=True,
             text=True,
@@ -383,8 +426,11 @@ class TestCLI:
         """Test handling of JSON numeric values (int and float)."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"integer": 42, "float": 3.14}',
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"integer": 42, "float": 3.14}',
             ],
             capture_output=True,
             text=True,
@@ -397,9 +443,13 @@ class TestCLI:
         """Test combining multiple flags together."""
         result = subprocess.run(
             [
-                sys.executable, "-m", "json2xml.cli",
-                "-s", '{"items": [1, 2]}',
-                "-w", "data",
+                sys.executable,
+                "-m",
+                "json2xml.cli",
+                "-s",
+                '{"items": [1, 2]}',
+                "-w",
+                "data",
                 "--no-pretty",
                 "--no-type",
                 "--no-item-wrap",
@@ -426,18 +476,23 @@ class TestCLIUnitTests:
     def test_create_parser_parses_all_args(self) -> None:
         """Test parser handles all argument combinations."""
         parser = create_parser()
-        args = parser.parse_args([
-            "-s", '{"test": 1}',
-            "-w", "custom",
-            "--no-root",
-            "--no-pretty",
-            "--no-type",
-            "--no-item-wrap",
-            "-x",
-            "-c",
-            "-l",
-            "-o", "output.xml",
-        ])
+        args = parser.parse_args(
+            [
+                "-s",
+                '{"test": 1}',
+                "-w",
+                "custom",
+                "--no-root",
+                "--no-pretty",
+                "--no-type",
+                "--no-item-wrap",
+                "-x",
+                "-c",
+                "-l",
+                "-o",
+                "output.xml",
+            ]
+        )
         assert args.string == '{"test": 1}'
         assert args.wrapper == "custom"
         assert args.root is False

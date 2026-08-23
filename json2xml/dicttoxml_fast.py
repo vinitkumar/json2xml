@@ -11,6 +11,7 @@ Usage:
     # Automatically uses fastest available backend
     xml_bytes = dicttoxml({"name": "John", "age": 30})
 """
+
 from __future__ import annotations
 
 import logging
@@ -46,6 +47,7 @@ try:
     from json2xml_rs import dicttoxml as _rust_dicttoxml  # pragma: no cover
     from json2xml_rs import escape_xml_py as rust_escape_xml  # pragma: no cover
     from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # pragma: no cover
+
     if _rejects_invalid_xml(rust_escape_xml):  # pragma: no cover
         _use_rust = True  # pragma: no cover
         LOG.debug("Using Rust backend for dicttoxml")  # pragma: no cover
@@ -68,6 +70,7 @@ def is_rust_available() -> bool:
 def get_backend() -> str:
     """Return the name of the current backend ('rust' or 'python')."""
     return "rust" if _use_rust else "python"
+
 
 @dataclass(frozen=True, slots=True)
 class _RustBackendAdapter:
@@ -100,10 +103,7 @@ class _RustBackendAdapter:
             cdata=request.cdata,
             list_headers=request.list_headers,
         )
-        if (
-            request.max_output_bytes is not None
-            and len(output) > request.max_output_bytes
-        ):
+        if request.max_output_bytes is not None and len(output) > request.max_output_bytes:
             raise ValueError("XML output size limit exceeded")
         return output
 

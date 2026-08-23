@@ -31,9 +31,7 @@ class TestDict2xml:
         """Test dicttoxml with xmlns namespaces."""
         data = {"ns1:node1": "data in namespace 1", "ns2:node2": "data in namespace 2"}
         namespaces = {"xmlns": "http://www.w3.org/1999/XSL/Transform"}
-        result = dicttoxml.dicttoxml(
-            obj=data, attr_type=False, xml_namespaces=namespaces
-        )
+        result = dicttoxml.dicttoxml(obj=data, attr_type=False, xml_namespaces=namespaces)
         assert (
             b'<?xml version="1.0" encoding="UTF-8" ?>'
             b'<root xmlns="http://www.w3.org/1999/XSL/Transform">'
@@ -52,9 +50,7 @@ class TestDict2xml:
                 "schemaLocation": "https://www.w3schools.com/note.xsd",
             }
         }
-        result = dicttoxml.dicttoxml(
-            data, custom_root=wrapper, xml_namespaces=namespaces, attr_type=False
-        )
+        result = dicttoxml.dicttoxml(data, custom_root=wrapper, xml_namespaces=namespaces, attr_type=False)
         print(result)
         assert (
             b'<?xml version="1.0" encoding="UTF-8" ?>'
@@ -76,9 +72,7 @@ class TestDict2xml:
                 "schemaLocation": "https://www.w3schools.com",
             },
         }
-        result = dicttoxml.dicttoxml(
-            data, custom_root=wrapper, xml_namespaces=xml_namespace, attr_type=False
-        ).decode()
+        result = dicttoxml.dicttoxml(data, custom_root=wrapper, xml_namespaces=xml_namespace, attr_type=False).decode()
         print(result)
         assert (
             '<?xml version="1.0" encoding="UTF-8" ?>'
@@ -101,9 +95,7 @@ class TestDict2xml:
             },
         }
 
-        result = dicttoxml.dicttoxml(
-            {"bike": "blue"}, attr_type=False, xml_namespaces=namespaces
-        )
+        result = dicttoxml.dicttoxml({"bike": "blue"}, attr_type=False, xml_namespaces=namespaces)
 
         assert b' injected="yes"' not in result
         assert b' default-injected="yes"' not in result
@@ -112,14 +104,9 @@ class TestDict2xml:
         assert b'xmlns:veh="urn:vehicle&quot; injected=&quot;yes"' in result
         assert b'xmlns="urn:default&quot; default-injected=&quot;yes"' in result
         assert b'xmlns:xsi="urn:xsi&quot; xsi-injected=&quot;yes"' in result
-        assert (
-            b'xsi:schemaLocation="vehicle.xsd&quot; location-injected=&quot;yes"'
-            in result
-        )
+        assert b'xsi:schemaLocation="vehicle.xsd&quot; location-injected=&quot;yes"' in result
 
-    @pytest.mark.parametrize(
-        "prefix", [1, "xmlData", "bad prefix", 'bad" injected="yes']
-    )
+    @pytest.mark.parametrize("prefix", [1, "xmlData", "bad prefix", 'bad" injected="yes'])
     def test_invalid_namespace_prefixes_are_rejected(self, prefix: Any) -> None:
         """Namespace prefixes must be valid XML namespace names."""
         with pytest.raises(ValueError, match="Invalid XML namespace prefix"):
@@ -136,9 +123,7 @@ class TestDict2xml:
             ({"schemaLocation": "vehicle.xsd"}, "requires a schemaInstance"),
         ],
     )
-    def test_invalid_xsi_namespace_shapes_are_rejected(
-        self, xsi_value: Any, message: str
-    ) -> None:
+    def test_invalid_xsi_namespace_shapes_are_rejected(self, xsi_value: Any, message: str) -> None:
         """XSI schema attributes require a well-formed namespace mapping."""
         with pytest.raises(ValueError, match=message):
             dicttoxml.dicttoxml(
@@ -162,18 +147,14 @@ class TestDict2xml:
     def test_item_wrap_true(self) -> None:
         """Test dicttoxml with item_wrap=True."""
         data = {"bike": ["blue", "green"]}
-        result = dicttoxml.dicttoxml(
-            obj=data, root=False, attr_type=False, item_wrap=True
-        )
+        result = dicttoxml.dicttoxml(obj=data, root=False, attr_type=False, item_wrap=True)
         assert result == b"<bike><item>blue</item><item>green</item></bike>"
 
     # @lat: [[tests#Conversion behavior#Item-wrap false repeats parent tag]]
     def test_item_wrap_false(self) -> None:
         """Test dicttoxml with item_wrap=False."""
         data = {"bike": ["blue", "green"]}
-        result = dicttoxml.dicttoxml(
-            obj=data, root=False, attr_type=False, item_wrap=False
-        )
+        result = dicttoxml.dicttoxml(obj=data, root=False, attr_type=False, item_wrap=False)
         assert result == b"<bike>blue</bike><bike>green</bike>"
 
     def test_dict2xml_with_flat(self) -> None:
@@ -216,58 +197,41 @@ class TestDict2xml:
         dict_without_attrs = {"Bicycles": "Wheels & Steers"}
         root = False
         attr_type = False
-        result = dicttoxml.dicttoxml(
-            dict_without_attrs, root=root, attr_type=attr_type
-        ).decode("UTF-8")
+        result = dicttoxml.dicttoxml(dict_without_attrs, root=root, attr_type=attr_type).decode("UTF-8")
         assert "<Bicycles>Wheels &amp; Steers</Bicycles>" == result
 
     def test_dict2xml_with_ampsersand_and_attrs(self) -> None:
         """Test dicttoxml with ampersand and attributes."""
-        dict_with_attrs = {
-            "Bicycles": {"@attrs": {"xml:lang": "nl"}, "@val": "Wheels & Steers"}
-        }
+        dict_with_attrs = {"Bicycles": {"@attrs": {"xml:lang": "nl"}, "@val": "Wheels & Steers"}}
         root = False
-        assert (
-            '<Bicycles xml:lang="nl">Wheels &amp; Steers</Bicycles>'
-            == dicttoxml.dicttoxml(dict_with_attrs, root=root, attr_type=False).decode(
-                "UTF-8"
-            )
-        )
+        assert '<Bicycles xml:lang="nl">Wheels &amp; Steers</Bicycles>' == dicttoxml.dicttoxml(
+            dict_with_attrs, root=root, attr_type=False
+        ).decode("UTF-8")
 
     @pytest.fixture
     def dict_with_attrs(self) -> dict[str, Any]:
         """Fixture providing a dictionary with attributes for testing."""
         return {
-            'transportation-mode': [
-                {
-                    '@attrs': {'xml:lang': 'nl'},
-                    '@val': 'Fiets'
-                },
-                {
-                    '@attrs': {'xml:lang': 'nl'},
-                    '@val': 'Bus'
-                },
-                {
-                    '@attrs': {'xml:lang': 'en'},
-                    '@val': 'Bike'
-                }
+            "transportation-mode": [
+                {"@attrs": {"xml:lang": "nl"}, "@val": "Fiets"},
+                {"@attrs": {"xml:lang": "nl"}, "@val": "Bus"},
+                {"@attrs": {"xml:lang": "en"}, "@val": "Bike"},
             ]
         }
 
     def test_dict2xml_list_items_with_attrs(self, dict_with_attrs: dict[str, Any]) -> None:
         """Test dicttoxml with list items containing attributes."""
-        '''With list headers = True
-        '''
+        """With list headers = True
+        """
 
-        wanted_xml_result = b'<transportation-mode xml:lang="nl">Fiets</transportation-mode>' \
-                            b'<transportation-mode xml:lang="nl">Bus</transportation-mode>' \
-                            b'<transportation-mode xml:lang="en">Bike</transportation-mode>'
+        wanted_xml_result = (
+            b'<transportation-mode xml:lang="nl">Fiets</transportation-mode>'
+            b'<transportation-mode xml:lang="nl">Bus</transportation-mode>'
+            b'<transportation-mode xml:lang="en">Bike</transportation-mode>'
+        )
         xml_result = dicttoxml.dicttoxml(
-            dict_with_attrs,
-            root=False,
-            attr_type=False,
-            item_wrap=False,
-            list_headers=True)
+            dict_with_attrs, root=False, attr_type=False, item_wrap=False, list_headers=True
+        )
 
         assert xml_result == wanted_xml_result
 
@@ -343,10 +307,7 @@ class TestDict2xml:
             list_headers=True,
         )
         print(con_list)
-        assert (
-            "<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>"
-            == con_list
-        )
+        assert "<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>" == con_list
 
     def test_dict2xml_str_list_header(self) -> None:
         """Test dict2xml_str with list headers."""
@@ -373,23 +334,14 @@ class TestDict2xml:
     def test_list_headers(self) -> None:
         """Test dicttoxml with list headers."""
         dict = {"Bike": [{"frame_color": "red"}, {"frame_color": "green"}]}
-        result = dicttoxml.dicttoxml(
-            dict, root=False, item_wrap=False, attr_type=False, list_headers=True
-        )
+        result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
         print(result)
-        assert (
-            b"<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>"
-            == result
-        )
+        assert b"<Bike><frame_color>red</frame_color></Bike><Bike><frame_color>green</frame_color></Bike>" == result
 
     def test_list_headers_nested(self) -> None:
         """Test dicttoxml with nested list headers."""
-        dict = {
-            "transport": {"Bike": [{"frame_color": "red"}, {"frame_color": "green"}]}
-        }
-        result = dicttoxml.dicttoxml(
-            dict, root=False, item_wrap=False, attr_type=False, list_headers=True
-        )
+        dict = {"transport": {"Bike": [{"frame_color": "red"}, {"frame_color": "green"}]}}
+        result = dicttoxml.dicttoxml(dict, root=False, item_wrap=False, attr_type=False, list_headers=True)
         assert (
             b"<transport><Bike><frame_color>red</frame_color></Bike>"
             b"<Bike><frame_color>green</frame_color></Bike></transport>" == result
@@ -398,9 +350,7 @@ class TestDict2xml:
     def test_list_headers_root(self) -> None:
         """Test dicttoxml with list headers and root element."""
         dict = {"Bike": [{"frame_color": "red"}, {"frame_color": "green"}]}
-        result = dicttoxml.dicttoxml(
-            dict, root=True, item_wrap=False, attr_type=False, list_headers=True
-        )
+        result = dicttoxml.dicttoxml(dict, root=True, item_wrap=False, attr_type=False, list_headers=True)
         assert (
             b'<?xml version="1.0" encoding="UTF-8" ?><root>'
             b"<Bike><frame_color>red</frame_color></Bike>"
@@ -417,19 +367,13 @@ class TestDict2xml:
         """Test dicttoxml with root element."""
         payload = {"mock": "payload"}
         result = dicttoxml.dicttoxml(payload, attr_type=False)
-        assert (
-            b'<?xml version="1.0" encoding="UTF-8" ?><root><mock>payload</mock></root>'
-            == result
-        )
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><root><mock>payload</mock></root>' == result
 
     def test_dict2xml_with_custom_root(self) -> None:
         """Test dicttoxml with custom root element."""
         payload = {"mock": "payload"}
         result = dicttoxml.dicttoxml(payload, attr_type=False, custom_root="element")
-        assert (
-            b'<?xml version="1.0" encoding="UTF-8" ?><element><mock>payload</mock></element>'
-            == result
-        )
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><element><mock>payload</mock></element>' == result
 
     def test_dict2xml_with_item_func(self) -> None:
         """Test dicttoxml with custom item function."""
@@ -445,9 +389,7 @@ class TestDict2xml:
     def test_dict2xml_with_item_func_issue_151(self) -> None:
         """Test dicttoxml with item function for issue 151."""
         data = [{"x": [1]}]
-        result = dicttoxml.dicttoxml(
-            data, root=False, attr_type=False, item_func=lambda y: y + "item"
-        )
+        result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_func=lambda y: y + "item")
         print(result)
         assert b"<item><x><xitem>1</xitem></x></item>" == result
 
@@ -474,34 +416,28 @@ class TestDict2xml:
 
         expected = '<item_name type="str">2023-02-15T12:30:45</item_name>'
 
-        assert dicttoxml.convert_kv(
-            key='item_name',
-            val=dt,
-            attr_type=True,
-            attr={},
-            cdata=False
-        ) == expected
+        assert dicttoxml.convert_kv(key="item_name", val=dt, attr_type=True, attr={}, cdata=False) == expected
 
     # write test for bool test
     def test_basic_conversion(self) -> None:
         """Test basic boolean conversion."""
-        xml = dicttoxml.convert_bool('key', True, False)
-        assert xml == '<key>true</key>'
+        xml = dicttoxml.convert_bool("key", True, False)
+        assert xml == "<key>true</key>"
 
     def test_with_type_attribute(self) -> None:
         """Test boolean conversion with type attribute."""
-        xml = dicttoxml.convert_bool('key', False, True)
+        xml = dicttoxml.convert_bool("key", False, True)
         assert xml == '<key type="bool">false</key>'
 
     def test_with_custom_attributes(self) -> None:
         """Test boolean conversion with custom attributes."""
-        xml = dicttoxml.convert_bool('key', True, False, {'id': '1'})
+        xml = dicttoxml.convert_bool("key", True, False, {"id": "1"})
         assert xml == '<key id="1">true</key>'
 
     def test_valid_key(self) -> None:
         """Test convert_bool with valid key."""
-        xml = dicttoxml.convert_bool('valid_key', False, attr_type=False)
-        assert xml == '<valid_key>false</valid_key>'
+        xml = dicttoxml.convert_bool("valid_key", False, attr_type=False)
+        assert xml == "<valid_key>false</valid_key>"
 
     def test_convert_kv_with_cdata(self) -> None:
         """Test convert_kv with CDATA wrapping."""
@@ -530,7 +466,6 @@ class TestDict2xml:
         result = dicttoxml.convert_none("key", attr_type=True)
         assert result == '<key type="null"></key>'
 
-
     def test_make_valid_xml_name_with_numeric_key(self) -> None:
         """Test make_valid_xml_name with numeric key."""
         key, attr = dicttoxml.make_valid_xml_name("123", {})
@@ -539,7 +474,7 @@ class TestDict2xml:
 
     def test_escape_xml_with_special_chars(self) -> None:
         """Test escape_xml with special characters."""
-        result = dicttoxml.escape_xml('This & that < those > these "quotes" \'single quotes\'')
+        result = dicttoxml.escape_xml("This & that < those > these \"quotes\" 'single quotes'")
         assert result == "This &amp; that &lt; those &gt; these &quot;quotes&quot; &apos;single quotes&apos;"
 
     def test_get_xml_type_with_sequence(self) -> None:
@@ -567,10 +502,7 @@ class TestDict2xml:
             attr_type=False,
         )
 
-        assert result == (
-            b'<?xml version="1.0" encoding="UTF-8" ?>'
-            b"<custom_root><key>value</key></custom_root>"
-        )
+        assert result == (b'<?xml version="1.0" encoding="UTF-8" ?><custom_root><key>value</key></custom_root>')
 
     # @lat: [[tests#Conversion behavior#Invalid custom attributes are rejected]]
     @pytest.mark.parametrize(
@@ -611,9 +543,7 @@ class TestDict2xml:
             attr_type=False,
         )
 
-        assert result == (
-            b'<key type="safe&quot; injected=&quot;yes">payload</key>'
-        )
+        assert result == (b'<key type="safe&quot; injected=&quot;yes">payload</key>')
 
     # @lat: [[tests#Conversion behavior#Custom type attributes are validated]]
     def test_custom_type_attribute_forbidden_chars_are_rejected(self) -> None:
@@ -647,9 +577,7 @@ class TestDict2xml:
     )
     @pytest.mark.parametrize("cdata", [False, True])
     # @lat: [[tests#Conversion behavior#XML 1.0 forbidden characters are rejected]]
-    def test_dicttoxml_rejects_xml_1_0_forbidden_characters(
-        self, invalid_char: str, cdata: bool
-    ) -> None:
+    def test_dicttoxml_rejects_xml_1_0_forbidden_characters(self, invalid_char: str, cdata: bool) -> None:
         """XML 1.0-forbidden controls must not reach raw text or CDATA output."""
         with pytest.raises(ValueError, match="not allowed in XML 1.0"):
             dicttoxml.dicttoxml(
@@ -661,16 +589,12 @@ class TestDict2xml:
 
     def test_dicttoxml_preserves_xml_1_0_whitespace_characters(self) -> None:
         """Tabs, newlines, and carriage returns remain valid XML text."""
-        result = dicttoxml.dicttoxml(
-            {"key": "tab\tline\nreturn\r"}, root=False, attr_type=False
-        )
+        result = dicttoxml.dicttoxml({"key": "tab\tline\nreturn\r"}, root=False, attr_type=False)
 
         assert result == b"<key>tab\tline\nreturn\r</key>"
 
     @pytest.mark.parametrize("valid_char", ["\x7f", "\x85"])
-    def test_dicttoxml_preserves_other_valid_nonprintable_characters(
-        self, valid_char: str
-    ) -> None:
+    def test_dicttoxml_preserves_other_valid_nonprintable_characters(self, valid_char: str) -> None:
         """Non-printable characters outside the forbidden ranges remain valid."""
         result = dicttoxml.dicttoxml(
             {"key": f"before{valid_char}after"},
@@ -692,10 +616,7 @@ class TestDict2xml:
         """Test dicttoxml without xml_namespaces keeps the default XML shape."""
         data = {"bike": "blue"}
         result = dicttoxml.dicttoxml(data, attr_type=False)
-        assert (
-            b'<?xml version="1.0" encoding="UTF-8" ?>'
-            b"<root><bike>blue</bike></root>" == result
-        )
+        assert b'<?xml version="1.0" encoding="UTF-8" ?><root><bike>blue</bike></root>' == result
         assert b"xmlns" not in result
         assert b"xsi:" not in result
 
@@ -712,8 +633,7 @@ class TestDict2xml:
             },
         }
         namespaces_before = {
-            prefix: value.copy() if isinstance(value, dict) else value
-            for prefix, value in namespaces.items()
+            prefix: value.copy() if isinstance(value, dict) else value for prefix, value in namespaces.items()
         }
 
         result = dicttoxml.dicttoxml(
@@ -746,8 +666,7 @@ class TestDict2xml:
             },
         }
         namespaces_before = {
-            prefix: value.copy() if isinstance(value, dict) else value
-            for prefix, value in namespaces.items()
+            prefix: value.copy() if isinstance(value, dict) else value for prefix, value in namespaces.items()
         }
 
         first = dicttoxml.dicttoxml(
@@ -765,12 +684,8 @@ class TestDict2xml:
 
         assert first == second
         assert first.count(b'xmlns:veh="https://example.com/vehicle"') == 1
-        assert first.count(
-            b'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
-        ) == 1
-        assert first.count(
-            b'xsi:schemaLocation="https://example.com/vehicle vehicle.xsd"'
-        ) == 1
+        assert first.count(b'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"') == 1
+        assert first.count(b'xsi:schemaLocation="https://example.com/vehicle vehicle.xsd"') == 1
         assert namespaces == namespaces_before
 
     def test_datetime_conversion(self) -> None:
@@ -807,7 +722,10 @@ class TestDict2xml:
         """Test list to XML with special characters."""
         data = {"items": ["<tag>", "&", '"quote"', "'single quote'"]}
         result = dicttoxml.dicttoxml(data, root=False, attr_type=False, item_wrap=True)
-        assert result == b"<items><item>&lt;tag&gt;</item><item>&amp;</item><item>&quot;quote&quot;</item><item>&apos;single quote&apos;</item></items>"
+        assert (
+            result
+            == b"<items><item>&lt;tag&gt;</item><item>&amp;</item><item>&quot;quote&quot;</item><item>&apos;single quote&apos;</item></items>"
+        )
 
     def test_datetime_conversion_with_isoformat(self) -> None:
         """Test datetime conversion with isoformat."""
@@ -847,6 +765,7 @@ class TestDict2xml:
 
     def test_get_xml_type_unsupported(self) -> None:
         """Test get_xml_type with unsupported type."""
+
         class CustomClass:
             pass
 
@@ -885,10 +804,7 @@ class TestDict2xml:
             attr_type=False,
         )
 
-        assert result == (
-            b'<active flag="yes">true</active>'
-            b'<disabled flag="no">false</disabled>'
-        )
+        assert result == (b'<active flag="yes">true</active><disabled flag="no">false</disabled>')
         assert b"True" not in result
         assert b"False" not in result
 
@@ -911,10 +827,7 @@ class TestDict2xml:
 
         result = dicttoxml.dicttoxml(data, root=False, attr_type=False)
 
-        assert result == (
-            b'<product sku="bike-1">Road bike</product>'
-            b'<items><item position="1">42</item></items>'
-        )
+        assert result == (b'<product sku="bike-1">Road bike</product><items><item position="1">42</item></items>')
         assert data == original
 
     # @lat: [[tests#Conversion behavior#Special attributes accept coercible pairs]]
@@ -945,6 +858,7 @@ class TestDict2xml:
 
     def test_dict2xml_str_invalid_type(self) -> None:
         """Test dict2xml_str with invalid type."""
+
         class CustomClass:
             pass
 
@@ -958,11 +872,12 @@ class TestDict2xml:
                 cdata=False,
                 item_name="test",
                 item_wrap=False,
-                parentIsList=False
+                parentIsList=False,
             )
 
     def test_convert_dict_invalid_type(self) -> None:
         """Test convert_dict with invalid type."""
+
         class CustomClass:
             pass
 
@@ -975,11 +890,12 @@ class TestDict2xml:
                 attr_type=False,
                 item_func=lambda x: "item",
                 cdata=False,
-                item_wrap=False
+                item_wrap=False,
             )
 
     def test_convert_list_invalid_type(self) -> None:
         """Test convert_list with invalid type."""
+
         class CustomClass:
             pass
 
@@ -992,7 +908,7 @@ class TestDict2xml:
                 attr_type=False,
                 item_func=lambda x: "item",
                 cdata=False,
-                item_wrap=False
+                item_wrap=False,
             )
 
     def test_convert_list_with_none(self) -> None:
@@ -1005,7 +921,7 @@ class TestDict2xml:
             attr_type=True,
             item_func=lambda x: "item",
             cdata=False,
-            item_wrap=True
+            item_wrap=True,
         )
         assert result == '<item type="null"></item>'
 
@@ -1019,13 +935,14 @@ class TestDict2xml:
             attr_type=False,
             item_func=lambda x: "item",
             cdata=False,
-            item_wrap=True
+            item_wrap=True,
         )
         assert 'id="root_' in result
-        assert '>test<' in result
+        assert ">test<" in result
 
     def test_convert_list_mixed_types(self) -> None:
         """Test convert_list with a mix of valid and invalid types."""
+
         class CustomClass:
             pass
 
@@ -1038,7 +955,7 @@ class TestDict2xml:
                 attr_type=False,
                 item_func=lambda x: "item",
                 cdata=False,
-                item_wrap=False
+                item_wrap=False,
             )
 
     # Additional tests for better coverage
@@ -1056,12 +973,7 @@ class TestDict2xml:
     def test_convert_with_sequence_input(self) -> None:
         """Test convert function with sequence input."""
         result = dicttoxml.convert(
-            obj=[1, 2, 3],
-            ids=None,
-            attr_type=False,
-            item_func=lambda x: "item",
-            cdata=False,
-            item_wrap=True
+            obj=[1, 2, 3], ids=None, attr_type=False, item_func=lambda x: "item", cdata=False, item_wrap=True
         )
         assert "<item>1</item><item>2</item><item>3</item>" == result
 
@@ -1105,12 +1017,7 @@ class TestDict2xml:
     def test_convert_with_float(self) -> None:
         """Test convert function with float input."""
         result = dicttoxml.convert(
-            obj=3.14,
-            ids=None,
-            attr_type=True,
-            item_func=lambda x: "item",
-            cdata=False,
-            item_wrap=True
+            obj=3.14, ids=None, attr_type=True, item_func=lambda x: "item", cdata=False, item_wrap=True
         )
         assert result == '<item type="float">3.14</item>'
 
@@ -1162,24 +1069,14 @@ class TestDict2xml:
     def test_convert_with_bool_direct(self) -> None:
         """Test convert function with boolean input directly."""
         result = dicttoxml.convert(
-            obj=True,
-            ids=None,
-            attr_type=False,
-            item_func=lambda x: "item",
-            cdata=False,
-            item_wrap=True
+            obj=True, ids=None, attr_type=False, item_func=lambda x: "item", cdata=False, item_wrap=True
         )
         assert result == "<item>true</item>"
 
     def test_convert_with_string_direct(self) -> None:
         """Test convert function with string input directly."""
         result = dicttoxml.convert(
-            obj="test_string",
-            ids=None,
-            attr_type=False,
-            item_func=lambda x: "item",
-            cdata=False,
-            item_wrap=True
+            obj="test_string", ids=None, attr_type=False, item_func=lambda x: "item", cdata=False, item_wrap=True
         )
         assert result == "<item>test_string</item>"
 
@@ -1187,29 +1084,20 @@ class TestDict2xml:
         """Test convert function with datetime input directly."""
         dt = datetime.datetime(2023, 2, 15, 12, 30, 45)
         result = dicttoxml.convert(
-            obj=dt,
-            ids=None,
-            attr_type=False,
-            item_func=lambda x: "item",
-            cdata=False,
-            item_wrap=True
+            obj=dt, ids=None, attr_type=False, item_func=lambda x: "item", cdata=False, item_wrap=True
         )
         assert result == "<item>2023-02-15T12:30:45</item>"
 
     def test_convert_with_none_direct(self) -> None:
         """Test convert function with None input directly."""
         result = dicttoxml.convert(
-            obj=None,
-            ids=None,
-            attr_type=False,
-            item_func=lambda x: "item",
-            cdata=False,
-            item_wrap=True
+            obj=None, ids=None, attr_type=False, item_func=lambda x: "item", cdata=False, item_wrap=True
         )
         assert result == "<item></item>"
 
     def test_convert_unsupported_type_direct(self) -> None:
         """Test convert function with unsupported type."""
+
         class CustomClass:
             pass
 
@@ -1220,7 +1108,7 @@ class TestDict2xml:
                 attr_type=False,
                 item_func=lambda x: "item",
                 cdata=False,
-                item_wrap=True
+                item_wrap=True,
             )
 
     def test_dict2xml_str_with_attr_type(self) -> None:
@@ -1234,7 +1122,7 @@ class TestDict2xml:
             cdata=False,
             item_name="test",
             item_wrap=False,
-            parentIsList=False
+            parentIsList=False,
         )
         assert 'type="dict"' in result
 
@@ -1249,7 +1137,7 @@ class TestDict2xml:
             cdata=False,
             item_name="test",
             item_wrap=False,
-            parentIsList=False
+            parentIsList=False,
         )
         assert "nested" in result
 
@@ -1263,7 +1151,7 @@ class TestDict2xml:
             item_func=lambda x: "item",
             cdata=False,
             item_name="test",
-            item_wrap=True
+            item_wrap=True,
         )
         assert 'type="list"' in result
 
@@ -1313,13 +1201,7 @@ class TestDict2xml:
         """Test convert_dict with boolean value."""
         obj = {"flag": True}
         result = dicttoxml.convert_dict(
-            obj=obj,
-            ids=[],
-            parent="root",
-            attr_type=False,
-            item_func=lambda x: "item",
-            cdata=False,
-            item_wrap=False
+            obj=obj, ids=[], parent="root", attr_type=False, item_func=lambda x: "item", cdata=False, item_wrap=False
         )
         assert "<flag>true</flag>" == result
 
@@ -1327,13 +1209,7 @@ class TestDict2xml:
         """Test convert_dict with falsy but not None value."""
         obj = {"empty": ""}
         result = dicttoxml.convert_dict(
-            obj=obj,
-            ids=[],
-            parent="root",
-            attr_type=False,
-            item_func=lambda x: "item",
-            cdata=False,
-            item_wrap=False
+            obj=obj, ids=[], parent="root", attr_type=False, item_func=lambda x: "item", cdata=False, item_wrap=False
         )
         assert "<empty></empty>" == result
 
@@ -1347,7 +1223,7 @@ class TestDict2xml:
             attr_type=False,
             item_func=lambda x: x + "@flat",
             cdata=False,
-            item_wrap=True
+            item_wrap=True,
         )
         assert "<root>test</root>" == result
 
@@ -1361,7 +1237,7 @@ class TestDict2xml:
             attr_type=False,
             item_func=lambda x: "item",
             cdata=False,
-            item_wrap=True
+            item_wrap=True,
         )
         assert "<item>true</item>" == result
 
@@ -1376,7 +1252,7 @@ class TestDict2xml:
             attr_type=False,
             item_func=lambda x: "item",
             cdata=False,
-            item_wrap=True
+            item_wrap=True,
         )
         assert "<item>2023-02-15T12:30:45</item>" == result
 
@@ -1390,7 +1266,7 @@ class TestDict2xml:
             attr_type=False,
             item_func=lambda x: "item",
             cdata=False,
-            item_wrap=True
+            item_wrap=True,
         )
         assert "<item><item>nested</item><item>list</item></item>" == result
 
@@ -1415,7 +1291,7 @@ class TestDict2xml:
             cdata=False,
             item_name="test",
             item_wrap=False,
-            parentIsList=False
+            parentIsList=False,
         )
         assert "test" in result
 
@@ -1428,13 +1304,7 @@ class TestDict2xml:
         obj = {"none_key": None}
 
         result = dicttoxml.convert_dict(
-            obj=obj,
-            ids=[],
-            parent="root",
-            attr_type=False,
-            item_func=lambda x: "item",
-            cdata=False,
-            item_wrap=False
+            obj=obj, ids=[], parent="root", attr_type=False, item_func=lambda x: "item", cdata=False, item_wrap=False
         )
 
         # None should trigger the "elif not val:" branch and result in an empty element
@@ -1443,34 +1313,27 @@ class TestDict2xml:
     def test_attrs_xml_escaping(self) -> None:
         """Test that @attrs values are properly XML-escaped."""
         # Test the specific case from the user's bug report
-        info_dict = {
-            'Info': {
-                "@attrs": {
-                    "Name": "systemSpec",
-                    "HelpText": "spec version <here>"
-                }
-            }
-        }
-        result = dicttoxml.dicttoxml(info_dict, attr_type=False, item_wrap=False, root=False).decode('utf-8')
+        info_dict = {"Info": {"@attrs": {"Name": "systemSpec", "HelpText": "spec version <here>"}}}
+        result = dicttoxml.dicttoxml(info_dict, attr_type=False, item_wrap=False, root=False).decode("utf-8")
         expected = '<Info Name="systemSpec" HelpText="spec version &lt;here&gt;"></Info>'
         assert expected == result
 
     def test_attrs_comprehensive_xml_escaping(self) -> None:
         """Test comprehensive XML escaping in attributes."""
         data = {
-            'Element': {
+            "Element": {
                 "@attrs": {
                     "ampersand": "Tom & Jerry",
                     "less_than": "value < 10",
                     "greater_than": "value > 5",
                     "quotes": 'He said "Hello"',
                     "single_quotes": "It's working",
-                    "mixed": "Tom & Jerry < 10 > 5 \"quoted\" 'apostrophe'"
+                    "mixed": "Tom & Jerry < 10 > 5 \"quoted\" 'apostrophe'",
                 },
-                "@val": "content"
+                "@val": "content",
             }
         }
-        result = dicttoxml.dicttoxml(data, attr_type=False, item_wrap=False, root=False).decode('utf-8')
+        result = dicttoxml.dicttoxml(data, attr_type=False, item_wrap=False, root=False).decode("utf-8")
 
         # Check that all special characters are properly escaped in attributes
         assert 'ampersand="Tom &amp; Jerry"' in result
@@ -1485,16 +1348,8 @@ class TestDict2xml:
 
     def test_attrs_empty_and_none_values(self) -> None:
         """Test attribute handling with empty and None values."""
-        data = {
-            'Element': {
-                "@attrs": {
-                    "empty": "",
-                    "zero": 0,
-                    "false": False
-                }
-            }
-        }
-        result = dicttoxml.dicttoxml(data, attr_type=False, item_wrap=False, root=False).decode('utf-8')
+        data = {"Element": {"@attrs": {"empty": "", "zero": 0, "false": False}}}
+        result = dicttoxml.dicttoxml(data, attr_type=False, item_wrap=False, root=False).decode("utf-8")
 
         assert 'empty=""' in result
         assert 'zero="0"' in result
@@ -1505,11 +1360,7 @@ class TestDict2xml:
         from json2xml.dicttoxml import make_attrstring
 
         # Test basic escaping
-        attrs = {
-            "test": "value <here>",
-            "ampersand": "Tom & Jerry",
-            "quotes": 'Say "hello"'
-        }
+        attrs = {"test": "value <here>", "ampersand": "Tom & Jerry", "quotes": 'Say "hello"'}
         result = make_attrstring(attrs)
 
         assert 'test="value &lt;here&gt;"' in result

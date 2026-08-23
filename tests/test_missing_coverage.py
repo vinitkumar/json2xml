@@ -65,6 +65,7 @@ class TestGetXpath31TagNameWithBytesAndBytearray:
         Line 222 (return "string") is the fallback for types that don't match
         any of the specific type checks.
         """
+
         # Create an object that isn't any of the handled types
         class CustomObject:
             pass
@@ -91,6 +92,7 @@ class TestConvertToXpath31Fallback:
 
         Line 261 is the fallback case that converts unsupported types to strings.
         """
+
         # Create an object that will trigger the fallback
         class CustomObject:
             def __str__(self) -> str:
@@ -105,6 +107,7 @@ class TestConvertToXpath31Fallback:
 
     def test_convert_to_xpath31_with_custom_object_and_parent_key(self) -> None:
         """Test convert_to_xpath31 fallback with parent_key attribute."""
+
         class CustomObject:
             def __str__(self) -> str:
                 return "test_value"
@@ -123,7 +126,7 @@ class TestConvertToXpath31Fallback:
         """
         test_obj = {"data": "test"}
 
-        with patch('json2xml.dicttoxml.get_xpath31_tag_name') as mock_tag:
+        with patch("json2xml.dicttoxml.get_xpath31_tag_name") as mock_tag:
             # Return an unexpected tag name that won't match any if statements
             mock_tag.return_value = "unexpected_type"
 
@@ -138,7 +141,7 @@ class TestConvertToXpath31Fallback:
         """Test line 261 fallback with key attribute."""
         test_obj = object()
 
-        with patch('json2xml.dicttoxml.get_xpath31_tag_name') as mock_tag:
+        with patch("json2xml.dicttoxml.get_xpath31_tag_name") as mock_tag:
             mock_tag.return_value = "unknown"
 
             result = convert_to_xpath31(test_obj, parent_key="test_key")
@@ -174,6 +177,7 @@ class TestConvertToXpath31FullIntegration:
 
     def test_xpath31_with_nested_custom_object(self) -> None:
         """Test xpath31 format with nested custom objects."""
+
         class Point:
             def __str__(self) -> str:
                 return "0,0"
@@ -191,6 +195,7 @@ class TestXmlTypeEdgeCases:
 
     def test_get_xml_type_with_custom_number_class(self) -> None:
         """Test get_xml_type with custom class inheriting from numbers.Number."""
+
         class CustomNumber(numbers.Number):
             def __init__(self, value: float) -> None:
                 self.value = value
@@ -251,6 +256,7 @@ class TestXpath31TypesComprehensive:
         # Fallback
         class CustomType:
             pass
+
         assert get_xpath31_tag_name(CustomType()) == "string"
 
 
@@ -346,6 +352,7 @@ class TestConvertToXpath31AllPaths:
 
     def test_convert_to_xpath31_custom_object_fallback(self) -> None:
         """Test custom object conversion (line 261 fallback)."""
+
         class Point:
             def __str__(self) -> str:
                 return "(1,2)"

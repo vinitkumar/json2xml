@@ -9,6 +9,7 @@ Environment variables:
     JSON2XML_GO_CLI: Path to the json2xml-go binary (default: json2xml-go in PATH)
     JSON2XML_EXAMPLES_DIR: Path to examples directory (default: ./examples relative to script)
 """
+
 from __future__ import annotations
 
 import json
@@ -30,6 +31,7 @@ PYTHON_CLI = [sys.executable, "-m", "json2xml.cli"]
 GO_CLI = Path(os.environ.get("JSON2XML_GO_CLI", "json2xml-go"))
 EXAMPLES_DIR = Path(os.environ.get("JSON2XML_EXAMPLES_DIR", str(BASE_DIR / "examples")))
 
+
 def generate_large_json(num_records: int = 1000) -> str:
     """Generate a large JSON file for benchmarking."""
     data = []
@@ -45,22 +47,14 @@ def generate_large_json(num_records: int = 1000) -> str:
                 "created": "2024-01-15T10:30:00Z",
                 "updated": "2024-01-15T12:45:00Z",
                 "version": random.randint(1, 100),
-                "nested": {
-                    "level1": {
-                        "level2": {"value": random_string(10)}
-                    }
-                },
+                "nested": {"level1": {"level2": {"value": random_string(10)}}},
             },
         }
         data.append(item)
     return json.dumps(data)
 
 
-def run_benchmark(
-    cmd: list[str],
-    iterations: int = 10,
-    warmup: int = 2
-) -> dict[str, float]:
+def run_benchmark(cmd: list[str], iterations: int = 10, warmup: int = 2) -> dict[str, float]:
     """
     Run a benchmark for the given command.
 
@@ -109,9 +103,11 @@ def print_header(title: str) -> None:
 def print_result(name: str, result: dict[str, float]) -> None:
     """Print benchmark result."""
     print(f"  {name}:")
-    print(f"    Avg: {format_time(result['avg'])} | "
-          f"Min: {format_time(result['min'])} | "
-          f"Max: {format_time(result['max'])}")
+    print(
+        f"    Avg: {format_time(result['avg'])} | "
+        f"Min: {format_time(result['min'])} | "
+        f"Max: {format_time(result['max'])}"
+    )
 
 
 def main() -> int:

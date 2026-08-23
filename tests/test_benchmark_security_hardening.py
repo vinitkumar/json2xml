@@ -76,9 +76,7 @@ def test_security_benchmark_subprocess_commands_stay_structured() -> None:
     assert subprocess_calls
     for call in subprocess_calls:
         assert call.args and isinstance(call.args[0], ast.List)
-        shell_keyword = next(
-            (keyword for keyword in call.keywords if keyword.arg == "shell"), None
-        )
+        shell_keyword = next((keyword for keyword in call.keywords if keyword.arg == "shell"), None)
         assert shell_keyword is not None
         assert isinstance(shell_keyword.value, ast.Constant)
         assert shell_keyword.value.value is False

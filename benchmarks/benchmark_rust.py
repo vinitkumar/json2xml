@@ -6,6 +6,7 @@ Run after building the Rust extension:
     cd rust && maturin develop --release && cd ..
     python benchmark_rust.py
 """
+
 from __future__ import annotations
 
 import json
@@ -24,6 +25,7 @@ from json2xml import dicttoxml as py_dicttoxml
 # Try to import Rust implementation
 try:
     from json2xml_rs import dicttoxml as rust_dicttoxml
+
     RUST_AVAILABLE = True
 except ImportError:
     RUST_AVAILABLE = False
@@ -45,11 +47,7 @@ def generate_test_data(num_records: int) -> list[dict]:
                 "created": "2024-01-15T10:30:00Z",
                 "updated": "2024-01-15T12:45:00Z",
                 "version": random.randint(1, 100),
-                "nested": {
-                    "level1": {
-                        "level2": {"value": random_string(10)}
-                    }
-                },
+                "nested": {"level1": {"level2": {"value": random_string(10)}}},
             },
         }
         data.append(item)
@@ -87,8 +85,10 @@ def run_benchmark(name: str, data: dict | list, iterations: int = 10):
         data,
         iterations,
     )
-    print(f"  Python: {format_time(py_result['avg'])} avg "
-          f"(min: {format_time(py_result['min'])}, max: {format_time(py_result['max'])})")
+    print(
+        f"  Python: {format_time(py_result['avg'])} avg "
+        f"(min: {format_time(py_result['min'])}, max: {format_time(py_result['max'])})"
+    )
 
     if RUST_AVAILABLE:
         # Rust implementation
@@ -97,8 +97,10 @@ def run_benchmark(name: str, data: dict | list, iterations: int = 10):
             data,
             iterations,
         )
-        print(f"  Rust:   {format_time(rust_result['avg'])} avg "
-              f"(min: {format_time(rust_result['min'])}, max: {format_time(rust_result['max'])})")
+        print(
+            f"  Rust:   {format_time(rust_result['avg'])} avg "
+            f"(min: {format_time(rust_result['min'])}, max: {format_time(rust_result['max'])})"
+        )
 
         speedup = py_result["avg"] / rust_result["avg"]
         color = Colors.GREEN if speedup > 1 else Colors.RED

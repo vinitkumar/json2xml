@@ -39,6 +39,7 @@ Examples:
     # Use XPath 3.1 format
     json2xml-py -x data.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -143,24 +144,18 @@ class CLIApplication:
         if not sys.stdin.isatty():
             return read_from_stdin()
 
-        exit_with_error(
-            "Error: No input provided. Pass a JSON file, use - for stdin, "
-            "or provide --string/--url."
-        )
+        exit_with_error("Error: No input provided. Pass a JSON file, use - for stdin, or provide --string/--url.")
         raise AssertionError("unreachable")
 
     def read_from_stdin(self) -> JSONValue:
         try:
             json_str = sys.stdin.read().strip()
             if not json_str:
-                exit_with_error(
-                    "Error: Empty stdin. Pipe JSON into stdin or pass a file/--string."
-                )
+                exit_with_error("Error: Empty stdin. Pipe JSON into stdin or pass a file/--string.")
             return readfromstring(json_str)
         except StringReadError as error:
             exit_with_error(
-                "Error: Invalid JSON from stdin. Pipe valid JSON into stdin "
-                f"or pass a file/--string. ({error})"
+                f"Error: Invalid JSON from stdin. Pipe valid JSON into stdin or pass a file/--string. ({error})"
             )
 
     def convert(self, data: JSONValue, options: CLIConversionOptions) -> str | bytes:

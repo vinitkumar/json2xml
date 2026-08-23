@@ -74,12 +74,11 @@ Each test in code should reference its spec with exactly one comment placed next
 
 ```python
 # @lat: [[tests#User login#Rejects expired tokens]]
-def test_rejects_expired_tokens():
-    ...
+def test_rejects_expired_tokens(): ...
+
 
 # @lat: [[tests#User login#Handles missing password]]
-def test_handles_missing_password():
-    ...
+def test_handles_missing_password(): ...
 ```
 
 Do not duplicate refs. One `@lat:` comment per spec section, placed at the test that covers it. `lat check` will flag any spec section not covered by a code reference, and any code reference pointing to a nonexistent section.

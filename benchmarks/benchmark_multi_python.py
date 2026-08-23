@@ -10,6 +10,7 @@ Compares:
 
 Each Python version gets its own virtual environment with json2xml installed.
 """
+
 from __future__ import annotations
 
 import json
@@ -29,9 +30,7 @@ from benchmark_utils import Colors, colorize, format_time, random_string
 BASE_DIR = Path(__file__).resolve().parent
 VENVS_DIR = BASE_DIR / ".benchmark_venvs"
 GO_CLI = Path(os.environ.get("JSON2XML_GO_CLI", "json2xml-go"))
-UV_PYTHON_DIR = Path(
-    os.environ.get("JSON2XML_UV_PYTHON_DIR", str(Path.home() / ".local/share/uv/python"))
-)
+UV_PYTHON_DIR = Path(os.environ.get("JSON2XML_UV_PYTHON_DIR", str(Path.home() / ".local/share/uv/python")))
 
 
 def _uv_python_path(distribution: str, executable: str) -> str:
@@ -83,11 +82,7 @@ def generate_test_json(num_records: int = 1000) -> str:
                 "created": "2024-01-15T10:30:00Z",
                 "updated": "2024-01-15T12:45:00Z",
                 "version": random.randint(1, 100),
-                "nested": {
-                    "level1": {
-                        "level2": {"value": random_string(10)}
-                    }
-                },
+                "nested": {"level1": {"level2": {"value": random_string(10)}}},
             },
         }
         data.append(item)
@@ -97,6 +92,7 @@ def generate_test_json(num_records: int = 1000) -> str:
 @dataclass
 class BenchmarkResult:
     """Holds benchmark timing results."""
+
     name: str
     avg_ms: float
     min_ms: float
@@ -219,10 +215,12 @@ def print_table_row(name: str, result: BenchmarkResult, baseline_ms: float | Non
         if speedup > 1:
             speedup_str = colorize(f" ({speedup:.1f}x faster)", Colors.GREEN)
         else:
-            speedup_str = f" ({1/speedup:.1f}x slower)"
+            speedup_str = f" ({1 / speedup:.1f}x slower)"
 
-    print(f"  {name:<35} {format_time(result.avg_ms):>12} "
-          f"(min: {format_time(result.min_ms)}, max: {format_time(result.max_ms)}){speedup_str}")
+    print(
+        f"  {name:<35} {format_time(result.avg_ms):>12} "
+        f"(min: {format_time(result.min_ms)}, max: {format_time(result.max_ms)}){speedup_str}"
+    )
 
 
 def main() -> int:
@@ -247,11 +245,13 @@ def main() -> int:
         print(f"  {name}:")
         if setup_venv(python_path, venv_path):
             print(f"    {colorize('✓', Colors.GREEN)} Ready")
-            active_pythons.append({
-                **py_config,
-                "venv_path": venv_path,
-                "cli_python": str(venv_path / "bin" / "python"),
-            })
+            active_pythons.append(
+                {
+                    **py_config,
+                    "venv_path": venv_path,
+                    "cli_python": str(venv_path / "bin" / "python"),
+                }
+            )
         else:
             print(f"    {colorize('✗', Colors.RED)} Skipped")
         print()
@@ -378,7 +378,7 @@ def main() -> int:
                 if speedup > 1:
                     vs_baseline = colorize(f"{speedup:.2f}x faster", Colors.GREEN)
                 else:
-                    vs_baseline = f"{1/speedup:.2f}x slower"
+                    vs_baseline = f"{1 / speedup:.2f}x slower"
             else:
                 vs_baseline = "baseline"
 

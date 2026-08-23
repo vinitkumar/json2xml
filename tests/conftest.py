@@ -1,4 +1,5 @@
 """Pytest configuration for json2xml tests."""
+
 from __future__ import annotations
 
 import json

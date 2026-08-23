@@ -8,6 +8,7 @@ Comprehensive benchmark comparing all json2xml implementations:
 
 Run with: python benchmark_all.py
 """
+
 from __future__ import annotations
 
 import json
@@ -30,6 +31,7 @@ from json2xml import dicttoxml as py_dicttoxml
 # Try to import Rust implementation
 try:
     from json2xml_rs import dicttoxml as rust_dicttoxml
+
     RUST_AVAILABLE = True
 except ImportError:
     RUST_AVAILABLE = False
@@ -54,11 +56,7 @@ def generate_test_data(num_records: int) -> list[dict]:
                 "created": "2024-01-15T10:30:00Z",
                 "updated": "2024-01-15T12:45:00Z",
                 "version": random.randint(1, 100),
-                "nested": {
-                    "level1": {
-                        "level2": {"value": random_string(10)}
-                    }
-                },
+                "nested": {"level1": {"level2": {"value": random_string(10)}}},
             },
         }
         data.append(item)
@@ -142,7 +140,7 @@ def run_benchmark(name: str, data: dict | list, iterations: int = 10):
     results = {}
 
     # Create temp file for CLI tools
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(data, f)
         json_file = f.name
 
@@ -150,17 +148,21 @@ def run_benchmark(name: str, data: dict | list, iterations: int = 10):
         # Python implementation
         py_result = benchmark_python(data, iterations)
         results["python"] = py_result
-        print(f"  {colorize('Python:', Colors.YELLOW):20} {format_time(py_result['avg']):>12} avg "
-              f"(min: {format_time(py_result['min'])}, max: {format_time(py_result['max'])})")
+        print(
+            f"  {colorize('Python:', Colors.YELLOW):20} {format_time(py_result['avg']):>12} avg "
+            f"(min: {format_time(py_result['min'])}, max: {format_time(py_result['max'])})"
+        )
 
         # Rust implementation
         if RUST_AVAILABLE:
             rust_result = benchmark_rust(data, iterations)
             results["rust"] = rust_result
             speedup = py_result["avg"] / rust_result["avg"]
-            print(f"  {colorize('Rust:', Colors.GREEN):20} {format_time(rust_result['avg']):>12} avg "
-                  f"(min: {format_time(rust_result['min'])}, max: {format_time(rust_result['max'])}) "
-                  f"[{colorize(f'{speedup:.1f}x faster', Colors.GREEN)}]")
+            print(
+                f"  {colorize('Rust:', Colors.GREEN):20} {format_time(rust_result['avg']):>12} avg "
+                f"(min: {format_time(rust_result['min'])}, max: {format_time(rust_result['max'])}) "
+                f"[{colorize(f'{speedup:.1f}x faster', Colors.GREEN)}]"
+            )
         else:
             print(f"  {colorize('Rust:', Colors.RED):20} NOT AVAILABLE")
 
@@ -170,9 +172,11 @@ def run_benchmark(name: str, data: dict | list, iterations: int = 10):
             results["go"] = go_result
             speedup = py_result["avg"] / go_result["avg"]
             color = Colors.GREEN if speedup > 1 else Colors.RED
-            print(f"  {colorize('Go:', Colors.CYAN):20} {format_time(go_result['avg']):>12} avg "
-                  f"(min: {format_time(go_result['min'])}, max: {format_time(go_result['max'])}) "
-                  f"[{colorize(f'{speedup:.1f}x vs Python', color)}]")
+            print(
+                f"  {colorize('Go:', Colors.CYAN):20} {format_time(go_result['avg']):>12} avg "
+                f"(min: {format_time(go_result['min'])}, max: {format_time(go_result['max'])}) "
+                f"[{colorize(f'{speedup:.1f}x vs Python', color)}]"
+            )
         else:
             print(f"  {colorize('Go:', Colors.RED):20} NOT AVAILABLE")
 
@@ -182,9 +186,11 @@ def run_benchmark(name: str, data: dict | list, iterations: int = 10):
             results["zig"] = zig_result
             speedup = py_result["avg"] / zig_result["avg"]
             color = Colors.GREEN if speedup > 1 else Colors.RED
-            print(f"  {colorize('Zig:', Colors.MAGENTA):20} {format_time(zig_result['avg']):>12} avg "
-                  f"(min: {format_time(zig_result['min'])}, max: {format_time(zig_result['max'])}) "
-                  f"[{colorize(f'{speedup:.1f}x vs Python', color)}]")
+            print(
+                f"  {colorize('Zig:', Colors.MAGENTA):20} {format_time(zig_result['avg']):>12} avg "
+                f"(min: {format_time(zig_result['min'])}, max: {format_time(zig_result['max'])}) "
+                f"[{colorize(f'{speedup:.1f}x vs Python', color)}]"
+            )
         else:
             print(f"  {colorize('Zig:', Colors.RED):20} NOT AVAILABLE")
 
@@ -203,8 +209,12 @@ def main():
     print(colorize("\nAvailable implementations:", Colors.YELLOW))
     print(f"  • Python:  {colorize('✓', Colors.GREEN)} (pure Python)")
     print(f"  • Rust:    {colorize('✓', Colors.GREEN) if RUST_AVAILABLE else colorize('✗', Colors.RED)} (json2xml-rs)")
-    print(f"  • Go:      {colorize('✓', Colors.GREEN) if GO_AVAILABLE else colorize('✗', Colors.RED)} (json2xml-go CLI)")
-    print(f"  • Zig:     {colorize('✓', Colors.GREEN) if ZIG_AVAILABLE else colorize('✗', Colors.RED)} (json2xml-zig CLI)")
+    print(
+        f"  • Go:      {colorize('✓', Colors.GREEN) if GO_AVAILABLE else colorize('✗', Colors.RED)} (json2xml-go CLI)"
+    )
+    print(
+        f"  • Zig:     {colorize('✓', Colors.GREEN) if ZIG_AVAILABLE else colorize('✗', Colors.RED)} (json2xml-zig CLI)"
+    )
 
     # Test data
     small_data = {"name": "John", "age": 30, "city": "New York"}

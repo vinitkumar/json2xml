@@ -9,9 +9,5 @@ def dicttoxml(
     cdata: bool = False,
     list_headers: bool = False,
 ) -> bytes: ...
-
-
 def escape_xml_py(s: str) -> str: ...
-
-
 def wrap_cdata_py(s: str) -> str: ...

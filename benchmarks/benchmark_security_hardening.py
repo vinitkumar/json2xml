@@ -195,9 +195,7 @@ def _benchmark_cell(
 
     for order in WORKER_ORDERS:
         for label in order:
-            worker_result = _invoke_worker(
-                script, repo, sources[label], mode, records, loops
-            )
+            worker_result = _invoke_worker(script, repo, sources[label], mode, records, loops)
             samples[label].extend(worker_result["samples_ns"])
             output = worker_result["output"]
             if label in outputs and output != outputs[label]:
@@ -209,9 +207,7 @@ def _benchmark_cell(
     if len(samples[BEFORE]) != 68 or len(samples[AFTER]) != 68:
         raise RuntimeError("benchmark schedule did not produce 68 samples per revision")
 
-    change_percent = (
-        (after["median_ns"] - before["median_ns"]) / before["median_ns"] * 100
-    )
+    change_percent = (after["median_ns"] - before["median_ns"]) / before["median_ns"] * 100
     return {
         "workload": workload,
         "records": records,
@@ -239,11 +235,7 @@ def _print_report(report: dict[str, Any]) -> None:
     print(f"Python: {report['environment']['python'].splitlines()[0]}")
     print(f"Executable: {report['environment']['executable']}")
     print(f"Platform: {report['environment']['platform']}")
-    print(
-        "Revisions: "
-        f"{report['revisions']['before']} (before) -> "
-        f"{report['revisions']['after']} (after)"
-    )
+    print(f"Revisions: {report['revisions']['before']} (before) -> {report['revisions']['after']} (after)")
     print()
     print("| Workload | Mode | Before median [p25, p75] | After median [p25, p75] | Change |")
     print("|---|---|---:|---:|---:|")
@@ -312,9 +304,7 @@ def run_benchmark(before_revision: str, after_revision: str) -> dict[str, Any]:
                 added.append(sources[label])
 
             cells = [
-                _benchmark_cell(
-                    script, repo, sources, workload, records, loops, mode
-                )
+                _benchmark_cell(script, repo, sources, workload, records, loops, mode)
                 for workload, records, loops in CASES
                 for mode in MODES
             ]
@@ -345,8 +335,7 @@ def run_benchmark(before_revision: str, after_revision: str) -> dict[str, Any]:
             "workers_per_revision": WORKERS_PER_REVISION,
             "warmups_per_worker": WARMUPS_PER_WORKER,
             "samples_per_worker": SAMPLES_PER_WORKER,
-            "samples_per_revision_and_cell": WORKERS_PER_REVISION
-            * SAMPLES_PER_WORKER,
+            "samples_per_revision_and_cell": WORKERS_PER_REVISION * SAMPLES_PER_WORKER,
         },
         "cells": cells,
     }
@@ -377,9 +366,7 @@ def main() -> None:
     report = run_benchmark(args.before, args.after)
     _print_report(report)
     if args.output_json is not None:
-        args.output_json.write_text(
-            json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        args.output_json.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         print(f"\nRaw samples written to {args.output_json}")
 
 

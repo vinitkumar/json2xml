@@ -4,6 +4,7 @@ Tests for the Rust (PyO3) dicttoxml implementation.
 These tests verify that the Rust implementation produces correct output
 and matches the Python implementation for supported features.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -14,6 +15,7 @@ import pytest
 try:
     from json2xml_rs import dicttoxml as rust_dicttoxml  # type: ignore[import-not-found]
     from json2xml_rs import escape_xml_py, wrap_cdata_py  # type: ignore[import-not-found]
+
     RUST_AVAILABLE = True
 except ImportError:
     RUST_AVAILABLE = False
@@ -176,15 +178,7 @@ class TestRustDicttoxml:
         assert b">Bob</name>" in result
 
     def test_deeply_nested(self):
-        data = {
-            "level1": {
-                "level2": {
-                    "level3": {
-                        "value": "deep"
-                    }
-                }
-            }
-        }
+        data = {"level1": {"level2": {"level3": {"value": "deep"}}}}
         result = rust_dicttoxml(data)
         assert b"<level1" in result
         assert b"<level2" in result
@@ -199,7 +193,7 @@ class TestRustDicttoxml:
             "boolean": True,
             "null": None,
             "list": [1, 2],
-            "dict": {"nested": "value"}
+            "dict": {"nested": "value"},
         }
         result = rust_dicttoxml(data)
         assert b">hello</string>" in result
@@ -233,7 +227,7 @@ class TestRustDicttoxmlOptions:
     def test_no_root(self):
         data = {"name": "John"}
         result = rust_dicttoxml(data, root=False)
-        assert b'<?xml version' not in result
+        assert b"<?xml version" not in result
         assert b"<root>" not in result
         assert b"<name" in result
 
@@ -266,8 +260,8 @@ class TestRustDicttoxmlOptions:
     def test_list_headers(self):
         data = {"colors": ["red", "green"]}
         result = rust_dicttoxml(data, list_headers=True)
-        assert b"<item type=\"str\">red</item>" in result
-        assert b"<item type=\"str\">green</item>" in result
+        assert b'<item type="str">red</item>' in result
+        assert b'<item type="str">green</item>' in result
 
 
 class TestRustVsPythonCompatibility:
@@ -331,14 +325,8 @@ class TestRustVsPythonCompatibility:
 
     def test_complex_nested_matches(self):
         data = {
-            "users": [
-                {"name": "Alice", "scores": [90, 85, 88]},
-                {"name": "Bob", "scores": [75, 80, 82]}
-            ],
-            "metadata": {
-                "count": 2,
-                "active": True
-            }
+            "users": [{"name": "Alice", "scores": [90, 85, 88]}, {"name": "Bob", "scores": [75, 80, 82]}],
+            "metadata": {"count": 2, "active": True},
         }
         rust, python = self.compare_outputs(data)
         assert rust == python
@@ -585,12 +573,7 @@ class TestFastDicttoxmlHelpers:
 
     def test_special_keys_deep_in_list(self):
         """Test special keys detection in deeply nested list structures."""
-        data = {
-            "outer": [
-                {"normal": "value"},
-                {"nested": {"@attrs": {"class": "test"}, "@val": "content"}}
-            ]
-        }
+        data = {"outer": [{"normal": "value"}, {"nested": {"@attrs": {"class": "test"}, "@val": "content"}}]}
         result = fast_dicttoxml(data)
         assert b'class="test"' in result
 
@@ -610,7 +593,7 @@ class TestFastDicttoxmlPythonFallback:
         from unittest.mock import patch
 
         # Temporarily mock Rust availability to False.
-        with patch.object(fast_module, '_use_rust', False):
+        with patch.object(fast_module, "_use_rust", False):
             result = fast_module.escape_xml("Hello <World>")
             assert "&lt;" in result
             assert "&gt;" in result
@@ -620,7 +603,7 @@ class TestFastDicttoxmlPythonFallback:
         from unittest.mock import patch
 
         # Temporarily mock Rust availability to False.
-        with patch.object(fast_module, '_use_rust', False):
+        with patch.object(fast_module, "_use_rust", False):
             result = fast_module.wrap_cdata("Hello World")
             assert result == "<![CDATA[Hello World]]>"
 
@@ -628,7 +611,7 @@ class TestFastDicttoxmlPythonFallback:
         """Test escape_xml falls back when rust_escape_xml is None."""
         from unittest.mock import patch
 
-        with patch.object(fast_module, 'rust_escape_xml', None):
+        with patch.object(fast_module, "rust_escape_xml", None):
             result = fast_module.escape_xml("Test & Value")
             assert "&amp;" in result
 
@@ -636,6 +619,6 @@ class TestFastDicttoxmlPythonFallback:
         """Test wrap_cdata falls back when rust_wrap_cdata is None."""
         from unittest.mock import patch
 
-        with patch.object(fast_module, 'rust_wrap_cdata', None):
+        with patch.object(fast_module, "rust_wrap_cdata", None):
             result = fast_module.wrap_cdata("Test Content")
             assert result == "<![CDATA[Test Content]]>"

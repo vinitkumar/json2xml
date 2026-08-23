@@ -1,3 +1,29 @@
+# json2xml_rs 0.5.0
+
+Released 2026-08-23.
+
+## Highlights
+
+- Makes the Rust serializer byte-identical to the Python serializer for every payload routed to it, correcting CDATA handling, nested list shapes, list member tags, dictionary type metadata, rootless output, and names beginning with `xml`.
+- Adds a native payload capability gate so non-JSON-native values and parser-resolved names fall back to Python instead of producing different XML.
+- Cuts the 1,000-record payload gate from 1.14 ms to 0.09 ms and the complete accelerated conversion from 1.51 ms to 0.49 ms.
+- Normalizes borrowed list member names so rootless dictionaries under `list_headers` remain well-formed.
+
+## Migration guidance
+
+The native backend now accepts only the subset it can reproduce exactly: dictionaries, lists, tuples, and exact string, boolean, integer, float, and null values with mutually compatible element names. Other payloads continue to work through the Python serializer.
+
+Python wrappers should require `json2xml-rs>=0.5.0` before relying on the native `payload_is_supported()` gate. Older extensions remain safe with the current wrapper because the missing capability causes automatic fallback to Python.
+
+## Package Version
+
+- Rust accelerator: `json2xml-rs==0.5.0`
+
+## Verification
+
+The release passed Rust formatting, Clippy with warnings denied, 47 Rust unit tests, and 596 Python tests with 100% statement coverage. Publication is additionally gated on built-wheel tests across Linux, macOS, Windows, CPython 3.10-3.15, and PyPy.
+
+
 # json2xml 6.5.1
 
 Released 2026-08-05.

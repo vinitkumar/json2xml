@@ -19,7 +19,12 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from .backend_selector import BackendSelector, ConversionRequest, has_special_keys
+from .backend_selector import (
+    BackendSelector,
+    ConversionRequest,
+    rust_renders_identically,
+    rust_renders_root_identically,
+)
 
 RustStringTransform = Callable[[str], str]
 
@@ -89,7 +94,8 @@ class _RustBackendAdapter:
             or request.xpath_format
             or request.indent is not None
             or not isinstance(request.obj, (dict, list))
-            or has_special_keys(request.obj)
+            or not rust_renders_root_identically(request.root, request.custom_root)
+            or not rust_renders_identically(request.obj)
         )
 
     def render(self, request: ConversionRequest) -> bytes:

@@ -216,6 +216,26 @@ Pretty output should be produced by the serializer itself rather than by constru
 
 Nested containers should be indented as they are written, and character data should keep its closing tag on the same line.
 
+### Rust backend parity
+
+The native backend and the Python serializer must produce identical bytes for every payload the selector admits, so divergence is tested from both sides.
+
+#### Gate rejects payloads Rust cannot reproduce
+
+Values Python classifies through isinstance fallbacks, scalar subclasses, and keys whose element name Python derives from a parser should all keep the request on the Python serializer.
+
+#### Admitted payloads render identically
+
+Every divergence found by differential testing is pinned across the full option matrix, and randomized payloads are compared against the Python serializer under a fixed seed.
+
+#### Native and Python gates agree
+
+The native gate is an optimization over the Python reference walk, so the two must return the same verdict for every payload; disagreeing in either direction is a correctness bug.
+
+### Parser-backed names stay on Python
+
+Colon names, non-ASCII names, and names ending in whitespace should not reach the native backend, and converting them through the public wrapper should match the Python serializer.
+
 ### Special keys force Python fallback
 
 Special dictionary keys such as `@attrs` and `@val` should bypass the Rust callable so the Python serializer can preserve legacy attribute semantics.

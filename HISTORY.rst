@@ -2,6 +2,9 @@
 Next
 ====
 
+  * fix: make the optional Rust backend byte-identical to the Python serializer for every payload it accepts, correcting CDATA on numbers, nested list shapes, list member tag names, ``type="dict"`` under ``list_headers``, and names beginning with ``xml``
+  * fix: keep payloads the Rust backend cannot reproduce exactly -- non-JSON-native values, parser-resolved key names, and normalized root names -- on the Python serializer
+  * perf: run the Rust backend's payload gate natively, cutting a 1,000-record conversion from 1.51 ms to 0.49 ms
   * fix: enforce conversion output limits from generated UTF-8 bytes instead of rejecting valid payloads with a conservative estimate
   * fix: reject unsupported falsy objects consistently instead of serializing them as null
   * fix: keep public scalar converter attribute dictionaries unchanged

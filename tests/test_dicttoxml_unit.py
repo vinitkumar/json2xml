@@ -200,9 +200,12 @@ def test_pretty_output_limit_counts_trailing_newline() -> None:
     rendered = dicttoxml.dicttoxml({"name": "Ada"}, indent="  ")
 
     assert rendered.endswith(b"\n")
-    assert dicttoxml.dicttoxml(
-        {"name": "Ada"}, indent="  ", max_output_bytes=len(rendered)
-    ) == rendered
+    assert (
+        dicttoxml.dicttoxml(
+            {"name": "Ada"}, indent="  ", max_output_bytes=len(rendered)
+        )
+        == rendered
+    )
     with pytest.raises(ValueError, match="XML output size limit exceeded"):
         dicttoxml.dicttoxml(
             {"name": "Ada"}, indent="  ", max_output_bytes=len(rendered) - 1

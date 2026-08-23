@@ -27,15 +27,17 @@ except ImportError:
 
 import json2xml.dicttoxml_fast as fast_module
 from json2xml import dicttoxml as py_dicttoxml
+from json2xml.backend_selector import ConversionRequest, rust_renders_identically
+from json2xml.dicttoxml_fast import (
+    _RustBackendAdapter,
+    get_backend,
+    is_rust_available,
+)
 from json2xml.dicttoxml_fast import (
     dicttoxml as fast_dicttoxml,
 )
 from json2xml.dicttoxml_fast import (
     escape_xml as fast_escape_xml,
-)
-from json2xml.dicttoxml_fast import (
-    get_backend,
-    is_rust_available,
 )
 from json2xml.dicttoxml_fast import (
     wrap_cdata as fast_wrap_cdata,
@@ -382,16 +384,67 @@ class TestRustVsPythonCompatibility:
             {"a<b": "value"},
             {'quote"key': "value"},
             {"apost'key": "value"},
-            {"ns1:node1": "value"},
-            {"名前": "太郎"},
             {"-bad": "value"},
-            {"": "value"},
         ],
     )
     def test_xml_name_normalization_matches(self, data: dict[str, str]):
         """Test Rust and Python agree on supported XML name normalization cases."""
         rust, python = self.compare_outputs(data, root=False, attr_type=False)
         assert rust == python
+
+    # @lat: [[tests#Conversion behavior#Parser-backed names stay on Python]]
+    @pytest.mark.parametrize(
+        "data",
+        [
+            {"ns1:node1": "value"},
+            {"名前": "太郎"},
+            {"": "value"},
+            {"trailing ": "value"},
+        ],
+    )
+    def test_parser_backed_names_are_not_routed_to_rust(
+        self, data: dict[str, str]
+    ) -> None:
+        """Names whose element name Python derives from a parser stay on Python.
+
+        The native backend reproduces only the ASCII fast path, so the selector must keep
+        these payloads on the Python serializer rather than let the two disagree.
+        """
+        assert not rust_renders_identically(data)
+
+        request = _request(data, root=False, attr_type=False)
+        assert not _RustBackendAdapter().can_handle(request)
+        assert fast_dicttoxml(
+            data, root=False, attr_type=False
+        ) == py_dicttoxml.dicttoxml(data, root=False, attr_type=False)
+
+
+def _request(
+    obj: object,
+    *,
+    root: bool = True,
+    custom_root: str = "root",
+    attr_type: bool = True,
+    item_wrap: bool = True,
+    cdata: bool = False,
+    list_headers: bool = False,
+) -> ConversionRequest:
+    """Build a ConversionRequest with the defaults the public wrapper would use."""
+    return ConversionRequest(
+        obj=obj,
+        root=root,
+        custom_root=custom_root,
+        ids=None,
+        attr_type=attr_type,
+        item_wrap=item_wrap,
+        item_func=None,
+        cdata=cdata,
+        xml_namespaces=None,
+        list_headers=list_headers,
+        xpath_format=False,
+        max_output_bytes=None,
+        indent=None,
+    )
 
 
 class TestFastDicttoxmlWrapper:

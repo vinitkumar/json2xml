@@ -6,7 +6,7 @@ This file documents the main execution paths that turn JSON input into XML outpu
 
 The standard pipeline reads JSON into Python objects, passes that data through [[json2xml/json2xml.py#Json2xml]], and delegates serialization through the fast backend selector in [[json2xml/dicttoxml_fast.py#dicttoxml]].
 
-Library callers usually construct [[json2xml/json2xml.py#Json2xml]] with decoded JSON data. CLI callers reach the same bounded conversion path through [[json2xml/cli.py#read_input]]. Pretty output is indented lexically without constructing a DOM.
+Library callers usually construct [[json2xml/json2xml.py#Json2xml]] with decoded JSON data. CLI callers reach the same bounded conversion path through [[json2xml/cli.py#read_input]]. Pretty output is indented by the serializer as it writes, so the library never parses XML.
 
 ## Conversion engine
 
@@ -16,7 +16,7 @@ The pure Python serializer recursively maps Python values to XML elements, attri
 
 The `dicttoxml()` entry point now normalizes options into `SerializerConfig` and delegates document shaping to a small renderer seam inside [[json2xml/dicttoxml.py#dicttoxml]]. That keeps XPath document framing, namespace emission, and root wrapping separate from the recursive element walkers.
 
-The recursive serializer still streams normal and XPath serialization through [[json2xml/dicttoxml.py#_XMLWriter]] so dict and list payloads do not allocate a complete string for each nested subtree. Public helpers such as `convert_dict()` still return strings for compatibility by delegating to the same append path, while library and CLI conversions write UTF-8 bytes incrementally and return the final `bytes` object. Attribute formatting stays centralized through `make_attrstring()`, and `@attrs`/`@val` normalization stays local to dict element handling so caller-owned metadata is never mutated.
+The recursive serializer still streams normal and XPath serialization through [[json2xml/dicttoxml.py#_XMLWriter]] so dict and list payloads do not allocate a complete string for each nested subtree. The writer can enforce an exact UTF-8 byte ceiling before each write. `convert()`, `dict2xml_str()`, `list2xml_str()`, `convert_dict()`, and `convert_list()` are deliberately retained as a public compatibility surface with no callers inside the library; they return strings by delegating to the same append path, while library and CLI conversions write UTF-8 bytes incrementally and return the final `bytes` object. Attribute formatting stays centralized through `make_attrstring()`, and scalar plus `@attrs`/`@val` paths copy caller metadata before adding normalized names or types.
 
 Text, CDATA, custom attributes, and namespace declarations share XML 1.0 character validation. Namespace declarations additionally validate prefixes before the renderer appends them to the root element.
 
@@ -42,11 +42,11 @@ Release and CI workflows install the pinned Rust toolchain before building wheel
 
 Make-based lint, type-check, and Python test targets run through uv's locked development environment so results do not depend on globally installed tools or optional extensions.
 
-The shared `UV_RUN` command installs the `dev` extra from `uv.lock`. The type-check target overlays `ty`, while test targets use the same isolated dependency set and leave Rust extension integration to its dedicated workflow.
+The shared `UV_RUN` command installs the complete `dev` extra from `uv.lock`. `pyproject.toml` and `uv.lock` are the only dependency declaration, so no pinned requirements files can drift from them. The type-check target overlays `ty`, while pytest configuration has one source in `pyproject.toml` and enforces 100% coverage for bare local runs. Rust extension integration stays in its dedicated workflow.
 
 ## Release packaging
 
-Package releases keep the Python wrapper and Rust accelerator requirements aligned so optional fast installs receive compatible wheels.
+Package releases keep the Python wrapper and Rust accelerator requirements aligned and use `uv build`/`uv publish` so optional fast installs receive compatible wheels.
 
 The Python package version lives in `pyproject.toml` and `json2xml/__init__.py`. The Rust accelerator version lives in both `rust/Cargo.toml` and `rust/pyproject.toml`, and the Python `fast` extra should require the Rust package version that contains any expected accelerator behavior. Publish and verify the Rust package before updating that Python requirement and lockfile. Release notes live in `HISTORY.rst`, with the current release also summarized in `RELEASE_NOTES.md` for tag and PyPI copy.
 
@@ -56,11 +56,11 @@ The benchmark docs record measured implementation tradeoffs so users can choose 
 
 The May 2026 benchmark on Apple Silicon shows the Rust extension as the best option for Python library calls, with 4-14x speedups over the optimized pure Python path and no process overhead. Go and Zig remain useful for native CLI workflows where startup cost is acceptable.
 
-Reproduction docs require contributors to record machine, OS, Python, and tool availability before comparing results. `benchmark_all.py` mixes library calls and CLI subprocesses intentionally, so its Go and Zig rows include process startup overhead.
+Reproduction docs require contributors to record machine, OS, Python, and tool availability before comparing results. `benchmarks/benchmark_all.py` mixes library calls and CLI subprocesses intentionally, so its Go and Zig rows include process startup overhead.
 
-The August 2026 public-wrapper benchmark uses [[benchmark_security_hardening.py#main]] to compare pre-hardening `826439f` with hardened `48dfd38` using fresh ABBA/BAAB-interleaved workers.
+The August 2026 public-wrapper benchmark uses [[benchmarks/benchmark_security_hardening.py#main]] to compare pre-hardening `826439f` with hardened `48dfd38` using fresh ABBA/BAAB-interleaved workers.
 
-Its [[benchmark_security_hardening.py#make_payload]] generator derives every field from a record index, while four workers × 17 samples give each revision 68 observations per cell. Raw JSON includes every timing plus output type, byte count, and SHA-256.
+Its [[benchmarks/benchmark_security_hardening.py#make_payload]] generator derives every field from a record index, while four workers × 17 samples give each revision 68 observations per cell. Raw JSON includes every timing plus output type, byte count, and SHA-256.
 
 Harness subprocesses use inline argv lists with shell parsing disabled. Revision arguments follow Git's end-of-options marker, and worktrees receive only full commit IDs resolved by Git.
 
@@ -68,17 +68,19 @@ Default calls improved 74-80% and pretty calls 27-42%, while explicit compact ca
 
 An identical uv-managed CPython 3.15.0rc1 follow-up confirmed the result: default calls improved 75-80%, pretty calls improved 28-43%, and compact calls regressed 44-60%.
 
+The August 2026 generation-time pretty-printing rerun compares `78ea9ea` with `7b29472` using the same harness. Moving indentation into the serializer made pretty conversion 46-53% faster, with the gain growing by payload size because the removed re-tokenizing pass was proportional to output length. Default and compact calls moved within noise, and all nine cells kept identical output SHA-256 values.
+
 The detailed record includes interquartile ranges, exact uv and interpreter provenance, and output checks showing that compact bytes remained identical across revisions.
 
-The June 2026 Rust memory benchmark uses [[benchmark_memory_rust.py#main]] under hyperfine to compare release builds in fresh Python processes. The bytes-writer implementation cuts serializer peak RSS by about half for large outputs, with a documented throughput tradeoff.
+The June 2026 Rust memory benchmark uses [[benchmarks/benchmark_memory_rust.py#main]] under hyperfine to compare release builds in fresh Python processes. The bytes-writer implementation cuts serializer peak RSS by about half for large outputs, with a documented throughput tradeoff.
 
-The June 2026 multi-interpreter CLI rerun uses [[benchmark_multi_python.py#main]] with per-interpreter virtual environments. On the recorded Apple Silicon run, CPython 3.15.0rc1 beat CPython 3.14.6 on every case, PyPy 3.11.15 only won the largest case, and Go remained the fastest end-to-end CLI path overall.
+The June 2026 multi-interpreter CLI rerun uses [[benchmarks/benchmark_multi_python.py#main]] with per-interpreter virtual environments. On the recorded Apple Silicon run, CPython 3.15.0rc1 beat CPython 3.14.6 on every case, PyPy 3.11.15 only won the largest case, and Go remained the fastest end-to-end CLI path overall.
 
 The Rust serializer's bytes-writer hot path uses monomorphized `Write` helpers and a bounded 16 KiB buffer instead of dynamic dispatch and one output write per XML fragment, reducing CPU overhead while retaining direct output into the final Python bytes object and its lower peak-memory profile. A controlled CPython 3.14 benchmark improved a 5,000-record payload from roughly 4.8 ms to 2.4 ms median while keeping the 100,000-record serializer delta near 80 MiB.
 
 The benchmark script now tracks uv-managed current-series interpreters through a configurable `JSON2XML_UV_PYTHON_DIR` base path plus per-interpreter overrides, with the documented defaults targeting CPython 3.14.6, CPython 3.15.0rc1, and PyPy 3.11.15. That keeps the published setup reproducible without hard-coding one contributor's home directory.
 
-The July 2026 CPython 3.15.0rc1 flamegraph for a 5,000-record nested payload identified repeated abstract type dispatch inside [[json2xml/dicttoxml.py#_append_convert_dict]] as the pure-Python bottleneck. Exact JSON-native type paths now precede compatibility fallbacks, while [[json2xml/dicttoxml.py#_is_number]] preserves `Decimal`, `Fraction`, complex, and custom `Number` support. The fixed workload improved from 83.0 ms to 57.2 ms per conversion; a 20-loop tracing profile fell from 8.311 s and 48.17 million calls to 5.782 s and 30.13 million calls. The committed [before](../docs/flamegraphs/python315-before.svg) and [after](../docs/flamegraphs/python315-after.svg) flamegraphs preserve the call-tree evidence.
+The July 2026 CPython 3.15.0rc1 flamegraph for a 5,000-record nested payload identified repeated abstract type dispatch inside [[json2xml/dicttoxml.py#_append_convert_dict]] as the pure-Python bottleneck. Exact JSON-native type paths now precede compatibility fallbacks, while [[json2xml/dicttoxml.py#_is_number]] preserves `Decimal`, `Fraction`, complex, and custom `Number` support. [[json2xml/dicttoxml.py#_classify]] holds that ordering once — an exact `type()` lookup followed by the subclass and date-like fallbacks — so every element writer dispatches on the same result and supported types cannot diverge between root, dict, and list positions. The fixed workload improved from 83.0 ms to 57.2 ms per conversion; a 20-loop tracing profile fell from 8.311 s and 48.17 million calls to 5.782 s and 30.13 million calls. The committed [before](../docs/flamegraphs/python315-before.svg) and [after](../docs/flamegraphs/python315-after.svg) flamegraphs preserve the call-tree evidence.
 
 The July 2026 native Rust flamegraph identified the scalar byte loop in the XML escape writer as the largest avoidable Rust cost. The shared scanner now uses `memchr` word/SIMD search for the five XML escape bytes and copies clean UTF-8 spans in bulk without changing the bounded bytes writer. A bounded sparse fast path switches to monotonic scanners after four matches, retaining normal-payload speed while keeping dense escape input linear. On the same deterministic 5,000-record CPython 3.15.0rc1 workload, paired release medians improved from 6.007 ms to 5.632 ms per conversion, or 6.23%, while the escape writer's exclusive native sample share fell from 14.31% to 7.97%. A follow-up 4–128 KiB capacity sweep retained the 16 KiB buffer: the stable range plateaued at 16–64 KiB, and an interleaved confirmation measured 16 KiB about 0.8% faster than 32 KiB without extra per-call memory. The committed [Rust before](../docs/flamegraphs/rust-before.svg) and [Rust after](../docs/flamegraphs/rust-after.svg) flamegraphs preserve the symbolized native-stack evidence.
 
@@ -99,6 +101,12 @@ Dependabot checks the root and documentation Python dependency manifests weekly,
 GitHub Actions workflows run with read-only tokens by default and use full SHA pins so third-party action updates are explicit.
 
 The `.github/workflows/` files declare the minimum `permissions:` scopes needed by each workflow, with CodeQL retaining `security-events: write` for result upload and TestPyPI retaining `id-token: write` for explicit trusted-publishing runs. The Python test job also scopes `id-token: write` and `FLAKINESS_PROJECT` to its pytest matrix so the flakiness reporter can authenticate through GitHub OIDC without exposing that permission to lint. Release-branch pushes build distributions and runs Twine checks; TestPyPI upload is a manual opt-in because that external registry requires separate publisher configuration. Action references are pinned to immutable commits with the upstream tag retained in comments for reviewability, and all CodeQL phases use the same release commit because mixed action versions reject each other's configuration. `.github/dependabot.yml` checks the `github-actions` ecosystem weekly so those pins do not silently age. The Python test matrix pins its PyPy 3.11 job to an explicit PyPy release so CI keeps exercising the intended CPython 3.11.15-compatible runtime instead of silently drifting with runner cache updates. It also exercises regular CPython 3.15.0rc1 while leaving that beta's free-threaded builds out of CI until the runner support is less brittle.
+
+The native backend is only selected for payloads it renders byte-identically. [[json2xml/backend_selector.py#rust_renders_identically]] is the reference definition of that subset -- dict, list, tuple, and exact `str`, `bool`, `int`, `float`, and `None` values, under keys both implementations name the same way -- and `payload_is_supported` in the crate is its native form, used at dispatch so the walk does not cost more than the conversion it guards. Subclasses and non-JSON-native values stay on Python because its isinstance fallbacks classify them in ways the native writer does not reproduce.
+
+Key naming is the subtle half of that subset. Python resolves any name its ASCII fast path rejects through a real XML parser, whose verdict the crate cannot reproduce, so non-ASCII names, colon names, and names ending in whitespace stay on Python. For ASCII colon-free names the two agree by construction, because the XML Name production restricted to ASCII is exactly the fast path.
+
+An extension that predates `payload_is_supported` also predates the output parity fixes, so [[json2xml/dicttoxml_fast.py]] refuses it in the same way it already refuses builds that permit invalid XML characters.
 
 Rust extension CI triggers on Rust sources, Rust integration tests, and Python fast-path files such as [[json2xml/backend_selector.py]] and [[json2xml/dicttoxml_fast.py]]. That keeps native backend tests attached to the Python dispatch code that decides whether the accelerator is used.
 

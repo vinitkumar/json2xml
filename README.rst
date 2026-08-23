@@ -416,8 +416,7 @@ This project uses modern Python development practices. Here's how to set up a de
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
     
     # Install dependencies
-    uv pip install -r requirements-dev.txt
-    uv pip install -e .
+    uv pip install -e ".[dev]"
 
 **Running Tests and Checks**
 
@@ -431,15 +430,6 @@ Using Make (recommended):
     make lint          # Run linting with ruff
     make typecheck     # Run type checking with ty
     make check-all     # Run all checks (lint, typecheck, test)
-
-Using the development script:
-
- .. code-block:: console
-
-    python dev.py          # Run all checks
-    python dev.py test     # Run tests only
-    python dev.py lint     # Run linting only
-    python dev.py typecheck # Run type checking only
 
 Using tools directly:
 
@@ -482,7 +472,7 @@ Running Rust benchmarks:
  .. code-block:: console
 
     # After building the extension
-    python benchmark_rust.py
+    python benchmarks/benchmark_rust.py
 
 The Rust code is in ``rust/src/lib.rs`` and uses PyO3 for Python bindings.
 

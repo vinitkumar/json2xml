@@ -1,7 +1,9 @@
 """Pytest configuration for json2xml tests."""
+
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -9,6 +11,12 @@ import pytest
 
 if TYPE_CHECKING:
     pass
+
+# Benchmark scripts live outside the installed package, so tests that import
+# them need the benchmarks directory on the import path.
+_BENCHMARKS_DIR = Path(__file__).resolve().parent.parent / "benchmarks"
+if str(_BENCHMARKS_DIR) not in sys.path:
+    sys.path.insert(0, str(_BENCHMARKS_DIR))
 
 
 @pytest.fixture

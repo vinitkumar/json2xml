@@ -1,4 +1,23 @@
 
+Next
+====
+
+  * fix: normalize the parent name a ``list_headers`` dict member borrows, so a rootless list of dictionaries no longer emits the malformed empty tag ``<>``
+  * fix: make the optional Rust backend byte-identical to the Python serializer for every payload it accepts, correcting CDATA on numbers, nested list shapes, list member tag names, ``type="dict"`` under ``list_headers``, and names beginning with ``xml``
+  * fix: keep payloads the Rust backend cannot reproduce exactly -- non-JSON-native values, parser-resolved key names, and normalized root names -- on the Python serializer
+  * perf: run the Rust backend's payload gate natively, cutting a 1,000-record conversion from 1.51 ms to 0.49 ms
+  * fix: enforce conversion output limits from generated UTF-8 bytes instead of rejecting valid payloads with a conservative estimate
+  * fix: reject unsupported falsy objects consistently instead of serializing them as null
+  * fix: keep public scalar converter attribute dictionaries unchanged
+  * perf: validate common ASCII XML attribute names without constructing a DOM
+  * fix: serialize date-like values consistently at the root, which previously rejected ``datetime.time`` while accepting it inside dicts and lists
+  * refactor: dispatch every element writer through a single type classifier
+  * docs: record the string-returning public converters as a retained compatibility surface
+  * perf: indent pretty output while serializing instead of re-tokenizing generated XML, roughly halving pretty conversion time and removing the last XML parsing path from the library
+  * chore: align local pytest, pre-commit, release, and Rust CI configuration with the supported toolchain
+  * chore: move benchmark scripts under ``benchmarks/`` and make ``pyproject.toml`` plus ``uv.lock`` the only dependency declaration
+
+
 6.5.1 / 2026-08-05
 ==================
 

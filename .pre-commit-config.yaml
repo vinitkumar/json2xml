@@ -17,48 +17,32 @@ repos:
   - id: check-added-large-files
   - id: check-case-conflict
   - id: check-json
+    exclude: ^examples/wrongjson\.json$
   - id: check-merge-conflict
   - id: check-symlinks
   - id: check-toml
   - id: end-of-file-fixer
+    exclude: ^(docs/flamegraphs/|rust/fuzz/corpus/|docs/conf\.py$|docs/requirements\.in$|examples/(bigexample|wrongjson)\.json$|lat\.md/lat\.md$|setup\.py$)
   - id: trailing-whitespace
-- repo: https://github.com/tox-dev/pyproject-fmt
-  rev: v2.5.0
+    exclude: ^(CONTRIBUTING\.rst$|README\.rst$|benchmarks/benchmark\.sh$|examples/wrongjson\.json$|rust/fuzz/fuzz_targets/)
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.16.4
   hooks:
-  - id: pyproject-fmt
-- repo: https://github.com/tox-dev/tox-ini-fmt
-  rev: 1.4.1
-  hooks:
-  - id: tox-ini-fmt
+  - id: ruff-check
+    args: [--fix]
+  - id: ruff-format
 - repo: https://github.com/rstcheck/rstcheck
   rev: v6.2.4
   hooks:
   - id: rstcheck
+    args:
+    - --ignore-directives=highlight,toctree,automodule
+    - --ignore-roles=ref
+    exclude: ^(README|docs/readme)\.rst$
     additional_dependencies:
     - tomli==2.0.1
 - repo: https://github.com/asottile/pyupgrade
   rev: v3.19.1
   hooks:
   - id: pyupgrade
-    args: [--py38-plus]
-- repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 24.10.0
-  hooks:
-  - id: black
-- repo: https://github.com/adamchainz/blacken-docs
-  rev: 1.19.1
-  hooks:
-  - id: blacken-docs
-    additional_dependencies:
-    - black==23.1.0
-- repo: https://github.com/pycqa/isort
-  rev: 5.13.2
-  hooks:
-    - id: isort
-      name: isort (python)
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.13.0
-  hooks:
-  - id: mypy
-    additional_dependencies:
-    - django-stubs==5.0.4
+    args: [--py310-plus]

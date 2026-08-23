@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Measure peak RSS for the Rust json2xml extension on a large payload."""
+
 from __future__ import annotations
 
 import argparse

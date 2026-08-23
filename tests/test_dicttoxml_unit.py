@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import datetime
 import numbers
 from decimal import Decimal
 from fractions import Fraction
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 
@@ -55,7 +57,9 @@ class ListSubclass(list[Any]):
         ([], "list", False),
     ],
 )
-def test_get_xml_type_and_primitive_classification(value: Any, xml_type: str, is_primitive: bool) -> None:
+def test_get_xml_type_and_primitive_classification(
+    value: Any, xml_type: str, is_primitive: bool
+) -> None:
     assert dicttoxml.get_xml_type(value) == xml_type
     assert dicttoxml.is_primitive_type(value) is is_primitive
 
@@ -74,7 +78,9 @@ def test_get_xml_type_and_primitive_classification(value: Any, xml_type: str, is
     ],
 )
 # @lat: [[tests#XML helper behavior#Numeric fast path preserves general Number support]]
-def test_number_classifier_preserves_supported_number_types(value: Any, expected: bool) -> None:
+def test_number_classifier_preserves_supported_number_types(
+    value: Any, expected: bool
+) -> None:
     assert dicttoxml._is_number(value) is expected
 
 
@@ -98,6 +104,28 @@ def test_exact_type_dispatch_preserves_subclass_fallbacks() -> None:
         b'<?xml version="1.0" encoding="UTF-8" ?>'
         b'<root><values type="list"><item type="number">7</item></values></root>'
     )
+
+
+# @lat: [[tests#Type dispatch#Date-like values serialize the same in every position]]
+def test_date_like_values_serialize_identically_in_every_position() -> None:
+    moment = datetime.time(12, 30)
+    expected = b"12:30:00"
+
+    assert expected in dicttoxml.dicttoxml({"t": moment})
+    assert expected in dicttoxml.dicttoxml([moment])
+    assert (
+        dicttoxml.dicttoxml(moment, root=False, attr_type=False)
+        == b"<item>12:30:00</item>"
+    )
+
+
+def test_falsy_unsupported_objects_raise_instead_of_becoming_null() -> None:
+    class FalsyUnsupported:
+        def __len__(self) -> int:
+            return 0
+
+    with pytest.raises(TypeError, match="Unsupported data type"):
+        dicttoxml.dicttoxml({"value": FalsyUnsupported()})
 
 
 def test_convert_preserves_root_scalar_and_sequence_subclasses() -> None:
@@ -125,8 +153,7 @@ def test_nested_subclasses_match_compatible_serializer_shapes() -> None:
         False,
         True,
     ) == (
-        '<text type="str">value</text>'
-        '<mapping type="dict"><count type="int">1</count></mapping>'
+        '<text type="str">value</text><mapping type="dict"><count type="int">1</count></mapping>'
     )
     assert dicttoxml.convert_list(
         [DictSubclass({"count": 1}), ListSubclass([2])],
@@ -137,31 +164,52 @@ def test_nested_subclasses_match_compatible_serializer_shapes() -> None:
         False,
         True,
     ) == (
-        '<item type="dict"><count type="int">1</count></item>'
-        '<item type="list"><item type="int">2</item></item>'
+        '<item type="dict"><count type="int">1</count></item><item type="list"><item type="int">2</item></item>'
     )
-    assert dicttoxml.convert_list(
-        [IntSubclass(7)],
-        None,
-        "bad&parent",
-        True,
-        item_func,
-        False,
-        False,
-    ) == '<key name="bad&amp;parent" type="number">7</key>'
+    assert (
+        dicttoxml.convert_list(
+            [IntSubclass(7)],
+            None,
+            "bad&parent",
+            True,
+            item_func,
+            False,
+            False,
+        )
+        == '<key name="bad&amp;parent" type="number">7</key>'
+    )
 
 
 def test_raw_attribute_values_preserve_mapping_subclasses() -> None:
-    assert dicttoxml.dict2xml_str(
-        attr_type=False,
-        attr={},
-        item={"@attrs": {"source": "api"}, "@val": DictSubclass({"count": 1})},
-        item_func=lambda _parent: "item",
-        cdata=False,
-        item_name="field",
-        item_wrap=True,
-        parentIsList=False,
-    ) == '<field source="api"><count>1</count></field>'
+    assert (
+        dicttoxml.dict2xml_str(
+            attr_type=False,
+            attr={},
+            item={"@attrs": {"source": "api"}, "@val": DictSubclass({"count": 1})},
+            item_func=lambda _parent: "item",
+            cdata=False,
+            item_name="field",
+            item_wrap=True,
+            parentIsList=False,
+        )
+        == '<field source="api"><count>1</count></field>'
+    )
+
+
+def test_pretty_output_limit_counts_trailing_newline() -> None:
+    rendered = dicttoxml.dicttoxml({"name": "Ada"}, indent="  ")
+
+    assert rendered.endswith(b"\n")
+    assert (
+        dicttoxml.dicttoxml(
+            {"name": "Ada"}, indent="  ", max_output_bytes=len(rendered)
+        )
+        == rendered
+    )
+    with pytest.raises(ValueError, match="XML output size limit exceeded"):
+        dicttoxml.dicttoxml(
+            {"name": "Ada"}, indent="  ", max_output_bytes=len(rendered) - 1
+        )
 
 
 @pytest.mark.parametrize(
@@ -172,10 +220,15 @@ def test_raw_attribute_values_preserve_mapping_subclasses() -> None:
     ],
 )
 # @lat: [[tests#Conversion behavior#Raw attribute values preserve scalar subclasses]]
-def test_raw_attribute_values_preserve_scalar_subclasses(value: str | int, expected_text: bytes) -> None:
-    assert dicttoxml.dicttoxml({"field": {"@attrs": {"source": "api"}, "@val": value}}) == (
-        b'<?xml version="1.0" encoding="UTF-8" ?>'
-        b'<root><field source="api">' + expected_text + b"</field></root>"
+def test_raw_attribute_values_preserve_scalar_subclasses(
+    value: str | int, expected_text: bytes
+) -> None:
+    assert dicttoxml.dicttoxml(
+        {"field": {"@attrs": {"source": "api"}, "@val": value}}
+    ) == (
+        b'<?xml version="1.0" encoding="UTF-8" ?><root><field source="api">'
+        + expected_text
+        + b"</field></root>"
     )
 
 
@@ -209,7 +262,9 @@ def test_escape_xml_matches_full_replacement_chain(value: str) -> None:
         ({"type": "str", "id": 1}, ' type="str" id="1"'),
     ],
 )
-def test_make_attrstring_pins_spacing_and_order(attrs: dict[str, Any], expected: str) -> None:
+def test_make_attrstring_pins_spacing_and_order(
+    attrs: dict[str, Any], expected: str
+) -> None:
     assert dicttoxml.make_attrstring(attrs) == expected
 
 
@@ -236,6 +291,23 @@ def test_valid_name_helpers_set_type_without_mutating_caller_attrs() -> None:
     assert base_attrs == {"id": "shared"}
 
 
+def test_public_scalar_helpers_do_not_mutate_caller_attrs() -> None:
+    converters = (
+        lambda attrs: dicttoxml.convert_kv("invalid&key", "Bike", True, attrs),
+        lambda attrs: dicttoxml.convert_bool("invalid&key", True, True, attrs),
+        lambda attrs: dicttoxml.convert_none("invalid&key", True, attrs),
+    )
+
+    for convert in converters:
+        attrs = {"id": "shared"}
+
+        result = convert(attrs)
+
+        assert 'name="invalid&amp;key"' in result
+        assert 'type="' in result
+        assert attrs == {"id": "shared"}
+
+
 def test_valid_name_helpers_keep_existing_attrs_without_attr_type() -> None:
     base_attrs = {"name": "invalid key"}
 
@@ -243,8 +315,14 @@ def test_valid_name_helpers_keep_existing_attrs_without_attr_type() -> None:
         dicttoxml.convert_kv_valid_name("key", "Bike", False, base_attrs)
         == '<key name="invalid key">Bike</key>'
     )
-    assert dicttoxml.convert_bool_valid_name("key", True, False, base_attrs) == '<key name="invalid key">true</key>'
-    assert dicttoxml.convert_none_valid_name("key", False, base_attrs) == '<key name="invalid key"></key>'
+    assert (
+        dicttoxml.convert_bool_valid_name("key", True, False, base_attrs)
+        == '<key name="invalid key">true</key>'
+    )
+    assert (
+        dicttoxml.convert_none_valid_name("key", False, base_attrs)
+        == '<key name="invalid key"></key>'
+    )
     assert base_attrs == {"name": "invalid key"}
 
 
@@ -286,27 +364,33 @@ def test_container_helpers_set_type_without_mutating_caller_attrs() -> None:
     dict_attrs = {"id": "shared"}
     list_attrs = {"id": "shared"}
 
-    assert dicttoxml.dict2xml_str(
-        attr_type=True,
-        attr=dict_attrs,
-        item={"name": "Bike"},
-        item_func=lambda _parent: "item",
-        cdata=False,
-        item_name="product",
-        item_wrap=True,
-        parentIsList=False,
-    ) == '<product id="shared" type="dict"><name type="str">Bike</name></product>'
+    assert (
+        dicttoxml.dict2xml_str(
+            attr_type=True,
+            attr=dict_attrs,
+            item={"name": "Bike"},
+            item_func=lambda _parent: "item",
+            cdata=False,
+            item_name="product",
+            item_wrap=True,
+            parentIsList=False,
+        )
+        == '<product id="shared" type="dict"><name type="str">Bike</name></product>'
+    )
     assert dict_attrs == {"id": "shared"}
 
-    assert dicttoxml.list2xml_str(
-        attr_type=True,
-        attr=list_attrs,
-        item=["Bike"],
-        item_func=lambda _parent: "item",
-        cdata=False,
-        item_name="products",
-        item_wrap=True,
-    ) == '<products id="shared" type="list"><item type="str">Bike</item></products>'
+    assert (
+        dicttoxml.list2xml_str(
+            attr_type=True,
+            attr=list_attrs,
+            item=["Bike"],
+            item_func=lambda _parent: "item",
+            cdata=False,
+            item_name="products",
+            item_wrap=True,
+        )
+        == '<products id="shared" type="list"><item type="str">Bike</item></products>'
+    )
     assert list_attrs == {"id": "shared"}
 
 
@@ -334,8 +418,14 @@ def test_key_is_valid_xml_fast_and_parse_paths_are_stable_under_cache() -> None:
 
 
 # @lat: [[tests#XML helper behavior#XML attribute name validation]]
-def test_xml_attribute_name_validation_accepts_only_parser_valid_names() -> None:
+def test_xml_attribute_name_validation_accepts_only_parser_valid_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     dicttoxml.key_is_valid_xml_attr.cache_clear()
+    from defusedxml.minidom import parseString
+
+    parse_string = Mock(wraps=parseString)
+    monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
 
     cases = {
         "a_b": True,
@@ -353,8 +443,88 @@ def test_xml_attribute_name_validation_accepts_only_parser_valid_names() -> None
 
     assert first == cases
     assert second == cases
-    dicttoxml.validate_xml_attr_names({key: "value" for key, is_valid in cases.items() if is_valid})
+    assert parse_string.call_count == 4
+    dicttoxml.validate_xml_attr_names(
+        {key: "value" for key, is_valid in cases.items() if is_valid}
+    )
     for key, is_valid in cases.items():
         if not is_valid:
             with pytest.raises(ValueError, match="Invalid XML attribute name"):
                 dicttoxml.validate_xml_attr_names({key: "value"})
+
+
+def _is_well_formed(xml_bytes: bytes, has_root: bool) -> bool:
+    """Return whether output satisfies the XML 1.0 well-formedness constraints.
+
+    expat is created without namespace processing on purpose: an undeclared prefix in a key
+    such as ``k:v`` is a namespace error, not a well-formedness one, and the serializer has
+    never claimed to resolve prefixes. The input is output this test just generated, so no
+    untrusted document is being parsed.
+    """
+    from xml.parsers.expat import ParserCreate
+
+    document = xml_bytes if has_root else b"<w>" + xml_bytes + b"</w>"
+    try:
+        ParserCreate().Parse(document, True)
+    except Exception:
+        return False
+    return True
+
+
+# @lat: [[tests#XML output safety#Generated documents are well formed]]
+@pytest.mark.parametrize("root", [True, False])
+@pytest.mark.parametrize("item_wrap", [True, False])
+@pytest.mark.parametrize("list_headers", [True, False])
+def test_generated_documents_are_well_formed(
+    root: bool, item_wrap: bool, list_headers: bool
+) -> None:
+    """No option combination may emit markup an XML parser rejects.
+
+    A rootless list of dicts under ``list_headers`` used to borrow an empty parent name and
+    emit ``<>``, which no parser accepts.
+    """
+    payloads: list[Any] = [
+        [{"b": 2}],
+        [{"b": 2}, 1],
+        [{"b": 2}, {"c": 3}],
+        [[{"b": 2}]],
+        [],
+        [None, True, 1.5, "s"],
+        {"a": [{"b": 2}]},
+        {"a": [[{"b": 2}]]},
+        {"a b": [{"b": 2}]},
+        {"123": [{"b": 2}]},
+    ]
+    for data in payloads:
+        rendered = dicttoxml.dicttoxml(
+            data, root=root, item_wrap=item_wrap, list_headers=list_headers
+        )
+        assert _is_well_formed(rendered, root), (
+            f"malformed output for {data!r} "
+            f"(root={root}, item_wrap={item_wrap}, list_headers={list_headers}): "
+            f"{rendered!r}"
+        )
+
+
+# @lat: [[tests#Conversion behavior#Rootless list headers name their members]]
+@pytest.mark.parametrize(
+    ("item_wrap", "expected"),
+    [
+        (True, b'<key><b type="int">2</b></key>'),
+        (False, b'<key name="" type="dict"><b type="int">2</b></key>'),
+    ],
+)
+def test_rootless_list_headers_name_dict_members(
+    item_wrap: bool, expected: bytes
+) -> None:
+    """A borrowed parent name is normalized the same way every other element name is.
+
+    Without a root there is no parent name to borrow, so the dict falls back to ``key`` and
+    carries the empty original as metadata -- exactly what a scalar in the same position
+    already does.
+    """
+    rendered = dicttoxml.dicttoxml(
+        [{"b": 2}], root=False, item_wrap=item_wrap, list_headers=True
+    )
+
+    assert rendered == expected

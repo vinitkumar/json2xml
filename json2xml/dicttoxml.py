@@ -20,18 +20,97 @@ _XML_ESCAPE_CHARS = frozenset("&\"'<>")
 
 
 class _XMLWriter:
-    """Small UTF-8 byte writer used by the internal streaming serializer."""
+    """Small UTF-8 byte writer used by the internal streaming serializer.
 
-    __slots__ = ("_buffer",)
+    Callers describe structure as they serialize: ``start``/``end`` for
+    container tags, ``element`` for a complete one-line element, and ``write``
+    for character data. Compact output has no layout, so those structural
+    methods are aliases of ``write`` here and the hot path stays at one call
+    per fragment. :class:`_IndentingXMLWriter` gives them meaning.
+    """
 
-    def __init__(self) -> None:
+    __slots__ = ("_buffer", "_max_output_bytes")
+
+    def __init__(self, max_output_bytes: int | None = None) -> None:
         self._buffer = BytesIO()
+        self._max_output_bytes = max_output_bytes
 
     def write(self, value: str) -> None:
-        self._buffer.write(value.encode("utf-8"))
+        encoded = value.encode("utf-8")
+        if (
+            self._max_output_bytes is not None
+            and self._buffer.tell() + len(encoded) > self._max_output_bytes
+        ):
+            raise ValueError("XML output size limit exceeded")
+        self._buffer.write(encoded)
+
+    element = write
+    start = write
+    end = write
 
     def to_bytes(self) -> bytes:
         return self._buffer.getvalue()
+
+
+class _IndentingXMLWriter(_XMLWriter):
+    """Lay out block structure as serialized fragments arrive.
+
+    Indentation is decided from the calls the serializer already makes, so
+    pretty output never requires a second pass over generated markup.
+    """
+
+    __slots__ = ("_indent", "_depth", "_inline")
+
+    def __init__(self, max_output_bytes: int | None, indent: str) -> None:
+        super().__init__(max_output_bytes)
+        self._indent = indent
+        self._depth = 0
+        self._inline = False
+
+    def write(self, value: str) -> None:
+        """Write character data, which keeps the closing tag on this line."""
+        super().write(value)
+        if value:
+            self._inline = True
+
+    def element(self, value: str) -> None:
+        """Write a complete element on its own line."""
+        self._newline()
+        super().write(value)
+
+    def start(self, value: str) -> None:
+        """Write an opening tag and indent up to the matching end."""
+        self._newline()
+        super().write(value)
+        self._depth += 1
+        self._inline = False
+
+    def end(self, value: str) -> None:
+        """Write the closing tag for the most recent start."""
+        self._depth -= 1
+        if not self._inline:
+            self._newline()
+        super().write(value)
+        self._inline = False
+
+    def _newline(self) -> None:
+        if self._buffer.tell():
+            super().write("\n")
+        if self._depth:
+            super().write(self._indent * self._depth)
+        self._inline = False
+
+    def to_bytes(self) -> bytes:
+        if self._buffer.tell():
+            super().write("\n")
+        return super().to_bytes()
+
+
+def _make_writer(max_output_bytes: int | None, indent: str | None) -> _XMLWriter:
+    """Return the writer matching the requested output layout."""
+    if indent is None:
+        return _XMLWriter(max_output_bytes)
+    return _IndentingXMLWriter(max_output_bytes, indent)
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -74,6 +153,7 @@ ELEMENT = Union[
     Sequence[Any],
     datetime.datetime,
     datetime.date,
+    datetime.time,
     None,
     dict[str, Any],
 ]
@@ -87,6 +167,51 @@ def _is_number(value: Any) -> bool:
     if value_type is int or value_type is float or value_type is complex:
         return True
     return isinstance(value, numbers.Number)
+
+
+# Serialization kinds shared by every element writer below. Keeping the type
+# decision in one place means adding or changing a supported type is a single
+# edit instead of four parallel ones.
+_KIND_BOOL = 0
+_KIND_SCALAR = 1
+_KIND_NONE = 2
+_KIND_DICT = 3
+_KIND_SEQUENCE = 4
+_KIND_DATETIME = 5
+_KIND_UNSUPPORTED = 6
+
+_EXACT_KINDS: dict[type, int] = {
+    bool: _KIND_BOOL,
+    str: _KIND_SCALAR,
+    int: _KIND_SCALAR,
+    float: _KIND_SCALAR,
+    complex: _KIND_SCALAR,
+    type(None): _KIND_NONE,
+    dict: _KIND_DICT,
+    list: _KIND_SEQUENCE,
+    tuple: _KIND_SEQUENCE,
+}
+
+
+def _classify(value: Any) -> int:
+    """Return the serialization kind for a value.
+
+    The exact-type dict lookup keeps native JSON values off abstract dispatch,
+    and the isinstance ladder below preserves the established fallback order
+    for string, numeric, date-like, mapping, and sequence subclasses.
+    """
+    kind = _EXACT_KINDS.get(type(value))
+    if kind is not None:
+        return kind
+    if isinstance(value, str) or _is_number(value):
+        return _KIND_SCALAR
+    if hasattr(value, "isoformat"):
+        return _KIND_DATETIME
+    if isinstance(value, dict):
+        return _KIND_DICT
+    if isinstance(value, Sequence):
+        return _KIND_SEQUENCE
+    return _KIND_UNSUPPORTED
 
 
 def get_xml_type(val: Any) -> str:
@@ -136,15 +261,11 @@ def _validate_xml_chars(value: str) -> None:
 
     for character in value:
         codepoint = ord(character)
-        is_forbidden_control = (
-            codepoint < 0x20 and codepoint not in (0x09, 0x0A, 0x0D)
-        )
+        is_forbidden_control = codepoint < 0x20 and codepoint not in (0x09, 0x0A, 0x0D)
         is_surrogate = 0xD800 <= codepoint <= 0xDFFF
         is_bmp_noncharacter = codepoint in (0xFFFE, 0xFFFF)
         if is_forbidden_control or is_surrogate or is_bmp_noncharacter:
-            raise ValueError(
-                f"Character U+{codepoint:04X} is not allowed in XML 1.0"
-            )
+            raise ValueError(f"Character U+{codepoint:04X} is not allowed in XML 1.0")
 
 
 def escape_xml(s: str | int | float | numbers.Number | None) -> str:
@@ -211,6 +332,7 @@ def _is_fast_valid_xml_name(key: str) -> bool:
     return all(char.isalnum() or char in {"-", "_", "."} for char in key[1:])
 
 
+# Keep caller-controlled names bounded so cache churn cannot grow memory indefinitely.
 @lru_cache(maxsize=4096)
 def key_is_valid_xml(key: str) -> bool:
     """
@@ -238,10 +360,13 @@ def key_is_valid_xml(key: str) -> bool:
         return False
 
 
+# Keep caller-controlled names bounded so cache churn cannot grow memory indefinitely.
 @lru_cache(maxsize=4096)
 def key_is_valid_xml_attr(key: str) -> bool:
     """Return True when key can be emitted directly as an XML attribute name."""
     key = str(key)
+    if _is_fast_valid_xml_name(key):
+        return True
     if not key:
         return False
 
@@ -360,25 +485,31 @@ def _append_xpath31(
     tag_name = get_xpath31_tag_name(obj)
 
     if tag_name == "null":
-        output.write(f"<null{namespace_attr}{key_attr}/>")
+        output.element(f"<null{namespace_attr}{key_attr}/>")
     elif tag_name == "boolean":
-        output.write(f"<boolean{namespace_attr}{key_attr}>{str(obj).lower()}</boolean>")
+        output.element(
+            f"<boolean{namespace_attr}{key_attr}>{str(obj).lower()}</boolean>"
+        )
     elif tag_name == "number":
-        output.write(f"<number{namespace_attr}{key_attr}>{obj}</number>")
+        output.element(f"<number{namespace_attr}{key_attr}>{obj}</number>")
     elif tag_name == "string":
-        output.write(f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>")
+        output.element(
+            f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>"
+        )
     elif tag_name == "map":
-        output.write(f"<map{namespace_attr}{key_attr}>")
+        output.start(f"<map{namespace_attr}{key_attr}>")
         for key, val in obj.items():
             _append_xpath31(output, val, key)
-        output.write("</map>")
+        output.end("</map>")
     elif tag_name == "array":
-        output.write(f"<array{namespace_attr}{key_attr}>")
+        output.start(f"<array{namespace_attr}{key_attr}>")
         for item in obj:
             _append_xpath31(output, item)
-        output.write("</array>")
+        output.end("</array>")
     else:
-        output.write(f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>")
+        output.element(
+            f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>"
+        )
 
 
 def convert(
@@ -392,7 +523,12 @@ def convert(
     list_headers: bool = False,
 ) -> str:
     """Routes the elements of an object to the right function to convert them
-    based on their data type"""
+    based on their data type.
+
+    Retained as public API for downstream callers. No code inside this
+    library calls it; conversion goes through the streaming ``_append_*``
+    functions, which this delegates to so behavior cannot diverge.
+    """
     output = _XMLWriter()
     _append_convert(
         output,
@@ -424,8 +560,11 @@ def dict2xml_str(
     parent: str = "",
     list_headers: bool = False,
 ) -> str:
-    """
-    parse dict2xml
+    """Convert a dict into an XML string.
+
+    Retained as public API for downstream callers. No code inside this
+    library calls it; conversion goes through the streaming ``_append_*``
+    functions, which this delegates to so behavior cannot diverge.
     """
     output = _XMLWriter()
     _append_dict2xml_str(
@@ -454,6 +593,12 @@ def list2xml_str(
     item_wrap: bool,
     list_headers: bool = False,
 ) -> str:
+    """Convert a list into an XML string.
+
+    Retained as public API for downstream callers. No code inside this
+    library calls it; conversion goes through the streaming ``_append_*``
+    functions, which this delegates to so behavior cannot diverge.
+    """
     output = _XMLWriter()
     _append_list2xml_str(
         output,
@@ -477,9 +622,14 @@ def convert_dict(
     item_func: Callable[[str], str],
     cdata: bool,
     item_wrap: bool,
-    list_headers: bool = False
+    list_headers: bool = False,
 ) -> str:
-    """Converts a dict into an XML string."""
+    """Converts a dict into an XML string.
+
+    Retained as public API for downstream callers. No code inside this
+    library calls it; conversion goes through the streaming ``_append_*``
+    functions, which this delegates to so behavior cannot diverge.
+    """
     output = _XMLWriter()
     _append_convert_dict(
         output,
@@ -505,7 +655,12 @@ def convert_list(
     item_wrap: bool,
     list_headers: bool = False,
 ) -> str:
-    """Converts a list into an XML string."""
+    """Converts a list into an XML string.
+
+    Retained as public API for downstream callers. No code inside this
+    library calls it; conversion goes through the streaming ``_append_*``
+    functions, which this delegates to so behavior cannot diverge.
+    """
     output = _XMLWriter()
     _append_convert_list(
         output,
@@ -534,21 +689,19 @@ def _append_convert(
 ) -> None:
     """Append converted XML directly into output without building subtree strings."""
     item_name = item_func(parent)
-    obj_type = type(obj)
+    kind = _classify(obj)
 
-    # Exact built-ins stay ahead of ABC/subclass checks on this hot path. The
-    # later isinstance/_is_number branches intentionally preserve compatible
-    # str, numeric, dict, and sequence subclasses without charging native JSON
-    # values for abstract dispatch.
-    if obj_type is bool:
-        output.write(convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata))
-    elif obj_type is str:
-        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
-    elif obj_type is int or obj_type is float or obj_type is complex:
-        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
-    elif obj is None:
-        output.write(convert_none(key=item_name, attr_type=attr_type, cdata=cdata))
-    elif obj_type is dict:
+    if kind == _KIND_SCALAR:
+        output.element(
+            convert_kv(
+                key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata
+            )
+        )
+    elif kind == _KIND_BOOL:
+        output.element(
+            convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata)
+        )
+    elif kind == _KIND_DICT:
         _append_convert_dict(
             output,
             cast("dict[str, Any]", obj),
@@ -560,7 +713,7 @@ def _append_convert(
             item_wrap,
             list_headers=list_headers,
         )
-    elif obj_type is list or obj_type is tuple:
+    elif kind == _KIND_SEQUENCE:
         _append_convert_list(
             output,
             obj,
@@ -572,10 +725,10 @@ def _append_convert(
             item_wrap,
             list_headers=list_headers,
         )
-    elif isinstance(obj, str) or _is_number(obj):
-        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
-    elif hasattr(obj, "isoformat") and isinstance(obj, (datetime.datetime, datetime.date)):
-        output.write(
+    elif kind == _KIND_NONE:
+        output.element(convert_none(key=item_name, attr_type=attr_type, cdata=cdata))
+    elif kind == _KIND_DATETIME:
+        output.element(
             convert_kv(
                 key=item_name,
                 val=obj.isoformat(),
@@ -583,30 +736,6 @@ def _append_convert(
                 attr={},
                 cdata=cdata,
             )
-        )
-    elif isinstance(obj, dict):
-        _append_convert_dict(
-            output,
-            cast("dict[str, Any]", obj),
-            ids,
-            parent,
-            attr_type,
-            item_func,
-            cdata,
-            item_wrap,
-            list_headers=list_headers,
-        )
-    elif isinstance(obj, Sequence):
-        _append_convert_list(
-            output,
-            obj,
-            ids,
-            parent,
-            attr_type,
-            item_func,
-            cdata,
-            item_wrap,
-            list_headers=list_headers,
         )
     else:
         raise TypeError(f"Unsupported data type: {obj} ({type(obj).__name__})")
@@ -635,18 +764,20 @@ def _append_dict2xml_str(
     if has_custom_attrs:
         raw_attrs = item["@attrs"]
         val_attr = raw_attrs if isinstance(raw_attrs, dict) else dict(raw_attrs)
-        rawitem = item["@val"] if "@val" in item else {
-            key: value for key, value in item.items() if key != "@attrs"
-        }
+        rawitem = (
+            item["@val"]
+            if "@val" in item
+            else {key: value for key, value in item.items() if key != "@attrs"}
+        )
     else:
         val_attr = attr
         rawitem = item.get("@val", item)
 
     if parentIsList and list_headers:
         if len(val_attr) > 0 and not item_wrap:
-            output.write(f"<{parent}{make_attrstring(val_attr)}>")
+            output.start(f"<{parent}{make_attrstring(val_attr)}>")
         else:
-            output.write(f"<{parent}>")
+            output.start(f"<{parent}>")
         _append_rawitem(
             output,
             rawitem,
@@ -658,7 +789,7 @@ def _append_dict2xml_str(
             item_name,
             list_headers,
         )
-        output.write(f"</{parent}>")
+        output.end(f"</{parent}>")
     elif item.get("@flat", False) or (parentIsList and not item_wrap):
         _append_rawitem(
             output,
@@ -672,7 +803,7 @@ def _append_dict2xml_str(
             list_headers,
         )
     else:
-        output.write(f"<{item_name}{make_attrstring(val_attr)}>")
+        output.start(f"<{item_name}{make_attrstring(val_attr)}>")
         _append_rawitem(
             output,
             rawitem,
@@ -684,7 +815,7 @@ def _append_dict2xml_str(
             item_name,
             list_headers,
         )
-        output.write(f"</{item_name}>")
+        output.end(f"</{item_name}>")
 
 
 def _append_rawitem(
@@ -698,28 +829,16 @@ def _append_rawitem(
     item_name: str,
     list_headers: bool,
 ) -> None:
-    if rawitem is None:
+    kind = _classify(rawitem)
+    if kind == _KIND_NONE:
         return
-    rawitem_type = type(rawitem)
-    if rawitem_type is bool:
+    if kind == _KIND_SCALAR:
+        output.write(escape_xml(str(rawitem)))
+    elif kind == _KIND_BOOL:
         output.write("true" if rawitem else "false")
-    elif rawitem_type is str or rawitem_type is int or rawitem_type is float or rawitem_type is complex:
-        output.write(escape_xml(str(rawitem)))
-    elif rawitem_type is dict or rawitem_type is list or rawitem_type is tuple:
-        _append_convert(
-            output,
-            rawitem,
-            ids,
-            attr_type,
-            item_func,
-            cdata,
-            item_wrap,
-            item_name,
-            list_headers=list_headers,
-        )
-    elif isinstance(rawitem, str) or _is_number(rawitem):
-        output.write(escape_xml(str(rawitem)))
     else:
+        # Containers, date-like values, and unsupported objects all round-trip
+        # through the element writer, which raises for anything it cannot map.
         _append_convert(
             output,
             rawitem,
@@ -753,7 +872,11 @@ def _append_list2xml_str(
         item_name = item_name[0:-5]
         flat = True
 
-    if flat or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap) or list_headers:
+    if (
+        flat
+        or (len(item) > 0 and is_primitive_type(item[0]) and not item_wrap)
+        or list_headers
+    ):
         _append_convert_list(
             output,
             item,
@@ -767,7 +890,7 @@ def _append_list2xml_str(
         )
         return
 
-    output.write(f"<{item_name}{make_attrstring(attr)}>")
+    output.start(f"<{item_name}{make_attrstring(attr)}>")
     _append_convert_list(
         output,
         item,
@@ -779,7 +902,7 @@ def _append_list2xml_str(
         item_wrap,
         list_headers=list_headers,
     )
-    output.write(f"</{item_name}>")
+    output.end(f"</{item_name}>")
 
 
 def _append_convert_dict(
@@ -795,22 +918,22 @@ def _append_convert_dict(
 ) -> None:
     """Append a dict as XML without allocating a joined child subtree."""
     for key, val in obj.items():
-        val_type = type(val)
+        kind = _classify(val)
         attr = {} if not ids else {"id": f"{get_unique_id(parent)}"}
         key_is_flat = isinstance(key, str) and key.endswith("@flat")
         xml_key = key[:-5] if key_is_flat else key
 
         key, attr = make_valid_xml_name(xml_key, attr)
 
-        if val_type is bool:
-            output.write(convert_bool_valid_name(key, val, attr_type, attr))
-        elif val_type is str or val_type is int or val_type is float or val_type is complex:
-            output.write(
+        if kind == _KIND_SCALAR:
+            output.element(
                 convert_kv_valid_name(
                     key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
                 )
             )
-        elif val_type is dict:
+        elif kind == _KIND_BOOL:
+            output.element(convert_bool_valid_name(key, val, attr_type, attr))
+        elif kind == _KIND_DICT:
             _append_dict2xml_str(
                 output,
                 attr_type,
@@ -823,7 +946,7 @@ def _append_convert_dict(
                 False,
                 list_headers=list_headers,
             )
-        elif val_type is list or val_type is tuple:
+        elif kind == _KIND_SEQUENCE:
             _append_list2xml_str(
                 output,
                 attr_type=attr_type,
@@ -835,14 +958,10 @@ def _append_convert_dict(
                 item_wrap=item_wrap,
                 list_headers=list_headers,
             )
-        elif isinstance(val, str) or _is_number(val):
-            output.write(
-                convert_kv_valid_name(
-                    key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
-                )
-            )
-        elif hasattr(val, "isoformat"):
-            output.write(
+        elif kind == _KIND_NONE:
+            output.element(convert_none_valid_name(key, attr_type, attr))
+        elif kind == _KIND_DATETIME:
+            output.element(
                 convert_kv_valid_name(
                     key=key,
                     val=val.isoformat(),
@@ -851,33 +970,6 @@ def _append_convert_dict(
                     cdata=cdata,
                 )
             )
-        elif isinstance(val, dict):
-            _append_dict2xml_str(
-                output,
-                attr_type,
-                attr,
-                val,
-                item_func,
-                cdata,
-                key,
-                item_wrap,
-                False,
-                list_headers=list_headers,
-            )
-        elif isinstance(val, Sequence):
-            _append_list2xml_str(
-                output,
-                attr_type=attr_type,
-                attr=attr,
-                item=val,
-                item_func=item_func,
-                cdata=cdata,
-                item_name=f"{key}@flat" if key_is_flat else key,
-                item_wrap=item_wrap,
-                list_headers=list_headers,
-            )
-        elif not val:
-            output.write(convert_none_valid_name(key, attr_type, attr))
         else:
             raise TypeError(f"Unsupported data type: {val} ({type(val).__name__})")
 
@@ -900,24 +992,21 @@ def _append_convert_list(
     item_name, item_name_attr = make_valid_xml_name(item_name, {})
     scalar_key = item_name if item_wrap else parent
     scalar_key, scalar_key_attr = make_valid_xml_name(scalar_key, {})
+    # Dict members under list_headers borrow the parent as their tag. A rootless document
+    # has no parent name, so normalize it like any other element name instead of emitting
+    # the empty tag "<>".
+    header_key, header_key_attr = make_valid_xml_name(parent, {})
     this_id = get_unique_id(parent) if ids else None
 
     for i, item in enumerate(items):
-        item_type = type(item)
-        base_attr: dict[str, Any] | None = None
-        if ids:
-            base_attr = {"id": f"{this_id}_{i + 1}"}
+        kind = _classify(item)
+        attr: dict[str, Any] = {"id": f"{this_id}_{i + 1}"} if ids else {}
 
-        if item_type is bool:
-            attr = dict(base_attr) if base_attr else {}
-            if item_name_attr:
-                attr.update(item_name_attr)
-            output.write(convert_bool_valid_name(item_name, item, attr_type, attr))
-        elif item_type is str or item_type is int or item_type is float or item_type is complex:
-            attr = dict(base_attr) if base_attr else {}
+        if kind == _KIND_SCALAR:
+            # Scalars are named for the parent when items are not wrapped.
             if scalar_key_attr:
                 attr.update(scalar_key_attr)
-            output.write(
+            output.element(
                 convert_kv_valid_name(
                     key=scalar_key,
                     val=item,
@@ -926,8 +1015,13 @@ def _append_convert_list(
                     cdata=cdata,
                 )
             )
-        elif item_type is dict:
-            attr = dict(base_attr) if base_attr else {}
+        elif kind == _KIND_BOOL:
+            if item_name_attr:
+                attr.update(item_name_attr)
+            output.element(convert_bool_valid_name(item_name, item, attr_type, attr))
+        elif kind == _KIND_DICT:
+            if list_headers and header_key_attr:
+                attr.update(header_key_attr)
             _append_dict2xml_str(
                 output,
                 attr_type=attr_type,
@@ -938,11 +1032,10 @@ def _append_convert_list(
                 item_name=item_name,
                 item_wrap=item_wrap,
                 parentIsList=True,
-                parent=parent,
+                parent=header_key,
                 list_headers=list_headers,
             )
-        elif item_type is list or item_type is tuple:
-            attr = dict(base_attr) if base_attr else {}
+        elif kind == _KIND_SEQUENCE:
             _append_list2xml_str(
                 output,
                 attr_type=attr_type,
@@ -954,24 +1047,14 @@ def _append_convert_list(
                 item_wrap=item_wrap,
                 list_headers=list_headers,
             )
-        elif isinstance(item, str) or _is_number(item):
-            attr = dict(base_attr) if base_attr else {}
-            if scalar_key_attr:
-                attr.update(scalar_key_attr)
-            output.write(
-                convert_kv_valid_name(
-                    key=scalar_key,
-                    val=item,
-                    attr_type=attr_type,
-                    attr=attr,
-                    cdata=cdata,
-                )
-            )
-        elif hasattr(item, "isoformat"):
-            attr = dict(base_attr) if base_attr else {}
+        elif kind == _KIND_NONE:
             if item_name_attr:
                 attr.update(item_name_attr)
-            output.write(
+            output.element(convert_none_valid_name(item_name, attr_type, attr))
+        elif kind == _KIND_DATETIME:
+            if item_name_attr:
+                attr.update(item_name_attr)
+            output.element(
                 convert_kv_valid_name(
                     key=item_name,
                     val=item.isoformat(),
@@ -980,39 +1063,6 @@ def _append_convert_list(
                     cdata=cdata,
                 )
             )
-        elif isinstance(item, dict):
-            attr = dict(base_attr) if base_attr else {}
-            _append_dict2xml_str(
-                output,
-                attr_type=attr_type,
-                attr=attr,
-                item=item,
-                item_func=item_func,
-                cdata=cdata,
-                item_name=item_name,
-                item_wrap=item_wrap,
-                parentIsList=True,
-                parent=parent,
-                list_headers=list_headers,
-            )
-        elif isinstance(item, Sequence):
-            attr = dict(base_attr) if base_attr else {}
-            _append_list2xml_str(
-                output,
-                attr_type=attr_type,
-                attr=attr,
-                item=item,
-                item_func=item_func,
-                cdata=cdata,
-                item_name=item_name,
-                item_wrap=item_wrap,
-                list_headers=list_headers,
-            )
-        elif item is None:
-            attr = dict(base_attr) if base_attr else {}
-            if item_name_attr:
-                attr.update(item_name_attr)
-            output.write(convert_none_valid_name(item_name, attr_type, attr))
         else:
             raise TypeError(f"Unsupported data type: {item} ({type(item).__name__})")
 
@@ -1025,18 +1075,21 @@ def convert_kv(
     cdata: bool = False,
 ) -> str:
     """Converts a number, string, or datetime into an XML element"""
-    if attr is None:
-        attr = {}
+    attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
 
     # Convert datetime to isoformat string
-    if hasattr(val, "isoformat") and isinstance(val, (datetime.datetime, datetime.date)):
+    if hasattr(val, "isoformat") and isinstance(
+        val, (datetime.datetime, datetime.date)
+    ):
         val = val.isoformat()
 
     if attr_type:
         attr["type"] = get_xml_type(val)
     attr_string = make_attrstring(attr)
-    return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    return (
+        f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    )
 
 
 def convert_kv_valid_name(
@@ -1047,19 +1100,30 @@ def convert_kv_valid_name(
     cdata: bool = False,
 ) -> str:
     """Converts a scalar into an XML element when the caller already validated the key."""
-    if hasattr(val, "isoformat") and isinstance(val, (datetime.datetime, datetime.date)):
+    if hasattr(val, "isoformat") and isinstance(
+        val, (datetime.datetime, datetime.date)
+    ):
         val = val.isoformat()
 
-    attr_string = make_typed_attrstring(attr, get_xml_type(val)) if attr_type else make_attrstring(attr)
-    return f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    attr_string = (
+        make_typed_attrstring(attr, get_xml_type(val))
+        if attr_type
+        else make_attrstring(attr)
+    )
+    return (
+        f"<{key}{attr_string}>{wrap_cdata(val) if cdata else escape_xml(val)}</{key}>"
+    )
 
 
 def convert_bool(
-    key: str, val: bool, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
+    key: str,
+    val: bool,
+    attr_type: bool,
+    attr: dict[str, Any] | None = None,
+    cdata: bool = False,
 ) -> str:
     """Converts a boolean into an XML element"""
-    if attr is None:
-        attr = {}
+    attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -1075,7 +1139,9 @@ def convert_bool_valid_name(
     attr: dict[str, Any],
 ) -> str:
     """Converts a boolean when the caller already validated the key."""
-    attr_string = make_typed_attrstring(attr, "bool") if attr_type else make_attrstring(attr)
+    attr_string = (
+        make_typed_attrstring(attr, "bool") if attr_type else make_attrstring(attr)
+    )
     return f"<{key}{attr_string}>{'true' if val else 'false'}</{key}>"
 
 
@@ -1083,8 +1149,7 @@ def convert_none(
     key: str, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
 ) -> str:
     """Converts a null value into an XML element"""
-    if attr is None:
-        attr = {}
+    attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -1093,11 +1158,11 @@ def convert_none(
     return f"<{key}{attr_string}></{key}>"
 
 
-def convert_none_valid_name(
-    key: str, attr_type: bool, attr: dict[str, Any]
-) -> str:
+def convert_none_valid_name(key: str, attr_type: bool, attr: dict[str, Any]) -> str:
     """Converts a null value when the caller already validated the key."""
-    attr_string = make_typed_attrstring(attr, "null") if attr_type else make_attrstring(attr)
+    attr_string = (
+        make_typed_attrstring(attr, "null") if attr_type else make_attrstring(attr)
+    )
     return f"<{key}{attr_string}></{key}>"
 
 
@@ -1116,6 +1181,8 @@ class SerializerConfig:
     xml_namespaces: dict[str, Any] | None
     list_headers: bool
     xpath_format: bool
+    max_output_bytes: int | None = None
+    indent: str | None = None
 
 
 class _XPathDocumentRenderer:
@@ -1125,15 +1192,15 @@ class _XPathDocumentRenderer:
         self._config = config
 
     def render(self) -> bytes:
-        output = _XMLWriter()
-        output.write('<?xml version="1.0" encoding="UTF-8" ?>')
+        output = _make_writer(self._config.max_output_bytes, self._config.indent)
+        output.element('<?xml version="1.0" encoding="UTF-8" ?>')
         tag_name = get_xpath31_tag_name(self._config.obj)
         if tag_name in {"map", "array"}:
             _append_xpath31(output, self._config.obj, namespace=True)
         else:
-            output.write(f'<map xmlns="{XPATH_FUNCTIONS_NS}">')
+            output.start(f'<map xmlns="{XPATH_FUNCTIONS_NS}">')
             _append_xpath31(output, self._config.obj)
-            output.write("</map>")
+            output.end("</map>")
         return output.to_bytes()
 
 
@@ -1189,7 +1256,7 @@ class _StandardDocumentRenderer:
         self._config = config
 
     def render(self) -> bytes:
-        output = _XMLWriter()
+        output = _make_writer(self._config.max_output_bytes, self._config.indent)
         if self._config.root:
             self._render_with_root(output)
         else:
@@ -1199,8 +1266,8 @@ class _StandardDocumentRenderer:
     def _render_with_root(self, output: _XMLWriter) -> None:
         custom_root, root_attr = make_valid_xml_name(self._config.custom_root, {})
         namespace_str = _NamespaceFormatter.format(self._config.xml_namespaces)
-        output.write('<?xml version="1.0" encoding="UTF-8" ?>')
-        output.write(f"<{custom_root}{make_attrstring(root_attr)}{namespace_str}>")
+        output.element('<?xml version="1.0" encoding="UTF-8" ?>')
+        output.start(f"<{custom_root}{make_attrstring(root_attr)}{namespace_str}>")
         _append_convert(
             output,
             self._config.obj,
@@ -1212,7 +1279,7 @@ class _StandardDocumentRenderer:
             parent=custom_root,
             list_headers=self._config.list_headers,
         )
-        output.write(f"</{custom_root}>")
+        output.end(f"</{custom_root}>")
 
     def _render_fragment(self, output: _XMLWriter) -> None:
         _append_convert(
@@ -1253,6 +1320,8 @@ def dicttoxml(
     xml_namespaces: dict[str, Any] | None = None,
     list_headers: bool = False,
     xpath_format: bool = False,
+    max_output_bytes: int | None = None,
+    indent: str | None = None,
 ) -> bytes:
     """
     Converts a python object into XML.
@@ -1348,6 +1417,14 @@ def dicttoxml(
         Uses type-based element names (map, array, string, number, boolean, null)
         with key attributes and the http://www.w3.org/2005/xpath-functions namespace.
 
+    :param max_output_bytes:
+        Optional exact UTF-8 byte limit enforced while serializing.
+
+    :param indent:
+        Optional indentation unit, such as two spaces. When given, the
+        serializer emits indented output directly instead of returning
+        compact markup that would have to be reformatted afterwards.
+
         Example:
 
         .. code-block:: python
@@ -1404,5 +1481,7 @@ def dicttoxml(
         xml_namespaces=xml_namespaces,
         list_headers=list_headers,
         xpath_format=xpath_format,
+        max_output_bytes=max_output_bytes,
+        indent=indent,
     )
     return _SerializerEngine(config).render()

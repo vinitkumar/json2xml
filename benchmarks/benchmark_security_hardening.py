@@ -240,12 +240,12 @@ def _print_report(report: dict[str, Any]) -> None:
     print(f"Executable: {report['environment']['executable']}")
     print(f"Platform: {report['environment']['platform']}")
     print(
-        "Revisions: "
-        f"{report['revisions']['before']} (before) -> "
-        f"{report['revisions']['after']} (after)"
+        f"Revisions: {report['revisions']['before']} (before) -> {report['revisions']['after']} (after)"
     )
     print()
-    print("| Workload | Mode | Before median [p25, p75] | After median [p25, p75] | Change |")
+    print(
+        "| Workload | Mode | Before median [p25, p75] | After median [p25, p75] | Change |"
+    )
     print("|---|---|---:|---:|---:|")
     for cell in report["cells"]:
         before = cell["before"]
@@ -259,7 +259,9 @@ def _print_report(report: dict[str, Any]) -> None:
             f"{cell['change_percent']:+.1f}% |"
         )
     print()
-    print("| Workload | Mode | Before type/bytes/SHA-256 | After type/bytes/SHA-256 | Identical |")
+    print(
+        "| Workload | Mode | Before type/bytes/SHA-256 | After type/bytes/SHA-256 | Identical |"
+    )
     print("|---|---|---|---|---:|")
     for cell in report["cells"]:
         before = cell["before"]["output"]
@@ -312,9 +314,7 @@ def run_benchmark(before_revision: str, after_revision: str) -> dict[str, Any]:
                 added.append(sources[label])
 
             cells = [
-                _benchmark_cell(
-                    script, repo, sources, workload, records, loops, mode
-                )
+                _benchmark_cell(script, repo, sources, workload, records, loops, mode)
                 for workload, records, loops in CASES
                 for mode in MODES
             ]
@@ -345,8 +345,7 @@ def run_benchmark(before_revision: str, after_revision: str) -> dict[str, Any]:
             "workers_per_revision": WORKERS_PER_REVISION,
             "warmups_per_worker": WARMUPS_PER_WORKER,
             "samples_per_worker": SAMPLES_PER_WORKER,
-            "samples_per_revision_and_cell": WORKERS_PER_REVISION
-            * SAMPLES_PER_WORKER,
+            "samples_per_revision_and_cell": WORKERS_PER_REVISION * SAMPLES_PER_WORKER,
         },
         "cells": cells,
     }
@@ -369,7 +368,12 @@ def _parser() -> argparse.ArgumentParser:
 def main() -> None:
     args = _parser().parse_args()
     if args.worker:
-        if args.source is None or args.mode is None or args.records is None or args.loops is None:
+        if (
+            args.source is None
+            or args.mode is None
+            or args.records is None
+            or args.loops is None
+        ):
             raise SystemExit("worker mode requires source, mode, records, and loops")
         _worker(args.source, args.mode, args.records, args.loops)
         return

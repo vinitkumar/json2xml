@@ -4,6 +4,7 @@ Tests for the Rust (PyO3) dicttoxml implementation.
 These tests verify that the Rust implementation produces correct output
 and matches the Python implementation for supported features.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -12,14 +13,26 @@ import pytest
 
 # Check if Rust extension is available
 try:
-    from json2xml_rs import dicttoxml as rust_dicttoxml  # type: ignore[import-not-found]
-    from json2xml_rs import escape_xml_py, wrap_cdata_py  # type: ignore[import-not-found]
+    from json2xml_rs import (
+        dicttoxml as rust_dicttoxml,  # type: ignore[import-not-found]
+    )
+    from json2xml_rs import (  # type: ignore[import-not-found]
+        escape_xml_py,
+        wrap_cdata_py,
+    )
+
     RUST_AVAILABLE = True
 except ImportError:
     RUST_AVAILABLE = False
 
 import json2xml.dicttoxml_fast as fast_module
 from json2xml import dicttoxml as py_dicttoxml
+from json2xml.backend_selector import ConversionRequest, rust_renders_identically
+from json2xml.dicttoxml_fast import (
+    _RustBackendAdapter,
+    get_backend,
+    is_rust_available,
+)
 from json2xml.dicttoxml_fast import (
     dicttoxml as fast_dicttoxml,
 )
@@ -27,15 +40,13 @@ from json2xml.dicttoxml_fast import (
     escape_xml as fast_escape_xml,
 )
 from json2xml.dicttoxml_fast import (
-    get_backend,
-    is_rust_available,
-)
-from json2xml.dicttoxml_fast import (
     wrap_cdata as fast_wrap_cdata,
 )
 
 # Skip all tests if Rust is not available
-pytestmark = pytest.mark.skipif(not RUST_AVAILABLE, reason="Rust extension not installed")
+pytestmark = pytest.mark.skipif(
+    not RUST_AVAILABLE, reason="Rust extension not installed"
+)
 
 
 class TestRustEscapeXml:
@@ -176,15 +187,7 @@ class TestRustDicttoxml:
         assert b">Bob</name>" in result
 
     def test_deeply_nested(self):
-        data = {
-            "level1": {
-                "level2": {
-                    "level3": {
-                        "value": "deep"
-                    }
-                }
-            }
-        }
+        data = {"level1": {"level2": {"level3": {"value": "deep"}}}}
         result = rust_dicttoxml(data)
         assert b"<level1" in result
         assert b"<level2" in result
@@ -199,7 +202,7 @@ class TestRustDicttoxml:
             "boolean": True,
             "null": None,
             "list": [1, 2],
-            "dict": {"nested": "value"}
+            "dict": {"nested": "value"},
         }
         result = rust_dicttoxml(data)
         assert b">hello</string>" in result
@@ -233,7 +236,7 @@ class TestRustDicttoxmlOptions:
     def test_no_root(self):
         data = {"name": "John"}
         result = rust_dicttoxml(data, root=False)
-        assert b'<?xml version' not in result
+        assert b"<?xml version" not in result
         assert b"<root>" not in result
         assert b"<name" in result
 
@@ -266,8 +269,8 @@ class TestRustDicttoxmlOptions:
     def test_list_headers(self):
         data = {"colors": ["red", "green"]}
         result = rust_dicttoxml(data, list_headers=True)
-        assert b"<item type=\"str\">red</item>" in result
-        assert b"<item type=\"str\">green</item>" in result
+        assert b'<item type="str">red</item>' in result
+        assert b'<item type="str">green</item>' in result
 
 
 class TestRustVsPythonCompatibility:
@@ -333,12 +336,9 @@ class TestRustVsPythonCompatibility:
         data = {
             "users": [
                 {"name": "Alice", "scores": [90, 85, 88]},
-                {"name": "Bob", "scores": [75, 80, 82]}
+                {"name": "Bob", "scores": [75, 80, 82]},
             ],
-            "metadata": {
-                "count": 2,
-                "active": True
-            }
+            "metadata": {"count": 2, "active": True},
         }
         rust, python = self.compare_outputs(data)
         assert rust == python
@@ -384,16 +384,67 @@ class TestRustVsPythonCompatibility:
             {"a<b": "value"},
             {'quote"key': "value"},
             {"apost'key": "value"},
-            {"ns1:node1": "value"},
-            {"名前": "太郎"},
             {"-bad": "value"},
-            {"": "value"},
         ],
     )
     def test_xml_name_normalization_matches(self, data: dict[str, str]):
         """Test Rust and Python agree on supported XML name normalization cases."""
         rust, python = self.compare_outputs(data, root=False, attr_type=False)
         assert rust == python
+
+    # @lat: [[tests#Conversion behavior#Parser-backed names stay on Python]]
+    @pytest.mark.parametrize(
+        "data",
+        [
+            {"ns1:node1": "value"},
+            {"名前": "太郎"},
+            {"": "value"},
+            {"trailing ": "value"},
+        ],
+    )
+    def test_parser_backed_names_are_not_routed_to_rust(
+        self, data: dict[str, str]
+    ) -> None:
+        """Names whose element name Python derives from a parser stay on Python.
+
+        The native backend reproduces only the ASCII fast path, so the selector must keep
+        these payloads on the Python serializer rather than let the two disagree.
+        """
+        assert not rust_renders_identically(data)
+
+        request = _request(data, root=False, attr_type=False)
+        assert not _RustBackendAdapter().can_handle(request)
+        assert fast_dicttoxml(
+            data, root=False, attr_type=False
+        ) == py_dicttoxml.dicttoxml(data, root=False, attr_type=False)
+
+
+def _request(
+    obj: object,
+    *,
+    root: bool = True,
+    custom_root: str = "root",
+    attr_type: bool = True,
+    item_wrap: bool = True,
+    cdata: bool = False,
+    list_headers: bool = False,
+) -> ConversionRequest:
+    """Build a ConversionRequest with the defaults the public wrapper would use."""
+    return ConversionRequest(
+        obj=obj,
+        root=root,
+        custom_root=custom_root,
+        ids=None,
+        attr_type=attr_type,
+        item_wrap=item_wrap,
+        item_func=None,
+        cdata=cdata,
+        xml_namespaces=None,
+        list_headers=list_headers,
+        xpath_format=False,
+        max_output_bytes=None,
+        indent=None,
+    )
 
 
 class TestFastDicttoxmlWrapper:
@@ -588,7 +639,7 @@ class TestFastDicttoxmlHelpers:
         data = {
             "outer": [
                 {"normal": "value"},
-                {"nested": {"@attrs": {"class": "test"}, "@val": "content"}}
+                {"nested": {"@attrs": {"class": "test"}, "@val": "content"}},
             ]
         }
         result = fast_dicttoxml(data)
@@ -610,7 +661,7 @@ class TestFastDicttoxmlPythonFallback:
         from unittest.mock import patch
 
         # Temporarily mock Rust availability to False.
-        with patch.object(fast_module, '_use_rust', False):
+        with patch.object(fast_module, "_use_rust", False):
             result = fast_module.escape_xml("Hello <World>")
             assert "&lt;" in result
             assert "&gt;" in result
@@ -620,7 +671,7 @@ class TestFastDicttoxmlPythonFallback:
         from unittest.mock import patch
 
         # Temporarily mock Rust availability to False.
-        with patch.object(fast_module, '_use_rust', False):
+        with patch.object(fast_module, "_use_rust", False):
             result = fast_module.wrap_cdata("Hello World")
             assert result == "<![CDATA[Hello World]]>"
 
@@ -628,7 +679,7 @@ class TestFastDicttoxmlPythonFallback:
         """Test escape_xml falls back when rust_escape_xml is None."""
         from unittest.mock import patch
 
-        with patch.object(fast_module, 'rust_escape_xml', None):
+        with patch.object(fast_module, "rust_escape_xml", None):
             result = fast_module.escape_xml("Test & Value")
             assert "&amp;" in result
 
@@ -636,6 +687,6 @@ class TestFastDicttoxmlPythonFallback:
         """Test wrap_cdata falls back when rust_wrap_cdata is None."""
         from unittest.mock import patch
 
-        with patch.object(fast_module, 'rust_wrap_cdata', None):
+        with patch.object(fast_module, "rust_wrap_cdata", None):
             result = fast_module.wrap_cdata("Test Content")
             assert result == "<![CDATA[Test Content]]>"

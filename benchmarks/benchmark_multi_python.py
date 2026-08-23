@@ -10,6 +10,7 @@ Compares:
 
 Each Python version gets its own virtual environment with json2xml installed.
 """
+
 from __future__ import annotations
 
 import json
@@ -26,11 +27,14 @@ from pathlib import Path
 from benchmark_utils import Colors, colorize, format_time, random_string
 
 # Configuration
-BASE_DIR = Path(__file__).resolve().parent
-VENVS_DIR = BASE_DIR / ".benchmark_venvs"
+BENCHMARKS_DIR = Path(__file__).resolve().parent
+BASE_DIR = BENCHMARKS_DIR.parent
+VENVS_DIR = BENCHMARKS_DIR / ".benchmark_venvs"
 GO_CLI = Path(os.environ.get("JSON2XML_GO_CLI", "json2xml-go"))
 UV_PYTHON_DIR = Path(
-    os.environ.get("JSON2XML_UV_PYTHON_DIR", str(Path.home() / ".local/share/uv/python"))
+    os.environ.get(
+        "JSON2XML_UV_PYTHON_DIR", str(Path.home() / ".local/share/uv/python")
+    )
 )
 
 
@@ -83,11 +87,7 @@ def generate_test_json(num_records: int = 1000) -> str:
                 "created": "2024-01-15T10:30:00Z",
                 "updated": "2024-01-15T12:45:00Z",
                 "version": random.randint(1, 100),
-                "nested": {
-                    "level1": {
-                        "level2": {"value": random_string(10)}
-                    }
-                },
+                "nested": {"level1": {"level2": {"value": random_string(10)}}},
             },
         }
         data.append(item)
@@ -97,6 +97,7 @@ def generate_test_json(num_records: int = 1000) -> str:
 @dataclass
 class BenchmarkResult:
     """Holds benchmark timing results."""
+
     name: str
     avg_ms: float
     min_ms: float
@@ -121,7 +122,9 @@ def setup_venv(python_path: str, venv_path: Path) -> bool:
             text=True,
         )
         if result.returncode != 0:
-            print(f"  {colorize('✗', Colors.RED)} Failed to create venv: {result.stderr}")
+            print(
+                f"  {colorize('✗', Colors.RED)} Failed to create venv: {result.stderr}"
+            )
             return False
 
         # Install json2xml in the venv
@@ -134,7 +137,9 @@ def setup_venv(python_path: str, venv_path: Path) -> bool:
             cwd=str(BASE_DIR),
         )
         if result.returncode != 0:
-            print(f"  {colorize('✗', Colors.RED)} Failed to install json2xml: {result.stderr}")
+            print(
+                f"  {colorize('✗', Colors.RED)} Failed to install json2xml: {result.stderr}"
+            )
             return False
 
     return True
@@ -207,7 +212,9 @@ def print_header(title: str) -> None:
     print(colorize("=" * 70, Colors.BLUE))
 
 
-def print_table_row(name: str, result: BenchmarkResult, baseline_ms: float | None = None) -> None:
+def print_table_row(
+    name: str, result: BenchmarkResult, baseline_ms: float | None = None
+) -> None:
     """Print a formatted table row."""
     if not result.success:
         print(f"  {name:<35} {colorize('FAILED', Colors.RED)}: {result.error}")
@@ -219,10 +226,12 @@ def print_table_row(name: str, result: BenchmarkResult, baseline_ms: float | Non
         if speedup > 1:
             speedup_str = colorize(f" ({speedup:.1f}x faster)", Colors.GREEN)
         else:
-            speedup_str = f" ({1/speedup:.1f}x slower)"
+            speedup_str = f" ({1 / speedup:.1f}x slower)"
 
-    print(f"  {name:<35} {format_time(result.avg_ms):>12} "
-          f"(min: {format_time(result.min_ms)}, max: {format_time(result.max_ms)}){speedup_str}")
+    print(
+        f"  {name:<35} {format_time(result.avg_ms):>12} "
+        f"(min: {format_time(result.min_ms)}, max: {format_time(result.max_ms)}){speedup_str}"
+    )
 
 
 def main() -> int:
@@ -247,11 +256,13 @@ def main() -> int:
         print(f"  {name}:")
         if setup_venv(python_path, venv_path):
             print(f"    {colorize('✓', Colors.GREEN)} Ready")
-            active_pythons.append({
-                **py_config,
-                "venv_path": venv_path,
-                "cli_python": str(venv_path / "bin" / "python"),
-            })
+            active_pythons.append(
+                {
+                    **py_config,
+                    "venv_path": venv_path,
+                    "cli_python": str(venv_path / "bin" / "python"),
+                }
+            )
         else:
             print(f"    {colorize('✗', Colors.RED)} Skipped")
         print()
@@ -292,7 +303,9 @@ def main() -> int:
         print(f"  Small:      {len(small_json):,} bytes")
         print(f"  Medium:     {medium_json_file.stat().st_size:,} bytes")
         print(f"  Large:      {large_json_file.stat().st_size:,} bytes (1000 records)")
-        print(f"  Very Large: {very_large_json_file.stat().st_size:,} bytes (5000 records)")
+        print(
+            f"  Very Large: {very_large_json_file.stat().st_size:,} bytes (5000 records)"
+        )
         print()
 
         iterations = 10
@@ -334,7 +347,9 @@ def main() -> int:
             # Find baseline (first successful Python result)
             baseline_ms = None
             for py_config in active_pythons:
-                if results.get(py_config["name"], BenchmarkResult("", 0, 0, 0, False)).success:
+                if results.get(
+                    py_config["name"], BenchmarkResult("", 0, 0, 0, False)
+                ).success:
                     baseline_ms = results[py_config["name"]].avg_ms
                     break
 
@@ -367,7 +382,9 @@ def main() -> int:
         print(f"  {'-' * 35} {'-' * 12} {'-' * 20}")
 
         baseline_name = "CPython 3.14.6"
-        baseline_avg = sum(avg_times.get(baseline_name, [0])) / len(avg_times.get(baseline_name, [1]))
+        baseline_avg = sum(avg_times.get(baseline_name, [0])) / len(
+            avg_times.get(baseline_name, [1])
+        )
 
         sorted_impls = sorted(avg_times.items(), key=lambda x: sum(x[1]) / len(x[1]))
 
@@ -378,7 +395,7 @@ def main() -> int:
                 if speedup > 1:
                     vs_baseline = colorize(f"{speedup:.2f}x faster", Colors.GREEN)
                 else:
-                    vs_baseline = f"{1/speedup:.2f}x slower"
+                    vs_baseline = f"{1 / speedup:.2f}x slower"
             else:
                 vs_baseline = "baseline"
 

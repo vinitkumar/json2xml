@@ -40,6 +40,7 @@ print(xml_bytes.decode())
 
 # Or use the hybrid module that auto-selects the fastest backend
 from json2xml import dicttoxml_fast
+
 xml_bytes = dicttoxml_fast.dicttoxml(data)
 ```
 
@@ -109,5 +110,5 @@ python -m pytest ../tests/
 
 ```bash
 cd ..
-python benchmark_rust.py
+python benchmarks/benchmark_rust.py
 ```

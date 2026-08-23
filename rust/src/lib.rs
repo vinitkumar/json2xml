@@ -8,7 +8,7 @@ use pyo3::exceptions::PyValueError;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 #[cfg(feature = "python")]
-use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString};
+use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
 #[cfg(feature = "python")]
 use std::io::{BufWriter, Write};
 
@@ -220,34 +220,23 @@ pub fn push_cdata(out: &mut String, s: &str) {
     out.push_str("]]>");
 }
 
-/// Check if a key is a valid XML element name (simplified check)
-/// Full validation would require XML parsing, but this catches common issues
+/// Return true for names the Python serializer accepts without consulting a parser.
+///
+/// This mirrors `_is_fast_valid_xml_name` in `json2xml/dicttoxml.py` exactly: ASCII only,
+/// no colon, an initial ASCII letter or underscore, then ASCII alphanumerics, `-`, `_`, or
+/// `.`. Python resolves anything outside this set through a real XML parser, whose verdict
+/// this crate cannot reproduce, so the backend selector keeps those payloads on the Python
+/// serializer rather than guessing here.
 pub fn is_valid_xml_name(key: &str) -> bool {
-    if key.is_empty() {
+    let bytes = key.as_bytes();
+    let Some((first, rest)) = bytes.split_first() else {
+        return false;
+    };
+    if !(first.is_ascii_alphabetic() || *first == b'_') {
         return false;
     }
-
-    let mut chars = key.chars();
-
-    // First character must be letter or underscore
-    match chars.next() {
-        Some(c) if c.is_alphabetic() || c == '_' => {}
-        _ => return false,
-    }
-
-    // Remaining characters can be letters, digits, hyphens, underscores, or periods
-    for c in chars {
-        if !(c.is_alphanumeric() || c == '-' || c == '_' || c == '.' || c == ':') {
-            return false;
-        }
-    }
-
-    // Names starting with "xml" (case-insensitive) are reserved
-    if key.len() >= 3 && key.as_bytes()[..3].eq_ignore_ascii_case(b"xml") {
-        return false;
-    }
-
-    true
+    rest.iter()
+        .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.'))
 }
 
 /// Make a valid XML name from a key, returning the tag name and the raw
@@ -320,6 +309,47 @@ fn write_open_tag<W: Write + ?Sized>(
     write_byte(out, b'>')
 }
 
+/// Write scalar character data, wrapping it in CDATA when requested.
+///
+/// Python's `convert_kv` applies CDATA to every scalar it handles, so strings and numbers
+/// share this path. Booleans and nulls have their own writers and never use CDATA.
+#[cfg(feature = "python")]
+#[inline]
+fn write_scalar_body<W: Write + ?Sized>(out: &mut W, s: &str, cdata: bool) -> PyResult<()> {
+    if cdata {
+        write_cdata(out, s)
+    } else {
+        write_escaped_text(out, s)
+    }
+}
+
+/// Write an `i64` without allocating a `String`.
+#[cfg(feature = "python")]
+#[inline]
+fn write_integer<W: Write + ?Sized>(out: &mut W, value: i64, cdata: bool) -> PyResult<()> {
+    // i64::MIN is 20 bytes with its sign, the widest decimal rendering.
+    let mut buf = [0u8; 20];
+    let mut end = buf.len();
+    let negative = value < 0;
+    // Accumulate through the negative side so i64::MIN does not overflow.
+    let mut remaining = if negative { value } else { -value };
+    loop {
+        end -= 1;
+        buf[end] = b'0' + (-(remaining % 10)) as u8;
+        remaining /= 10;
+        if remaining == 0 {
+            break;
+        }
+    }
+    if negative {
+        end -= 1;
+        buf[end] = b'-';
+    }
+    // Digits and the sign are ASCII, so the slice is valid UTF-8 by construction.
+    let rendered = core::str::from_utf8(&buf[end..]).expect("decimal digits are ASCII");
+    write_scalar_body(out, rendered, cdata)
+}
+
 /// Write a closing tag directly to buffer.
 #[cfg(feature = "python")]
 #[inline]
@@ -377,16 +407,14 @@ fn write_value<W: Write + ?Sized>(
         return Ok(());
     }
 
-    // Int - try i64 first, fall back to string for large integers
+    // Int - try i64 first, fall back to Python's str() for large integers.
+    // Python's convert_kv wraps every non-bool, non-null scalar in CDATA when enabled,
+    // so numbers take the same path as strings here.
     if obj.is_instance_of::<PyInt>() {
         write_open_tag(out, tag, name_attr, type_attr(cfg, "int"))?;
         match obj.extract::<i64>() {
-            Ok(v) => {
-                write_str(out, &v.to_string())?;
-            }
-            Err(_) => {
-                write_str(out, obj.str()?.to_str()?)?;
-            }
+            Ok(v) => write_integer(out, v, cfg.cdata)?,
+            Err(_) => write_scalar_body(out, obj.str()?.to_str()?, cfg.cdata)?,
         }
         write_close_tag(out, tag)?;
         return Ok(());
@@ -395,7 +423,7 @@ fn write_value<W: Write + ?Sized>(
     // Float - use Python's str() for parity (Rust renders 1.0 as "1")
     if obj.is_instance_of::<PyFloat>() {
         write_open_tag(out, tag, name_attr, type_attr(cfg, "float"))?;
-        write_str(out, obj.str()?.to_str()?)?;
+        write_scalar_body(out, obj.str()?.to_str()?, cfg.cdata)?;
         write_close_tag(out, tag)?;
         return Ok(());
     }
@@ -404,11 +432,7 @@ fn write_value<W: Write + ?Sized>(
     if let Ok(py_str) = obj.cast::<PyString>() {
         let s = py_str.to_str()?;
         write_open_tag(out, tag, name_attr, type_attr(cfg, "str"))?;
-        if cfg.cdata {
-            write_cdata(out, s)?;
-        } else {
-            write_escaped_text(out, s)?;
-        }
+        write_scalar_body(out, s, cfg.cdata)?;
         write_close_tag(out, tag)?;
         return Ok(());
     }
@@ -430,7 +454,7 @@ fn write_value<W: Write + ?Sized>(
         if wrap_container {
             write_open_tag(out, tag, name_attr, type_attr(cfg, "list"))?;
         }
-        write_list_contents(py, out, list, tag, cfg)?;
+        write_convert_list(py, out, list, tag, cfg)?;
         if wrap_container {
             write_close_tag(out, tag)?;
         }
@@ -444,7 +468,7 @@ fn write_value<W: Write + ?Sized>(
         if wrap_container {
             write_open_tag(out, tag, name_attr, type_attr(cfg, "list"))?;
         }
-        write_list_contents(py, out, &list, tag, cfg)?;
+        write_convert_list(py, out, &list, tag, cfg)?;
         if wrap_container {
             write_close_tag(out, tag)?;
         }
@@ -455,16 +479,12 @@ fn write_value<W: Write + ?Sized>(
     let py_str = obj.str()?;
     let s = py_str.to_str()?;
     write_open_tag(out, tag, name_attr, type_attr(cfg, "str"))?;
-    if cfg.cdata {
-        write_cdata(out, s)?;
-    } else {
-        write_escaped_text(out, s)?;
-    }
+    write_scalar_body(out, s, cfg.cdata)?;
     write_close_tag(out, tag)?;
     Ok(())
 }
 
-/// Write all key-value pairs of a dict into the buffer.
+/// Write every key/value pair of a dict, mirroring `_append_convert_dict`.
 #[cfg(feature = "python")]
 fn write_dict_contents<W: Write + ?Sized>(
     py: Python<'_>,
@@ -474,28 +494,135 @@ fn write_dict_contents<W: Write + ?Sized>(
 ) -> PyResult<()> {
     for (key, val) in dict.iter() {
         let key_py_str = key.str()?;
-        let key_str = key_py_str.to_str()?;
-        let (xml_key, name_attr_pair) = make_valid_xml_name(key_str);
-        let name_attr = name_attr_pair.as_ref().map(|(_, v)| v.as_ref());
-        // Python's historical list shape depends only on the first member. Preserve that rule
-        // for mixed lists rather than reclassifying the container from every value.
-        if let Ok(list) = val.cast::<PyList>() {
-            let first_is_scalar = list
-                .get_item(0)
-                .ok()
-                .map(|item| is_python_scalar(&item))
-                .unwrap_or(false);
-            let wrap_list_container = (cfg.item_wrap || !first_is_scalar) && !cfg.list_headers;
+        let (xml_key, name_attr_owned) = make_valid_xml_name(key_py_str.to_str()?);
+        let name_attr = name_attr_owned.as_ref().map(|(_, v)| v.as_ref());
 
-            if wrap_list_container {
-                write_open_tag(out, &xml_key, name_attr, type_attr(cfg, "list"))?;
-                write_list_contents(py, out, list, &xml_key, cfg)?;
-                write_close_tag(out, &xml_key)?;
-            } else {
-                write_list_contents(py, out, list, &xml_key, cfg)?;
-            }
+        if let Ok(list) = val.cast::<PyList>() {
+            write_list2xml_str(py, out, name_attr, list, &xml_key, cfg)?;
+        } else if let Ok(child) = val.cast::<PyDict>() {
+            write_dict2xml_str(py, out, name_attr, child, &xml_key, false, "", cfg)?;
         } else {
             write_value(py, out, &val, &xml_key, name_attr, cfg, true)?;
+        }
+    }
+    Ok(())
+}
+
+/// Emit a dict element, mirroring `_append_dict2xml_str`.
+///
+/// `parent_is_list` and `list_headers` decide whether the dict keeps its own wrapper, borrows
+/// the parent tag, or is flattened into the surrounding element.
+#[cfg(feature = "python")]
+#[allow(clippy::too_many_arguments)]
+fn write_dict2xml_str<W: Write + ?Sized>(
+    py: Python<'_>,
+    out: &mut W,
+    name_attr: Option<&str>,
+    item: &Bound<'_, PyDict>,
+    item_name: &str,
+    parent_is_list: bool,
+    parent: &str,
+    cfg: &ConvertConfig,
+) -> PyResult<()> {
+    let type_value = type_attr(cfg, "dict");
+    let has_attrs = name_attr.is_some() || type_value.is_some();
+
+    if parent_is_list && cfg.list_headers {
+        // Python only carries the attributes onto the borrowed parent tag when items are
+        // not individually wrapped.
+        if has_attrs && !cfg.item_wrap {
+            write_open_tag(out, parent, name_attr, type_value)?;
+        } else {
+            write_open_tag(out, parent, None, None)?;
+        }
+        write_dict_contents(py, out, item, cfg)?;
+        write_close_tag(out, parent)?;
+    } else if parent_is_list && !cfg.item_wrap {
+        write_dict_contents(py, out, item, cfg)?;
+    } else {
+        write_open_tag(out, item_name, name_attr, type_value)?;
+        write_dict_contents(py, out, item, cfg)?;
+        write_close_tag(out, item_name)?;
+    }
+    Ok(())
+}
+
+/// Emit a list element, mirroring `_append_list2xml_str`.
+///
+/// The wrapper is dropped when the members are written directly into the surrounding element:
+/// under `list_headers`, or when an unwrapped list leads with a primitive.
+#[cfg(feature = "python")]
+fn write_list2xml_str<W: Write + ?Sized>(
+    py: Python<'_>,
+    out: &mut W,
+    name_attr: Option<&str>,
+    item: &Bound<'_, PyList>,
+    item_name: &str,
+    cfg: &ConvertConfig,
+) -> PyResult<()> {
+    // Python's historical list shape depends only on the first member.
+    let first_is_primitive = match item.get_item(0) {
+        Ok(first) => is_python_scalar(&first),
+        Err(_) => false,
+    };
+
+    if cfg.list_headers || (first_is_primitive && !cfg.item_wrap) {
+        return write_convert_list(py, out, item, item_name, cfg);
+    }
+
+    write_open_tag(out, item_name, name_attr, type_attr(cfg, "list"))?;
+    write_convert_list(py, out, item, item_name, cfg)?;
+    write_close_tag(out, item_name)
+}
+
+/// Write every member of a list, mirroring `_append_convert_list`.
+#[cfg(feature = "python")]
+fn write_convert_list<W: Write + ?Sized>(
+    py: Python<'_>,
+    out: &mut W,
+    list: &Bound<'_, PyList>,
+    parent: &str,
+    cfg: &ConvertConfig,
+) -> PyResult<()> {
+    // The default item_func names every member "item"; custom functions stay on Python.
+    let item_name = "item";
+    // Only plain scalars borrow the parent tag when items are not wrapped. Booleans and
+    // nulls keep the item tag, matching the Python writer.
+    let (scalar_key, scalar_name_attr) = if cfg.item_wrap {
+        (Cow::Borrowed(item_name), None)
+    } else {
+        make_valid_xml_name(parent)
+    };
+    let scalar_name = scalar_name_attr.as_ref().map(|(_, v)| v.as_ref());
+
+    // Dict members under list_headers borrow the parent as their tag. A rootless document
+    // has no parent name, so it is normalized like any other element name rather than
+    // emitting the empty tag "<>".
+    let (header_key, header_name_attr) = make_valid_xml_name(parent);
+    let header_name = if cfg.list_headers {
+        header_name_attr.as_ref().map(|(_, v)| v.as_ref())
+    } else {
+        None
+    };
+
+    for item in list.iter() {
+        if let Ok(dict) = item.cast::<PyDict>() {
+            write_dict2xml_str(
+                py,
+                out,
+                header_name,
+                dict,
+                item_name,
+                true,
+                &header_key,
+                cfg,
+            )?;
+        } else if let Ok(inner) = item.cast::<PyList>() {
+            write_list2xml_str(py, out, None, inner, item_name, cfg)?;
+        } else if item.is_none() || item.is_instance_of::<PyBool>() {
+            write_value(py, out, &item, item_name, None, cfg, true)?;
+        } else {
+            write_value(py, out, &item, &scalar_key, scalar_name, cfg, true)?;
         }
     }
     Ok(())
@@ -511,48 +638,6 @@ fn is_python_scalar(obj: &Bound<'_, PyAny>) -> bool {
         || obj.is_instance_of::<PyInt>()
         || obj.is_instance_of::<PyFloat>()
         || obj.is_instance_of::<PyString>()
-}
-
-/// Write all items of a list into the buffer.
-#[cfg(feature = "python")]
-fn write_list_contents<W: Write + ?Sized>(
-    py: Python<'_>,
-    out: &mut W,
-    list: &Bound<'_, PyList>,
-    parent: &str,
-    cfg: &ConvertConfig,
-) -> PyResult<()> {
-    // `list_headers` changes the tag policy only for dictionary members; primitive members
-    // continue to follow `item_wrap`.
-    let scalar_tag_name = if cfg.item_wrap { "item" } else { parent };
-    let dict_tag_name = if cfg.list_headers {
-        parent
-    } else if cfg.item_wrap {
-        "item"
-    } else {
-        parent
-    };
-
-    for item in list.iter() {
-        // Dicts inside lists have special wrapping logic
-        if let Ok(dict) = item.cast::<PyDict>() {
-            if cfg.item_wrap || cfg.list_headers {
-                let dict_type_attr = if cfg.list_headers {
-                    None
-                } else {
-                    type_attr(cfg, "dict")
-                };
-                write_open_tag(out, dict_tag_name, None, dict_type_attr)?;
-                write_dict_contents(py, out, dict, cfg)?;
-                write_close_tag(out, dict_tag_name)?;
-            } else {
-                write_dict_contents(py, out, dict, cfg)?;
-            }
-        } else {
-            write_value(py, out, &item, scalar_tag_name, None, cfg, true)?;
-        }
-    }
-    Ok(())
 }
 
 /// Convert a Python value to UTF-8 encoded XML bytes.
@@ -616,12 +701,18 @@ fn dicttoxml(
             write_byte(&mut out, b'>')?;
         }
 
+        // Python renders a rootless document with an empty parent name, so list members and
+        // top-level scalars must be named from that same empty parent rather than from the
+        // unused custom root.
+        let parent = if root { custom_root } else { "" };
+
         if let Ok(dict) = obj.cast::<PyDict>() {
             write_dict_contents(py, &mut out, dict, &config)?;
         } else if let Ok(list) = obj.cast::<PyList>() {
-            write_list_contents(py, &mut out, list, custom_root, &config)?;
+            write_convert_list(py, &mut out, list, parent, &config)?;
         } else {
-            write_value(py, &mut out, obj, custom_root, None, &config, true)?;
+            // A bare scalar is named by the item function, exactly as _append_convert does.
+            write_value(py, &mut out, obj, "item", None, &config, true)?;
         }
 
         if root {
@@ -634,6 +725,74 @@ fn dicttoxml(
         Ok(())
     })
     .map(Bound::unbind)
+}
+
+/// Return true when a key names the same element in both implementations.
+///
+/// Mirrors `_rust_renders_key_identically` in `json2xml/backend_selector.py`.
+#[cfg(feature = "python")]
+fn key_renders_identically(key: &Bound<'_, PyAny>) -> bool {
+    let Ok(py_str) = key.cast_exact::<PyString>() else {
+        return false;
+    };
+    let Ok(text) = py_str.to_str() else {
+        return false;
+    };
+    if text.is_empty() || text.starts_with('@') || text.ends_with("@flat") {
+        return false;
+    }
+    if !text.is_ascii() || text.contains(':') {
+        return false;
+    }
+    // A trailing space is the one case Python's parser probe accepts but the fast path
+    // rejects, because the probe document tolerates space before the tag close.
+    !text.as_bytes()[text.len() - 1].is_ascii_whitespace()
+}
+
+/// Return true when a payload stays inside the subset this backend renders identically.
+///
+/// This is the native form of `rust_renders_identically`; the selector calls it before
+/// dispatching so the walk does not cost a Python-level traversal of the whole payload.
+/// Types are matched exactly, because Python classifies subclasses through isinstance
+/// fallbacks that this writer does not reproduce.
+#[cfg(feature = "python")]
+#[pyfunction]
+fn payload_is_supported(obj: &Bound<'_, PyAny>) -> PyResult<bool> {
+    let mut stack: Vec<Bound<'_, PyAny>> = vec![obj.clone()];
+
+    while let Some(value) = stack.pop() {
+        if value.is_none()
+            || value.is_exact_instance_of::<PyString>()
+            || value.is_exact_instance_of::<PyBool>()
+            || value.is_exact_instance_of::<PyInt>()
+            || value.is_exact_instance_of::<PyFloat>()
+        {
+            continue;
+        }
+        if let Ok(dict) = value.cast_exact::<PyDict>() {
+            for (key, child) in dict.iter() {
+                if !key_renders_identically(&key) {
+                    return Ok(false);
+                }
+                stack.push(child);
+            }
+            continue;
+        }
+        if let Ok(list) = value.cast_exact::<PyList>() {
+            for item in list.iter() {
+                stack.push(item);
+            }
+            continue;
+        }
+        if let Ok(tuple) = value.cast_exact::<PyTuple>() {
+            for item in tuple.iter() {
+                stack.push(item);
+            }
+            continue;
+        }
+        return Ok(false);
+    }
+    Ok(true)
 }
 
 /// Fast XML string escaping.
@@ -659,6 +818,7 @@ fn wrap_cdata_py(s: &str) -> PyResult<String> {
 #[pymodule]
 fn json2xml_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(dicttoxml, m)?)?;
+    m.add_function(wrap_pyfunction!(payload_is_supported, m)?)?;
     m.add_function(wrap_pyfunction!(escape_xml_py, m)?)?;
     m.add_function(wrap_pyfunction!(wrap_cdata_py, m)?)?;
     Ok(())
@@ -784,8 +944,10 @@ mod tests {
         }
 
         #[test]
-        fn accepts_name_with_colons() {
-            assert!(is_valid_xml_name("ns:element"));
+        fn rejects_name_with_colons() {
+            // Python resolves colon names through its parser, so the selector keeps them
+            // on the Python serializer rather than have this crate guess.
+            assert!(!is_valid_xml_name("ns:element"));
         }
 
         #[test]
@@ -809,18 +971,20 @@ mod tests {
         }
 
         #[test]
-        fn rejects_xml_prefix_lowercase() {
-            assert!(!is_valid_xml_name("xmlelement"));
+        fn accepts_xml_prefixed_names() {
+            // The XML specification reserves these names, but the Python serializer emits
+            // them unchanged. Rejecting them here silently renamed user keys.
+            assert!(is_valid_xml_name("xmlelement"));
+            assert!(is_valid_xml_name("XMLelement"));
+            assert!(is_valid_xml_name("XmLelement"));
+            assert!(is_valid_xml_name("xml"));
         }
 
         #[test]
-        fn rejects_xml_prefix_uppercase() {
-            assert!(!is_valid_xml_name("XMLelement"));
-        }
-
-        #[test]
-        fn rejects_xml_prefix_mixed_case() {
-            assert!(!is_valid_xml_name("XmLelement"));
+        fn rejects_non_ascii_names() {
+            // Python decides these with a parser; this crate must not claim them.
+            assert!(!is_valid_xml_name("café"));
+            assert!(!is_valid_xml_name("名前"));
         }
     }
 

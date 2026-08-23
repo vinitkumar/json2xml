@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from json2xml.backend_selector import BackendSelector, ConversionRequest, has_special_keys
+from json2xml.backend_selector import (
+    BackendSelector,
+    ConversionRequest,
+    has_special_keys,
+)
 
 
 class _NeverBackend:
@@ -36,6 +40,7 @@ def test_backend_selector_raises_when_no_backend_can_handle_request() -> None:
         xml_namespaces=None,
         list_headers=False,
         xpath_format=False,
+        max_output_bytes=None,
     )
 
     selector = BackendSelector(_NeverBackend())

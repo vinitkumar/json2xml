@@ -65,9 +65,8 @@ jobs:
       with:
         enable-cache: true
         cache-dependency-glob: |
-          requirements*.txt
-          requirements-dev.in
           pyproject.toml
+          uv.lock
 
     - name: Install dependencies
       run: |
@@ -116,9 +115,8 @@ jobs:
       with:
         enable-cache: true
         cache-dependency-glob: |
-          requirements*.txt
-          requirements-dev.in
           pyproject.toml
+          uv.lock
 
     - name: Install dependencies
       run: |

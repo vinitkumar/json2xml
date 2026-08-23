@@ -78,6 +78,10 @@ The multi-interpreter benchmark should derive default interpreter paths from `JS
 
 The multi-interpreter benchmark should let per-interpreter environment variables override uv-derived defaults so unusual local layouts remain runnable without editing the script.
 
+### Moved benchmark scripts retain repository-relative paths
+
+Benchmark scripts stored under `benchmarks/` should resolve package metadata and example fixtures from the repository root while keeping generated benchmark environments inside the benchmark directory.
+
 ### Security benchmark payloads stay deterministic
 
 The public-wrapper benchmark should build the documented small and index-derived nested record payloads exactly so reruns use identical inputs without an external random seed.
@@ -198,19 +202,47 @@ The public wrapper should return Unicode text for pretty output and UTF-8 bytes 
 
 Default library conversion should return serializer bytes without building a second DOM copy, while pretty printing remains available through an explicit opt-in.
 
-### Pretty printing rejects unsafe XML constructs
+### Generated documents are well formed
 
-Opt-in pretty printing should reject an exponential entity-expansion payload before indentation and expose the rejection as the converter's public invalid-data error.
+No combination of `root`, `item_wrap`, and `list_headers` may emit markup a parser rejects. The check runs expat without namespace processing, because an unbound prefix from a colon key is a namespace error rather than a well-formedness one.
+
+### Rootless list headers name their members
+
+A dictionary borrowing a parent tag under `list_headers` should normalize that name like any other element name, so a rootless list of dictionaries produces `key` elements instead of an empty tag.
 
 ### Conversion resource limits
 
-Conversion should reject excessive nesting, item counts, and conservative output estimates before serialization, then enforce the exact byte limit on compact and pretty results.
+Conversion should reject excessive nesting and item counts before serialization, then enforce exact generated-byte limits without rejecting valid compact output based on an estimate.
 
-Limit validation rejects booleans, non-integers, and non-positive values. Tests cover preflight estimates, exact backend bytes, and indentation added only by pretty output.
+Limit validation rejects booleans, non-integers, and non-positive values. Tests cover exact backend bytes and all pretty whitespace, including indentation and the trailing newline, in that same budget.
 
 ### Pretty printing avoids DOM reparsing
 
-Pretty output should use bounded lexical indentation over trusted serializer output instead of constructing a second DOM, rejecting unterminated, mismatched, or unclosed markup.
+Pretty output should be produced by the serializer itself rather than by constructing or reparsing a DOM.
+
+### Pretty printing indents during serialization
+
+Nested containers should be indented as they are written, and character data should keep its closing tag on the same line.
+
+### Rust backend parity
+
+The native backend and the Python serializer must produce identical bytes for every payload the selector admits, so divergence is tested from both sides.
+
+#### Gate rejects payloads Rust cannot reproduce
+
+Values Python classifies through isinstance fallbacks, scalar subclasses, and keys whose element name Python derives from a parser should all keep the request on the Python serializer.
+
+#### Admitted payloads render identically
+
+Every divergence found by differential testing is pinned across the full option matrix, and randomized payloads are compared against the Python serializer under a fixed seed.
+
+#### Native and Python gates agree
+
+The native gate is an optimization over the Python reference walk, so the two must return the same verdict for every payload; disagreeing in either direction is a correctness bug.
+
+### Parser-backed names stay on Python
+
+Colon names, non-ASCII names, and names ending in whitespace should not reach the native backend, and converting them through the public wrapper should match the Python serializer.
 
 ### Special keys force Python fallback
 
@@ -248,15 +280,21 @@ These tests pin low-level XML helper contracts so performance refactors keep the
 
 Common built-in numbers should avoid abstract-class dispatch while `Decimal`, `Fraction`, complex, and custom `Number` implementations remain supported.
 
+### Date-like values serialize the same in every position
+
+Objects exposing `isoformat` should serialize identically as a root value, a dict value, and a list item, because one classifier decides the kind for all three writers.
+
 ### Exact-type dispatch preserves subclass fallbacks
 
-Exact native JSON types should use direct hot paths while compatible numeric, string, dictionary, and sequence subclasses retain the established fallback behavior.
+Exact native JSON types should use direct hot paths while compatible subclasses retain fallback behavior and unsupported objects raise consistently regardless of truthiness.
 
 The complete Python suite is also a 100% statement-coverage gate so these less common compatibility paths cannot silently fall out of validation.
 
 ### Valid-name helpers preserve caller attrs
 
 Helpers that receive prevalidated XML names should add type metadata only to the emitted element and must not mutate caller-owned attribute dictionaries.
+
+Public scalar helpers should provide the same non-mutating contract even when they normalize an invalid XML name and add metadata.
 
 ### Container helpers preserve caller attrs
 
@@ -272,7 +310,7 @@ XML name validation should agree across the ASCII fast path, parser-backed path,
 
 ### XML attribute name validation
 
-Attribute name validation should reject malformed custom attribute keys while preserving parser-accepted edge names such as underscores, hyphens, and xml-prefixed names.
+Attribute name validation should accept ordinary ASCII names without a parser and reject malformed custom keys while preserving parser-accepted edge names.
 
 ### Rust invalid-name attrs escape once
 

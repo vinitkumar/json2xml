@@ -7,8 +7,9 @@ different JSON sizes.
 
 Environment variables:
     JSON2XML_GO_CLI: Path to the json2xml-go binary (default: json2xml-go in PATH)
-    JSON2XML_EXAMPLES_DIR: Path to examples directory (default: ./examples relative to script)
+    JSON2XML_EXAMPLES_DIR: Path to examples directory (default: ./examples in repository)
 """
+
 from __future__ import annotations
 
 import json
@@ -23,12 +24,13 @@ from pathlib import Path
 from benchmark_utils import Colors, colorize, format_time, random_string
 
 # Base directory for repo-relative defaults
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Paths - configurable via environment variables
 PYTHON_CLI = [sys.executable, "-m", "json2xml.cli"]
 GO_CLI = Path(os.environ.get("JSON2XML_GO_CLI", "json2xml-go"))
 EXAMPLES_DIR = Path(os.environ.get("JSON2XML_EXAMPLES_DIR", str(BASE_DIR / "examples")))
+
 
 def generate_large_json(num_records: int = 1000) -> str:
     """Generate a large JSON file for benchmarking."""
@@ -45,11 +47,7 @@ def generate_large_json(num_records: int = 1000) -> str:
                 "created": "2024-01-15T10:30:00Z",
                 "updated": "2024-01-15T12:45:00Z",
                 "version": random.randint(1, 100),
-                "nested": {
-                    "level1": {
-                        "level2": {"value": random_string(10)}
-                    }
-                },
+                "nested": {"level1": {"level2": {"value": random_string(10)}}},
             },
         }
         data.append(item)
@@ -57,9 +55,7 @@ def generate_large_json(num_records: int = 1000) -> str:
 
 
 def run_benchmark(
-    cmd: list[str],
-    iterations: int = 10,
-    warmup: int = 2
+    cmd: list[str], iterations: int = 10, warmup: int = 2
 ) -> dict[str, float]:
     """
     Run a benchmark for the given command.
@@ -109,9 +105,11 @@ def print_header(title: str) -> None:
 def print_result(name: str, result: dict[str, float]) -> None:
     """Print benchmark result."""
     print(f"  {name}:")
-    print(f"    Avg: {format_time(result['avg'])} | "
-          f"Min: {format_time(result['min'])} | "
-          f"Max: {format_time(result['max'])}")
+    print(
+        f"    Avg: {format_time(result['avg'])} | "
+        f"Min: {format_time(result['min'])} | "
+        f"Max: {format_time(result['max'])}"
+    )
 
 
 def main() -> int:
@@ -124,7 +122,9 @@ def main() -> int:
 
     if not GO_CLI.exists():
         print(colorize(f"Error: Go binary not found at {GO_CLI}", Colors.RED))
-        print("Please build it first: cd json2xml-go && go build -o json2xml-go ./cmd/json2xml-go")
+        print(
+            "Please build it first: cd json2xml-go && go build -o json2xml-go ./cmd/json2xml-go"
+        )
         return 1
 
     print(colorize("✓ Prerequisites met", Colors.GREEN))
@@ -156,7 +156,9 @@ def main() -> int:
         print(f"  Small:      {len(small_json)} bytes (inline)")
         print(f"  Medium:     {medium_json_file.stat().st_size:,} bytes")
         print(f"  Large:      {large_json_file.stat().st_size:,} bytes (1000 records)")
-        print(f"  Very Large: {very_large_json_file.stat().st_size:,} bytes (5000 records)")
+        print(
+            f"  Very Large: {very_large_json_file.stat().st_size:,} bytes (5000 records)"
+        )
         print()
 
         # Benchmark: Small JSON (inline string)
@@ -220,7 +222,12 @@ def main() -> int:
     total_go = sum(r["go"]["avg"] for r in results.values())
     if total_go > 0:
         overall_speedup = total_py / total_go
-        print(colorize(f"Overall: Go is {overall_speedup:.1f}x faster than Python", Colors.GREEN + Colors.BOLD))
+        print(
+            colorize(
+                f"Overall: Go is {overall_speedup:.1f}x faster than Python",
+                Colors.GREEN + Colors.BOLD,
+            )
+        )
 
     print()
     print(colorize("=" * 50, Colors.BLUE))

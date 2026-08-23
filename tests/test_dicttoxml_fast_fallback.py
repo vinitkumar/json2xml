@@ -1,4 +1,5 @@
 """Tests for optional Rust backend selection in dicttoxml_fast."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -7,13 +8,23 @@ from unittest.mock import Mock
 import pytest
 
 import json2xml.dicttoxml_fast as fast_module
+from json2xml import dicttoxml as py_dicttoxml
+from json2xml.backend_selector import ConversionRequest, rust_renders_identically
 
 
 def _force_rust_backend(monkeypatch: pytest.MonkeyPatch) -> Mock:
-    """Install a fake Rust backend so tests can exercise selection logic without PyO3."""
+    """Install a fake Rust backend so tests can exercise selection logic without PyO3.
+
+    The payload gate is part of that backend, so it is stubbed with its pure-Python
+    reference; without it the adapter would correctly refuse every request and these tests
+    would exercise nothing.
+    """
     rust_backend = Mock(return_value=b"<rust/>")
     monkeypatch.setattr(fast_module, "_use_rust", True)
     monkeypatch.setattr(fast_module, "_rust_dicttoxml", rust_backend)
+    monkeypatch.setattr(
+        fast_module, "_rust_payload_is_supported", rust_renders_identically
+    )
     return rust_backend
 
 
@@ -26,9 +37,7 @@ def _force_rust_backend(monkeypatch: pytest.MonkeyPatch) -> Mock:
         (Mock(side_effect=ValueError("invalid XML")), True),
     ],
 )
-def test_rust_backend_must_reject_invalid_xml(
-    escape: Mock, expected: bool
-) -> None:
+def test_rust_backend_must_reject_invalid_xml(escape: Mock, expected: bool) -> None:
     """Only backends that reject XML 1.0 control characters are safe to use."""
     assert fast_module._rejects_invalid_xml(escape) is expected
 
@@ -73,12 +82,25 @@ def test_fast_wrapper_uses_rust_when_available_for_supported_options(
     )
 
 
+def test_fast_wrapper_enforces_output_limit_for_rust_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Exact byte limits also apply when the optional Rust backend renders."""
+    _force_rust_backend(monkeypatch)
+
+    with pytest.raises(ValueError, match="XML output size limit exceeded"):
+        fast_module.dicttoxml({"name": "Ada"}, max_output_bytes=6)
+
+
 @pytest.mark.parametrize(
     ("kwargs", "expected"),
     [
         ({"ids": [1]}, b'id="'),
         ({"item_func": lambda parent: "entry"}, b"<entry"),
-        ({"xml_namespaces": {"demo": "https://example.com/demo"}}, b'xmlns:demo="https://example.com/demo"'),
+        (
+            {"xml_namespaces": {"demo": "https://example.com/demo"}},
+            b'xmlns:demo="https://example.com/demo"',
+        ),
         ({"xpath_format": True}, b'xmlns="http://www.w3.org/2005/xpath-functions"'),
     ],
 )
@@ -151,3 +173,35 @@ def test_fast_helper_functions_use_python_fallback(
 
     assert fast_module.escape_xml("Ada & <XML>") == "Ada &amp; &lt;XML&gt;"
     assert fast_module.wrap_cdata("Ada <XML>") == "<![CDATA[Ada <XML>]]>"
+
+
+def test_backend_without_the_payload_gate_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An extension predating the payload gate also predates the output parity fixes.
+
+    Such a build would render admitted payloads differently from the Python serializer, so
+    the adapter must decline every request rather than trust it.
+    """
+    _force_rust_backend(monkeypatch)
+    monkeypatch.setattr(fast_module, "_rust_payload_is_supported", None)
+
+    adapter = fast_module._RustBackendAdapter()
+    request = ConversionRequest(
+        obj={"a": 1},
+        root=True,
+        custom_root="root",
+        ids=None,
+        attr_type=True,
+        item_wrap=True,
+        item_func=None,
+        cdata=False,
+        xml_namespaces=None,
+        list_headers=False,
+        xpath_format=False,
+        max_output_bytes=None,
+        indent=None,
+    )
+
+    assert adapter.can_handle(request) is False
+    assert fast_module.dicttoxml({"a": 1}) == py_dicttoxml.dicttoxml({"a": 1})

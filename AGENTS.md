@@ -3,6 +3,12 @@
 - Run `lat search` to find sections relevant to your task. Read them to understand the design intent before writing code.
 - Run `lat expand` on user prompts to expand any `[[refs]]` — this resolves section names to file locations and provides context.
 
+# Development commands
+
+- Run `make check-all` for lint, type checks, and the Python test suite.
+- Run `make test-rust` for the native Rust tests.
+- Use the locked `uv` environment through the Makefile targets rather than global tools.
+
 # Post-task checklist (REQUIRED — do not skip)
 
 After EVERY task, before responding to the user:
@@ -68,12 +74,11 @@ Each test in code should reference its spec with exactly one comment placed next
 
 ```python
 # @lat: [[tests#User login#Rejects expired tokens]]
-def test_rejects_expired_tokens():
-    ...
+def test_rejects_expired_tokens(): ...
+
 
 # @lat: [[tests#User login#Handles missing password]]
-def test_handles_missing_password():
-    ...
+def test_handles_missing_password(): ...
 ```
 
 Do not duplicate refs. One `@lat:` comment per spec section, placed at the test that covers it. `lat check` will flag any spec section not covered by a code reference, and any code reference pointing to a nonexistent section.

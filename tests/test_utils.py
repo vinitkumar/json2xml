@@ -1,4 +1,5 @@
 """Test module for json2xml.utils functionality."""
+
 import gzip
 import json
 import socket
@@ -101,7 +102,7 @@ class TestReadFromJson:
         """Test reading a valid JSON file."""
         test_data = {"key": "value", "number": 42}
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(test_data, f)
             temp_filename = f.name
 
@@ -110,11 +111,12 @@ class TestReadFromJson:
             assert result == test_data
         finally:
             import os
+
             os.unlink(temp_filename)
 
     def test_readfromjson_invalid_json_content(self) -> None:
         """Test reading a file with invalid JSON content."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write('{"invalid": json content}')  # Invalid JSON
             temp_filename = f.name
 
@@ -123,6 +125,7 @@ class TestReadFromJson:
                 readfromjson(temp_filename)
         finally:
             import os
+
             os.unlink(temp_filename)
 
     def test_readfromjson_file_not_found(self) -> None:
@@ -130,7 +133,7 @@ class TestReadFromJson:
         with pytest.raises(JSONReadError, match="Invalid JSON File"):
             readfromjson("non_existent_file.json")
 
-    @patch('builtins.open')
+    @patch("builtins.open")
     def test_readfromjson_permission_error(self, mock_open: Mock) -> None:
         """Test reading a file with permission issues."""
         # Mock open to raise PermissionError
@@ -139,7 +142,7 @@ class TestReadFromJson:
         with pytest.raises(JSONReadError, match="Invalid JSON File"):
             readfromjson("some_file.json")
 
-    @patch('builtins.open')
+    @patch("builtins.open")
     def test_readfromjson_os_error(self, mock_open: Mock) -> None:
         """Test reading a file with OS error."""
         # Mock open to raise OSError (covers line 34-35 in utils.py)
@@ -154,9 +157,7 @@ class TestReadFromUrl:
 
     def test_readfromurl_success(self, json_server: str) -> None:
         """Test successful URL reading."""
-        result = readfromurl(
-            f"{json_server}/data.json", allow_private_networks=True
-        )
+        result = readfromurl(f"{json_server}/data.json", allow_private_networks=True)
 
         assert result == {"key": "value", "number": 42}
 
@@ -172,23 +173,17 @@ class TestReadFromUrl:
     def test_readfromurl_http_error(self, json_server: str) -> None:
         """Test URL reading with HTTP error status."""
         with pytest.raises(URLReadError, match="URL is not returning correct response"):
-            readfromurl(
-                f"{json_server}/nonexistent.json", allow_private_networks=True
-            )
+            readfromurl(f"{json_server}/nonexistent.json", allow_private_networks=True)
 
     def test_readfromurl_server_error(self, json_server: str) -> None:
         """Test URL reading with server error status."""
         with pytest.raises(URLReadError, match="URL is not returning correct response"):
-            readfromurl(
-                f"{json_server}/error.json", allow_private_networks=True
-            )
+            readfromurl(f"{json_server}/error.json", allow_private_networks=True)
 
     def test_readfromurl_invalid_json_response(self, json_server: str) -> None:
         """Test URL reading with invalid JSON response."""
         with pytest.raises(URLReadError, match="URL did not return valid JSON"):
-            readfromurl(
-                f"{json_server}/invalid.json", allow_private_networks=True
-            )
+            readfromurl(f"{json_server}/invalid.json", allow_private_networks=True)
 
     def test_readfromurl_network_error(self) -> None:
         """Test network failures are wrapped as URLReadError."""
@@ -491,9 +486,11 @@ class TestReadFromUrl:
             ),
             pytest.param(
                 "deflate",
-                (lambda compressor: compressor.compress(b'{"ok":true}') + compressor.flush())(
-                    zlib.compressobj(wbits=-zlib.MAX_WBITS)
-                ),
+                (
+                    lambda compressor: (
+                        compressor.compress(b'{"ok":true}') + compressor.flush()
+                    )
+                )(zlib.compressobj(wbits=-zlib.MAX_WBITS)),
                 id="raw-deflate",
             ),
         ],
@@ -703,7 +700,7 @@ class TestReadFromString:
 
     def test_readfromstring_empty_object(self) -> None:
         """Test reading empty JSON object."""
-        json_string = '{}'
+        json_string = "{}"
         result = readfromstring(json_string)
         assert result == {}
 
@@ -712,11 +709,8 @@ class TestReadFromString:
         json_string = '{"users": [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}], "total": 2}'
         result = readfromstring(json_string)
         expected = {
-            "users": [
-                {"name": "John", "age": 30},
-                {"name": "Jane", "age": 25}
-            ],
-            "total": 2
+            "users": [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}],
+            "total": 2,
         }
         assert result == expected
 
@@ -789,9 +783,7 @@ class TestIntegration:
         """Test reading from URL and converting to XML."""
         from json2xml import dicttoxml
 
-        data = readfromurl(
-            f"{json_server}/api.json", allow_private_networks=True
-        )
+        data = readfromurl(f"{json_server}/api.json", allow_private_networks=True)
         xml_result = dicttoxml.dicttoxml(data, attr_type=False, root=False)
 
         assert b"<api>response</api>" in xml_result

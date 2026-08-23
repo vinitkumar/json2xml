@@ -1,4 +1,5 @@
 """Utility methods for reading JSON data from various sources."""
+
 from __future__ import annotations
 
 import json
@@ -32,21 +33,25 @@ def _get_http_client() -> tuple[Any, Any, Any]:
 
 class JSONReadError(Exception):
     """Raised when there is an error reading JSON data."""
+
     pass
 
 
 class InvalidDataError(Exception):
     """Raised when the data is invalid."""
+
     pass
 
 
 class URLReadError(Exception):
     """Raised when there is an error reading from a URL."""
+
     pass
 
 
 class StringReadError(Exception):
     """Raised when there is an error reading from a string."""
+
     pass
 
 
@@ -100,8 +105,7 @@ def _resolve_validated_address(
         except (OSError, UnicodeError) as error:
             raise URLReadError("URL hostname could not be resolved") from error
         addresses = [
-            ip_address(str(info[4][0]).split("%", 1)[0])
-            for info in address_info
+            ip_address(str(info[4][0]).split("%", 1)[0]) for info in address_info
         ]
 
     if not addresses or any(not address.is_global for address in addresses):
@@ -158,8 +162,7 @@ def _has_zlib_header(data: bytes) -> bool:
         return False
     compression_method, flags = data[0], data[1]
     return (
-        compression_method & 0x0F == 8
-        and (compression_method << 8 | flags) % 31 == 0
+        compression_method & 0x0F == 8 and (compression_method << 8 | flags) % 31 == 0
     )
 
 
@@ -205,9 +208,7 @@ def _decompress_with_limit(
             if content_length is not None and compressed_bytes == content_length:
                 break
             compressed_bytes_max = (
-                content_length
-                if content_length is not None
-                else max_response_bytes + 1
+                content_length if content_length is not None else max_response_bytes + 1
             )
             read_size = min(
                 COMPRESSED_READ_CHUNK_BYTES,

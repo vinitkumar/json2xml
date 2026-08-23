@@ -106,7 +106,7 @@ def test_exact_type_dispatch_preserves_subclass_fallbacks() -> None:
     )
 
 
-# @lat: [[tests#Type dispatch#Date-like values serialize the same in every position]]
+# @lat: [[tests#XML helper behavior#Date-like values serialize the same in every position]]
 def test_date_like_values_serialize_identically_in_every_position() -> None:
     moment = datetime.time(12, 30)
     expected = b"12:30:00"
@@ -471,7 +471,7 @@ def _is_well_formed(xml_bytes: bytes, has_root: bool) -> bool:
     return True
 
 
-# @lat: [[tests#XML output safety#Generated documents are well formed]]
+# @lat: [[tests#Conversion behavior#Generated documents are well formed]]
 @pytest.mark.parametrize("root", [True, False])
 @pytest.mark.parametrize("item_wrap", [True, False])
 @pytest.mark.parametrize("list_headers", [True, False])

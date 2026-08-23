@@ -51,7 +51,7 @@ def _options(combo: tuple[bool, ...]) -> dict[str, Any]:
     }
 
 
-# @lat: [[tests#Rust backend parity#Gate rejects payloads Rust cannot reproduce]]
+# @lat: [[tests#Conversion behavior#Rust backend parity#Gate rejects payloads Rust cannot reproduce]]
 @pytest.mark.parametrize(
     "value",
     [
@@ -127,7 +127,7 @@ def _assert_identical(data: Any, **kwargs: Any) -> None:
     assert rust_dicttoxml(data, **kwargs) == py_dicttoxml.dicttoxml(data, **kwargs)
 
 
-# @lat: [[tests#Rust backend parity#Admitted payloads render identically]]
+# @lat: [[tests#Conversion behavior#Rust backend parity#Admitted payloads render identically]]
 @requires_rust
 @pytest.mark.parametrize("combo", OPTION_MATRIX)
 def test_regression_payloads_render_identically(combo: tuple[bool, ...]) -> None:
@@ -201,7 +201,6 @@ def _random_payload(rng: random.Random) -> Any:
     return [_random_value(rng, 1) for _ in range(rng.randint(0, 4))]
 
 
-# @lat: [[tests#Rust backend parity#Admitted payloads render identically]]
 @requires_rust
 def test_randomized_payloads_render_identically() -> None:
     """Differential check over the option matrix with a fixed seed for reproducibility."""
@@ -220,7 +219,7 @@ def test_randomized_payloads_render_identically() -> None:
     assert compared > 500, f"differential coverage collapsed to {compared} comparisons"
 
 
-# @lat: [[tests#Rust backend parity#Native and Python gates agree]]
+# @lat: [[tests#Conversion behavior#Rust backend parity#Native and Python gates agree]]
 @requires_rust
 def test_native_and_python_gates_agree() -> None:
     """The native gate is an optimization, so it must decide exactly as Python does.

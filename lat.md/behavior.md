@@ -30,7 +30,7 @@ Default output includes an XML declaration, wraps content in `all`, stays compac
 
 The fast backend selector falls back to the pure Python serializer for root scalar payloads so values like `0`, `false`, and `""` keep the historical `<item>` element inside the configured root wrapper.
 
-The Rust fast path in [[rust/src/lib.rs#write_dict_contents]] and [[rust/src/lib.rs#write_list_contents]] mirrors those Python list-wrapper rules. `list_headers=True` suppresses the outer list container and repeats the parent tag only for nested dict items, while primitive items still use the same scalar tags that Python emits.
+The Rust fast path in [[rust/src/lib.rs#write_dict_contents]] and [[rust/src/lib.rs#write_convert_list]] mirrors those Python list-wrapper rules. `list_headers=True` suppresses the outer list container and repeats the parent tag only for nested dict items, while primitive items still use the same scalar tags that Python emits.
 
 ## XPath 3.1 format
 

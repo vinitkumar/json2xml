@@ -80,8 +80,7 @@ Ready to contribute? Here's how to set up `json2xml` for local development.
     $ cd json2xml/
     $ uv venv
     $ source .venv/bin/activate
-    $ uv pip install -r requirements-dev.txt
-    $ uv pip install -e .
+    $ uv pip install -e ".[dev]"
 
 4. Create a branch for local development::
 
@@ -140,7 +139,7 @@ Install Rust and maturin::
 
 ::
 
-    $ python benchmark_rust.py
+    $ python benchmarks/benchmark_rust.py
 
 **Rust Code Structure**
 
@@ -182,12 +181,9 @@ To run a subset of tests::
 Deploying
 ---------
 
-A reminder for the maintainers on how to deploy.
-Make sure all your changes are committed (including an entry in HISTORY.rst).
-Then run::
+A reminder for maintainers on how to deploy:
 
-Update the version in pyproject.toml and json2xml/__init__.py
-$ git push
-$ git push --tags
-
-Travis will then deploy to PyPI if tests pass.
+#. Update the version in ``pyproject.toml`` and ``json2xml/__init__.py``.
+#. Add the release notes to ``HISTORY.rst``.
+#. Run ``make test-all`` and ``make dist``.
+#. Publish the verified artifacts with ``uv publish dist/*``.

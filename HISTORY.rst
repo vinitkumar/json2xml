@@ -1,4 +1,15 @@
 
+Next
+====
+
+  * fix: enforce conversion output limits from generated UTF-8 bytes instead of rejecting valid payloads with a conservative estimate
+  * fix: reject unsupported falsy objects consistently instead of serializing them as null
+  * fix: keep public scalar converter attribute dictionaries unchanged
+  * perf: validate common ASCII XML attribute names without constructing a DOM
+  * chore: align local pytest, pre-commit, release, and Rust CI configuration with the supported toolchain
+  * chore: move benchmark scripts under ``benchmarks/`` and make ``pyproject.toml`` plus ``uv.lock`` the only dependency declaration
+
+
 6.5.1 / 2026-08-05
 ==================
 

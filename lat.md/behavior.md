@@ -42,7 +42,7 @@ When `xpath_format=True`, [[json2xml/dicttoxml.py#dicttoxml]] delegates payload 
 
 Opt-in pretty printing indents trusted serializer output without constructing a second XML DOM.
 
-[[json2xml/json2xml.py#Json2xml#to_xml]] rejects excessive depth, item counts, conservative output estimates, and exact encoded output sizes. Its lexical formatter rejects malformed markup, DTDs, and entities while enforcing the pretty-output byte limit.
+[[json2xml/json2xml.py#Json2xml#to_xml]] rejects excessive depth and item counts before conversion. Compact output is bounded as UTF-8 bytes are emitted, and the lexical formatter also enforces the final pretty-output byte limit while rejecting malformed markup, DTDs, and entities.
 
 ## XML output safety
 

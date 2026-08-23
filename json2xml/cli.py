@@ -81,7 +81,7 @@ class CLIConversionOptions:
     list_headers: bool
 
     @classmethod
-    def from_namespace(cls, args: argparse.Namespace) -> "CLIConversionOptions":
+    def from_namespace(cls, args: argparse.Namespace) -> CLIConversionOptions:
         return cls(
             input_file=args.input_file,
             url=args.url,

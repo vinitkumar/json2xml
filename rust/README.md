@@ -109,5 +109,5 @@ python -m pytest ../tests/
 
 ```bash
 cd ..
-python benchmark_rust.py
+python benchmarks/benchmark_rust.py
 ```

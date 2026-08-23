@@ -204,9 +204,9 @@ Opt-in pretty printing should reject an exponential entity-expansion payload bef
 
 ### Conversion resource limits
 
-Conversion should reject excessive nesting, item counts, and conservative output estimates before serialization, then enforce the exact byte limit on compact and pretty results.
+Conversion should reject excessive nesting and item counts before serialization, then enforce exact generated-byte limits without rejecting valid compact output based on an estimate.
 
-Limit validation rejects booleans, non-integers, and non-positive values. Tests cover preflight estimates, exact backend bytes, and indentation added only by pretty output.
+Limit validation rejects booleans, non-integers, and non-positive values. Tests cover exact backend bytes and indentation added only by pretty output.
 
 ### Pretty printing avoids DOM reparsing
 
@@ -250,13 +250,15 @@ Common built-in numbers should avoid abstract-class dispatch while `Decimal`, `F
 
 ### Exact-type dispatch preserves subclass fallbacks
 
-Exact native JSON types should use direct hot paths while compatible numeric, string, dictionary, and sequence subclasses retain the established fallback behavior.
+Exact native JSON types should use direct hot paths while compatible subclasses retain fallback behavior and unsupported objects raise consistently regardless of truthiness.
 
 The complete Python suite is also a 100% statement-coverage gate so these less common compatibility paths cannot silently fall out of validation.
 
 ### Valid-name helpers preserve caller attrs
 
 Helpers that receive prevalidated XML names should add type metadata only to the emitted element and must not mutate caller-owned attribute dictionaries.
+
+Public scalar helpers should provide the same non-mutating contract even when they normalize an invalid XML name and add metadata.
 
 ### Container helpers preserve caller attrs
 
@@ -272,7 +274,7 @@ XML name validation should agree across the ASCII fast path, parser-backed path,
 
 ### XML attribute name validation
 
-Attribute name validation should reject malformed custom attribute keys while preserving parser-accepted edge names such as underscores, hyphens, and xml-prefixed names.
+Attribute name validation should accept ordinary ASCII names without a parser and reject malformed custom keys while preserving parser-accepted edge names.
 
 ### Rust invalid-name attrs escape once
 

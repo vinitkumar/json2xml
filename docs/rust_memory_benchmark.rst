@@ -33,7 +33,7 @@ The memory result matches the implementation change: the previous version held r
 Methodology
 -----------
 
-The benchmark uses ``benchmark_memory_rust.py`` with a deterministic generated payload so the Rust fast path can be measured without file parsing or pure-Python fallback behavior.
+The benchmark uses ``benchmarks/benchmark_memory_rust.py`` with a deterministic generated payload so the Rust fast path can be measured without file parsing or pure-Python fallback behavior.
 
 * Machine: Apple Silicon arm64
 * OS: macOS 26.5.1
@@ -136,6 +136,6 @@ Run each version in a fresh process after installing the desired Rust extension 
 
    python3 -m maturin develop --release --offline
    hyperfine --runs 5 --show-output --export-json /private/tmp/json2xml-rust-memory-hyperfine.json \
-     'python3 benchmark_memory_rust.py --records 100000 --label current-hyperfine'
+     'python3 benchmarks/benchmark_memory_rust.py --records 100000 --label current-hyperfine'
 
 For the previous comparison, install commit ``7dd86b0`` in a temporary worktree, then run the same command from the main checkout so the benchmark script stays identical.

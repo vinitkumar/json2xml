@@ -73,6 +73,16 @@ def test_fast_wrapper_uses_rust_when_available_for_supported_options(
     )
 
 
+def test_fast_wrapper_enforces_output_limit_for_rust_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Exact byte limits also apply when the optional Rust backend renders."""
+    _force_rust_backend(monkeypatch)
+
+    with pytest.raises(ValueError, match="XML output size limit exceeded"):
+        fast_module.dicttoxml({"name": "Ada"}, max_output_bytes=6)
+
+
 @pytest.mark.parametrize(
     ("kwargs", "expected"),
     [

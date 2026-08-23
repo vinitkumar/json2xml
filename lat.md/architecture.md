@@ -16,7 +16,7 @@ The pure Python serializer recursively maps Python values to XML elements, attri
 
 The `dicttoxml()` entry point now normalizes options into `SerializerConfig` and delegates document shaping to a small renderer seam inside [[json2xml/dicttoxml.py#dicttoxml]]. That keeps XPath document framing, namespace emission, and root wrapping separate from the recursive element walkers.
 
-The recursive serializer still streams normal and XPath serialization through [[json2xml/dicttoxml.py#_XMLWriter]] so dict and list payloads do not allocate a complete string for each nested subtree. Public helpers such as `convert_dict()` still return strings for compatibility by delegating to the same append path, while library and CLI conversions write UTF-8 bytes incrementally and return the final `bytes` object. Attribute formatting stays centralized through `make_attrstring()`, and `@attrs`/`@val` normalization stays local to dict element handling so caller-owned metadata is never mutated.
+The recursive serializer still streams normal and XPath serialization through [[json2xml/dicttoxml.py#_XMLWriter]] so dict and list payloads do not allocate a complete string for each nested subtree. The writer can enforce an exact UTF-8 byte ceiling before each write. Public helpers such as `convert_dict()` still return strings for compatibility by delegating to the same append path, while library and CLI conversions write UTF-8 bytes incrementally and return the final `bytes` object. Attribute formatting stays centralized through `make_attrstring()`, and scalar plus `@attrs`/`@val` paths copy caller metadata before adding normalized names or types.
 
 Text, CDATA, custom attributes, and namespace declarations share XML 1.0 character validation. Namespace declarations additionally validate prefixes before the renderer appends them to the root element.
 
@@ -42,11 +42,11 @@ Release and CI workflows install the pinned Rust toolchain before building wheel
 
 Make-based lint, type-check, and Python test targets run through uv's locked development environment so results do not depend on globally installed tools or optional extensions.
 
-The shared `UV_RUN` command installs the `dev` extra from `uv.lock`. The type-check target overlays `ty`, while test targets use the same isolated dependency set and leave Rust extension integration to its dedicated workflow.
+The shared `UV_RUN` command installs the complete `dev` extra from `uv.lock`. `pyproject.toml` and `uv.lock` are the only dependency declaration, so no pinned requirements files can drift from them. The type-check target overlays `ty`, while pytest configuration has one source in `pyproject.toml` and enforces 100% coverage for bare local runs. Rust extension integration stays in its dedicated workflow.
 
 ## Release packaging
 
-Package releases keep the Python wrapper and Rust accelerator requirements aligned so optional fast installs receive compatible wheels.
+Package releases keep the Python wrapper and Rust accelerator requirements aligned and use `uv build`/`uv publish` so optional fast installs receive compatible wheels.
 
 The Python package version lives in `pyproject.toml` and `json2xml/__init__.py`. The Rust accelerator version lives in both `rust/Cargo.toml` and `rust/pyproject.toml`, and the Python `fast` extra should require the Rust package version that contains any expected accelerator behavior. Publish and verify the Rust package before updating that Python requirement and lockfile. Release notes live in `HISTORY.rst`, with the current release also summarized in `RELEASE_NOTES.md` for tag and PyPI copy.
 
@@ -56,11 +56,11 @@ The benchmark docs record measured implementation tradeoffs so users can choose 
 
 The May 2026 benchmark on Apple Silicon shows the Rust extension as the best option for Python library calls, with 4-14x speedups over the optimized pure Python path and no process overhead. Go and Zig remain useful for native CLI workflows where startup cost is acceptable.
 
-Reproduction docs require contributors to record machine, OS, Python, and tool availability before comparing results. `benchmark_all.py` mixes library calls and CLI subprocesses intentionally, so its Go and Zig rows include process startup overhead.
+Reproduction docs require contributors to record machine, OS, Python, and tool availability before comparing results. `benchmarks/benchmark_all.py` mixes library calls and CLI subprocesses intentionally, so its Go and Zig rows include process startup overhead.
 
-The August 2026 public-wrapper benchmark uses [[benchmark_security_hardening.py#main]] to compare pre-hardening `826439f` with hardened `48dfd38` using fresh ABBA/BAAB-interleaved workers.
+The August 2026 public-wrapper benchmark uses [[benchmarks/benchmark_security_hardening.py#main]] to compare pre-hardening `826439f` with hardened `48dfd38` using fresh ABBA/BAAB-interleaved workers.
 
-Its [[benchmark_security_hardening.py#make_payload]] generator derives every field from a record index, while four workers × 17 samples give each revision 68 observations per cell. Raw JSON includes every timing plus output type, byte count, and SHA-256.
+Its [[benchmarks/benchmark_security_hardening.py#make_payload]] generator derives every field from a record index, while four workers × 17 samples give each revision 68 observations per cell. Raw JSON includes every timing plus output type, byte count, and SHA-256.
 
 Harness subprocesses use inline argv lists with shell parsing disabled. Revision arguments follow Git's end-of-options marker, and worktrees receive only full commit IDs resolved by Git.
 
@@ -70,9 +70,9 @@ An identical uv-managed CPython 3.15.0rc1 follow-up confirmed the result: defaul
 
 The detailed record includes interquartile ranges, exact uv and interpreter provenance, and output checks showing that compact bytes remained identical across revisions.
 
-The June 2026 Rust memory benchmark uses [[benchmark_memory_rust.py#main]] under hyperfine to compare release builds in fresh Python processes. The bytes-writer implementation cuts serializer peak RSS by about half for large outputs, with a documented throughput tradeoff.
+The June 2026 Rust memory benchmark uses [[benchmarks/benchmark_memory_rust.py#main]] under hyperfine to compare release builds in fresh Python processes. The bytes-writer implementation cuts serializer peak RSS by about half for large outputs, with a documented throughput tradeoff.
 
-The June 2026 multi-interpreter CLI rerun uses [[benchmark_multi_python.py#main]] with per-interpreter virtual environments. On the recorded Apple Silicon run, CPython 3.15.0rc1 beat CPython 3.14.6 on every case, PyPy 3.11.15 only won the largest case, and Go remained the fastest end-to-end CLI path overall.
+The June 2026 multi-interpreter CLI rerun uses [[benchmarks/benchmark_multi_python.py#main]] with per-interpreter virtual environments. On the recorded Apple Silicon run, CPython 3.15.0rc1 beat CPython 3.14.6 on every case, PyPy 3.11.15 only won the largest case, and Go remained the fastest end-to-end CLI path overall.
 
 The Rust serializer's bytes-writer hot path uses monomorphized `Write` helpers and a bounded 16 KiB buffer instead of dynamic dispatch and one output write per XML fragment, reducing CPU overhead while retaining direct output into the final Python bytes object and its lower peak-memory profile. A controlled CPython 3.14 benchmark improved a 5,000-record payload from roughly 4.8 ms to 2.4 ms median while keeping the 100,000-record serializer delta near 80 MiB.
 

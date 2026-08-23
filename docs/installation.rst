@@ -77,8 +77,7 @@ For contributing to json2xml, set up a development environment:
     $ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
     # Install dependencies
-    $ uv pip install -r requirements-dev.txt
-    $ uv pip install -e .
+    $ uv pip install -e ".[dev]"
 
 
 Requirements

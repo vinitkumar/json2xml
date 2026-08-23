@@ -19,6 +19,7 @@ class ConversionRequest:
     xml_namespaces: dict[str, Any] | None
     list_headers: bool
     xpath_format: bool
+    max_output_bytes: int | None = None
 
 
 class BackendAdapter(Protocol):

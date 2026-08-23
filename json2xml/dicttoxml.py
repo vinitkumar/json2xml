@@ -22,13 +22,20 @@ _XML_ESCAPE_CHARS = frozenset("&\"'<>")
 class _XMLWriter:
     """Small UTF-8 byte writer used by the internal streaming serializer."""
 
-    __slots__ = ("_buffer",)
+    __slots__ = ("_buffer", "_max_output_bytes")
 
-    def __init__(self) -> None:
+    def __init__(self, max_output_bytes: int | None = None) -> None:
         self._buffer = BytesIO()
+        self._max_output_bytes = max_output_bytes
 
     def write(self, value: str) -> None:
-        self._buffer.write(value.encode("utf-8"))
+        encoded = value.encode("utf-8")
+        if (
+            self._max_output_bytes is not None
+            and self._buffer.tell() + len(encoded) > self._max_output_bytes
+        ):
+            raise ValueError("XML output size limit exceeded")
+        self._buffer.write(encoded)
 
     def to_bytes(self) -> bytes:
         return self._buffer.getvalue()
@@ -211,6 +218,7 @@ def _is_fast_valid_xml_name(key: str) -> bool:
     return all(char.isalnum() or char in {"-", "_", "."} for char in key[1:])
 
 
+# Keep caller-controlled names bounded so cache churn cannot grow memory indefinitely.
 @lru_cache(maxsize=4096)
 def key_is_valid_xml(key: str) -> bool:
     """
@@ -238,10 +246,13 @@ def key_is_valid_xml(key: str) -> bool:
         return False
 
 
+# Keep caller-controlled names bounded so cache churn cannot grow memory indefinitely.
 @lru_cache(maxsize=4096)
 def key_is_valid_xml_attr(key: str) -> bool:
     """Return True when key can be emitted directly as an XML attribute name."""
     key = str(key)
+    if _is_fast_valid_xml_name(key):
+        return True
     if not key:
         return False
 
@@ -876,7 +887,7 @@ def _append_convert_dict(
                 item_wrap=item_wrap,
                 list_headers=list_headers,
             )
-        elif not val:
+        elif val is None:
             output.write(convert_none_valid_name(key, attr_type, attr))
         else:
             raise TypeError(f"Unsupported data type: {val} ({type(val).__name__})")
@@ -1025,8 +1036,7 @@ def convert_kv(
     cdata: bool = False,
 ) -> str:
     """Converts a number, string, or datetime into an XML element"""
-    if attr is None:
-        attr = {}
+    attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
 
     # Convert datetime to isoformat string
@@ -1058,8 +1068,7 @@ def convert_bool(
     key: str, val: bool, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
 ) -> str:
     """Converts a boolean into an XML element"""
-    if attr is None:
-        attr = {}
+    attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -1083,8 +1092,7 @@ def convert_none(
     key: str, attr_type: bool, attr: dict[str, Any] | None = None, cdata: bool = False
 ) -> str:
     """Converts a null value into an XML element"""
-    if attr is None:
-        attr = {}
+    attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
 
     if attr_type:
@@ -1116,6 +1124,7 @@ class SerializerConfig:
     xml_namespaces: dict[str, Any] | None
     list_headers: bool
     xpath_format: bool
+    max_output_bytes: int | None = None
 
 
 class _XPathDocumentRenderer:
@@ -1125,7 +1134,7 @@ class _XPathDocumentRenderer:
         self._config = config
 
     def render(self) -> bytes:
-        output = _XMLWriter()
+        output = _XMLWriter(self._config.max_output_bytes)
         output.write('<?xml version="1.0" encoding="UTF-8" ?>')
         tag_name = get_xpath31_tag_name(self._config.obj)
         if tag_name in {"map", "array"}:
@@ -1189,7 +1198,7 @@ class _StandardDocumentRenderer:
         self._config = config
 
     def render(self) -> bytes:
-        output = _XMLWriter()
+        output = _XMLWriter(self._config.max_output_bytes)
         if self._config.root:
             self._render_with_root(output)
         else:
@@ -1253,6 +1262,7 @@ def dicttoxml(
     xml_namespaces: dict[str, Any] | None = None,
     list_headers: bool = False,
     xpath_format: bool = False,
+    max_output_bytes: int | None = None,
 ) -> bytes:
     """
     Converts a python object into XML.
@@ -1348,6 +1358,9 @@ def dicttoxml(
         Uses type-based element names (map, array, string, number, boolean, null)
         with key attributes and the http://www.w3.org/2005/xpath-functions namespace.
 
+    :param max_output_bytes:
+        Optional exact UTF-8 byte limit enforced while serializing.
+
         Example:
 
         .. code-block:: python
@@ -1404,5 +1417,6 @@ def dicttoxml(
         xml_namespaces=xml_namespaces,
         list_headers=list_headers,
         xpath_format=xpath_format,
+        max_output_bytes=max_output_bytes,
     )
     return _SerializerEngine(config).render()

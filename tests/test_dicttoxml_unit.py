@@ -4,6 +4,7 @@ import numbers
 from decimal import Decimal
 from fractions import Fraction
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 
@@ -98,6 +99,15 @@ def test_exact_type_dispatch_preserves_subclass_fallbacks() -> None:
         b'<?xml version="1.0" encoding="UTF-8" ?>'
         b'<root><values type="list"><item type="number">7</item></values></root>'
     )
+
+
+def test_falsy_unsupported_objects_raise_instead_of_becoming_null() -> None:
+    class FalsyUnsupported:
+        def __len__(self) -> int:
+            return 0
+
+    with pytest.raises(TypeError, match="Unsupported data type"):
+        dicttoxml.dicttoxml({"value": FalsyUnsupported()})
 
 
 def test_convert_preserves_root_scalar_and_sequence_subclasses() -> None:
@@ -236,6 +246,23 @@ def test_valid_name_helpers_set_type_without_mutating_caller_attrs() -> None:
     assert base_attrs == {"id": "shared"}
 
 
+def test_public_scalar_helpers_do_not_mutate_caller_attrs() -> None:
+    converters = (
+        lambda attrs: dicttoxml.convert_kv("invalid&key", "Bike", True, attrs),
+        lambda attrs: dicttoxml.convert_bool("invalid&key", True, True, attrs),
+        lambda attrs: dicttoxml.convert_none("invalid&key", True, attrs),
+    )
+
+    for convert in converters:
+        attrs = {"id": "shared"}
+
+        result = convert(attrs)
+
+        assert 'name="invalid&amp;key"' in result
+        assert 'type="' in result
+        assert attrs == {"id": "shared"}
+
+
 def test_valid_name_helpers_keep_existing_attrs_without_attr_type() -> None:
     base_attrs = {"name": "invalid key"}
 
@@ -334,8 +361,14 @@ def test_key_is_valid_xml_fast_and_parse_paths_are_stable_under_cache() -> None:
 
 
 # @lat: [[tests#XML helper behavior#XML attribute name validation]]
-def test_xml_attribute_name_validation_accepts_only_parser_valid_names() -> None:
+def test_xml_attribute_name_validation_accepts_only_parser_valid_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     dicttoxml.key_is_valid_xml_attr.cache_clear()
+    from defusedxml.minidom import parseString
+
+    parse_string = Mock(wraps=parseString)
+    monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
 
     cases = {
         "a_b": True,
@@ -353,6 +386,7 @@ def test_xml_attribute_name_validation_accepts_only_parser_valid_names() -> None
 
     assert first == cases
     assert second == cases
+    assert parse_string.call_count == 4
     dicttoxml.validate_xml_attr_names({key: "value" for key, is_valid in cases.items() if is_valid})
     for key, is_valid in cases.items():
         if not is_valid:

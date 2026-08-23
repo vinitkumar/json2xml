@@ -17,12 +17,11 @@ def _positive_limit(name: str, value: int) -> int:
 
 
 def _validate_conversion_budget(
-    data: JSONValue, max_depth: int, max_items: int, max_output_bytes: int
+    data: JSONValue, max_depth: int, max_items: int
 ) -> None:
-    """Reject inputs whose structure or conservative encoded size exceeds a limit."""
+    """Reject inputs whose nesting depth or item count exceeds a limit."""
     stack: list[tuple[Any, int]] = [(data, 0)]
     items = 0
-    estimated_bytes = 128
     while stack:
         value, depth = stack.pop()
         items += 1
@@ -31,17 +30,10 @@ def _validate_conversion_budget(
         if depth > max_depth:
             raise InvalidDataError("JSON nesting depth limit exceeded")
         if isinstance(value, Mapping):
-            estimated_bytes += 256 * len(value)
-            for key, child in value.items():
-                estimated_bytes += 6 * len(str(key).encode("utf-8"))
+            for child in value.values():
                 stack.append((child, depth + 1))
         elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
-            estimated_bytes += 128 * len(value)
             stack.extend((child, depth + 1) for child in value)
-        else:
-            estimated_bytes += 6 * len(str(value).encode("utf-8")) + 128
-        if estimated_bytes > max_output_bytes:
-            raise InvalidDataError("XML output size limit exceeded")
 
 
 def _pretty_xml(xml_data: bytes, max_output_bytes: int) -> str:
@@ -196,9 +188,7 @@ class Json2xml:
             rejects the data.
         """
         if self.data is not None:
-            _validate_conversion_budget(
-                self.data, self.max_depth, self.max_items, self.max_output_bytes
-            )
+            _validate_conversion_budget(self.data, self.max_depth, self.max_items)
             try:
                 xml_data = dicttoxml.dicttoxml(
                     self.data,
@@ -209,9 +199,10 @@ class Json2xml:
                     xpath_format=self.xpath_format,
                     cdata=self.cdata,
                     list_headers=self.list_headers,
+                    max_output_bytes=self.max_output_bytes,
                 )
             except ValueError as error:
-                raise InvalidDataError from error
+                raise InvalidDataError(str(error)) from error
             if len(xml_data) > self.max_output_bytes:
                 raise InvalidDataError("XML output size limit exceeded")
             if self.pretty:

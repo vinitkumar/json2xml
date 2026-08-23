@@ -30,7 +30,7 @@ PYTHON_CLI="${PYTHON_CLI:-python -m json2xml.cli}"
 GO_CLI="${GO_CLI:-json2xml-go}"
 ITERATIONS=10
 SMALL_JSON='{"name": "John", "age": 30, "city": "New York"}'
-MEDIUM_JSON_FILE="${MEDIUM_JSON_FILE:-$SCRIPT_DIR/examples/bigexample.json}"
+MEDIUM_JSON_FILE="${MEDIUM_JSON_FILE:-$SCRIPT_DIR/../examples/bigexample.json}"
 MEDIUM_JSON="$(cat "$MEDIUM_JSON_FILE")"
 LARGE_JSON_FILE="/tmp/json2xml_benchmark_large.json"
 

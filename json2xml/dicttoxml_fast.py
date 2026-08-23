@@ -90,7 +90,7 @@ class _RustBackendAdapter:
 
     def render(self, request: ConversionRequest) -> bytes:
         assert _rust_dicttoxml is not None
-        return _rust_dicttoxml(
+        output = _rust_dicttoxml(
             request.obj,
             root=request.root,
             custom_root=request.custom_root,
@@ -99,6 +99,12 @@ class _RustBackendAdapter:
             cdata=request.cdata,
             list_headers=request.list_headers,
         )
+        if (
+            request.max_output_bytes is not None
+            and len(output) > request.max_output_bytes
+        ):
+            raise ValueError("XML output size limit exceeded")
+        return output
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,6 +132,7 @@ class _PythonBackendAdapter:
             xml_namespaces=request.xml_namespaces,
             list_headers=request.list_headers,
             xpath_format=request.xpath_format,
+            max_output_bytes=request.max_output_bytes,
         )
 
 
@@ -148,6 +155,7 @@ def dicttoxml(
     xml_namespaces: dict[str, Any] | None = None,
     list_headers: bool = False,
     xpath_format: bool = False,
+    max_output_bytes: int | None = None,
 ) -> bytes:
     """
     Convert a Python dict or list to XML.
@@ -167,6 +175,7 @@ def dicttoxml(
         xml_namespaces: XML namespace definitions (not supported in Rust)
         list_headers: Repeat parent tag for each list item (default: False)
         xpath_format: Use XPath 3.1 format (not supported in Rust)
+        max_output_bytes: Reject output larger than this encoded byte count
 
     Returns:
         UTF-8 encoded XML as bytes
@@ -183,6 +192,7 @@ def dicttoxml(
         xml_namespaces=xml_namespaces,
         list_headers=list_headers,
         xpath_format=xpath_format,
+        max_output_bytes=max_output_bytes,
     )
     return _BACKEND_SELECTOR.render(request)
 

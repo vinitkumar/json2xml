@@ -44,6 +44,12 @@ Opt-in pretty printing indents during serialization, so no generated XML is ever
 
 [[json2xml/json2xml.py#Json2xml#to_xml]] rejects excessive depth and item counts before conversion, then passes an indent unit to the serializer when pretty output is requested. Compact and pretty output are both bounded as UTF-8 bytes are emitted, and indentation is counted in that budget because the writer emits it. Because the library never reads XML back, malformed markup, DTDs, and entities have no formatter to reach.
 
+## Generated documents are well formed
+
+Every option combination emits markup an XML 1.0 parser accepts.
+
+Element names are normalized wherever one is written, including the parent name a dictionary borrows under `list_headers`. A rootless document has no parent name to borrow, so that member falls back to `key` and carries the empty original as metadata, exactly as a scalar in the same position already does. Namespace prefixes are out of scope: a key such as `k:v` is emitted verbatim and binding its prefix is the caller's responsibility.
+
 ## XML output safety
 
 Every serializer mode rejects XML 1.0-forbidden characters and treats namespace metadata as attributes so raw output cannot bypass well-formedness or escaping checks.

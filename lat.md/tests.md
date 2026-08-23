@@ -202,6 +202,14 @@ The public wrapper should return Unicode text for pretty output and UTF-8 bytes 
 
 Default library conversion should return serializer bytes without building a second DOM copy, while pretty printing remains available through an explicit opt-in.
 
+### Generated documents are well formed
+
+No combination of `root`, `item_wrap`, and `list_headers` may emit markup a parser rejects. The check runs expat without namespace processing, because an unbound prefix from a colon key is a namespace error rather than a well-formedness one.
+
+### Rootless list headers name their members
+
+A dictionary borrowing a parent tag under `list_headers` should normalize that name like any other element name, so a rootless list of dictionaries produces `key` elements instead of an empty tag.
+
 ### Conversion resource limits
 
 Conversion should reject excessive nesting and item counts before serialization, then enforce exact generated-byte limits without rejecting valid compact output based on an estimate.

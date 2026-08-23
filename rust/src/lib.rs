@@ -595,9 +595,28 @@ fn write_convert_list<W: Write + ?Sized>(
     };
     let scalar_name = scalar_name_attr.as_ref().map(|(_, v)| v.as_ref());
 
+    // Dict members under list_headers borrow the parent as their tag. A rootless document
+    // has no parent name, so it is normalized like any other element name rather than
+    // emitting the empty tag "<>".
+    let (header_key, header_name_attr) = make_valid_xml_name(parent);
+    let header_name = if cfg.list_headers {
+        header_name_attr.as_ref().map(|(_, v)| v.as_ref())
+    } else {
+        None
+    };
+
     for item in list.iter() {
         if let Ok(dict) = item.cast::<PyDict>() {
-            write_dict2xml_str(py, out, None, dict, item_name, true, parent, cfg)?;
+            write_dict2xml_str(
+                py,
+                out,
+                header_name,
+                dict,
+                item_name,
+                true,
+                &header_key,
+                cfg,
+            )?;
         } else if let Ok(inner) = item.cast::<PyList>() {
             write_list2xml_str(py, out, None, inner, item_name, cfg)?;
         } else if item.is_none() || item.is_instance_of::<PyBool>() {

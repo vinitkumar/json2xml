@@ -992,6 +992,10 @@ def _append_convert_list(
     item_name, item_name_attr = make_valid_xml_name(item_name, {})
     scalar_key = item_name if item_wrap else parent
     scalar_key, scalar_key_attr = make_valid_xml_name(scalar_key, {})
+    # Dict members under list_headers borrow the parent as their tag. A rootless document
+    # has no parent name, so normalize it like any other element name instead of emitting
+    # the empty tag "<>".
+    header_key, header_key_attr = make_valid_xml_name(parent, {})
     this_id = get_unique_id(parent) if ids else None
 
     for i, item in enumerate(items):
@@ -1016,6 +1020,8 @@ def _append_convert_list(
                 attr.update(item_name_attr)
             output.element(convert_bool_valid_name(item_name, item, attr_type, attr))
         elif kind == _KIND_DICT:
+            if list_headers and header_key_attr:
+                attr.update(header_key_attr)
             _append_dict2xml_str(
                 output,
                 attr_type=attr_type,
@@ -1026,7 +1032,7 @@ def _append_convert_list(
                 item_name=item_name,
                 item_wrap=item_wrap,
                 parentIsList=True,
-                parent=parent,
+                parent=header_key,
                 list_headers=list_headers,
             )
         elif kind == _KIND_SEQUENCE:

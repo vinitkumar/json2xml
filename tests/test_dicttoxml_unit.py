@@ -451,3 +451,80 @@ def test_xml_attribute_name_validation_accepts_only_parser_valid_names(
         if not is_valid:
             with pytest.raises(ValueError, match="Invalid XML attribute name"):
                 dicttoxml.validate_xml_attr_names({key: "value"})
+
+
+def _is_well_formed(xml_bytes: bytes, has_root: bool) -> bool:
+    """Return whether output satisfies the XML 1.0 well-formedness constraints.
+
+    expat is created without namespace processing on purpose: an undeclared prefix in a key
+    such as ``k:v`` is a namespace error, not a well-formedness one, and the serializer has
+    never claimed to resolve prefixes. The input is output this test just generated, so no
+    untrusted document is being parsed.
+    """
+    from xml.parsers.expat import ParserCreate
+
+    document = xml_bytes if has_root else b"<w>" + xml_bytes + b"</w>"
+    try:
+        ParserCreate().Parse(document, True)
+    except Exception:
+        return False
+    return True
+
+
+# @lat: [[tests#XML output safety#Generated documents are well formed]]
+@pytest.mark.parametrize("root", [True, False])
+@pytest.mark.parametrize("item_wrap", [True, False])
+@pytest.mark.parametrize("list_headers", [True, False])
+def test_generated_documents_are_well_formed(
+    root: bool, item_wrap: bool, list_headers: bool
+) -> None:
+    """No option combination may emit markup an XML parser rejects.
+
+    A rootless list of dicts under ``list_headers`` used to borrow an empty parent name and
+    emit ``<>``, which no parser accepts.
+    """
+    payloads: list[Any] = [
+        [{"b": 2}],
+        [{"b": 2}, 1],
+        [{"b": 2}, {"c": 3}],
+        [[{"b": 2}]],
+        [],
+        [None, True, 1.5, "s"],
+        {"a": [{"b": 2}]},
+        {"a": [[{"b": 2}]]},
+        {"a b": [{"b": 2}]},
+        {"123": [{"b": 2}]},
+    ]
+    for data in payloads:
+        rendered = dicttoxml.dicttoxml(
+            data, root=root, item_wrap=item_wrap, list_headers=list_headers
+        )
+        assert _is_well_formed(rendered, root), (
+            f"malformed output for {data!r} "
+            f"(root={root}, item_wrap={item_wrap}, list_headers={list_headers}): "
+            f"{rendered!r}"
+        )
+
+
+# @lat: [[tests#Conversion behavior#Rootless list headers name their members]]
+@pytest.mark.parametrize(
+    ("item_wrap", "expected"),
+    [
+        (True, b'<key><b type="int">2</b></key>'),
+        (False, b'<key name="" type="dict"><b type="int">2</b></key>'),
+    ],
+)
+def test_rootless_list_headers_name_dict_members(
+    item_wrap: bool, expected: bytes
+) -> None:
+    """A borrowed parent name is normalized the same way every other element name is.
+
+    Without a root there is no parent name to borrow, so the dict falls back to ``key`` and
+    carries the empty original as metadata -- exactly what a scalar in the same position
+    already does.
+    """
+    rendered = dicttoxml.dicttoxml(
+        [{"b": 2}], root=False, item_wrap=item_wrap, list_headers=True
+    )
+
+    assert rendered == expected

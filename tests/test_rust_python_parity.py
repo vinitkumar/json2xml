@@ -145,6 +145,9 @@ def test_regression_payloads_render_identically(combo: tuple[bool, ...]) -> None
         # type="dict" was dropped for unwrapped list members under list_headers.
         {"a": [{"b": 2}, 1]},
         {"a": [{}]},
+        # A rootless list of dicts under list_headers has no parent name to borrow.
+        [{"b": 2}],
+        [{"b": 2}, 1],
         # Names beginning with "xml" were silently renamed to <key name="...">.
         {"xmlfoo": 1, "XML": 2, "xml": 3},
         {"123": "v", "my key": "v", "a&b": "v", "-bad": "v"},

@@ -198,19 +198,19 @@ The public wrapper should return Unicode text for pretty output and UTF-8 bytes 
 
 Default library conversion should return serializer bytes without building a second DOM copy, while pretty printing remains available through an explicit opt-in.
 
-### Pretty printing rejects unsafe XML constructs
-
-Opt-in pretty printing should reject an exponential entity-expansion payload before indentation and expose the rejection as the converter's public invalid-data error.
-
 ### Conversion resource limits
 
 Conversion should reject excessive nesting and item counts before serialization, then enforce exact generated-byte limits without rejecting valid compact output based on an estimate.
 
-Limit validation rejects booleans, non-integers, and non-positive values. Tests cover exact backend bytes and indentation added only by pretty output.
+Limit validation rejects booleans, non-integers, and non-positive values. Tests cover exact backend bytes and the indentation that pretty output adds to that same budget.
 
 ### Pretty printing avoids DOM reparsing
 
-Pretty output should use bounded lexical indentation over trusted serializer output instead of constructing a second DOM, rejecting unterminated, mismatched, or unclosed markup.
+Pretty output should be produced by the serializer itself rather than by constructing or reparsing a DOM.
+
+### Pretty printing indents during serialization
+
+Nested containers should be indented as they are written, and character data should keep its closing tag on the same line.
 
 ### Special keys force Python fallback
 

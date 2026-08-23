@@ -20,7 +20,14 @@ _XML_ESCAPE_CHARS = frozenset("&\"'<>")
 
 
 class _XMLWriter:
-    """Small UTF-8 byte writer used by the internal streaming serializer."""
+    """Small UTF-8 byte writer used by the internal streaming serializer.
+
+    Callers describe structure as they serialize: ``start``/``end`` for
+    container tags, ``element`` for a complete one-line element, and ``write``
+    for character data. Compact output has no layout, so those structural
+    methods are aliases of ``write`` here and the hot path stays at one call
+    per fragment. :class:`_IndentingXMLWriter` gives them meaning.
+    """
 
     __slots__ = ("_buffer", "_max_output_bytes")
 
@@ -37,8 +44,73 @@ class _XMLWriter:
             raise ValueError("XML output size limit exceeded")
         self._buffer.write(encoded)
 
+    element = write
+    start = write
+    end = write
+
     def to_bytes(self) -> bytes:
         return self._buffer.getvalue()
+
+
+class _IndentingXMLWriter(_XMLWriter):
+    """Lay out block structure as serialized fragments arrive.
+
+    Indentation is decided from the calls the serializer already makes, so
+    pretty output never requires a second pass over generated markup.
+    """
+
+    __slots__ = ("_indent", "_depth", "_inline")
+
+    def __init__(self, max_output_bytes: int | None, indent: str) -> None:
+        super().__init__(max_output_bytes)
+        self._indent = indent
+        self._depth = 0
+        self._inline = False
+
+    def write(self, value: str) -> None:
+        """Write character data, which keeps the closing tag on this line."""
+        super().write(value)
+        if value:
+            self._inline = True
+
+    def element(self, value: str) -> None:
+        """Write a complete element on its own line."""
+        self._newline()
+        super().write(value)
+
+    def start(self, value: str) -> None:
+        """Write an opening tag and indent up to the matching end."""
+        self._newline()
+        super().write(value)
+        self._depth += 1
+        self._inline = False
+
+    def end(self, value: str) -> None:
+        """Write the closing tag for the most recent start."""
+        self._depth -= 1
+        if not self._inline:
+            self._newline()
+        super().write(value)
+        self._inline = False
+
+    def _newline(self) -> None:
+        if self._buffer.tell():
+            super().write("\n")
+        if self._depth:
+            super().write(self._indent * self._depth)
+        self._inline = False
+
+    def to_bytes(self) -> bytes:
+        data = super().to_bytes()
+        return data + b"\n" if data else data
+
+
+def _make_writer(max_output_bytes: int | None, indent: str | None) -> _XMLWriter:
+    """Return the writer matching the requested output layout."""
+    if indent is None:
+        return _XMLWriter(max_output_bytes)
+    return _IndentingXMLWriter(max_output_bytes, indent)
+
 
 
 def make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -417,25 +489,25 @@ def _append_xpath31(
     tag_name = get_xpath31_tag_name(obj)
 
     if tag_name == "null":
-        output.write(f"<null{namespace_attr}{key_attr}/>")
+        output.element(f"<null{namespace_attr}{key_attr}/>")
     elif tag_name == "boolean":
-        output.write(f"<boolean{namespace_attr}{key_attr}>{str(obj).lower()}</boolean>")
+        output.element(f"<boolean{namespace_attr}{key_attr}>{str(obj).lower()}</boolean>")
     elif tag_name == "number":
-        output.write(f"<number{namespace_attr}{key_attr}>{obj}</number>")
+        output.element(f"<number{namespace_attr}{key_attr}>{obj}</number>")
     elif tag_name == "string":
-        output.write(f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>")
+        output.element(f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>")
     elif tag_name == "map":
-        output.write(f"<map{namespace_attr}{key_attr}>")
+        output.start(f"<map{namespace_attr}{key_attr}>")
         for key, val in obj.items():
             _append_xpath31(output, val, key)
-        output.write("</map>")
+        output.end("</map>")
     elif tag_name == "array":
-        output.write(f"<array{namespace_attr}{key_attr}>")
+        output.start(f"<array{namespace_attr}{key_attr}>")
         for item in obj:
             _append_xpath31(output, item)
-        output.write("</array>")
+        output.end("</array>")
     else:
-        output.write(f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>")
+        output.element(f"<string{namespace_attr}{key_attr}>{escape_xml(str(obj))}</string>")
 
 
 def convert(
@@ -594,9 +666,11 @@ def _append_convert(
     kind = _classify(obj)
 
     if kind == _KIND_SCALAR:
-        output.write(convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata))
+        output.element(
+            convert_kv(key=item_name, val=obj, attr_type=attr_type, attr={}, cdata=cdata)
+        )
     elif kind == _KIND_BOOL:
-        output.write(convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata))
+        output.element(convert_bool(key=item_name, val=obj, attr_type=attr_type, cdata=cdata))
     elif kind == _KIND_DICT:
         _append_convert_dict(
             output,
@@ -622,9 +696,9 @@ def _append_convert(
             list_headers=list_headers,
         )
     elif kind == _KIND_NONE:
-        output.write(convert_none(key=item_name, attr_type=attr_type, cdata=cdata))
+        output.element(convert_none(key=item_name, attr_type=attr_type, cdata=cdata))
     elif kind == _KIND_DATETIME:
-        output.write(
+        output.element(
             convert_kv(
                 key=item_name,
                 val=obj.isoformat(),
@@ -669,9 +743,9 @@ def _append_dict2xml_str(
 
     if parentIsList and list_headers:
         if len(val_attr) > 0 and not item_wrap:
-            output.write(f"<{parent}{make_attrstring(val_attr)}>")
+            output.start(f"<{parent}{make_attrstring(val_attr)}>")
         else:
-            output.write(f"<{parent}>")
+            output.start(f"<{parent}>")
         _append_rawitem(
             output,
             rawitem,
@@ -683,7 +757,7 @@ def _append_dict2xml_str(
             item_name,
             list_headers,
         )
-        output.write(f"</{parent}>")
+        output.end(f"</{parent}>")
     elif item.get("@flat", False) or (parentIsList and not item_wrap):
         _append_rawitem(
             output,
@@ -697,7 +771,7 @@ def _append_dict2xml_str(
             list_headers,
         )
     else:
-        output.write(f"<{item_name}{make_attrstring(val_attr)}>")
+        output.start(f"<{item_name}{make_attrstring(val_attr)}>")
         _append_rawitem(
             output,
             rawitem,
@@ -709,7 +783,7 @@ def _append_dict2xml_str(
             item_name,
             list_headers,
         )
-        output.write(f"</{item_name}>")
+        output.end(f"</{item_name}>")
 
 
 def _append_rawitem(
@@ -780,7 +854,7 @@ def _append_list2xml_str(
         )
         return
 
-    output.write(f"<{item_name}{make_attrstring(attr)}>")
+    output.start(f"<{item_name}{make_attrstring(attr)}>")
     _append_convert_list(
         output,
         item,
@@ -792,7 +866,7 @@ def _append_list2xml_str(
         item_wrap,
         list_headers=list_headers,
     )
-    output.write(f"</{item_name}>")
+    output.end(f"</{item_name}>")
 
 
 def _append_convert_dict(
@@ -816,13 +890,13 @@ def _append_convert_dict(
         key, attr = make_valid_xml_name(xml_key, attr)
 
         if kind == _KIND_SCALAR:
-            output.write(
+            output.element(
                 convert_kv_valid_name(
                     key=key, val=val, attr_type=attr_type, attr=attr, cdata=cdata
                 )
             )
         elif kind == _KIND_BOOL:
-            output.write(convert_bool_valid_name(key, val, attr_type, attr))
+            output.element(convert_bool_valid_name(key, val, attr_type, attr))
         elif kind == _KIND_DICT:
             _append_dict2xml_str(
                 output,
@@ -849,9 +923,9 @@ def _append_convert_dict(
                 list_headers=list_headers,
             )
         elif kind == _KIND_NONE:
-            output.write(convert_none_valid_name(key, attr_type, attr))
+            output.element(convert_none_valid_name(key, attr_type, attr))
         elif kind == _KIND_DATETIME:
-            output.write(
+            output.element(
                 convert_kv_valid_name(
                     key=key,
                     val=val.isoformat(),
@@ -892,7 +966,7 @@ def _append_convert_list(
             # Scalars are named for the parent when items are not wrapped.
             if scalar_key_attr:
                 attr.update(scalar_key_attr)
-            output.write(
+            output.element(
                 convert_kv_valid_name(
                     key=scalar_key,
                     val=item,
@@ -904,7 +978,7 @@ def _append_convert_list(
         elif kind == _KIND_BOOL:
             if item_name_attr:
                 attr.update(item_name_attr)
-            output.write(convert_bool_valid_name(item_name, item, attr_type, attr))
+            output.element(convert_bool_valid_name(item_name, item, attr_type, attr))
         elif kind == _KIND_DICT:
             _append_dict2xml_str(
                 output,
@@ -934,11 +1008,11 @@ def _append_convert_list(
         elif kind == _KIND_NONE:
             if item_name_attr:
                 attr.update(item_name_attr)
-            output.write(convert_none_valid_name(item_name, attr_type, attr))
+            output.element(convert_none_valid_name(item_name, attr_type, attr))
         elif kind == _KIND_DATETIME:
             if item_name_attr:
                 attr.update(item_name_attr)
-            output.write(
+            output.element(
                 convert_kv_valid_name(
                     key=item_name,
                     val=item.isoformat(),
@@ -1048,6 +1122,7 @@ class SerializerConfig:
     list_headers: bool
     xpath_format: bool
     max_output_bytes: int | None = None
+    indent: str | None = None
 
 
 class _XPathDocumentRenderer:
@@ -1057,15 +1132,15 @@ class _XPathDocumentRenderer:
         self._config = config
 
     def render(self) -> bytes:
-        output = _XMLWriter(self._config.max_output_bytes)
-        output.write('<?xml version="1.0" encoding="UTF-8" ?>')
+        output = _make_writer(self._config.max_output_bytes, self._config.indent)
+        output.element('<?xml version="1.0" encoding="UTF-8" ?>')
         tag_name = get_xpath31_tag_name(self._config.obj)
         if tag_name in {"map", "array"}:
             _append_xpath31(output, self._config.obj, namespace=True)
         else:
-            output.write(f'<map xmlns="{XPATH_FUNCTIONS_NS}">')
+            output.start(f'<map xmlns="{XPATH_FUNCTIONS_NS}">')
             _append_xpath31(output, self._config.obj)
-            output.write("</map>")
+            output.end("</map>")
         return output.to_bytes()
 
 
@@ -1121,7 +1196,7 @@ class _StandardDocumentRenderer:
         self._config = config
 
     def render(self) -> bytes:
-        output = _XMLWriter(self._config.max_output_bytes)
+        output = _make_writer(self._config.max_output_bytes, self._config.indent)
         if self._config.root:
             self._render_with_root(output)
         else:
@@ -1131,8 +1206,8 @@ class _StandardDocumentRenderer:
     def _render_with_root(self, output: _XMLWriter) -> None:
         custom_root, root_attr = make_valid_xml_name(self._config.custom_root, {})
         namespace_str = _NamespaceFormatter.format(self._config.xml_namespaces)
-        output.write('<?xml version="1.0" encoding="UTF-8" ?>')
-        output.write(f"<{custom_root}{make_attrstring(root_attr)}{namespace_str}>")
+        output.element('<?xml version="1.0" encoding="UTF-8" ?>')
+        output.start(f"<{custom_root}{make_attrstring(root_attr)}{namespace_str}>")
         _append_convert(
             output,
             self._config.obj,
@@ -1144,7 +1219,7 @@ class _StandardDocumentRenderer:
             parent=custom_root,
             list_headers=self._config.list_headers,
         )
-        output.write(f"</{custom_root}>")
+        output.end(f"</{custom_root}>")
 
     def _render_fragment(self, output: _XMLWriter) -> None:
         _append_convert(
@@ -1186,6 +1261,7 @@ def dicttoxml(
     list_headers: bool = False,
     xpath_format: bool = False,
     max_output_bytes: int | None = None,
+    indent: str | None = None,
 ) -> bytes:
     """
     Converts a python object into XML.
@@ -1284,6 +1360,11 @@ def dicttoxml(
     :param max_output_bytes:
         Optional exact UTF-8 byte limit enforced while serializing.
 
+    :param indent:
+        Optional indentation unit, such as two spaces. When given, the
+        serializer emits indented output directly instead of returning
+        compact markup that would have to be reformatted afterwards.
+
         Example:
 
         .. code-block:: python
@@ -1341,5 +1422,6 @@ def dicttoxml(
         list_headers=list_headers,
         xpath_format=xpath_format,
         max_output_bytes=max_output_bytes,
+        indent=indent,
     )
     return _SerializerEngine(config).render()

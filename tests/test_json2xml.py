@@ -10,7 +10,7 @@ import pytest
 import xmltodict
 
 from json2xml import json2xml
-from json2xml.json2xml import _positive_limit, _pretty_xml
+from json2xml.json2xml import _positive_limit
 from json2xml.utils import (
     InvalidDataError,
     JSONReadError,
@@ -143,6 +143,7 @@ class TestJson2xml:
                 "cdata": False,
                 "list_headers": False,
                 "max_output_bytes": 10 * 1024 * 1024,
+                "indent": None,
             }
         ]
 
@@ -233,39 +234,6 @@ class TestJson2xml:
             json2xml.Json2xml({"bad": decoded}).to_xml()
         assert pytest_wrapped_e.type == InvalidDataError
 
-    def test_pretty_print_rejects_malformed_generated_xml(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """The streaming formatter rejects unterminated generated markup."""
-        monkeypatch.setattr(
-            "json2xml.json2xml.dicttoxml.dicttoxml",
-            Mock(return_value=b"<root><broken"),
-        )
-
-        with pytest.raises(InvalidDataError):
-            json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
-
-    @pytest.mark.parametrize(
-        "malformed_xml",
-        [
-            b"<root><child></root>",
-            b"<root>",
-            b"<root><![CDATA[unterminated</root>",
-            b"<root><!-- unterminated</root>",
-        ],
-    )
-    def test_pretty_print_rejects_unbalanced_generated_xml(
-        self, monkeypatch: pytest.MonkeyPatch, malformed_xml: bytes
-    ) -> None:
-        """Lexical indentation rejects mismatched, unclosed, and unterminated markup."""
-        monkeypatch.setattr(
-            "json2xml.json2xml.dicttoxml.dicttoxml",
-            Mock(return_value=malformed_xml),
-        )
-
-        with pytest.raises(InvalidDataError, match="Malformed XML generated"):
-            json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
-
     # @lat: [[tests#Conversion behavior#Conversion resource limits]]
     @pytest.mark.parametrize(
         ("data", "limits"),
@@ -315,58 +283,19 @@ class TestJson2xml:
         with pytest.raises(InvalidDataError, match="XML output size limit exceeded"):
             json2xml.Json2xml({}, max_output_bytes=200).to_xml()
 
-    def test_pretty_output_limit_counts_indentation(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_pretty_output_limit_counts_indentation(self) -> None:
         """Pretty-only whitespace is included in the exact output byte budget."""
-        compact = b"<r>" * 10 + b"</r>" * 10
-        monkeypatch.setattr(
-            "json2xml.json2xml.dicttoxml.dicttoxml", Mock(return_value=compact)
-        )
+        data = {"outer": {"inner": {"leaf": "value"}}}
+        compact_size = len(json2xml.Json2xml(data).to_xml() or b"")
 
         with pytest.raises(InvalidDataError, match="XML output size limit exceeded"):
-            json2xml.Json2xml({}, pretty=True, max_output_bytes=200).to_xml()
-
-    def test_pretty_formatter_handles_supported_markup(self) -> None:
-        """Declaration, quoted attributes, comments, CDATA, and empty tags stay intact."""
-        xml = (
-            b'<?xml version="1.0"?><root attr=">">'
-            b"<!--note--><value><![CDATA[a<b]]></value><empty/></root>"
-        )
-
-        result = _pretty_xml(xml, 1_000)
-
-        assert '<root attr=">">' in result
-        assert "  <!--note-->" in result
-        assert "<value><![CDATA[a<b]]></value>" in result
-        assert "  <empty/>" in result
-
-    def test_pretty_formatter_rejects_trailing_text_and_unknown_declarations(
-        self
-    ) -> None:
-        """Text outside the root and unsupported declarations cannot be formatted as XML."""
-        with pytest.raises(InvalidDataError, match="Malformed XML generated"):
-            _pretty_xml(b"<root/>trailing", 1_000)
-        with pytest.raises(InvalidDataError, match="Malformed XML generated"):
-            _pretty_xml(b"<!unsupported><root/>", 1_000)
-        with pytest.raises(InvalidDataError, match="Malformed XML generated"):
-            _pretty_xml(b"<![CDATA[outside-root]]><root/>", 1_000)
-
-    @pytest.mark.parametrize(
-        "unsafe_xml", [b"<!DOCTYPE root><root/>", b"<!ENTITY x 'x'><root/>"]
-    )
-    def test_pretty_formatter_rejects_unsafe_declarations(
-        self, unsafe_xml: bytes
-    ) -> None:
-        """DTD and entity declarations are rejected case-insensitively."""
-        with pytest.raises(InvalidDataError, match="Unsafe XML declaration rejected"):
-            _pretty_xml(unsafe_xml.lower(), 1_000)
+            json2xml.Json2xml(data, pretty=True, max_output_bytes=compact_size).to_xml()
 
     # @lat: [[tests#Conversion behavior#Pretty printing avoids DOM reparsing]]
     def test_pretty_print_does_not_reparse_a_dom(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Pretty output uses bounded lexical indentation without an XML DOM parser."""
+        """Pretty output is indented during serialization, never by reparsing."""
         parse_string = Mock(side_effect=AssertionError("DOM parser must not run"))
         monkeypatch.setattr("defusedxml.minidom.parseString", parse_string)
 
@@ -376,27 +305,38 @@ class TestJson2xml:
         assert "\n  <name" in result
         parse_string.assert_not_called()
 
-    # @lat: [[tests#Conversion behavior#Pretty printing rejects unsafe XML constructs]]
-    def test_pretty_print_rejects_entity_expansion_payload(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        """The bounded formatter rejects exponential entities before expansion."""
-        entity_declarations = ['<!ENTITY lol0 "lol">']
-        for level in range(1, 10):
-            references = f"&lol{level - 1};" * 10
-            entity_declarations.append(f'<!ENTITY lol{level} "{references}">')
-        malicious_xml = (
-            '<?xml version="1.0"?>'
-            f'<!DOCTYPE lolz [{"".join(entity_declarations)}]>'
-            '<lolz>&lol9;</lolz>'
-        ).encode()
-        monkeypatch.setattr(
-            "json2xml.json2xml.dicttoxml.dicttoxml",
-            Mock(return_value=malicious_xml),
+    # @lat: [[tests#Conversion behavior#Pretty printing indents during serialization]]
+    def test_pretty_print_keeps_character_data_on_one_line(self) -> None:
+        """Text content suppresses the line break before its closing tag."""
+        result = json2xml.Json2xml(
+            {"a": {"@attrs": {"x": "1"}, "@val": "text"}}, pretty=True
+        ).to_xml()
+
+        assert result == (
+            '<?xml version="1.0" encoding="UTF-8" ?>\n'
+            '<all>\n'
+            '  <a x="1">text</a>\n'
+            '</all>\n'
         )
 
-        with pytest.raises(InvalidDataError):
-            json2xml.Json2xml({"valid": "data"}, pretty=True).to_xml()
+    # @lat: [[tests#Conversion behavior#Pretty printing indents during serialization]]
+    def test_pretty_print_indents_nested_containers_during_serialization(self) -> None:
+        """Indentation comes from the writer, so structure and text stay intact."""
+        result = json2xml.Json2xml(
+            {"outer": {"leaf": "value", "items": [1]}}, pretty=True
+        ).to_xml()
+
+        assert result == (
+            '<?xml version="1.0" encoding="UTF-8" ?>\n'
+            '<all>\n'
+            '  <outer type="dict">\n'
+            '    <leaf type="str">value</leaf>\n'
+            '    <items type="list">\n'
+            '      <item type="int">1</item>\n'
+            '    </items>\n'
+            '  </outer>\n'
+            '</all>\n'
+        )
 
     def test_read_boolean_data_from_json(self) -> None:
         """Test correct return for boolean types."""

@@ -20,6 +20,7 @@ class ConversionRequest:
     list_headers: bool
     xpath_format: bool
     max_output_bytes: int | None = None
+    indent: str | None = None
 
 
 class BackendAdapter(Protocol):

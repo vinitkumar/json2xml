@@ -84,6 +84,7 @@ class _RustBackendAdapter:
             or request.item_func is not None
             or request.xml_namespaces
             or request.xpath_format
+            or request.indent is not None
             or not isinstance(request.obj, (dict, list))
             or has_special_keys(request.obj)
         )
@@ -133,6 +134,7 @@ class _PythonBackendAdapter:
             list_headers=request.list_headers,
             xpath_format=request.xpath_format,
             max_output_bytes=request.max_output_bytes,
+            indent=request.indent,
         )
 
 
@@ -156,6 +158,7 @@ def dicttoxml(
     list_headers: bool = False,
     xpath_format: bool = False,
     max_output_bytes: int | None = None,
+    indent: str | None = None,
 ) -> bytes:
     """
     Convert a Python dict or list to XML.
@@ -176,6 +179,7 @@ def dicttoxml(
         list_headers: Repeat parent tag for each list item (default: False)
         xpath_format: Use XPath 3.1 format (not supported in Rust)
         max_output_bytes: Reject output larger than this encoded byte count
+        indent: Indentation unit for pretty output (not supported in Rust)
 
     Returns:
         UTF-8 encoded XML as bytes
@@ -193,6 +197,7 @@ def dicttoxml(
         list_headers=list_headers,
         xpath_format=xpath_format,
         max_output_bytes=max_output_bytes,
+        indent=indent,
     )
     return _BACKEND_SELECTOR.render(request)
 

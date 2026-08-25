@@ -6,7 +6,7 @@ This file captures the observable conversion and input rules that matter more th
 
 The input helpers convert files, strings, URLs, and stdin into Python data structures while surfacing source-specific errors to callers.
 
-[[json2xml/utils.py#readfromjson]] wraps file and JSON decoding failures in `JSONReadError`. [[json2xml/utils.py#readfromstring]] rejects non-string inputs and malformed JSON with `StringReadError`.
+[[json2xml/utils.py#readfromjson]] wraps file and JSON decoding failures in `JSONReadError`. [[json2xml/utils.py#readfromjsonl]] decodes each non-empty JSON Lines record into an ordered list and reports malformed physical line numbers through the same error type. [[json2xml/utils.py#readfromjsonlstring]] provides the equivalent text reader for stdin. [[json2xml/utils.py#readfromstring]] rejects non-string inputs and malformed JSON with `StringReadError`.
 
 [[json2xml/utils.py#readfromurl]] lazily initializes the HTTP client, performs a bounded GET request, and raises `URLReadError` for hostname encoding, network, status, size, decoding, and JSON failures.
 
@@ -20,7 +20,7 @@ Remote JSON reads default to public, credential-free HTTP(S) targets and bounded
 
 The public examples favor realistic API, file, and stdin flows with compact before-and-after output that can be checked against the real converter.
 
-README and docs examples use `pretty=False` for scan-friendly output and avoid hidden fixtures. They cover Python API conversion, local JSON exports, and shell pipelines so users can choose the right entry point quickly.
+README and docs examples use `pretty=False` for scan-friendly output and avoid hidden fixtures. They cover Python API conversion, local JSON and JSONL exports, and shell pipelines so users can choose the right entry point quickly.
 
 ## Conversion output
 

@@ -114,4 +114,4 @@ Rust extension CI triggers on Rust sources, Rust integration tests, and Python f
 
 The CLI is a thin adapter that parses options, resolves one input source, and forwards those options into the same converter used by the library API.
 
-[[json2xml/cli.py#create_parser]] defines the user-facing flags. A small `CLIApplication` seam now owns source resolution, stdin parsing, conversion, and output writing, while [[json2xml/cli.py#read_input]] and [[json2xml/cli.py#main]] remain the stable wrapper functions used by tests and callers. Command-line use and library use still meet at [[json2xml/json2xml.py#Json2xml]].
+[[json2xml/cli.py#create_parser]] defines the user-facing flags. A small `CLIApplication` seam owns source resolution, stdin parsing, conversion, and output writing, while [[json2xml/cli.py#read_input]] and [[json2xml/cli.py#main]] remain stable wrappers. `.jsonl` files select line parsing automatically; stdin requires `--jsonl` because it has no suffix. Both formats still meet library use at [[json2xml/json2xml.py#Json2xml]].

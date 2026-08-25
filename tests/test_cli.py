@@ -15,6 +15,7 @@ import pytest
 from json2xml.cli import (
     CLIApplication,
     CLIConversionOptions,
+    InputFormat,
     create_parser,
     main,
     read_from_stdin,
@@ -77,6 +78,26 @@ class TestCLI:
         assert result.returncode == 0
         assert "<key" in result.stdout
         assert "value" in result.stdout
+
+    # @lat: [[tests#CLI input resolution#JSONL file suffix selects line parsing]]
+    def test_jsonl_file_input(self, tmp_path: Path) -> None:
+        """Convert each JSONL record through the existing list behavior."""
+        jsonl_file = tmp_path / "records.jsonl"
+        jsonl_file.write_text(
+            '{"name": "Ada"}\n{"name": "Grace"}\n',
+            encoding="utf-8",
+        )
+
+        result = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", str(jsonl_file)],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0
+        assert result.stdout.count("<item") == 2
+        assert "Ada" in result.stdout
+        assert "Grace" in result.stdout
 
     def test_output_file(self) -> None:
         """Test -o/--output flag for file output."""
@@ -207,6 +228,21 @@ class TestCLI:
         assert result.returncode == 0
         assert "<stdin" in result.stdout
         assert "test" in result.stdout
+
+    # @lat: [[tests#CLI input resolution#JSONL flag parses stdin by line]]
+    def test_jsonl_stdin_input(self) -> None:
+        """Parse JSONL from stdin when its format is explicit."""
+        result = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", "--jsonl", "-"],
+            input='{"name": "Ada"}\n{"name": "Grace"}\n',
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0
+        assert result.stdout.count("<item") == 2
+        assert "Ada" in result.stdout
+        assert "Grace" in result.stdout
 
     def test_invalid_json_string(self) -> None:
         """Test error handling for invalid JSON string."""
@@ -504,6 +540,29 @@ class TestCLIUnitTests:
         assert args.list_headers is True
         assert args.output == "output.xml"
 
+    def test_read_input_jsonl_dash(self) -> None:
+        """Route explicit JSONL stdin through the line reader."""
+        args = create_parser().parse_args(["--jsonl", "-"])
+        app = CLIApplication()
+        options = CLIConversionOptions.from_namespace(args)
+        with patch.object(app, "read_from_stdin", return_value=[]) as mock_read:
+            assert app.read_input(options) == []
+
+        mock_read.assert_called_once_with(InputFormat.JSONL)
+
+    def test_read_input_jsonl_implicit_stdin(self) -> None:
+        """Apply JSONL framing when input arrives through an implicit pipe."""
+        args = create_parser().parse_args(["--jsonl"])
+        app = CLIApplication()
+        options = CLIConversionOptions.from_namespace(args)
+        with (
+            patch("sys.stdin.isatty", return_value=False),
+            patch.object(app, "read_from_stdin", return_value=[]) as mock_read,
+        ):
+            assert app.read_input(options) == []
+
+        mock_read.assert_called_once_with(InputFormat.JSONL)
+
     def test_main_with_string_input(self, capsys: CaptureFixture[str]) -> None:
         """Test main function with string input."""
         exit_code = main(["-s", '{"name": "test"}'])
@@ -580,6 +639,16 @@ class TestCLIUnitTests:
                 read_from_stdin()
         assert exc_info.value.code == 1
 
+    def test_read_from_stdin_invalid_jsonl_raises_system_exit(self) -> None:
+        """Report malformed JSONL from stdin with its line number."""
+        with (
+            patch("sys.stdin", io.StringIO('{"valid": true}\ninvalid\n')),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            CLIApplication().read_from_stdin(InputFormat.JSONL)
+
+        assert exc_info.value.code == 1
+
     def test_read_from_stdin_invalid_json_raises_system_exit(self) -> None:
         """Test read_from_stdin raises SystemExit on invalid JSON."""
         with patch("sys.stdin", io.StringIO("not json")):
@@ -626,6 +695,22 @@ class TestCLIUnitTests:
 
         captured = capsys.readouterr()
         assert "JSON file not found" in captured.err
+
+    def test_read_input_existing_jsonl_file_parse_error(
+        self, tmp_path: Path, capsys: CaptureFixture[str]
+    ) -> None:
+        """Include the JSONL filename and malformed line in CLI errors."""
+        jsonl_file = tmp_path / "invalid.jsonl"
+        jsonl_file.write_text('{"valid": true}\ninvalid\n', encoding="utf-8")
+        args = create_parser().parse_args([str(jsonl_file)])
+
+        with pytest.raises(SystemExit) as exc_info:
+            read_input(args)
+
+        assert exc_info.value.code == 1
+        error = capsys.readouterr().err
+        assert str(jsonl_file) in error
+        assert "Invalid JSONL at line 2" in error
 
     def test_read_input_existing_json_file_parse_error(
         self, capsys: CaptureFixture[str]

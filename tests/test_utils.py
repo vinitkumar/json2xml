@@ -7,6 +7,7 @@ import tempfile
 import threading
 import zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 from unittest.mock import Mock, patch
 
@@ -19,6 +20,8 @@ from json2xml.utils import (
     StringReadError,
     URLReadError,
     readfromjson,
+    readfromjsonl,
+    readfromjsonlstring,
     readfromstring,
     readfromurl,
 )
@@ -150,6 +153,50 @@ class TestReadFromJson:
 
         with pytest.raises(JSONReadError, match="Invalid JSON File"):
             readfromjson("some_file.json")
+
+
+class TestReadFromJsonLines:
+    """Test JSON Lines file reading."""
+
+    # @lat: [[tests#Input readers#JSONL reader returns one value per line]]
+    def test_reads_nonempty_lines(self, tmp_path: Path) -> None:
+        """Decode each non-empty line and preserve record order."""
+        jsonl_file = tmp_path / "records.jsonl"
+        jsonl_file.write_text(
+            '{"name": "Ada"}\n\n{"name": "Grace"}\n',
+            encoding="utf-8",
+        )
+
+        assert readfromjsonl(str(jsonl_file)) == [
+            {"name": "Ada"},
+            {"name": "Grace"},
+        ]
+
+    def test_empty_file_returns_empty_list(self, tmp_path: Path) -> None:
+        """Treat an empty JSONL file as an empty record collection."""
+        jsonl_file = tmp_path / "empty.jsonl"
+        jsonl_file.write_text("", encoding="utf-8")
+
+        assert readfromjsonl(str(jsonl_file)) == []
+
+    def test_wraps_file_errors(self, tmp_path: Path) -> None:
+        """Keep filesystem failures inside the JSON reader contract."""
+        with pytest.raises(JSONReadError, match="Invalid JSONL File"):
+            readfromjsonl(str(tmp_path / "missing.jsonl"))
+
+    def test_rejects_non_string_text(self) -> None:
+        """Reject values that cannot contain JSON Lines text."""
+        with pytest.raises(JSONReadError, match="proper JSONL string"):
+            readfromjsonlstring(1)
+
+    # @lat: [[tests#Input readers#JSONL reader identifies malformed lines]]
+    def test_reports_malformed_line(self, tmp_path: Path) -> None:
+        """Wrap malformed records with their physical line number."""
+        jsonl_file = tmp_path / "records.jsonl"
+        jsonl_file.write_text('{"valid": true}\n\ninvalid\n', encoding="utf-8")
+
+        with pytest.raises(JSONReadError, match="Invalid JSONL at line 3"):
+            readfromjsonl(str(jsonl_file))
 
 
 class TestReadFromUrl:

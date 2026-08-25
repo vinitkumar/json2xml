@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import socket
 import zlib
+from collections.abc import Iterable
 from ipaddress import ip_address
 from typing import Any
 from urllib.parse import SplitResult, urlsplit, urlunsplit
@@ -63,6 +64,41 @@ def readfromjson(filename: str) -> JSONValue:
             return json.load(jsondata)
     except (ValueError, OSError) as error:
         raise JSONReadError("Invalid JSON File") from error
+
+
+def _parse_jsonlines(lines: Iterable[str]) -> list[JSONValue]:
+    """Decode non-empty records or raise `JSONReadError` with the physical line."""
+    values: list[JSONValue] = []
+    for line_number, line in enumerate(lines, start=1):
+        if not line.strip():
+            continue
+        try:
+            values.append(json.loads(line))
+        except json.JSONDecodeError as error:
+            raise JSONReadError(f"Invalid JSONL at line {line_number}") from error
+    return values
+
+
+def readfromjsonl(filename: str) -> JSONValue:
+    """Read a JSON Lines file into a list, skipping blank lines.
+
+    File access and malformed records raise `JSONReadError`.
+    """
+    try:
+        with open(filename, encoding="utf-8") as jsondata:
+            return _parse_jsonlines(jsondata)
+    except OSError as error:
+        raise JSONReadError("Invalid JSONL File") from error
+
+
+def readfromjsonlstring(jsondata: object) -> JSONValue:
+    """Read JSON Lines text into a list, skipping blank lines.
+
+    Non-string input and malformed records raise `JSONReadError`.
+    """
+    if not isinstance(jsondata, str):
+        raise JSONReadError("Input is not a proper JSONL string")
+    return _parse_jsonlines(jsondata.splitlines())
 
 
 # @lat: [[behavior#URL security boundaries]]

@@ -18,9 +18,25 @@ When both URL and string inputs are present, the CLI should read from the URL fi
 
 When the positional input is `-`, the CLI should read stdin instead of trying to open a file literally named `-`.
 
+### JSONL file suffix selects line parsing
+
+A `.jsonl` positional file should parse as ordered JSON records automatically and convert through the existing list-to-XML behavior.
+
+### JSONL flag parses stdin by line
+
+The `--jsonl` flag should parse piped input as JSON Lines because stdin has no filename suffix from which to infer its format.
+
 ## Input readers
 
 These tests verify the concrete reader helpers against realistic source behavior so parsing and error wrapping stay aligned with production use.
+
+### JSONL reader returns one value per line
+
+JSONL input should decode each non-empty line as an independent JSON value, preserve input order, and return the records as one list for conversion.
+
+### JSONL reader identifies malformed lines
+
+Malformed JSONL should raise `JSONReadError` with the physical line number so callers can locate invalid records even when blank lines appear earlier in the file.
 
 ### URL reader uses real HTTP and wraps failures
 

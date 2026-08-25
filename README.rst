@@ -498,6 +498,12 @@ The ``json2xml-py`` command-line tool provides an easy way to convert JSON to XM
     # Read from stdin
     cat data.json | json2xml-py -
 
+    # Convert JSON Lines; each non-empty line becomes one list item
+    json2xml-py records.jsonl
+
+    # JSON Lines from stdin needs an explicit format flag
+    cat records.jsonl | json2xml-py --jsonl -
+
     # Output to file
     json2xml-py -o output.xml data.json
 
@@ -514,7 +520,8 @@ The ``json2xml-py`` command-line tool provides an easy way to convert JSON to XM
     Input Options:
       -u, --url string        Read JSON from URL
       -s, --string string     Read JSON from string
-      [input-file]            Read JSON from file (use - for stdin)
+      --jsonl                 Parse stdin as JSON Lines
+      [input-file]            Read JSON or JSONL from file (use - for stdin)
 
     Output Options:
       -o, --output string     Output file (default: stdout)

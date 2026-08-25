@@ -15,6 +15,7 @@ Flags:
     -o, --output string     Output file (default: stdout)
     -u, --url string        Read JSON from URL
     -s, --string string     Read JSON from string
+    --jsonl                 Parse stdin as JSON Lines
     -c, --cdata             Wrap string values in CDATA sections
     -l, --list-headers      Repeat headers for each list item
     -h, --help              Show help message
@@ -33,6 +34,12 @@ Examples:
     # Read from string
     json2xml-py -s '{"name": "John", "age": 30}'
 
+    # Convert a JSON Lines file
+    json2xml-py records.jsonl
+
+    # Read JSON Lines from stdin
+    cat records.jsonl | json2xml-py --jsonl -
+
     # Output to file
     json2xml-py -o output.xml data.json
 
@@ -45,6 +52,7 @@ from __future__ import annotations
 import argparse
 import sys
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import NoReturn
 
@@ -56,12 +64,22 @@ from json2xml.utils import (
     StringReadError,
     URLReadError,
     readfromjson,
+    readfromjsonl,
+    readfromjsonlstring,
     readfromstring,
     readfromurl,
 )
 
 AUTHOR = "Vinit Kumar"
 EMAIL = "mail@vinitkumar.me"
+JSONL_SUFFIX = ".jsonl"
+
+
+class InputFormat(Enum):
+    """Input framing used when a source has no filename suffix."""
+
+    JSON = "json"
+    JSONL = "jsonl"
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,6 +98,7 @@ class CLIConversionOptions:
     xpath_format: bool
     cdata: bool
     list_headers: bool
+    jsonl: bool = False
 
     @classmethod
     def from_namespace(cls, args: argparse.Namespace) -> CLIConversionOptions:
@@ -96,6 +115,7 @@ class CLIConversionOptions:
             xpath_format=args.xpath_format,
             cdata=args.cdata,
             list_headers=args.list_headers,
+            jsonl=vars(args).get("jsonl", False),
         )
 
 
@@ -127,6 +147,8 @@ class CLIApplication:
 
         if options.input_file:
             if options.input_file == "-":
+                if options.jsonl:
+                    return self.read_from_stdin(InputFormat.JSONL)
                 return read_from_stdin()
             if not Path(options.input_file).is_file():
                 exit_with_error(
@@ -134,6 +156,8 @@ class CLIApplication:
                     "Check the path or use - to read JSON from stdin."
                 )
             try:
+                if Path(options.input_file).suffix.lower() == JSONL_SUFFIX:
+                    return readfromjsonl(options.input_file)
                 return readfromjson(options.input_file)
             except JSONReadError as error:
                 exit_with_error(
@@ -142,6 +166,8 @@ class CLIApplication:
                 )
 
         if not sys.stdin.isatty():
+            if options.jsonl:
+                return self.read_from_stdin(InputFormat.JSONL)
             return read_from_stdin()
 
         exit_with_error(
@@ -149,13 +175,22 @@ class CLIApplication:
         )
         raise AssertionError("unreachable")
 
-    def read_from_stdin(self) -> JSONValue:
+    def read_from_stdin(
+        self, input_format: InputFormat = InputFormat.JSON
+    ) -> JSONValue:
+        json_str = sys.stdin.read().strip()
+        if not json_str:
+            exit_with_error(
+                "Error: Empty stdin. Pipe JSON into stdin or pass a file/--string."
+            )
+
+        if input_format is InputFormat.JSONL:
+            try:
+                return readfromjsonlstring(json_str)
+            except JSONReadError as error:
+                exit_with_error(f"Error: Invalid JSONL from stdin. ({error})")
+
         try:
-            json_str = sys.stdin.read().strip()
-            if not json_str:
-                exit_with_error(
-                    "Error: Empty stdin. Pipe JSON into stdin or pass a file/--string."
-                )
             return readfromstring(json_str)
         except StringReadError as error:
             exit_with_error(
@@ -222,6 +257,12 @@ Examples:
   # Read from stdin
   cat data.json | json2xml-py -
 
+  # Convert a JSON Lines file
+  json2xml-py records.jsonl
+
+  # Read JSON Lines from stdin
+  cat records.jsonl | json2xml-py --jsonl -
+
   # Output to file
   json2xml-py -o output.xml data.json
 
@@ -254,6 +295,11 @@ Examples:
         dest="string",
         default=None,
         help="Read JSON from string",
+    )
+    input_group.add_argument(
+        "--jsonl",
+        action="store_true",
+        help="Parse stdin as JSON Lines (files ending in .jsonl are detected automatically)",
     )
 
     # Output options

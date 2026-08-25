@@ -6,7 +6,11 @@ This file captures the observable conversion and input rules that matter more th
 
 The input helpers convert files, strings, URLs, and stdin into Python data structures while surfacing source-specific errors to callers.
 
-[[json2xml/utils.py#readfromjson]] wraps file and JSON decoding failures in `JSONReadError`. [[json2xml/utils.py#readfromjsonl]] decodes each non-empty JSON Lines record into an ordered list and wraps filesystem, malformed-record, and invalid UTF-8 failures in the same error type. [[json2xml/utils.py#readfromjsonlstring]] splits text only at LF so leading blank lines remain countable and valid U+2028/U+2029 string content stays inside its record. [[json2xml/utils.py#readfromstring]] rejects non-string inputs and malformed JSON with `StringReadError`.
+[[json2xml/utils.py#readfromjson]] wraps file and JSON decoding failures in `JSONReadError`. [[json2xml/utils.py#readfromjsonl]] decodes each non-empty JSON Lines record into an ordered list and wraps filesystem, malformed-record, and invalid UTF-8 failures in the same error type. [[json2xml/utils.py#readfromstring]] rejects non-string inputs and malformed JSON with `StringReadError`.
+
+Every JSON Lines reader splits records at LF only, so leading blank lines remain countable, a lone CR fails the record it sits in rather than silently starting a new one, and valid U+2028/U+2029 string content stays inside its record. [[json2xml/utils.py#readfromjsonlstring]] splits decoded text directly, while [[json2xml/utils.py#readfromjsonl]] disables newline translation to reach the same result from a file.
+
+File readers decode as `utf-8-sig` and [[json2xml/utils.py#strip_byte_order_mark]] removes a byte order mark from already decoded text, so a mark an editor added does not fail the first record.
 
 [[json2xml/utils.py#readfromurl]] lazily initializes the HTTP client, performs a bounded GET request, and raises `URLReadError` for hostname encoding, network, status, size, decoding, and JSON failures.
 
@@ -16,9 +20,11 @@ JSONL command-line conversion keeps memory bounded to one source record and one 
 
 [[json2xml/jsonl.py#stream_jsonl_to_xml]] skips blank lines, preserves physical line numbers in parse and conversion errors, validates each record independently through [[json2xml/json2xml.py#Json2xml]], and writes each fragment before requesting the next line. The standard root is opened and closed once around all fragments.
 
-Supported root, wrapper, type, item-wrap, CDATA, and invalid-character options match regular list conversion. Pretty, XPath, and list-header modes fail before output because their whole-document layouts are not implemented for this stream. Stdout may contain a partial document after a late failure.
+Output is byte-identical to converting the same records as one JSON array. [[json2xml/jsonl.py#_convert_record]] reaches that by serializing each record inside the real root and slicing the known root markup back off, because a rootless conversion has no wrapper name to lend a member that has none and would emit `<key name="">` for scalars.
 
-For `-o`, [[json2xml/cli.py#CLIApplication#stream_jsonl]] writes to a temporary file beside the destination and calls `os.replace` only after the stream succeeds. Failed conversions remove the temporary file and preserve any prior destination. Invalid UTF-8 is wrapped as `JSONReadError`, so the CLI reports it through the JSON-file parse path.
+Root, wrapper, type, item-wrap, CDATA, and invalid-character options all stream. [[json2xml/cli.py#needs_whole_document]] routes pretty, XPath, and list-header requests to the materialized reader instead, since those layouts are defined over the complete document. Stdout may contain a partial document after a late failure.
+
+For `-o`, [[json2xml/cli.py#CLIApplication#stream_jsonl]] writes to a temporary file beside the destination and calls `os.replace` only after the stream succeeds. [[json2xml/cli.py#output_file_mode]] restores the permissions a plain write would leave, preserving an existing destination's mode, because temporary files are created private. Failed conversions remove the temporary file, preserve any prior destination, and name the requested output rather than the temporary path. Invalid UTF-8 is wrapped as `JSONReadError`, so the CLI reports it through the JSON-file parse path.
 
 ## URL security boundaries
 
@@ -64,4 +70,4 @@ Element names are normalized wherever one is written, including the parent name 
 
 Every serializer mode rejects XML 1.0-forbidden characters by default and treats namespace metadata as attributes so raw output cannot bypass well-formedness or escaping checks.
 
-[[json2xml/xml_chars.py#is_xml10_char]] is the shared XML 1.0 predicate used by [[json2xml/dicttoxml.py#escape_xml]] and CDATA writers. CLI callers may explicitly select replace, visible `\\uXXXX` escape, or removal through [[json2xml/xml_chars.py#transform_json_xml_chars]]; replacement transforms values and keys without recursion and rejects key collisions. Namespace prefixes are validated, while namespace and custom attribute values use the shared XML escaping path.
+[[json2xml/xml_chars.py#is_xml10_char]] is the shared XML 1.0 predicate used by [[json2xml/dicttoxml.py#escape_xml]] and CDATA writers. CLI callers may explicitly select replace, visible `\\uXXXX` escape, or removal through [[json2xml/xml_chars.py#transform_json_xml_chars]]; replacement transforms values and keys without recursion and rejects key collisions. Escaping is not reversible, because its output cannot be told apart from source text that already spelled out those characters. Namespace prefixes are validated, while namespace and custom attribute values use the shared XML escaping path.

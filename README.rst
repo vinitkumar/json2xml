@@ -504,16 +504,7 @@ The ``json2xml-py`` command-line tool provides an easy way to convert JSON to XM
     # JSON Lines from stdin needs an explicit format flag
     cat records.jsonl | json2xml-py --jsonl -
 
-JSONL conversion reads and writes one record at a time, so memory use is bounded by the largest record rather than the complete file. Depth, item, and output limits apply independently to each record. Blank lines are skipped.
-
-``-o`` writes through a temporary file in the destination directory and replaces the requested file only after every record succeeds. Parse and XML conversion errors identify the physical JSONL line. Stdout cannot be rolled back, so a late error leaves partial XML in the pipe and exits nonzero.
-
-Streaming JSONL currently rejects ``--pretty``, ``--xpath``, and ``--list-headers`` because those modes require unsupported whole-document layout semantics. Root, wrapper, type attributes, item wrapping, and CDATA retain the same output shape as regular list conversion.
-
-XML 1.0-forbidden characters are rejected by default. Use ``--invalid-xml-chars replace`` to substitute U+FFFD, ``escape`` to emit visible ``\\uXXXX`` text, or ``remove`` to delete them. The policy applies to JSON and JSONL string values and keys; transformed key collisions fail instead of dropping data.
-
-.. code-block:: console
-
+    # Replace characters forbidden by XML 1.0
     json2xml-py --invalid-xml-chars replace github-events.jsonl -o github-events.xml
 
     # Output to file
@@ -525,6 +516,22 @@ XML 1.0-forbidden characters are rejected by default. Use ``--invalid-xml-chars 
     # Disable pretty printing and type attributes
     json2xml-py --no-pretty --no-type data.json
 
+**JSON Lines**
+
+Files ending in ``.jsonl`` or ``.ndjson`` are converted record at a time, so memory use is bounded by the largest record rather than the complete file. Depth, item, and output limits apply independently to each record, and blank lines are skipped. Every record produces the same XML as it would as a member of one JSON array.
+
+``--jsonl`` forces line framing for any source, including stdin, ``--string``, and files named something else. ``--no-jsonl`` forces whole-document JSON framing for a file whose name only looks like JSON Lines. ``--jsonl`` cannot be combined with ``--url``.
+
+``--pretty``, ``--xpath``, and ``--list-headers`` need the whole document laid out at once, so they read every record into memory first instead of streaming. The remaining options -- root, wrapper, type attributes, item wrapping, and CDATA -- stream.
+
+``-o`` writes through a temporary file in the destination directory and replaces the requested file only after every record succeeds, keeping the permissions a plain write would produce. Parse and XML conversion errors identify the physical JSONL line. Stdout cannot be rolled back, so a late error leaves partial XML in the pipe and exits nonzero.
+
+**Invalid XML characters**
+
+XML 1.0-forbidden characters are rejected by default. Use ``--invalid-xml-chars replace`` to substitute U+FFFD, ``escape`` to emit visible ``\\uXXXX`` text, or ``remove`` to delete them. The policy applies to JSON and JSON Lines string values and keys; transformed key collisions fail instead of dropping data.
+
+``escape`` is not reversible: its output is indistinguishable from source text that already contained a backslash, a ``u``, and four hex digits. Prefer ``replace`` or ``remove`` when the output is parsed again downstream.
+
 **CLI Options**
 
 .. code-block:: text
@@ -532,8 +539,9 @@ XML 1.0-forbidden characters are rejected by default. Use ``--invalid-xml-chars 
     Input Options:
       -u, --url string        Read JSON from URL
       -s, --string string     Read JSON from string
-      --jsonl                 Parse stdin as JSON Lines
-      [input-file]            Read JSON or JSONL from file (use - for stdin)
+      --jsonl                 Force JSON Lines framing for the input
+      --no-jsonl              Force whole-document JSON framing for the input
+      [input-file]            Read JSON, or stream .jsonl/.ndjson, from file (use - for stdin)
 
     Output Options:
       -o, --output string     Output file (default: stdout)

@@ -17,7 +17,17 @@ from .types import JSONValue
 DEFAULT_URL_TIMEOUT: Any | None = None
 DEFAULT_MAX_RESPONSE_BYTES = 10 * 1024 * 1024
 COMPRESSED_READ_CHUNK_BYTES = 64 * 1024
+# "utf-8-sig" decodes plain UTF-8 but also drops a leading byte order mark,
+# which json.loads would otherwise reject as an unexpected character.
+JSON_FILE_ENCODING = "utf-8-sig"
+BYTE_ORDER_MARK = "\ufeff"
+LINE_SEPARATOR = "\n"
 _HTTP: Any | None = None
+
+
+def strip_byte_order_mark(text: str) -> str:
+    """Remove one leading byte order mark from already decoded text."""
+    return text.removeprefix(BYTE_ORDER_MARK)
 
 
 def _get_http_client() -> tuple[Any, Any, Any]:
@@ -60,7 +70,7 @@ class StringReadError(Exception):
 def readfromjson(filename: str) -> JSONValue:
     """Read JSON data from a file."""
     try:
-        with open(filename, encoding="utf-8") as jsondata:
+        with open(filename, encoding=JSON_FILE_ENCODING) as jsondata:
             return json.load(jsondata)
     except (ValueError, OSError) as error:
         raise JSONReadError("Invalid JSON File") from error
@@ -82,10 +92,11 @@ def _parse_jsonlines(lines: Iterable[str]) -> list[JSONValue]:
 def readfromjsonl(filename: str) -> JSONValue:
     """Read a JSON Lines file into a list, skipping blank lines.
 
+    Records are split at LF only, so a lone CR stays inside its record.
     File access and malformed records raise `JSONReadError`.
     """
     try:
-        with open(filename, encoding="utf-8") as jsondata:
+        with open(filename, encoding=JSON_FILE_ENCODING, newline=LINE_SEPARATOR) as jsondata:
             return _parse_jsonlines(jsondata)
     except (OSError, UnicodeDecodeError) as error:
         raise JSONReadError("Invalid JSONL File") from error
@@ -98,7 +109,7 @@ def readfromjsonlstring(jsondata: object) -> JSONValue:
     """
     if not isinstance(jsondata, str):
         raise JSONReadError("Input is not a proper JSONL string")
-    return _parse_jsonlines(jsondata.split("\n"))
+    return _parse_jsonlines(strip_byte_order_mark(jsondata).split(LINE_SEPARATOR))
 
 
 # @lat: [[behavior#URL security boundaries]]

@@ -91,6 +91,28 @@ Output:
 
     <?xml version="1.0" encoding="UTF-8" ?><all><event>deploy</event><status>ok</status></all>
 
+Convert a JSON Lines export without loading it all into memory:
+
+.. code-block:: console
+
+    cat > events.jsonl <<'JSONL'
+    {"event":"deploy","status":"ok"}
+    {"event":"rollback","status":"failed"}
+    JSONL
+    json2xml-py --no-type events.jsonl
+
+Output:
+
+.. code-block:: xml
+
+    <?xml version="1.0" encoding="UTF-8" ?><all><item><event>deploy</event><status>ok</status></item><item><event>rollback</event><status>failed</status></item></all>
+
+Files named ``.jsonl`` or ``.ndjson`` are detected automatically. Pass ``--jsonl``
+to frame any other source by line, including stdin and ``--string``, or
+``--no-jsonl`` to read a ``.jsonl`` file as one whole JSON document. Records
+stream one at a time except under ``--pretty``, ``--xpath``, and
+``--list-headers``, which need every record materialized first.
+
 
 Constructor Parameters
 ----------------------

@@ -207,6 +207,41 @@ class TestReadFromJsonLines:
             {"value": "before\u2028after\u2029end"}
         ]
 
+    # @lat: [[tests#Input readers#Readers split records at LF only]]
+    def test_lone_carriage_return_does_not_split(self, tmp_path: Path) -> None:
+        """Split file and string readers identically, at LF only."""
+        carriage_return_text = '{"name": "Ada"}\r{"name": "Grace"}\n'
+        jsonl_file = tmp_path / "carriage-return.jsonl"
+        jsonl_file.write_bytes(carriage_return_text.encode("utf-8"))
+
+        with pytest.raises(JSONReadError, match="Invalid JSONL at line 1"):
+            readfromjsonl(str(jsonl_file))
+        with pytest.raises(JSONReadError, match="Invalid JSONL at line 1"):
+            readfromjsonlstring(carriage_return_text)
+
+    def test_carriage_return_line_feed_terminates_records(
+        self, tmp_path: Path
+    ) -> None:
+        """Accept CRLF terminators because only the LF ends the record."""
+        crlf_text = '{"name": "Ada"}\r\n{"name": "Grace"}\r\n'
+        jsonl_file = tmp_path / "crlf.jsonl"
+        jsonl_file.write_bytes(crlf_text.encode("utf-8"))
+
+        assert readfromjsonl(str(jsonl_file)) == readfromjsonlstring(crlf_text)
+        assert readfromjsonlstring(crlf_text) == [{"name": "Ada"}, {"name": "Grace"}]
+
+    # @lat: [[tests#Input readers#Readers drop a leading byte order mark]]
+    def test_byte_order_mark_is_dropped(self, tmp_path: Path) -> None:
+        """Accept files an editor saved with a UTF-8 byte order mark."""
+        json_file = tmp_path / "bom.json"
+        jsonl_file = tmp_path / "bom.jsonl"
+        json_file.write_bytes(b'\xef\xbb\xbf{"name": "Ada"}')
+        jsonl_file.write_bytes(b'\xef\xbb\xbf{"name": "Ada"}\n')
+
+        assert readfromjson(str(json_file)) == {"name": "Ada"}
+        assert readfromjsonl(str(jsonl_file)) == [{"name": "Ada"}]
+        assert readfromjsonlstring('\ufeff{"name": "Ada"}\n') == [{"name": "Ada"}]
+
     # @lat: [[tests#Input readers#JSONL reader identifies malformed lines]]
     def test_reports_malformed_line(self, tmp_path: Path) -> None:
         """Wrap malformed records with their physical line number."""

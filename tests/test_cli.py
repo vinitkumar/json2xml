@@ -99,6 +99,45 @@ class TestCLI:
         assert "Ada" in result.stdout
         assert "Grace" in result.stdout
 
+    # @lat: [[tests#CLI input resolution#JSONL flag overrides the file suffix]]
+    def test_jsonl_flag_overrides_suffix(self, tmp_path: Path) -> None:
+        """Apply the explicit format flag to files as well as stdin."""
+        records = tmp_path / "records.log"
+        document = tmp_path / "document.jsonl"
+        records.write_text('{"name": "Ada"}\n{"name": "Grace"}\n', encoding="utf-8")
+        document.write_text('[{"name": "Ada"}]\n', encoding="utf-8")
+
+        forced_jsonl = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", "--jsonl", str(records)],
+            capture_output=True,
+            text=True,
+        )
+        forced_json = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", "--no-jsonl", str(document)],
+            capture_output=True,
+            text=True,
+        )
+
+        assert forced_jsonl.returncode == 0
+        assert forced_jsonl.stdout.count("<item") == 2
+        assert forced_json.returncode == 0
+        assert 'type="list"' not in forced_json.stdout
+
+    # @lat: [[tests#CLI input resolution#NDJSON files select line parsing]]
+    def test_ndjson_suffix_selects_line_parsing(self, tmp_path: Path) -> None:
+        """Detect the .ndjson spelling of JSON Lines alongside .jsonl."""
+        records = tmp_path / "records.ndjson"
+        records.write_text('{"name": "Ada"}\n{"name": "Grace"}\n', encoding="utf-8")
+
+        result = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", str(records)],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0
+        assert result.stdout.count("<item") == 2
+
     def test_output_file(self) -> None:
         """Test -o/--output flag for file output."""
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -1,4 +1,19 @@
 
+7.1.0 / 2026-08-25
+==================
+
+  * feat: convert JSON Lines from the command line, streaming one record at a time so memory stays bounded by the largest record rather than the file
+  * feat: detect ``.jsonl`` and ``.ndjson`` inputs automatically, and add ``--jsonl``/``--no-jsonl`` to force either framing for any source including stdin and ``--string``
+  * feat: add ``--invalid-xml-chars`` to reject, replace, escape, or remove characters forbidden by XML 1.0 in both JSON and JSON Lines values and keys
+  * fix: emit the same bytes for a streamed record as for the same record inside a JSON array, which previously produced ``<key name="">`` for scalars under ``--no-item-wrap``
+  * fix: fall back to whole-document conversion for ``--pretty``, ``--xpath``, and ``--list-headers`` instead of refusing to convert JSON Lines at all
+  * fix: keep streamed ``-o`` output at the permissions a plain write would leave instead of the temporary file's private mode
+  * fix: report a missing JSON Lines file with the same message as a missing JSON file, and name the requested output file rather than the temporary path beside it
+  * fix: accept a UTF-8 byte order mark in JSON and JSON Lines files
+  * fix: split JSON Lines records at LF in every reader, so a lone carriage return no longer silently starts a new record when reading from a file
+  * fix: reject ``--jsonl`` with ``--url`` and unknown ``--invalid-xml-chars`` values during argument parsing, naming the valid choices
+
+
 7.0.0 / 2026-08-23
 ==================
 

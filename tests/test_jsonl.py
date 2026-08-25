@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import argparse
 import json
+import stat
 from collections.abc import Iterator
 from io import BytesIO, StringIO
 from pathlib import Path
@@ -10,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 
-from json2xml.cli import main
+from json2xml.cli import invalid_xml_policy, main
 from json2xml.json2xml import Json2xml
 from json2xml.jsonl import JsonlConversionOptions, stream_jsonl_to_xml
 from json2xml.utils import InvalidDataError, JSONReadError
@@ -55,7 +57,7 @@ def test_writes_each_record_before_next() -> None:
 # @lat: [[tests#Streaming JSONL conversion#Supported options retain batch output]]
 def test_supported_options_match_batch(options: JsonlConversionOptions) -> None:
     """Keep the existing list conversion shape for supported options."""
-    records = [{"name": "Ada"}, {"name": "Grace"}]
+    records = [{"name": "Ada"}, 7, ["nested"], {"name": "Grace"}]
     destination = BytesIO()
 
     stream_jsonl_to_xml(
@@ -195,15 +197,16 @@ def test_cli_keeps_output_after_late_error(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("flag", ["--pretty", "--xpath", "--list-headers"])
-# @lat: [[tests#Streaming JSONL conversion#Incompatible modes fail before output]]
-def test_cli_rejects_incompatible_modes(tmp_path: Path, flag: str) -> None:
-    """Reject whole-document modes before creating the destination."""
+# @lat: [[tests#Streaming JSONL conversion#Whole-document modes materialize records]]
+def test_cli_materializes_whole_document_modes(tmp_path: Path, flag: str) -> None:
+    """Convert JSONL through the materialized reader for whole-document modes."""
     jsonl_file = tmp_path / "records.jsonl"
     output_file = tmp_path / "records.xml"
-    jsonl_file.write_text('{"name": "Ada"}\n', encoding="utf-8")
+    jsonl_file.write_text('{"name": "Ada"}\n{"name": "Grace"}\n', encoding="utf-8")
 
-    assert main([flag, "-o", str(output_file), str(jsonl_file)]) == 1
-    assert not output_file.exists()
+    assert main([flag, "-o", str(output_file), str(jsonl_file)]) == 0
+    assert "Ada" in output_file.read_text(encoding="utf-8")
+    assert "Grace" in output_file.read_text(encoding="utf-8")
 
 
 def test_cli_streams_jsonl_stdin_to_file(tmp_path: Path) -> None:
@@ -238,9 +241,17 @@ def test_cli_reports_invalid_jsonl_stdin(
     assert not output_file.exists()
 
 
-def test_cli_reports_missing_jsonl(tmp_path: Path) -> None:
-    """Return failure when a selected JSONL source cannot be opened."""
-    assert main([str(tmp_path / "missing.jsonl")]) == 1
+# @lat: [[tests#CLI failure messages#Missing JSONL reuses the missing-file message]]
+def test_cli_reports_missing_jsonl(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Report a missing JSONL source the same way a missing JSON file is."""
+    with pytest.raises(SystemExit) as exit_info:
+        main([str(tmp_path / "missing.jsonl")])
+
+    assert exit_info.value.code == 1
+    assert "JSON file not found" in capsys.readouterr().err
 
 
 # @lat: [[tests#Streaming JSONL conversion#Invalid UTF-8 uses file parse errors]]
@@ -265,3 +276,119 @@ def test_cli_reports_missing_binary_stdout() -> None:
         patch("sys.stdout", StringIO()),
     ):
         assert main(["--jsonl", "-"]) == 1
+
+
+# @lat: [[tests#Streaming JSONL conversion#Output files keep conventional permissions]]
+def test_cli_output_permissions_match_plain_writes(tmp_path: Path) -> None:
+    """Leave streamed output readable rather than temporary-file private."""
+    jsonl_file = tmp_path / "records.jsonl"
+    json_file = tmp_path / "record.json"
+    jsonl_file.write_text('{"name": "Ada"}\n', encoding="utf-8")
+    json_file.write_text('{"name": "Ada"}\n', encoding="utf-8")
+    streamed = tmp_path / "streamed.xml"
+    materialized = tmp_path / "materialized.xml"
+
+    assert main(["-o", str(streamed), str(jsonl_file)]) == 0
+    assert main(["-o", str(materialized), str(json_file)]) == 0
+    assert streamed.stat().st_mode == materialized.stat().st_mode
+
+    existing = tmp_path / "existing.xml"
+    existing.write_bytes(b"")
+    existing.chmod(0o640)
+
+    assert main(["-o", str(existing), str(jsonl_file)]) == 0
+    assert stat.S_IMODE(existing.stat().st_mode) == 0o640
+
+
+# @lat: [[tests#Streaming JSONL conversion#Output failures name the destination]]
+def test_cli_output_error_names_destination(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Name the requested output file instead of the hidden temporary file."""
+    jsonl_file = tmp_path / "records.jsonl"
+    jsonl_file.write_text('{"name": "Ada"}\n', encoding="utf-8")
+    output_file = tmp_path / "missing-directory" / "records.xml"
+
+    assert main(["-o", str(output_file), str(jsonl_file)]) == 1
+    error = capsys.readouterr().err
+    assert str(output_file) in error
+    assert ".tmp" not in error
+
+
+# @lat: [[tests#Streaming JSONL conversion#Byte order marks are dropped]]
+def test_stream_drops_byte_order_mark() -> None:
+    """Convert a first record an editor saved with a byte order mark."""
+    destination = BytesIO()
+
+    stream_jsonl_to_xml(
+        ['﻿{"name": "Ada"}\n'],
+        destination,
+        JsonlConversionOptions(attr_type=False),
+    )
+
+    assert b"<name>Ada</name>" in destination.getvalue()
+
+
+# @lat: [[tests#Streaming JSONL conversion#Record conversion failures stop the CLI]]
+def test_cli_reports_record_conversion_failure(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Report a record that is valid JSON but forbidden by XML 1.0."""
+    jsonl_file = tmp_path / "records.jsonl"
+    output_file = tmp_path / "records.xml"
+    jsonl_file.write_text('{"name": "Ada"}\n{"name": "\\u0001"}\n', encoding="utf-8")
+
+    assert main(["-o", str(output_file), str(jsonl_file)]) == 1
+    assert "JSONL line 2" in capsys.readouterr().err
+    assert not output_file.exists()
+
+
+# @lat: [[tests#Streaming JSONL conversion#Unreadable sources use the file parse error]]
+def test_cli_reports_unreadable_jsonl(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Report an existing JSONL file the process is not allowed to open."""
+    jsonl_file = tmp_path / "records.jsonl"
+    jsonl_file.write_text('{"name": "Ada"}\n', encoding="utf-8")
+
+    with patch("json2xml.cli.open", side_effect=OSError("denied")):
+        assert main([str(jsonl_file)]) == 1
+
+    assert "Could not parse JSON file:" in capsys.readouterr().err
+
+
+# @lat: [[tests#CLI input resolution#JSONL string input is framed by line]]
+def test_cli_frames_string_input_by_line(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Frame --string input by line and report malformed records."""
+    assert main(["--jsonl", "-s", '{"name": "Ada"}\n{"name": "Grace"}']) == 0
+    assert capsys.readouterr().out.count("<item") == 2
+
+    with pytest.raises(SystemExit) as exit_info:
+        main(["--jsonl", "-s", '{"name": "Ada"}\ninvalid'])
+
+    assert exit_info.value.code == 1
+    assert "Invalid JSON Lines in --string input" in capsys.readouterr().err
+
+
+# @lat: [[tests#CLI failure messages#Argument conflicts fail during parsing]]
+def test_cli_rejects_jsonl_with_url(capsys: pytest.CaptureFixture[str]) -> None:
+    """Reject flag combinations and values while parsing arguments."""
+    with pytest.raises(SystemExit) as exit_info:
+        main(["--jsonl", "-u", "https://example.com/data.json"])
+
+    assert exit_info.value.code == 2
+    assert "--jsonl cannot be combined with --url" in capsys.readouterr().err
+
+    with pytest.raises(SystemExit) as exit_info:
+        main(["--invalid-xml-chars", "bogus", "-s", "{}"])
+
+    assert exit_info.value.code == 2
+    assert "choose from reject, replace, escape, remove" in capsys.readouterr().err
+
+    with pytest.raises(argparse.ArgumentTypeError, match="choose from reject"):
+        invalid_xml_policy("bogus")

@@ -26,6 +26,18 @@ A `.jsonl` positional file should parse as ordered JSON records automatically an
 
 The `--jsonl` flag should parse piped input as JSON Lines because stdin has no filename suffix from which to infer its format.
 
+### JSONL flag overrides the file suffix
+
+`--jsonl` should force line framing for a file named anything, and `--no-jsonl` should force whole-document framing for a `.jsonl` file, so the name is a default rather than a verdict.
+
+### NDJSON files select line parsing
+
+A `.ndjson` file should parse by line like `.jsonl` does, because both name the same format and users should not have to rename an export.
+
+### JSONL string input is framed by line
+
+`--string` with `--jsonl` should decode each line as its own record and report malformed lines, so the format flag means one thing across every source.
+
 ## Input readers
 
 These tests verify the concrete reader helpers against realistic source behavior so parsing and error wrapping stay aligned with production use.
@@ -49,6 +61,14 @@ JSONL stdin should retain leading blank physical lines so later parse errors rep
 ### Unicode separators remain record content
 
 Literal U+2028 and U+2029 characters inside JSON strings should remain content because JSON Lines records split only at LF, optionally preceded by CR.
+
+### Readers split records at LF only
+
+The file and string JSON Lines readers should agree on record boundaries: CRLF terminates a record, and a lone CR fails the record it sits in rather than silently starting a new one.
+
+### Readers drop a leading byte order mark
+
+JSON and JSON Lines files saved with a UTF-8 byte order mark should decode normally, because an editor's mark is not a data error the first record should fail on.
 
 ### URL reader uses real HTTP and wraps failures
 
@@ -88,7 +108,7 @@ Streaming conversion should emit each record before requesting the next line so 
 
 ### Supported options retain batch output
 
-Streaming conversion should match regular list conversion for root, wrapper, type, item wrapping, and CDATA options so file size does not change XML semantics.
+Streaming conversion should match regular list conversion byte for byte across root, wrapper, type, item wrapping, and CDATA options, including records such as scalars that have no name of their own and must borrow the wrapper name.
 
 ### Malformed records retain physical line numbers
 
@@ -118,13 +138,41 @@ The CLI should apply conversion budgets to each JSONL record independently so a 
 
 File output should replace its destination only after every JSONL record succeeds so malformed late records cannot destroy an existing output file.
 
-### Incompatible modes fail before output
+### Whole-document modes materialize records
 
-Pretty, XPath, and list-header modes should fail before creating output because their whole-document layouts are not yet supported by the streaming serializer.
+Pretty, XPath, and list-header modes should convert JSONL through the materialized reader rather than failing, because their layouts are defined over the complete document and users still need them.
+
+### Output files keep conventional permissions
+
+Streamed output should carry the permissions a plain write would leave and preserve an existing destination's mode, so the temporary file's private mode does not reach the destination.
+
+### Output failures name the destination
+
+A destination that cannot be created should be reported by the name the user asked for, never by the hidden temporary path beside it.
+
+### Byte order marks are dropped
+
+A streamed first record carrying a byte order mark should convert normally, matching the file readers' handling of the same mark.
+
+### Record conversion failures stop the CLI
+
+A record that is valid JSON but forbidden by XML 1.0 should stop the CLI with its physical line number and leave no output file behind.
+
+### Unreadable sources use the file parse error
+
+An existing JSONL file that cannot be opened should be reported through the JSON-file parse message rather than an unhandled operating system error.
 
 ## CLI failure messages
 
 These tests verify common command-line failures return short messages that name the broken input source and point users at the next valid action.
+
+### Missing JSONL reuses the missing-file message
+
+A missing `.jsonl` file should produce the same message and exit path as a missing `.json` file, because the input format does not change what went wrong.
+
+### Argument conflicts fail during parsing
+
+Unusable flag combinations and values, such as `--jsonl` with `--url` or an unknown `--invalid-xml-chars` policy, should fail during argument parsing with the standard exit code and the valid choices named.
 
 ### No input is actionable
 

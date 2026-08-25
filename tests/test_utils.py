@@ -184,10 +184,28 @@ class TestReadFromJsonLines:
         with pytest.raises(JSONReadError, match="Invalid JSONL File"):
             readfromjsonl(str(tmp_path / "missing.jsonl"))
 
+    # @lat: [[tests#Input readers#JSONL reader wraps invalid UTF-8]]
+    def test_wraps_invalid_utf8(self, tmp_path: Path) -> None:
+        """Keep decoding failures inside the JSON reader contract."""
+        jsonl_file = tmp_path / "invalid-utf8.jsonl"
+        jsonl_file.write_bytes(b'{"valid": true}\n\xff\n')
+
+        with pytest.raises(JSONReadError, match="Invalid JSONL File"):
+            readfromjsonl(str(jsonl_file))
+
     def test_rejects_non_string_text(self) -> None:
         """Reject values that cannot contain JSON Lines text."""
         with pytest.raises(JSONReadError, match="proper JSONL string"):
             readfromjsonlstring(1)
+
+    # @lat: [[tests#Input readers#Unicode separators remain record content]]
+    def test_unicode_line_separator_is_content(self) -> None:
+        """Split JSONL text only at LF record terminators."""
+        jsonl_text = '{"value": "before\u2028after\u2029end"}\n'
+
+        assert readfromjsonlstring(jsonl_text) == [
+            {"value": "before\u2028after\u2029end"}
+        ]
 
     # @lat: [[tests#Input readers#JSONL reader identifies malformed lines]]
     def test_reports_malformed_line(self, tmp_path: Path) -> None:

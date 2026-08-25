@@ -498,11 +498,23 @@ The ``json2xml-py`` command-line tool provides an easy way to convert JSON to XM
     # Read from stdin
     cat data.json | json2xml-py -
 
-    # Convert JSON Lines; each non-empty line becomes one list item
-    json2xml-py records.jsonl
+    # Stream JSON Lines to an atomically replaced output file
+    json2xml-py records.jsonl -o records.xml
 
     # JSON Lines from stdin needs an explicit format flag
     cat records.jsonl | json2xml-py --jsonl -
+
+JSONL conversion reads and writes one record at a time, so memory use is bounded by the largest record rather than the complete file. Depth, item, and output limits apply independently to each record. Blank lines are skipped.
+
+``-o`` writes through a temporary file in the destination directory and replaces the requested file only after every record succeeds. Parse and XML conversion errors identify the physical JSONL line. Stdout cannot be rolled back, so a late error leaves partial XML in the pipe and exits nonzero.
+
+Streaming JSONL currently rejects ``--pretty``, ``--xpath``, and ``--list-headers`` because those modes require unsupported whole-document layout semantics. Root, wrapper, type attributes, item wrapping, and CDATA retain the same output shape as regular list conversion.
+
+XML 1.0-forbidden characters are rejected by default. Use ``--invalid-xml-chars replace`` to substitute U+FFFD, ``escape`` to emit visible ``\\uXXXX`` text, or ``remove`` to delete them. The policy applies to JSON and JSONL string values and keys; transformed key collisions fail instead of dropping data.
+
+.. code-block:: console
+
+    json2xml-py --invalid-xml-chars replace github-events.jsonl -o github-events.xml
 
     # Output to file
     json2xml-py -o output.xml data.json
@@ -535,6 +547,7 @@ The ``json2xml-py`` command-line tool provides an easy way to convert JSON to XM
       -x, --xpath             Use XPath 3.1 json-to-xml format
       -c, --cdata             Wrap string values in CDATA sections
       -l, --list-headers      Repeat headers for each list item
+      --invalid-xml-chars     reject, replace, escape, or remove forbidden characters
 
     Other Options:
       -v, --version           Show version information

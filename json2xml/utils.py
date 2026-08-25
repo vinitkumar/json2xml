@@ -87,7 +87,7 @@ def readfromjsonl(filename: str) -> JSONValue:
     try:
         with open(filename, encoding="utf-8") as jsondata:
             return _parse_jsonlines(jsondata)
-    except OSError as error:
+    except (OSError, UnicodeDecodeError) as error:
         raise JSONReadError("Invalid JSONL File") from error
 
 
@@ -98,7 +98,7 @@ def readfromjsonlstring(jsondata: object) -> JSONValue:
     """
     if not isinstance(jsondata, str):
         raise JSONReadError("Input is not a proper JSONL string")
-    return _parse_jsonlines(jsondata.splitlines())
+    return _parse_jsonlines(jsondata.split("\n"))
 
 
 # @lat: [[behavior#URL security boundaries]]

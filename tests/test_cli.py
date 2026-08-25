@@ -649,6 +649,19 @@ class TestCLIUnitTests:
 
         assert exc_info.value.code == 1
 
+    # @lat: [[tests#Input readers#JSONL stdin preserves leading blank lines]]
+    def test_jsonl_stdin_keeps_leading_lines(
+        self, capsys: CaptureFixture[str]
+    ) -> None:
+        """Keep physical line numbers when JSONL stdin starts blank."""
+        with (
+            patch("sys.stdin", io.StringIO("\n\ninvalid\n")),
+            pytest.raises(SystemExit),
+        ):
+            CLIApplication().read_from_stdin(InputFormat.JSONL)
+
+        assert "Invalid JSONL at line 3" in capsys.readouterr().err
+
     def test_read_from_stdin_invalid_json_raises_system_exit(self) -> None:
         """Test read_from_stdin raises SystemExit on invalid JSON."""
         with patch("sys.stdin", io.StringIO("not json")):

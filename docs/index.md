@@ -15,7 +15,7 @@ print(json2xml.Json2xml(data).to_xml())
 ## Features
 
 - Conversion from a JSON string to XML
-- Conversion from JSON and JSON Lines files to XML
+- Bounded-memory streaming from JSON Lines files to XML
 - Conversion from an API that emits JSON data to XML
 - XPath 3.1 compliant output format (optional)
 - Customizable root element wrapper

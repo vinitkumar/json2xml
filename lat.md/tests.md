@@ -38,6 +38,18 @@ JSONL input should decode each non-empty line as an independent JSON value, pres
 
 Malformed JSONL should raise `JSONReadError` with the physical line number so callers can locate invalid records even when blank lines appear earlier in the file.
 
+### JSONL reader wraps invalid UTF-8
+
+Invalid UTF-8 in a JSONL file should raise `JSONReadError` so decoding and filesystem failures share the documented reader contract.
+
+### JSONL stdin preserves leading blank lines
+
+JSONL stdin should retain leading blank physical lines so later parse errors report their actual source line instead of a stripped line number.
+
+### Unicode separators remain record content
+
+Literal U+2028 and U+2029 characters inside JSON strings should remain content because JSON Lines records split only at LF, optionally preceded by CR.
+
 ### URL reader uses real HTTP and wraps failures
 
 URL input should read valid JSON over HTTP and wrap status, network, and decoding failures in `URLReadError`.
@@ -65,6 +77,50 @@ Malformed IDNA hostnames should raise `URLReadError` so hostname encoding failur
 ### URL reader pins validated DNS addresses
 
 Public URL reads should connect to a validated resolved address while preserving the original Host header and TLS hostname so DNS rebinding cannot redirect the connection.
+
+## Streaming JSONL conversion
+
+These tests verify JSON Lines can become one XML document while input and output remain bounded to one record at a time.
+
+### Records are written before reading ahead
+
+Streaming conversion should emit each record before requesting the next line so memory use depends on one record rather than the complete JSONL source.
+
+### Supported options retain batch output
+
+Streaming conversion should match regular list conversion for root, wrapper, type, item wrapping, and CDATA options so file size does not change XML semantics.
+
+### Malformed records retain physical line numbers
+
+A malformed record should stop streaming with its physical JSONL line number so users can locate the failure after partial stdout output.
+
+### Invalid UTF-8 uses file parse errors
+
+A streaming JSONL file with invalid UTF-8 should use the CLI's JSON-file parse error and preserve atomic output behavior instead of leaking a decoding exception.
+
+### Conversion errors retain physical line numbers
+
+A record that cannot become valid XML should report its physical JSONL line number so users can locate valid JSON containing unsupported XML data.
+
+### Invalid XML character policies are explicit
+
+Strict mode should reject forbidden XML 1.0 characters, while replace, escape, and remove modes should transform them predictably without changing valid characters.
+
+### CLI applies the selected character policy
+
+The invalid-character CLI option should select the requested policy for JSONL and regular JSON conversion while retaining strict rejection by default.
+
+### Record limits do not become file limits
+
+The CLI should apply conversion budgets to each JSONL record independently so a valid stream can exceed the aggregate item limit without materialization.
+
+### Output files replace atomically
+
+File output should replace its destination only after every JSONL record succeeds so malformed late records cannot destroy an existing output file.
+
+### Incompatible modes fail before output
+
+Pretty, XPath, and list-header modes should fail before creating output because their whole-document layouts are not yet supported by the streaming serializer.
 
 ## CLI failure messages
 

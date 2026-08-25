@@ -11,6 +11,8 @@ from io import BytesIO
 from random import SystemRandom
 from typing import Any, Union, cast
 
+from .xml_chars import is_xml10_char
+
 __lazy_modules__ = ["defusedxml.minidom"]
 
 # Create a safe random number generator
@@ -260,12 +262,10 @@ def _validate_xml_chars(value: str) -> None:
         return
 
     for character in value:
-        codepoint = ord(character)
-        is_forbidden_control = codepoint < 0x20 and codepoint not in (0x09, 0x0A, 0x0D)
-        is_surrogate = 0xD800 <= codepoint <= 0xDFFF
-        is_bmp_noncharacter = codepoint in (0xFFFE, 0xFFFF)
-        if is_forbidden_control or is_surrogate or is_bmp_noncharacter:
-            raise ValueError(f"Character U+{codepoint:04X} is not allowed in XML 1.0")
+        if not is_xml10_char(character):
+            raise ValueError(
+                f"Character U+{ord(character):04X} is not allowed in XML 1.0"
+            )
 
 
 def escape_xml(s: str | int | float | numbers.Number | None) -> str:

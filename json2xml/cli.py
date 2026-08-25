@@ -18,6 +18,7 @@ Flags:
     --jsonl                 Parse stdin as JSON Lines
     -c, --cdata             Wrap string values in CDATA sections
     -l, --list-headers      Repeat headers for each list item
+    --invalid-xml-chars     Handle XML 1.0-forbidden characters
     -h, --help              Show help message
     -v, --version           Show version information
 
@@ -40,6 +41,9 @@ Examples:
     # Read JSON Lines from stdin
     cat records.jsonl | json2xml-py --jsonl -
 
+    # Replace characters forbidden by XML 1.0
+    json2xml-py --invalid-xml-chars replace data.json
+
     # Output to file
     json2xml-py -o output.xml data.json
 
@@ -50,14 +54,17 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import NoReturn
+from tempfile import NamedTemporaryFile
+from typing import BinaryIO, NoReturn, TextIO
 
 from json2xml import __version__
 from json2xml.json2xml import Json2xml
+from json2xml.jsonl import JsonlConversionOptions, stream_jsonl_to_xml
 from json2xml.types import JSONValue
 from json2xml.utils import (
     JSONReadError,
@@ -69,6 +76,7 @@ from json2xml.utils import (
     readfromstring,
     readfromurl,
 )
+from json2xml.xml_chars import InvalidXMLPolicy, transform_json_xml_chars
 
 AUTHOR = "Vinit Kumar"
 EMAIL = "mail@vinitkumar.me"
@@ -99,6 +107,7 @@ class CLIConversionOptions:
     cdata: bool
     list_headers: bool
     jsonl: bool = False
+    invalid_xml_policy: InvalidXMLPolicy = InvalidXMLPolicy.REJECT
 
     @classmethod
     def from_namespace(cls, args: argparse.Namespace) -> CLIConversionOptions:
@@ -116,6 +125,9 @@ class CLIConversionOptions:
             cdata=args.cdata,
             list_headers=args.list_headers,
             jsonl=vars(args).get("jsonl", False),
+            invalid_xml_policy=vars(args).get(
+                "invalid_xml_policy", InvalidXMLPolicy.REJECT
+            ),
         )
 
 
@@ -127,6 +139,84 @@ def exit_with_error(message: str) -> NoReturn:
 
 class CLIApplication:
     """Thin command adapter around input resolution, conversion, and output."""
+
+    def uses_jsonl_stream(self, options: CLIConversionOptions) -> bool:
+        """Return whether the selected source requires record-at-a-time conversion."""
+        if options.url or options.string:
+            return False
+        if options.input_file and options.input_file != "-":
+            return Path(options.input_file).suffix.lower() == JSONL_SUFFIX
+        return options.jsonl
+
+    def stream_jsonl(self, options: CLIConversionOptions) -> None:
+        """Stream the selected JSONL source to stdout or an atomic output file."""
+        if options.pretty:
+            raise ValueError("Streaming JSONL does not support --pretty")
+        if options.xpath_format:
+            raise ValueError("Streaming JSONL does not support --xpath")
+        if options.list_headers:
+            raise ValueError("Streaming JSONL does not support --list-headers")
+
+        stream_options = JsonlConversionOptions(
+            wrapper=options.wrapper,
+            root=options.root,
+            attr_type=options.attr_type,
+            item_wrap=options.item_wrap,
+            cdata=options.cdata,
+            invalid_xml_policy=options.invalid_xml_policy,
+        )
+        if options.input_file and options.input_file != "-":
+            try:
+                source = open(options.input_file, encoding="utf-8")
+            except OSError as error:
+                raise JSONReadError(
+                    f"Could not read JSONL file: {options.input_file}"
+                ) from error
+            with source:
+                try:
+                    self._write_jsonl(source, options.output, stream_options)
+                except UnicodeDecodeError as error:
+                    raise JSONReadError("Invalid JSONL File") from error
+            return
+
+        self._write_jsonl(sys.stdin, options.output, stream_options)
+
+    def _write_jsonl(
+        self,
+        source: TextIO,
+        output_file: str | None,
+        options: JsonlConversionOptions,
+    ) -> None:
+        if output_file is None:
+            destination = self._stdout_buffer()
+            stream_jsonl_to_xml(source, destination, options)
+            destination.write(b"\n")
+            return
+
+        output_path = Path(output_file)
+        temporary_path: Path | None = None
+        try:
+            with NamedTemporaryFile(
+                mode="wb",
+                dir=output_path.parent,
+                prefix=f".{output_path.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as destination:
+                temporary_path = Path(destination.name)
+                stream_jsonl_to_xml(source, destination, options)
+            os.replace(temporary_path, output_path)
+        except BaseException:
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
+            raise
+
+    @staticmethod
+    def _stdout_buffer() -> BinaryIO:
+        destination = getattr(sys.stdout, "buffer", None)
+        if destination is None:
+            raise OSError("Binary stdout is unavailable")
+        return destination
 
     def read_input(self, options: CLIConversionOptions) -> JSONValue:
         if options.url:
@@ -178,8 +268,8 @@ class CLIApplication:
     def read_from_stdin(
         self, input_format: InputFormat = InputFormat.JSON
     ) -> JSONValue:
-        json_str = sys.stdin.read().strip()
-        if not json_str:
+        json_str = sys.stdin.read()
+        if not json_str.strip():
             exit_with_error(
                 "Error: Empty stdin. Pipe JSON into stdin or pass a file/--string."
             )
@@ -198,8 +288,9 @@ class CLIApplication:
             )
 
     def convert(self, data: JSONValue, options: CLIConversionOptions) -> str | bytes:
+        transformed_data = transform_json_xml_chars(data, options.invalid_xml_policy)
         converter = Json2xml(
-            data=data,
+            data=transformed_data,
             wrapper=options.wrapper,
             root=options.root,
             pretty=options.pretty,
@@ -263,6 +354,9 @@ Examples:
   # Read JSON Lines from stdin
   cat records.jsonl | json2xml-py --jsonl -
 
+  # Replace characters forbidden by XML 1.0
+  json2xml-py --invalid-xml-chars replace data.json
+
   # Output to file
   json2xml-py -o output.xml data.json
 
@@ -280,7 +374,7 @@ Examples:
         "input_file",
         nargs="?",
         default=None,
-        help="Read JSON from file (use - for stdin)",
+        help="Read JSON or stream .jsonl from file (use - for stdin)",
     )
     input_group.add_argument(
         "-u",
@@ -299,7 +393,7 @@ Examples:
     input_group.add_argument(
         "--jsonl",
         action="store_true",
-        help="Parse stdin as JSON Lines (files ending in .jsonl are detected automatically)",
+        help="Stream stdin as JSON Lines (files ending in .jsonl are detected automatically)",
     )
 
     # Output options
@@ -401,6 +495,15 @@ Examples:
         default=False,
         help="Repeat headers for each list item",
     )
+    conv_group.add_argument(
+        "--invalid-xml-chars",
+        dest="invalid_xml_policy",
+        type=InvalidXMLPolicy,
+        choices=tuple(InvalidXMLPolicy),
+        default=InvalidXMLPolicy.REJECT,
+        metavar="{reject,replace,escape,remove}",
+        help="Handle characters forbidden by XML 1.0 (default: reject)",
+    )
 
     # Other options
     parser.add_argument(
@@ -439,6 +542,24 @@ def main(argv: list[str] | None = None) -> int:
     parser = create_parser()
     args = parser.parse_args(argv)
     options = CLIConversionOptions.from_namespace(args)
+
+    if _APP.uses_jsonl_stream(options):
+        try:
+            _APP.stream_jsonl(options)
+        except JSONReadError as error:
+            if options.input_file and options.input_file != "-":
+                print(
+                    f"Error: Could not parse JSON file: {options.input_file}. "
+                    f"Check that the file contains valid JSON. ({error})",
+                    file=sys.stderr,
+                )
+            else:
+                print(f"Error: Invalid JSONL from stdin. ({error})", file=sys.stderr)
+            return 1
+        except Exception as error:
+            print(f"Error converting to XML: {error}", file=sys.stderr)
+            return 1
+        return 0
 
     try:
         data = read_input(options)

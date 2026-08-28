@@ -218,6 +218,45 @@ class TestCLI:
         assert result.returncode == 1
         assert "Invalid JSON in --string input" in result.stderr
 
+    # @lat: [[tests#CLI input resolution#Explicit empty string rejects piped stdin]]
+    def test_empty_string_does_not_fall_back_to_stdin(self) -> None:
+        """Test an explicit empty string remains the selected input source."""
+        result = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", "-s", ""],
+            input='{"stdin": "unexpected"}',
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 1
+        assert "Invalid JSON in --string input" in result.stderr
+        assert result.stdout == ""
+
+    # @lat: [[tests#CLI input resolution#Explicit empty URL rejects piped stdin]]
+    def test_empty_url_does_not_fall_back_to_stdin(self) -> None:
+        """Test an explicit empty URL remains the selected input source."""
+        result = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", "-u", ""],
+            input='{"stdin": "unexpected"}',
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 1
+        assert "Error reading from URL" in result.stderr
+        assert result.stdout == ""
+
+    # @lat: [[tests#CLI input resolution#Explicit empty file path rejects piped stdin]]
+    def test_empty_file_path_does_not_fall_back_to_stdin(self) -> None:
+        """Test an explicit empty file path remains the selected input source."""
+        result = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", ""],
+            input='{"stdin": "unexpected"}',
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 1
+        assert "Empty JSON file path" in result.stderr
+        assert result.stdout == ""
+
     def test_no_input_error(self) -> None:
         """Test error when no input is provided."""
         # Force isatty to return True by using a pty-like environment
@@ -606,6 +645,21 @@ class TestCLIUnitTests:
 
         captured = capsys.readouterr()
         assert "Error reading from URL" in captured.err
+
+    # @lat: [[tests#CLI failure messages#Empty file path names the empty source]]
+    def test_read_input_empty_file_path(self, capsys: CaptureFixture[str]) -> None:
+        """Test read_input rejects an explicitly empty file path."""
+        args = MagicMock()
+        args.url = None
+        args.string = None
+        args.input_file = ""
+
+        with pytest.raises(SystemExit) as exc_info:
+            read_input(args)
+
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "Empty JSON file path" in captured.err
 
     def test_read_input_json_file_error(self, capsys: CaptureFixture[str]) -> None:
         """Test read_input handles JSON file read errors."""

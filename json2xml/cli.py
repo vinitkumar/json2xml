@@ -109,6 +109,7 @@ class CLIApplication:
     """Thin command adapter around input resolution, conversion, and output."""
 
     def read_input(self, options: CLIConversionOptions) -> JSONValue:
+        # None means omitted; explicit empty values still require source validation.
         if options.url is not None:
             try:
                 return readfromurl(options.url)

@@ -1,4 +1,10 @@
 
+7.0.1 / 2026-08-28
+==================
+
+  * fix: validate explicitly provided empty ``--string``, ``--url``, and file-path inputs instead of silently falling back to stdin
+
+
 7.0.0 / 2026-08-23
 ==================
 

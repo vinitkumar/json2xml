@@ -1,3 +1,24 @@
+# json2xml 7.0.1
+
+Released 2026-08-28.
+
+## Highlights
+
+- Validates explicitly supplied CLI input sources by presence, so empty `--string`, `--url`, and file-path values no longer fall back to piped stdin.
+- Reports a dedicated error for an empty file path instead of a misleading missing-file message.
+- Keeps the Python and Rust package boundary unchanged; `json2xml[fast]` continues to use `json2xml-rs>=0.5.0`.
+
+## Package Versions
+
+- Python package: `json2xml==7.0.1`
+- Rust accelerator: `json2xml-rs==0.5.0`
+- Fast install: `pip install "json2xml[fast]==7.0.1"`
+
+## Verification
+
+The release passed Ruff, ty, 600 Python tests with 100% statement coverage, Rust formatting, Clippy with warnings denied, 47 Rust unit tests, package builds, Twine metadata checks, an isolated fast-install smoke test, and the hosted Python and Rust compatibility matrices.
+
+
 # json2xml 7.0.0
 
 Released 2026-08-23.

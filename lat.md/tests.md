@@ -14,6 +14,18 @@ These tests lock down how the CLI chooses among competing input sources so calle
 
 When both URL and string inputs are present, the CLI should read from the URL first so the documented source precedence remains stable.
 
+### Explicit empty string rejects piped stdin
+
+An explicitly empty `--string` value should fail string validation instead of silently selecting piped stdin, preserving the caller's chosen source.
+
+### Explicit empty URL rejects piped stdin
+
+An explicitly empty `--url` value should fail URL validation instead of silently selecting piped stdin, preserving the caller's chosen source.
+
+### Explicit empty file path rejects piped stdin
+
+An explicitly empty positional path should fail with an empty-path error instead of silently selecting piped stdin, preserving the caller's chosen source.
+
 ### Dash argument reads stdin
 
 When the positional input is `-`, the CLI should read stdin instead of trying to open a file literally named `-`.
@@ -61,6 +73,10 @@ Running the CLI without JSON should fail with a message that tells users to pass
 ### Invalid file JSON names the source
 
 Malformed JSON read from an existing file should mention that file path so users can distinguish file parsing failures from missing-file, string, stdin, or conversion failures.
+
+### Empty file path names the empty source
+
+An explicitly empty positional path should report an empty-path error rather than a confusing missing-file message naming nothing.
 
 ### No-input guard stays total if exit helper is bypassed
 

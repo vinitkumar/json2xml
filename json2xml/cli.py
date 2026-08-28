@@ -109,13 +109,14 @@ class CLIApplication:
     """Thin command adapter around input resolution, conversion, and output."""
 
     def read_input(self, options: CLIConversionOptions) -> JSONValue:
-        if options.url:
+        # None means omitted; explicit empty values still require source validation.
+        if options.url is not None:
             try:
                 return readfromurl(options.url)
             except URLReadError as error:
                 exit_with_error(f"Error reading from URL: {error}")
 
-        if options.string:
+        if options.string is not None:
             try:
                 return readfromstring(options.string)
             except StringReadError as error:
@@ -125,9 +126,14 @@ class CLIApplication:
                     f"({error})"
                 )
 
-        if options.input_file:
+        if options.input_file is not None:
             if options.input_file == "-":
                 return read_from_stdin()
+            if not options.input_file:
+                exit_with_error(
+                    "Error: Empty JSON file path. "
+                    "Pass a JSON file, use - for stdin, or provide --string/--url."
+                )
             if not Path(options.input_file).is_file():
                 exit_with_error(
                     f"Error: JSON file not found: {options.input_file}. "

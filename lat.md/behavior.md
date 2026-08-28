@@ -10,6 +10,8 @@ The input helpers convert files, strings, URLs, and stdin into Python data struc
 
 [[json2xml/utils.py#readfromurl]] lazily initializes the HTTP client, performs a bounded GET request, and raises `URLReadError` for hostname encoding, network, status, size, decoding, and JSON failures.
 
+[[json2xml/cli.py#CLIApplication#read_input]] selects URL, string, and file sources by argument presence, not truthiness. Explicit empty values therefore reach source-specific validation instead of falling back to a later source or stdin.
+
 ## URL security boundaries
 
 Remote JSON reads default to public, credential-free HTTP(S) targets and bounded decoded responses so callers do not accidentally expose internal services or unlimited memory.

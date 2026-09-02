@@ -252,6 +252,10 @@ Values Python classifies through isinstance fallbacks, scalar subclasses, and ke
 
 Every divergence found by differential testing is pinned across the full option matrix, and randomized payloads are compared against the Python serializer under a fixed seed.
 
+#### Tuples stay on Python
+
+Python applies its list-shape rules to tuples but the native writer only recognizes lists, so the gate must keep every payload containing a tuple on the Python serializer.
+
 #### Native and Python gates agree
 
 The native gate is an optimization over the Python reference walk, so the two must return the same verdict for every payload; disagreeing in either direction is a correctness bug.

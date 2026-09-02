@@ -56,9 +56,9 @@ class BackendSelector:
 
 # Types the Rust backend renders byte-identically to the Python serializer. Subclasses are
 # excluded on purpose: Python classifies them through its isinstance fallbacks, which the
-# native writer does not reproduce.
+# native writer does not reproduce. Tuples are excluded because Python applies its
+# list-shape rules to them while the native writer only recognizes lists.
 _RUST_SCALAR_TYPES = frozenset({str, bool, int, float, type(None)})
-_RUST_CONTAINER_TYPES = frozenset({dict, list, tuple})
 
 
 def _rust_renders_key_identically(key: Any) -> bool:
@@ -105,7 +105,7 @@ def rust_renders_identically(obj: Any) -> bool:
                     return False
                 stack.append(child)
             continue
-        if value_type in _RUST_CONTAINER_TYPES:
+        if value_type is list:
             stack.extend(value)
             continue
         return False

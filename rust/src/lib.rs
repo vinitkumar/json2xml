@@ -8,7 +8,7 @@ use pyo3::exceptions::PyValueError;
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 #[cfg(feature = "python")]
-use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
+use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString};
 #[cfg(feature = "python")]
 use std::io::{BufWriter, Write};
 
@@ -754,7 +754,8 @@ fn key_renders_identically(key: &Bound<'_, PyAny>) -> bool {
 /// This is the native form of `rust_renders_identically`; the selector calls it before
 /// dispatching so the walk does not cost a Python-level traversal of the whole payload.
 /// Types are matched exactly, because Python classifies subclasses through isinstance
-/// fallbacks that this writer does not reproduce.
+/// fallbacks that this writer does not reproduce. Tuples are rejected because Python applies
+/// its list-shape rules to them while this writer only recognizes lists.
 #[cfg(feature = "python")]
 #[pyfunction]
 fn payload_is_supported(obj: &Bound<'_, PyAny>) -> PyResult<bool> {
@@ -780,12 +781,6 @@ fn payload_is_supported(obj: &Bound<'_, PyAny>) -> PyResult<bool> {
         }
         if let Ok(list) = value.cast_exact::<PyList>() {
             for item in list.iter() {
-                stack.push(item);
-            }
-            continue;
-        }
-        if let Ok(tuple) = value.cast_exact::<PyTuple>() {
-            for item in tuple.iter() {
                 stack.push(item);
             }
             continue;

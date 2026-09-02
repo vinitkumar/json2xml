@@ -107,9 +107,28 @@ def test_gate_admits_keys_both_backends_name_identically(key: str) -> None:
 
 def test_gate_walks_nested_containers() -> None:
     """A single unsupported value anywhere in the payload disqualifies the request."""
-    assert rust_renders_identically({"a": [{"b": (1, 2)}, None]})
+    assert rust_renders_identically({"a": [{"b": [1, 2]}, None]})
     assert not rust_renders_identically({"a": [{"b": [Decimal("1")]}]})
     assert not rust_renders_identically([[{"deep": {"deeper": Decimal("1")}}]])
+
+
+# @lat: [[tests#Conversion behavior#Rust backend parity#Tuples stay on Python]]
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"a": (1, 2)},
+        {"a": [(1, 2)]},
+        {"a": ({"b": 1},)},
+        [(1, 2)],
+    ],
+)
+def test_gate_rejects_tuples(data: Any) -> None:
+    """Python applies its list-shape rules to tuples; the native writer only to lists.
+
+    Under ``item_wrap=False`` or ``list_headers=True`` the two disagree on whether a
+    nested tuple keeps its wrapper, so tuples never reach the native backend.
+    """
+    assert not rust_renders_identically(data)
 
 
 def test_root_gate_only_applies_when_a_root_is_emitted() -> None:

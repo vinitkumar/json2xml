@@ -1168,9 +1168,9 @@ def convert_none_valid_name(key: str, attr_type: bool, attr: dict[str, Any]) -> 
 
 @dataclass(frozen=True, slots=True)
 class SerializerConfig:
-    """Normalized options for the pure Python serializer engine."""
+    """Normalized conversion options shared by the backend selector and this engine."""
 
-    obj: ELEMENT
+    obj: Any
     root: bool
     custom_root: str
     ids: list[int] | None
@@ -1484,4 +1484,9 @@ def dicttoxml(
         max_output_bytes=max_output_bytes,
         indent=indent,
     )
+    return serialize(config)
+
+
+def serialize(config: SerializerConfig) -> bytes:
+    """Render an already normalized configuration; see :func:`dicttoxml`."""
     return _SerializerEngine(config).render()

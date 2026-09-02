@@ -22,11 +22,8 @@ from typing import Any
 
 import json2xml.dicttoxml as _py_dicttoxml
 
-from .backend_selector import (
-    BackendSelector,
-    ConversionRequest,
-    rust_renders_root_identically,
-)
+from .backend_selector import BackendSelector, rust_renders_root_identically
+from .dicttoxml import SerializerConfig
 
 RustStringTransform = Callable[[str], str]
 
@@ -138,14 +135,14 @@ class _RustBackendAdapter:
 
     name: str = "rust"
 
-    def can_handle(self, request: ConversionRequest) -> bool:
+    def can_handle(self, request: SerializerConfig) -> bool:
         rust = _RUST
         if rust is None:
             return False
 
         return not (
             request.ids is not None
-            or request.item_func is not None
+            or request.item_func is not _py_dicttoxml.default_item_func
             or request.xml_namespaces
             or request.xpath_format
             or request.indent is not None
@@ -156,7 +153,7 @@ class _RustBackendAdapter:
             or not rust.payload_is_supported(request.obj)
         )
 
-    def render(self, request: ConversionRequest) -> bytes:
+    def render(self, request: SerializerConfig) -> bytes:
         assert _RUST is not None
         output = _RUST.dicttoxml(
             request.obj,
@@ -179,36 +176,16 @@ class _RustBackendAdapter:
 class _PythonBackendAdapter:
     """Adapter for the compatibility-preserving Python backend."""
 
-    python_dicttoxml: Callable[..., bytes]
-    default_item_func: Callable[[str], str]
-
     name: str = "python"
 
-    def can_handle(self, request: ConversionRequest) -> bool:
+    def can_handle(self, request: SerializerConfig) -> bool:
         return True
 
-    def render(self, request: ConversionRequest) -> bytes:
-        return self.python_dicttoxml(
-            request.obj,
-            root=request.root,
-            custom_root=request.custom_root,
-            ids=request.ids,
-            attr_type=request.attr_type,
-            item_wrap=request.item_wrap,
-            item_func=request.item_func or self.default_item_func,
-            cdata=request.cdata,
-            xml_namespaces=request.xml_namespaces,
-            list_headers=request.list_headers,
-            xpath_format=request.xpath_format,
-            max_output_bytes=request.max_output_bytes,
-            indent=request.indent,
-        )
+    def render(self, request: SerializerConfig) -> bytes:
+        return _py_dicttoxml.serialize(request)
 
 
-_BACKEND_SELECTOR = BackendSelector(
-    _RustBackendAdapter(),
-    _PythonBackendAdapter(_py_dicttoxml.dicttoxml, _py_dicttoxml.default_item_func),
-)
+_BACKEND_SELECTOR = BackendSelector(_RustBackendAdapter(), _PythonBackendAdapter())
 
 
 # @lat: [[architecture#Backend selection]]
@@ -251,14 +228,14 @@ def dicttoxml(
     Returns:
         UTF-8 encoded XML as bytes
     """
-    request = ConversionRequest(
+    request = SerializerConfig(
         obj=obj,
         root=root,
         custom_root=custom_root,
         ids=ids,
         attr_type=attr_type,
         item_wrap=item_wrap,
-        item_func=item_func,
+        item_func=_py_dicttoxml.default_item_func if item_func is None else item_func,
         cdata=cdata,
         xml_namespaces=xml_namespaces,
         list_headers=list_headers,

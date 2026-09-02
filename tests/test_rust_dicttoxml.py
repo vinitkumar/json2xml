@@ -27,7 +27,8 @@ except ImportError:
 
 import json2xml.dicttoxml_fast as fast_module
 from json2xml import dicttoxml as py_dicttoxml
-from json2xml.backend_selector import ConversionRequest, rust_renders_identically
+from json2xml.backend_selector import rust_renders_identically
+from json2xml.dicttoxml import SerializerConfig, default_item_func
 from json2xml.dicttoxml_fast import (
     _RustBackendAdapter,
     get_backend,
@@ -428,16 +429,16 @@ def _request(
     item_wrap: bool = True,
     cdata: bool = False,
     list_headers: bool = False,
-) -> ConversionRequest:
-    """Build a ConversionRequest with the defaults the public wrapper would use."""
-    return ConversionRequest(
+) -> SerializerConfig:
+    """Build a SerializerConfig with the defaults the public wrapper would use."""
+    return SerializerConfig(
         obj=obj,
         root=root,
         custom_root=custom_root,
         ids=None,
         attr_type=attr_type,
         item_wrap=item_wrap,
-        item_func=None,
+        item_func=default_item_func,
         cdata=cdata,
         xml_namespaces=None,
         list_headers=list_headers,

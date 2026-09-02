@@ -214,10 +214,6 @@ Helper exports for XML escaping and CDATA wrapping should preserve Python behavi
 
 The Rust escape and CDATA helpers take only `str`, so the public helpers must coerce numbers the same way the Python helpers do; installing the extension must not narrow the API.
 
-### Backend selector detects Python-only payload markers
-
-The backend selector should recognize nested `@attrs`, `@val`, and `@flat` markers so Rust is skipped before semantics drift.
-
 ### Backend selector fails loudly with no compatible backend
 
 If every backend rejects a conversion request, the selector should raise a clear error instead of silently returning bad output.

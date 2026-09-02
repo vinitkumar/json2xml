@@ -253,6 +253,26 @@ def test_fast_wrapper_falls_back_to_python_for_unsupported_options(
     rust_backend.assert_not_called()
 
 
+class _FalsyNamer:
+    """A callable whose truthiness is False, as a callable object legitimately can be."""
+
+    def __bool__(self) -> bool:
+        return False
+
+    def __call__(self, parent: str) -> str:
+        return "entry"
+
+
+def test_falsy_item_func_is_still_used(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Only None selects the default item function; truthiness is not a proxy for it."""
+    rust_backend = _force_rust_backend(monkeypatch)
+
+    result = fast_module.dicttoxml({"items": [1]}, root=False, item_func=_FalsyNamer())
+
+    assert b"<entry" in result
+    rust_backend.assert_not_called()
+
+
 # @lat: [[tests#Conversion behavior#Special keys force Python fallback]]
 def test_fast_wrapper_falls_back_to_python_for_special_keys(
     monkeypatch: pytest.MonkeyPatch,

@@ -97,8 +97,15 @@ class Json2xml:
             the data.
         """
         if self.data is not None:
-            _validate_conversion_budget(self.data, self.max_depth, self.max_items)
             try:
+                # The native gate walks the payload anyway, so it enforces the budget
+                # when it can; the Python walk remains for every other case.
+                if not dicttoxml.check_conversion_budget(
+                    self.data, self.max_depth, self.max_items
+                ):
+                    _validate_conversion_budget(
+                        self.data, self.max_depth, self.max_items
+                    )
                 xml_data = dicttoxml.dicttoxml(
                     self.data,
                     root=self.root,

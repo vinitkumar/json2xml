@@ -252,6 +252,12 @@ Conversion should reject excessive nesting and item counts before serialization,
 
 Limit validation rejects booleans, non-integers, and non-positive values. Tests cover exact backend bytes and all pretty whitespace, including indentation and the trailing newline, in that same budget.
 
+### Native conversion budget
+
+The native payload gate enforces depth and item limits in the same visiting order as the Python walk, so both report the same first violation.
+
+`Json2xml` skips the Python walk only when the native walk completes; builds without limit support keep the Python walk.
+
 ### Pretty printing avoids DOM reparsing
 
 Pretty output should be produced by the serializer itself rather than by constructing or reparsing a DOM.

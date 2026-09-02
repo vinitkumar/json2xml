@@ -44,7 +44,7 @@ When `xpath_format=True`, [[json2xml/dicttoxml.py#dicttoxml]] delegates payload 
 
 Opt-in pretty printing indents during serialization, so no generated XML is ever parsed back.
 
-[[json2xml/json2xml.py#Json2xml#to_xml]] rejects excessive depth and item counts before conversion, then passes an indent unit to the serializer when pretty output is requested. Compact and pretty output are both bounded as UTF-8 bytes are emitted, and indentation is counted in that budget because the writer emits it. Because the library never reads XML back, malformed markup, DTDs, and entities have no formatter to reach.
+[[json2xml/json2xml.py#Json2xml#to_xml]] rejects excessive depth and item counts before conversion, then passes an indent unit to the serializer when pretty output is requested. When the installed extension can enforce those limits, the native payload gate performs that walk so the Rust path does not pay for a second Python-level traversal; otherwise the Python walk runs. Compact and pretty output are both bounded as UTF-8 bytes are emitted, and indentation is counted in that budget because the writer emits it. Because the library never reads XML back, malformed markup, DTDs, and entities have no formatter to reach.
 
 ## Generated documents are well formed
 

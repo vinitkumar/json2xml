@@ -32,6 +32,9 @@ RustStringTransform = Callable[[str], str]
 
 LOG = logging.getLogger(__name__)
 
+# Limits are passed to the extension as u64; anything larger stays on the Python walk.
+_NATIVE_LIMIT_MAX = 2**64 - 1
+
 
 @dataclass(frozen=True, slots=True)
 class _RustBindings:
@@ -39,9 +42,11 @@ class _RustBindings:
 
     dicttoxml: Callable[..., bytes]
     # The payload gate walks the whole input, so it runs natively when available.
-    payload_is_supported: Callable[[Any], bool]
+    payload_is_supported: Callable[..., bool]
     escape_xml: RustStringTransform
     wrap_cdata: RustStringTransform
+    # Builds before 0.6.0 cannot enforce depth and item limits during that walk.
+    enforces_limits: bool
 
 
 def _rejects_invalid_xml(escape: RustStringTransform) -> bool:
@@ -53,6 +58,15 @@ def _rejects_invalid_xml(escape: RustStringTransform) -> bool:
     except Exception:
         return False
     return False
+
+
+def _accepts_limits(payload_is_supported: Callable[..., bool]) -> bool:
+    """Return whether the payload gate takes ``max_depth`` and ``max_items``."""
+    try:
+        payload_is_supported({}, max_depth=1, max_items=1)
+    except TypeError:
+        return False
+    return True
 
 
 def _load_rust_bindings() -> _RustBindings | None:
@@ -69,6 +83,7 @@ def _load_rust_bindings() -> _RustBindings | None:
             payload_is_supported=json2xml_rs.payload_is_supported,
             escape_xml=json2xml_rs.escape_xml_py,
             wrap_cdata=json2xml_rs.wrap_cdata_py,
+            enforces_limits=_accepts_limits(json2xml_rs.payload_is_supported),
         )
     except AttributeError:
         # Builds before payload_is_supported existed also predate the output parity
@@ -97,6 +112,24 @@ def is_rust_available() -> bool:
 def get_backend() -> str:
     """Return the name of the current backend ('rust' or 'python')."""
     return "rust" if _RUST is not None else "python"
+
+
+def check_conversion_budget(obj: Any, max_depth: int, max_items: int) -> bool:
+    """Enforce nesting and item limits during the native payload walk.
+
+    Returns True when the native walk completed within budget, so the caller can
+    skip its Python-level walk. Returns False when the caller must run that walk
+    instead: no usable extension, a build without limit support, a limit outside
+    the native range, or a payload outside the exact subset the gate walks.
+
+    :raises ValueError: If ``obj`` exceeds ``max_depth`` or ``max_items``.
+    """
+    rust = _RUST
+    if rust is None or not rust.enforces_limits:
+        return False
+    if max_depth > _NATIVE_LIMIT_MAX or max_items > _NATIVE_LIMIT_MAX:
+        return False
+    return rust.payload_is_supported(obj, max_depth=max_depth, max_items=max_items)
 
 
 @dataclass(frozen=True, slots=True)

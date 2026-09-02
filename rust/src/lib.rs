@@ -756,12 +756,31 @@ fn key_renders_identically(key: &Bound<'_, PyAny>) -> bool {
 /// Types are matched exactly, because Python classifies subclasses through isinstance
 /// fallbacks that this writer does not reproduce. Tuples are rejected because Python applies
 /// its list-shape rules to them while this writer only recognizes lists.
+///
+/// When `max_depth` or `max_items` is given, the same walk enforces the conversion budget
+/// exactly as `_validate_conversion_budget` in `json2xml/json2xml.py` does: values are
+/// visited in the same order and the same message is raised for the first violation, so
+/// the wrapper can skip its own Python-level walk. A `false` verdict says nothing about the
+/// budget; the caller must then fall back to the Python walk.
 #[cfg(feature = "python")]
 #[pyfunction]
-fn payload_is_supported(obj: &Bound<'_, PyAny>) -> PyResult<bool> {
-    let mut stack: Vec<Bound<'_, PyAny>> = vec![obj.clone()];
+#[pyo3(signature = (obj, max_depth=None, max_items=None))]
+fn payload_is_supported(
+    obj: &Bound<'_, PyAny>,
+    max_depth: Option<u64>,
+    max_items: Option<u64>,
+) -> PyResult<bool> {
+    let mut stack: Vec<(Bound<'_, PyAny>, u64)> = vec![(obj.clone(), 0)];
+    let mut items: u64 = 0;
 
-    while let Some(value) = stack.pop() {
+    while let Some((value, depth)) = stack.pop() {
+        items += 1;
+        if max_items.is_some_and(|limit| items > limit) {
+            return Err(PyValueError::new_err("JSON item limit exceeded"));
+        }
+        if max_depth.is_some_and(|limit| depth > limit) {
+            return Err(PyValueError::new_err("JSON nesting depth limit exceeded"));
+        }
         if value.is_none()
             || value.is_exact_instance_of::<PyString>()
             || value.is_exact_instance_of::<PyBool>()
@@ -775,13 +794,13 @@ fn payload_is_supported(obj: &Bound<'_, PyAny>) -> PyResult<bool> {
                 if !key_renders_identically(&key) {
                     return Ok(false);
                 }
-                stack.push(child);
+                stack.push((child, depth + 1));
             }
             continue;
         }
         if let Ok(list) = value.cast_exact::<PyList>() {
             for item in list.iter() {
-                stack.push(item);
+                stack.push((item, depth + 1));
             }
             continue;
         }

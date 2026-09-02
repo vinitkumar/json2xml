@@ -16,13 +16,21 @@ from json2xml.backend_selector import rust_renders_identically
 from json2xml.dicttoxml_fast import _RustBindings
 
 
+def _gate_with_limits(
+    obj: Any, max_depth: int | None = None, max_items: int | None = None
+) -> bool:
+    """Reference gate with the keyword signature of a limit-enforcing extension."""
+    return rust_renders_identically(obj)
+
+
 def _fake_bindings(**overrides: Any) -> _RustBindings:
     """Build Rust bindings backed by the Python reference implementations."""
     fields: dict[str, Any] = {
         "dicttoxml": Mock(return_value=b"<rust/>"),
-        "payload_is_supported": rust_renders_identically,
+        "payload_is_supported": _gate_with_limits,
         "escape_xml": py_dicttoxml.escape_xml,
         "wrap_cdata": py_dicttoxml.wrap_cdata,
+        "enforces_limits": True,
     }
     fields.update(overrides)
     return _RustBindings(**fields)
@@ -95,7 +103,64 @@ def test_loader_binds_a_complete_extension(monkeypatch: pytest.MonkeyPatch) -> N
         payload_is_supported=rust_renders_identically,
         escape_xml=py_dicttoxml.escape_xml,
         wrap_cdata=py_dicttoxml.wrap_cdata,
+        enforces_limits=False,
     )
+
+
+# @lat: [[tests#Conversion behavior#Native conversion budget]]
+def test_loader_detects_builds_that_enforce_limits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A gate that accepts limit keywords lets Json2xml skip its Python walk."""
+    _fake_extension(
+        monkeypatch, **{**_COMPLETE_EXPORTS, "payload_is_supported": _gate_with_limits}
+    )
+
+    bindings = fast_module._load_rust_bindings()
+
+    assert bindings is not None
+    assert bindings.enforces_limits is True
+
+
+def test_budget_check_defers_to_python_without_rust(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(fast_module, "_RUST", None)
+
+    assert fast_module.check_conversion_budget({"a": 1}, 10, 10) is False
+
+
+def test_budget_check_defers_when_build_cannot_enforce_limits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    gate = Mock(return_value=True)
+    monkeypatch.setattr(
+        fast_module,
+        "_RUST",
+        _fake_bindings(payload_is_supported=gate, enforces_limits=False),
+    )
+
+    assert fast_module.check_conversion_budget({"a": 1}, 10, 10) is False
+    gate.assert_not_called()
+
+
+def test_budget_check_defers_for_limits_beyond_native_range(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    gate = Mock(return_value=True)
+    monkeypatch.setattr(fast_module, "_RUST", _fake_bindings(payload_is_supported=gate))
+
+    assert fast_module.check_conversion_budget({"a": 1}, 2**64, 10) is False
+    assert fast_module.check_conversion_budget({"a": 1}, 10, 2**64) is False
+    gate.assert_not_called()
+
+
+def test_budget_check_runs_natively(monkeypatch: pytest.MonkeyPatch) -> None:
+    gate = Mock(return_value=True)
+    monkeypatch.setattr(fast_module, "_RUST", _fake_bindings(payload_is_supported=gate))
+
+    assert fast_module.check_conversion_budget({"a": 1}, 10, 20) is True
+    gate.assert_called_once_with({"a": 1}, max_depth=10, max_items=20)
 
 
 # @lat: [[tests#Conversion behavior#Outdated Rust backends stay disabled]]

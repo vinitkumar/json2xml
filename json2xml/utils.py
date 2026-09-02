@@ -14,6 +14,7 @@ __lazy_modules__ = ["urllib3"]
 from .types import JSONValue
 
 DEFAULT_URL_TIMEOUT: Any | None = None
+_DEFAULT_PORTS = {"http": 80, "https": 443}
 DEFAULT_MAX_RESPONSE_BYTES = 10 * 1024 * 1024
 COMPRESSED_READ_CHUNK_BYTES = 64 * 1024
 _HTTP: Any | None = None
@@ -55,13 +56,20 @@ class StringReadError(Exception):
     pass
 
 
+def _effective_port(parsed: SplitResult) -> int:
+    """Return the explicit port, or the default for a validated scheme."""
+    return parsed.port or _DEFAULT_PORTS[parsed.scheme]
+
+
 # @lat: [[behavior#Input readers]]
 def readfromjson(filename: str) -> JSONValue:
     """Read JSON data from a file."""
     try:
         with open(filename, encoding="utf-8") as jsondata:
             return json.load(jsondata)
-    except (ValueError, OSError) as error:
+    except OSError as error:
+        raise JSONReadError("Could not read JSON file") from error
+    except ValueError as error:
         raise JSONReadError("Invalid JSON File") from error
 
 
@@ -92,7 +100,7 @@ def _resolve_validated_address(
 
     assert parsed.hostname is not None
     hostname = parsed.hostname
-    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    port = _effective_port(parsed)
     try:
         addresses = [ip_address(hostname)]
     except ValueError:
@@ -127,7 +135,7 @@ def _request_via_validated_address(
     except UnicodeError as error:
         raise URLReadError("URL hostname could not be resolved") from error
 
-    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    port = _effective_port(parsed)
     authority = f"[{hostname}]" if ":" in hostname else hostname
     if parsed.port is not None:
         authority = f"{authority}:{parsed.port}"

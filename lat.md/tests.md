@@ -38,6 +38,10 @@ When the positional input is `-`, the CLI should read stdin instead of trying to
 
 These tests verify the concrete reader helpers against realistic source behavior so parsing and error wrapping stay aligned with production use.
 
+### File reader distinguishes unreadable files from invalid JSON
+
+A file that cannot be opened reports a read failure, while a file whose content does not parse reports invalid JSON, so callers can tell the two apart from the message.
+
 ### URL reader uses real HTTP and wraps failures
 
 URL input should read valid JSON over HTTP and wrap status, network, and decoding failures in `URLReadError`.

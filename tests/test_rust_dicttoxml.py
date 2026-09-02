@@ -7,6 +7,7 @@ and matches the Python implementation for supported features.
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -652,6 +653,19 @@ class TestFastDicttoxmlHelpers:
         result = fast_dicttoxml(data)
         # Should use Python fallback for @flat handling
         assert b"John" in result
+
+
+class TestRustRejectsUnsupportedTypes:
+    """The native writer raises instead of guessing for types outside the gate."""
+
+    # @lat: [[tests#Conversion behavior#Rust backend parity#Native writer rejects unsupported types]]
+    @pytest.mark.parametrize("value", [(1, 2), {1, 2}, object(), iter([1])])
+    def test_direct_call_raises_type_error(self, value: Any) -> None:
+        with pytest.raises(TypeError, match="Unsupported data type"):
+            rust_dicttoxml({"a": value})
+
+    def test_selector_keeps_such_payloads_on_python(self) -> None:
+        assert b">1</a>" in fast_dicttoxml({"a": Decimal("1")}, root=False)
 
 
 class TestFastHelpersWithRealExtension:

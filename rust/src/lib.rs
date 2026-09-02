@@ -4,7 +4,7 @@
 //! preserve. Unsupported features remain on the compatibility-focused Python serializer.
 
 #[cfg(feature = "python")]
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyTypeError, PyValueError};
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 #[cfg(feature = "python")]
@@ -21,6 +21,7 @@ const OUTPUT_BUFFER_SIZE: usize = 16 * 1024;
 // monotonic iterators keep dense inputs linear instead of repeatedly scanning the same bytes.
 const SPARSE_ESCAPE_SCAN_LIMIT: u8 = 4;
 
+#[cfg(feature = "python")]
 #[inline]
 fn invalid_xml_char(s: &str) -> Option<char> {
     s.chars().find(|character| {
@@ -91,14 +92,15 @@ fn escape_replacement(byte: u8) -> &'static str {
 #[inline]
 pub fn escape_xml(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + s.len() / 10);
-    push_escaped_attr(&mut out, s);
+    push_escaped_text(&mut out, s);
     out
 }
 
-/// Append text content with the five-character escaping used by the Python implementation.
+/// Append text with the five-character escaping used by the Python implementation.
 ///
-/// This low-level helper assumes `s` already satisfies the XML 1.0 Char production. It scans
-/// bytes for speed and copies clean UTF-8 slices in bulk.
+/// Python escapes attribute values and character data identically, so this one routine
+/// serves both. It assumes `s` already satisfies the XML 1.0 Char production, scans bytes
+/// for speed, and copies clean UTF-8 slices in bulk.
 #[inline]
 pub fn push_escaped_text(out: &mut String, s: &str) {
     let bytes = s.as_bytes();
@@ -122,12 +124,6 @@ pub fn push_escaped_text(out: &mut String, s: &str) {
         last = i + 1;
     }
     out.push_str(&s[last..]);
-}
-
-/// Append attribute value with full XML escaping (also escapes quotes).
-#[inline]
-pub fn push_escaped_attr(out: &mut String, s: &str) {
-    push_escaped_text(out, s);
 }
 
 #[cfg(feature = "python")]
@@ -168,12 +164,6 @@ fn write_escaped_text<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
         last = i + 1;
     }
     write_str(out, &s[last..])
-}
-
-#[cfg(feature = "python")]
-#[inline]
-fn write_escaped_attr<W: Write + ?Sized>(out: &mut W, s: &str) -> PyResult<()> {
-    write_escaped_text(out, s)
 }
 
 #[cfg(feature = "python")]
@@ -280,7 +270,7 @@ fn push_attrs(out: &mut String, attrs: &[(String, String)]) {
         out.push(' ');
         out.push_str(k);
         out.push_str("=\"");
-        push_escaped_attr(out, v);
+        push_escaped_text(out, v);
         out.push('"');
     }
 }
@@ -298,7 +288,7 @@ fn write_open_tag<W: Write + ?Sized>(
     write_str(out, tag)?;
     if let Some(name) = name_attr {
         write_str(out, " name=\"")?;
-        write_escaped_attr(out, name)?;
+        write_escaped_text(out, name)?;
         write_byte(out, b'"')?;
     }
     if let Some(ty) = type_attr {
@@ -369,9 +359,6 @@ struct ConvertConfig {
     list_headers: bool,
 }
 
-#[cfg(feature = "python")]
-use pyo3::PyResult;
-
 /// Return `Some(type_name)` when `attr_type` is enabled.
 #[cfg(feature = "python")]
 #[inline]
@@ -381,6 +368,10 @@ fn type_attr<'a>(cfg: &ConvertConfig, ty: &'a str) -> Option<&'a str> {
 
 /// Single unified type-dispatch writer. Every Python value goes through here
 /// exactly once, writing directly into the shared output buffer.
+///
+/// Only the types the payload gate admits are handled; anything else is a `TypeError`
+/// rather than a guess, so a direct caller cannot get output the Python serializer would
+/// not produce.
 #[cfg(feature = "python")]
 fn write_value<W: Write + ?Sized>(
     py: Python<'_>,
@@ -461,27 +452,11 @@ fn write_value<W: Write + ?Sized>(
         return Ok(());
     }
 
-    // Other iterables (tuples, generators, etc.)
-    if let Ok(iter) = obj.try_iter() {
-        let items: Vec<Bound<'_, PyAny>> = iter.collect::<PyResult<_>>()?;
-        let list = PyList::new(py, &items)?;
-        if wrap_container {
-            write_open_tag(out, tag, name_attr, type_attr(cfg, "list"))?;
-        }
-        write_convert_list(py, out, &list, tag, cfg)?;
-        if wrap_container {
-            write_close_tag(out, tag)?;
-        }
-        return Ok(());
-    }
-
-    // Fallback: convert to string via Python's str()
-    let py_str = obj.str()?;
-    let s = py_str.to_str()?;
-    write_open_tag(out, tag, name_attr, type_attr(cfg, "str"))?;
-    write_scalar_body(out, s, cfg.cdata)?;
-    write_close_tag(out, tag)?;
-    Ok(())
+    Err(PyTypeError::new_err(format!(
+        "Unsupported data type: {} ({})",
+        obj.repr()?,
+        obj.get_type().name()?
+    )))
 }
 
 /// Write every key/value pair of a dict, mirroring `_append_convert_dict`.
@@ -642,8 +617,8 @@ fn is_python_scalar(obj: &Bound<'_, PyAny>) -> bool {
 
 /// Convert a Python value to UTF-8 encoded XML bytes.
 ///
-/// The direct extension accepts scalars and iterables, while the automatic backend selector
-/// dispatches only supported dict/list requests here.
+/// The direct extension accepts dicts, lists, and JSON scalars, while the automatic backend
+/// selector dispatches only supported dict/list requests here.
 ///
 /// Args:
 ///     obj: The Python object to convert.
@@ -661,6 +636,7 @@ fn is_python_scalar(obj: &Bound<'_, PyAny>) -> bool {
 /// Raises:
 ///     ValueError: If `custom_root` is not a supported XML name or data contains characters
 ///         excluded by XML 1.0.
+///     TypeError: If a value is not a dict, list, or JSON scalar.
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(signature = (obj, root=true, custom_root="root", attr_type=true, item_wrap=true, cdata=false, list_headers=false))]
@@ -1154,15 +1130,11 @@ mod tests {
             push_escaped_text(&mut out, "café & thé");
             assert_eq!(out, "café &amp; thé");
         }
-    }
-
-    mod push_escaped_attr_tests {
-        use super::*;
 
         #[test]
-        fn escapes_quotes_and_special_chars() {
+        fn escapes_attribute_values_with_the_same_table() {
             let mut out = String::new();
-            push_escaped_attr(&mut out, "a\"b'c&d<e>f");
+            push_escaped_text(&mut out, "a\"b'c&d<e>f");
             assert_eq!(out, "a&quot;b&apos;c&amp;d&lt;e&gt;f");
         }
     }

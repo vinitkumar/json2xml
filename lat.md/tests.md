@@ -286,6 +286,10 @@ Every divergence found by differential testing is pinned across the full option 
 
 Python applies its list-shape rules to tuples but the native writer only recognizes lists, so the gate must keep every payload containing a tuple on the Python serializer.
 
+#### Native writer rejects unsupported types
+
+A direct call into the extension with a value outside the gate's subset raises `TypeError` instead of guessing an output shape the Python serializer would not produce.
+
 #### Native and Python gates agree
 
 The native gate is an optimization over the Python reference walk, so the two must return the same verdict for every payload; disagreeing in either direction is a correctness bug.

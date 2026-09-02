@@ -1,3 +1,34 @@
+# json2xml 7.1.0
+
+Released 2026-09-03.
+
+## Highlights
+
+- Enforces conversion depth and item limits inside the native payload walk when `json2xml-rs>=0.6.0` is installed, so the accelerated path no longer pays for a second Python-level traversal. A 2,000-record conversion drops from 7.1 ms to 1.4 ms.
+- Keeps tuples on the Python serializer, closing the last known case where the two backends rendered the same payload differently.
+- Writes identical CLI output to stdout and `--output` files: UTF-8 bytes ending in exactly one newline.
+- Accepts numbers and other scalars in `dicttoxml_fast.escape_xml` and `wrap_cdata` whichever backend is active, and raises `InvalidDataError` from `Json2xml.to_xml` for every value the serializer rejects.
+- Loads the optional Rust backend through one tested function that also keeps working with `json2xml-rs` 0.5.0.
+
+## Behaviour changes and migration guidance
+
+- Files written with `--output` now end with a single newline, matching stdout. Stdout is written as UTF-8 bytes regardless of the console encoding.
+- `readfromjson` raises `JSONReadError("Could not read JSON file")` when the file cannot be opened; only parse failures keep the `Invalid JSON File` message.
+- `Json2xml.to_xml` raises `InvalidDataError` instead of `TypeError` for unsupported values such as a Mapping that is not a dict.
+- `json2xml.backend_selector.ConversionRequest` and `has_special_keys` are removed. Use `json2xml.dicttoxml.SerializerConfig`, which the selector now shares with the serializer, and `rust_renders_identically` for the payload gate.
+- `json2xml_rs.dicttoxml` called directly with tuples, sets, iterators, or arbitrary objects raises `TypeError` in 0.6.0; the `json2xml` wrapper routes such payloads to Python as before.
+
+## Package Versions
+
+- Python package: `json2xml==7.1.0`
+- Rust accelerator: `json2xml-rs==0.6.0`
+- Fast install: `pip install "json2xml[fast]==7.1.0"`
+
+## Verification
+
+The release passed Ruff, ty, 650 Python tests with 100% statement coverage, Rust formatting, Clippy with warnings denied, 47 Rust unit tests, package builds, Twine metadata checks, an isolated fast-install smoke test, and the hosted Python and Rust compatibility matrices.
+
+
 # json2xml_rs 0.6.0
 
 Released 2026-09-03.

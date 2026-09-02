@@ -1,4 +1,19 @@
 
+7.1.0 / 2026-09-03
+==================
+
+  * perf: enforce conversion depth and item limits inside the native payload walk, cutting a 2,000-record accelerated conversion from 7.1 ms to 1.4 ms
+  * fix: keep tuples on the Python serializer; the native backend rendered nested tuples differently under ``item_wrap=False`` and ``list_headers=True``
+  * fix: write identical CLI output to stdout and ``--output`` files, as UTF-8 bytes ending in exactly one newline
+  * fix: accept numbers and other scalars in ``dicttoxml_fast.escape_xml`` and ``wrap_cdata`` on both backends
+  * fix: raise ``InvalidDataError`` from ``Json2xml.to_xml`` for values the serializer rejects, such as a Mapping that is not a dict
+  * fix: classify ``datetime.time`` in the direct ``convert_kv`` helpers the same way the serializer does
+  * fix: report unreadable files distinctly from invalid JSON in ``readfromjson``
+  * refactor: load the optional Rust backend through one function that keeps working with ``json2xml-rs`` 0.5.0, and log under ``json2xml.dicttoxml_fast``
+  * refactor: share ``SerializerConfig`` between the serializer and the backend selector, add ``dicttoxml.serialize()``, and remove ``ConversionRequest`` and ``has_special_keys``
+  * refactor: declare CLI toggles with ``BooleanOptionalAction`` and derive type attributes from one exact-type table
+  * chore: release ``json2xml-rs`` 0.6.0 first and require it from ``json2xml[fast]``
+
 7.0.1 / 2026-08-28
 ==================
 

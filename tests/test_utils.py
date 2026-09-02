@@ -128,9 +128,10 @@ class TestReadFromJson:
 
             os.unlink(temp_filename)
 
+    # @lat: [[tests#Input readers#File reader distinguishes unreadable files from invalid JSON]]
     def test_readfromjson_file_not_found(self) -> None:
         """Test reading a non-existent file."""
-        with pytest.raises(JSONReadError, match="Invalid JSON File"):
+        with pytest.raises(JSONReadError, match="Could not read JSON file"):
             readfromjson("non_existent_file.json")
 
     @patch("builtins.open")
@@ -139,7 +140,7 @@ class TestReadFromJson:
         # Mock open to raise PermissionError
         mock_open.side_effect = PermissionError("Permission denied")
 
-        with pytest.raises(JSONReadError, match="Invalid JSON File"):
+        with pytest.raises(JSONReadError, match="Could not read JSON file"):
             readfromjson("some_file.json")
 
     @patch("builtins.open")
@@ -148,7 +149,7 @@ class TestReadFromJson:
         # Mock open to raise OSError (covers line 34-35 in utils.py)
         mock_open.side_effect = OSError("Device not ready")
 
-        with pytest.raises(JSONReadError, match="Invalid JSON File"):
+        with pytest.raises(JSONReadError, match="Could not read JSON file"):
             readfromjson("some_file.json")
 
 

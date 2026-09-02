@@ -7,6 +7,7 @@ and matches the Python implementation for supported features.
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -27,7 +28,8 @@ except ImportError:
 
 import json2xml.dicttoxml_fast as fast_module
 from json2xml import dicttoxml as py_dicttoxml
-from json2xml.backend_selector import ConversionRequest, rust_renders_identically
+from json2xml.backend_selector import rust_renders_identically
+from json2xml.dicttoxml import SerializerConfig, default_item_func
 from json2xml.dicttoxml_fast import (
     _RustBackendAdapter,
     get_backend,
@@ -428,16 +430,16 @@ def _request(
     item_wrap: bool = True,
     cdata: bool = False,
     list_headers: bool = False,
-) -> ConversionRequest:
-    """Build a ConversionRequest with the defaults the public wrapper would use."""
-    return ConversionRequest(
+) -> SerializerConfig:
+    """Build a SerializerConfig with the defaults the public wrapper would use."""
+    return SerializerConfig(
         obj=obj,
         root=root,
         custom_root=custom_root,
         ids=None,
         attr_type=attr_type,
         item_wrap=item_wrap,
-        item_func=None,
+        item_func=default_item_func,
         cdata=cdata,
         xml_namespaces=None,
         list_headers=list_headers,
@@ -653,6 +655,30 @@ class TestFastDicttoxmlHelpers:
         assert b"John" in result
 
 
+class TestRustRejectsUnsupportedTypes:
+    """The native writer raises instead of guessing for types outside the gate."""
+
+    # @lat: [[tests#Conversion behavior#Rust backend parity#Native writer rejects unsupported types]]
+    @pytest.mark.parametrize("value", [(1, 2), {1, 2}, object(), iter([1])])
+    def test_direct_call_raises_type_error(self, value: Any) -> None:
+        with pytest.raises(TypeError, match="Unsupported data type"):
+            rust_dicttoxml({"a": value})
+
+    def test_selector_keeps_such_payloads_on_python(self) -> None:
+        assert b">1</a>" in fast_dicttoxml({"a": Decimal("1")}, root=False)
+
+
+class TestFastHelpersWithRealExtension:
+    """The installed extension must not narrow the helpers' accepted inputs."""
+
+    def test_escape_xml_accepts_numbers(self) -> None:
+        assert fast_module.escape_xml(5) == "5"
+        assert fast_module.escape_xml(1.5) == "1.5"
+
+    def test_wrap_cdata_accepts_numbers(self) -> None:
+        assert fast_module.wrap_cdata(5) == "<![CDATA[5]]>"
+
+
 class TestFastDicttoxmlPythonFallback:
     """Test Python fallback paths in dicttoxml_fast module."""
 
@@ -660,8 +686,7 @@ class TestFastDicttoxmlPythonFallback:
         """Test escape_xml falls back to Python when Rust unavailable."""
         from unittest.mock import patch
 
-        # Temporarily mock Rust availability to False.
-        with patch.object(fast_module, "_use_rust", False):
+        with patch.object(fast_module, "_RUST", None):
             result = fast_module.escape_xml("Hello <World>")
             assert "&lt;" in result
             assert "&gt;" in result
@@ -670,23 +695,6 @@ class TestFastDicttoxmlPythonFallback:
         """Test wrap_cdata falls back to Python when Rust unavailable."""
         from unittest.mock import patch
 
-        # Temporarily mock Rust availability to False.
-        with patch.object(fast_module, "_use_rust", False):
+        with patch.object(fast_module, "_RUST", None):
             result = fast_module.wrap_cdata("Hello World")
             assert result == "<![CDATA[Hello World]]>"
-
-    def test_escape_xml_fallback_when_rust_func_none(self):
-        """Test escape_xml falls back when rust_escape_xml is None."""
-        from unittest.mock import patch
-
-        with patch.object(fast_module, "rust_escape_xml", None):
-            result = fast_module.escape_xml("Test & Value")
-            assert "&amp;" in result
-
-    def test_wrap_cdata_fallback_when_rust_func_none(self):
-        """Test wrap_cdata falls back when rust_wrap_cdata is None."""
-        from unittest.mock import patch
-
-        with patch.object(fast_module, "rust_wrap_cdata", None):
-            result = fast_module.wrap_cdata("Test Content")
-            assert result == "<![CDATA[Test Content]]>"

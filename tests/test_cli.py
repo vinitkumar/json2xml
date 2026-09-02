@@ -512,6 +512,29 @@ class TestCLIUnitTests:
         assert parser.prog == "json2xml-py"
         assert parser.parse_args(["-s", "{}"]).pretty is False
 
+    # @lat: [[tests#CLI input resolution#Boolean flags toggle in both directions]]
+    @pytest.mark.parametrize(
+        ("dest", "short", "long"),
+        [
+            ("root", "-r", "--root"),
+            ("pretty", "-p", "--pretty"),
+            ("attr_type", "-t", "--type"),
+            ("item_wrap", "-i", "--item-wrap"),
+        ],
+    )
+    def test_boolean_flags_toggle_in_both_directions(
+        self, dest: str, short: str, long: str
+    ) -> None:
+        """Each flag can enable, disable, and re-enable its option; the last one wins."""
+        parser = create_parser()
+        negated = long.replace("--", "--no-", 1)
+
+        assert getattr(parser.parse_args([short]), dest) is True
+        assert getattr(parser.parse_args([long]), dest) is True
+        assert getattr(parser.parse_args([negated]), dest) is False
+        assert getattr(parser.parse_args([negated, short]), dest) is True
+        assert getattr(parser.parse_args([long, negated]), dest) is False
+
     def test_create_parser_parses_all_args(self) -> None:
         """Test parser handles all argument combinations."""
         parser = create_parser()
@@ -604,7 +627,44 @@ class TestCLIUnitTests:
             output_file = Path(tmpdir) / "output.xml"
             write_output("<xml>test</xml>", str(output_file))
             assert output_file.exists()
-            assert output_file.read_text() == "<xml>test</xml>"
+            assert output_file.read_text() == "<xml>test</xml>\n"
+
+    # @lat: [[tests#CLI output#Stdout and file output are identical]]
+    @pytest.mark.parametrize(
+        "output",
+        [
+            b"<xml/>",
+            "<xml/>",
+            "<xml>\n  <a/>\n</xml>\n",
+            "<xml/>\n\n\n",
+            "<name>Zo\u00eb \U0001f389</name>",
+        ],
+        ids=["compact-bytes", "compact-text", "pretty-text", "extra-newlines", "utf8"],
+    )
+    def test_write_output_ends_with_exactly_one_newline_everywhere(
+        self, output: str | bytes, capsys: CaptureFixture[str], tmp_path: Path
+    ) -> None:
+        """Stdout and a file receive the same text: the document plus one newline."""
+        text = output.decode() if isinstance(output, bytes) else output
+        expected = text.rstrip("\n") + "\n"
+        output_file = tmp_path / "output.xml"
+
+        write_output(output, None)
+        write_output(output, str(output_file))
+
+        assert capsys.readouterr().out == expected
+        assert output_file.read_text(encoding="utf-8") == expected
+
+    def test_write_output_falls_back_to_text_stdout_without_a_buffer(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A text-only stdout replacement still receives the document."""
+        stdout = io.StringIO()
+        monkeypatch.setattr(sys, "stdout", stdout)
+
+        write_output("<name>Zo\u00eb</name>", None)
+
+        assert stdout.getvalue() == "<name>Zo\u00eb</name>\n"
 
     def test_read_from_stdin_valid_json(self) -> None:
         """Test read_from_stdin with valid JSON."""

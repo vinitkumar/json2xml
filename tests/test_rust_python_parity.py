@@ -21,6 +21,8 @@ from json2xml.backend_selector import (
     rust_renders_identically,
     rust_renders_root_identically,
 )
+from json2xml.json2xml import _validate_conversion_budget
+from json2xml.utils import InvalidDataError
 
 try:
     from json2xml_rs import (
@@ -107,9 +109,28 @@ def test_gate_admits_keys_both_backends_name_identically(key: str) -> None:
 
 def test_gate_walks_nested_containers() -> None:
     """A single unsupported value anywhere in the payload disqualifies the request."""
-    assert rust_renders_identically({"a": [{"b": (1, 2)}, None]})
+    assert rust_renders_identically({"a": [{"b": [1, 2]}, None]})
     assert not rust_renders_identically({"a": [{"b": [Decimal("1")]}]})
     assert not rust_renders_identically([[{"deep": {"deeper": Decimal("1")}}]])
+
+
+# @lat: [[tests#Conversion behavior#Rust backend parity#Tuples stay on Python]]
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"a": (1, 2)},
+        {"a": [(1, 2)]},
+        {"a": ({"b": 1},)},
+        [(1, 2)],
+    ],
+)
+def test_gate_rejects_tuples(data: Any) -> None:
+    """Python applies its list-shape rules to tuples; the native writer only to lists.
+
+    Under ``item_wrap=False`` or ``list_headers=True`` the two disagree on whether a
+    nested tuple keeps its wrapper, so tuples never reach the native backend.
+    """
+    assert not rust_renders_identically(data)
 
 
 def test_root_gate_only_applies_when_a_root_is_emitted() -> None:
@@ -228,9 +249,10 @@ def test_native_and_python_gates_agree() -> None:
     payload the writer cannot reproduce, and admitting too little silently drops the fast
     path.
     """
-    from json2xml.dicttoxml_fast import _rust_payload_is_supported
+    from json2xml.dicttoxml_fast import _RUST
 
-    assert _rust_payload_is_supported is not None
+    assert _RUST is not None
+    _rust_payload_is_supported = _RUST.payload_is_supported
 
     fixtures: list[Any] = [
         {},
@@ -260,3 +282,46 @@ def test_native_and_python_gates_agree() -> None:
     for _ in range(400):
         data = _random_payload(rng)
         assert _rust_payload_is_supported(data) == rust_renders_identically(data), data
+
+
+def _python_budget_verdict(data: Any, max_depth: int, max_items: int) -> str:
+    try:
+        _validate_conversion_budget(data, max_depth, max_items)
+    except InvalidDataError as error:
+        return str(error)
+    return "ok"
+
+
+def _native_budget_verdict(data: Any, max_depth: int, max_items: int) -> str:
+    from json2xml.dicttoxml_fast import _RUST
+
+    assert _RUST is not None
+    try:
+        supported = _RUST.payload_is_supported(
+            data, max_depth=max_depth, max_items=max_items
+        )
+    except ValueError as error:
+        return str(error)
+    assert supported
+    return "ok"
+
+
+# @lat: [[tests#Conversion behavior#Native conversion budget]]
+@requires_rust
+@pytest.mark.parametrize(
+    ("max_depth", "max_items"),
+    [(100, 100), (1, 100), (2, 100), (100, 3), (100, 4), (2, 4), (1, 2)],
+)
+def test_native_budget_walk_matches_python_walk(max_depth: int, max_items: int) -> None:
+    """Both walks visit values in the same order, so they report the same first violation."""
+    payloads: list[Any] = [
+        {"a": [1, 2, {"b": [3]}]},
+        [[[[1]]]],
+        {"a": {"b": {"c": 1}}, "d": [1, 2, 3, 4, 5]},
+        [],
+        {},
+    ]
+    for data in payloads:
+        assert _native_budget_verdict(data, max_depth, max_items) == (
+            _python_budget_verdict(data, max_depth, max_items)
+        ), (data, max_depth, max_items)

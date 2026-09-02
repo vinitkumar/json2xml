@@ -1,30 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Protocol
 
 # Shared with the Python serializer deliberately: the root-name gate below is only
 # correct while it uses the exact predicate Python's name resolver starts from.
-from .dicttoxml import _is_fast_valid_xml_name
-
-
-@dataclass(frozen=True, slots=True)
-class ConversionRequest:
-    """Normalized conversion request shared across backend adapters."""
-
-    obj: Any
-    root: bool
-    custom_root: str
-    ids: list[int] | None
-    attr_type: bool
-    item_wrap: bool
-    item_func: Any
-    cdata: bool
-    xml_namespaces: dict[str, Any] | None
-    list_headers: bool
-    xpath_format: bool
-    max_output_bytes: int | None = None
-    indent: str | None = None
+from .dicttoxml import SerializerConfig, _is_fast_valid_xml_name
 
 
 class BackendAdapter(Protocol):
@@ -34,10 +14,10 @@ class BackendAdapter(Protocol):
     def name(self) -> str:
         raise NotImplementedError  # pragma: no cover
 
-    def can_handle(self, request: ConversionRequest) -> bool:
+    def can_handle(self, request: SerializerConfig) -> bool:
         raise NotImplementedError  # pragma: no cover
 
-    def render(self, request: ConversionRequest) -> bytes:
+    def render(self, request: SerializerConfig) -> bytes:
         raise NotImplementedError  # pragma: no cover
 
 
@@ -47,7 +27,7 @@ class BackendSelector:
     def __init__(self, *backends: BackendAdapter) -> None:
         self._backends = backends
 
-    def render(self, request: ConversionRequest) -> bytes:
+    def render(self, request: SerializerConfig) -> bytes:
         for backend in self._backends:
             if backend.can_handle(request):
                 return backend.render(request)
@@ -56,9 +36,9 @@ class BackendSelector:
 
 # Types the Rust backend renders byte-identically to the Python serializer. Subclasses are
 # excluded on purpose: Python classifies them through its isinstance fallbacks, which the
-# native writer does not reproduce.
+# native writer does not reproduce. Tuples are excluded because Python applies its
+# list-shape rules to them while the native writer only recognizes lists.
 _RUST_SCALAR_TYPES = frozenset({str, bool, int, float, type(None)})
-_RUST_CONTAINER_TYPES = frozenset({dict, list, tuple})
 
 
 def _rust_renders_key_identically(key: Any) -> bool:
@@ -105,23 +85,8 @@ def rust_renders_identically(obj: Any) -> bool:
                     return False
                 stack.append(child)
             continue
-        if value_type in _RUST_CONTAINER_TYPES:
+        if value_type is list:
             stack.extend(value)
             continue
         return False
     return True
-
-
-def has_special_keys(obj: Any) -> bool:
-    """Return True when the payload uses Python-only special key semantics."""
-    if isinstance(obj, dict):
-        return any(
-            (isinstance(key, str) and (key.startswith("@") or key.endswith("@flat")))
-            or has_special_keys(value)
-            for key, value in obj.items()
-        )
-
-    if isinstance(obj, list):
-        return any(has_special_keys(item) for item in obj)
-
-    return False

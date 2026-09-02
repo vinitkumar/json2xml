@@ -26,6 +26,10 @@ An explicitly empty `--url` value should fail URL validation instead of silently
 
 An explicitly empty positional path should fail with an empty-path error instead of silently selecting piped stdin, preserving the caller's chosen source.
 
+### Boolean flags toggle in both directions
+
+Every boolean conversion flag can enable, disable, and re-enable its option, and the last occurrence wins, so scripts can override an earlier flag instead of passing a no-op.
+
 ### Dash argument reads stdin
 
 When the positional input is `-`, the CLI should read stdin instead of trying to open a file literally named `-`.
@@ -33,6 +37,10 @@ When the positional input is `-`, the CLI should read stdin instead of trying to
 ## Input readers
 
 These tests verify the concrete reader helpers against realistic source behavior so parsing and error wrapping stay aligned with production use.
+
+### File reader distinguishes unreadable files from invalid JSON
+
+A file that cannot be opened reports a read failure, while a file whose content does not parse reports invalid JSON, so callers can tell the two apart from the message.
 
 ### URL reader uses real HTTP and wraps failures
 
@@ -61,6 +69,14 @@ Malformed IDNA hostnames should raise `URLReadError` so hostname encoding failur
 ### URL reader pins validated DNS addresses
 
 Public URL reads should connect to a validated resolved address while preserving the original Host header and TLS hostname so DNS rebinding cannot redirect the connection.
+
+## CLI output
+
+The CLI writes the same text whether it targets stdout or a file, so redirecting stdout and passing `-o` produce byte-identical results.
+
+### Stdout and file output are identical
+
+Both destinations receive the document followed by exactly one newline; pretty output already ends with one and compact output gains one.
 
 ## CLI failure messages
 
@@ -117,6 +133,10 @@ Every harness subprocess should use an inline argv list with shell parsing expli
 ## Conversion behavior
 
 These tests pin the XML shapes that matter most for interoperability, especially the modes that intentionally diverge from the default serializer.
+
+### Rust backend loader refuses unusable builds
+
+The loader binds `json2xml_rs` only when it is importable, exports the payload gate, and rejects XML 1.0 forbidden characters; every other outcome leaves the Python serializer in charge.
 
 ### Outdated Rust backends stay disabled
 
@@ -198,9 +218,9 @@ Backend metadata helpers should report whether Rust is active and name the selec
 
 Helper exports for XML escaping and CDATA wrapping should preserve Python behavior when Rust helper callables are unavailable.
 
-### Backend selector detects Python-only payload markers
+### Fast helper functions accept every scalar
 
-The backend selector should recognize nested `@attrs`, `@val`, and `@flat` markers so Rust is skipped before semantics drift.
+The Rust escape and CDATA helpers take only `str`, so the public helpers must coerce numbers the same way the Python helpers do; installing the extension must not narrow the API.
 
 ### Backend selector fails loudly with no compatible backend
 
@@ -209,6 +229,10 @@ If every backend rejects a conversion request, the selector should raise a clear
 ### Json2xml uses fast backend selection
 
 The public `Json2xml` wrapper should delegate through the fast backend selector so regular library and CLI conversions can use the Rust accelerator when installed.
+
+### Serializer rejections become InvalidDataError
+
+`Json2xml.to_xml` documents `InvalidDataError` as its only conversion failure, so a value the budget walk accepts but the serializer rejects, such as a non-dict Mapping, must surface as that error rather than a bare `TypeError`.
 
 ### Json2xml return types match pretty mode
 
@@ -232,6 +256,12 @@ Conversion should reject excessive nesting and item counts before serialization,
 
 Limit validation rejects booleans, non-integers, and non-positive values. Tests cover exact backend bytes and all pretty whitespace, including indentation and the trailing newline, in that same budget.
 
+### Native conversion budget
+
+The native payload gate enforces depth and item limits in the same visiting order as the Python walk, so both report the same first violation.
+
+`Json2xml` skips the Python walk only when the native walk completes; builds without limit support keep the Python walk.
+
 ### Pretty printing avoids DOM reparsing
 
 Pretty output should be produced by the serializer itself rather than by constructing or reparsing a DOM.
@@ -251,6 +281,14 @@ Values Python classifies through isinstance fallbacks, scalar subclasses, and ke
 #### Admitted payloads render identically
 
 Every divergence found by differential testing is pinned across the full option matrix, and randomized payloads are compared against the Python serializer under a fixed seed.
+
+#### Tuples stay on Python
+
+Python applies its list-shape rules to tuples but the native writer only recognizes lists, so the gate must keep every payload containing a tuple on the Python serializer.
+
+#### Native writer rejects unsupported types
+
+A direct call into the extension with a value outside the gate's subset raises `TypeError` instead of guessing an output shape the Python serializer would not produce.
 
 #### Native and Python gates agree
 

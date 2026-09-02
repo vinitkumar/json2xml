@@ -7,10 +7,11 @@ Usage:
 
 Flags:
     -w, --wrapper string    Wrapper element name (default "all")
-    -r, --root              Include root element (default true)
-    -p, --pretty            Pretty print output (default false)
-    -t, --type              Include type attributes (default true)
-    -i, --item-wrap         Wrap list items in <item> elements (default true)
+    -r, --root              Include root element (default true, --no-root disables)
+    -p, --pretty            Pretty print output (default false, --no-pretty disables)
+    -t, --type              Include type attributes (default true, --no-type disables)
+    -i, --item-wrap         Wrap list items in <item> elements (default true,
+                            --no-item-wrap disables)
     -x, --xpath             Use XPath 3.1 json-to-xml format
     -o, --output string     Output file (default: stdout)
     -u, --url string        Read JSON from URL
@@ -198,8 +199,7 @@ class CLIApplication:
         try:
             Path(output_file).write_text(text, encoding="utf-8")
         except OSError as error:
-            print(f"Error writing to file: {error}", file=sys.stderr)
-            sys.exit(1)
+            exit_with_error(f"Error writing to file: {error}")
 
     @staticmethod
     def _write_stdout(text: str) -> None:
@@ -295,61 +295,38 @@ Examples:
         default="all",
         help='Wrapper element name (default: "all")',
     )
+    # Each toggle also accepts its --no-* form; the last occurrence wins.
     conv_group.add_argument(
         "-r",
         "--root",
         dest="root",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=True,
-        help="Include root element (default: true)",
-    )
-    conv_group.add_argument(
-        "--no-root",
-        dest="root",
-        action="store_false",
-        help="Exclude root element",
+        help="Include root element",
     )
     conv_group.add_argument(
         "-p",
         "--pretty",
         dest="pretty",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=False,
-        help="Pretty print output (default: false)",
-    )
-    conv_group.add_argument(
-        "--no-pretty",
-        dest="pretty",
-        action="store_false",
-        help="Disable pretty printing",
+        help="Pretty print output",
     )
     conv_group.add_argument(
         "-t",
         "--type",
         dest="attr_type",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=True,
-        help="Include type attributes (default: true)",
-    )
-    conv_group.add_argument(
-        "--no-type",
-        dest="attr_type",
-        action="store_false",
-        help="Exclude type attributes",
+        help="Include type attributes",
     )
     conv_group.add_argument(
         "-i",
         "--item-wrap",
         dest="item_wrap",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=True,
-        help="Wrap list items in <item> elements (default: true)",
-    )
-    conv_group.add_argument(
-        "--no-item-wrap",
-        dest="item_wrap",
-        action="store_false",
-        help="Don't wrap list items",
+        help="Wrap list items in <item> elements",
     )
     conv_group.add_argument(
         "-x",

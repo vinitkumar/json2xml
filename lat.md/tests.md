@@ -26,6 +26,10 @@ An explicitly empty `--url` value should fail URL validation instead of silently
 
 An explicitly empty positional path should fail with an empty-path error instead of silently selecting piped stdin, preserving the caller's chosen source.
 
+### Boolean flags toggle in both directions
+
+Every boolean conversion flag can enable, disable, and re-enable its option, and the last occurrence wins, so scripts can override an earlier flag instead of passing a no-op.
+
 ### Dash argument reads stdin
 
 When the positional input is `-`, the CLI should read stdin instead of trying to open a file literally named `-`.

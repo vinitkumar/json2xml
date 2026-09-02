@@ -512,6 +512,29 @@ class TestCLIUnitTests:
         assert parser.prog == "json2xml-py"
         assert parser.parse_args(["-s", "{}"]).pretty is False
 
+    # @lat: [[tests#CLI input resolution#Boolean flags toggle in both directions]]
+    @pytest.mark.parametrize(
+        ("dest", "short", "long"),
+        [
+            ("root", "-r", "--root"),
+            ("pretty", "-p", "--pretty"),
+            ("attr_type", "-t", "--type"),
+            ("item_wrap", "-i", "--item-wrap"),
+        ],
+    )
+    def test_boolean_flags_toggle_in_both_directions(
+        self, dest: str, short: str, long: str
+    ) -> None:
+        """Each flag can enable, disable, and re-enable its option; the last one wins."""
+        parser = create_parser()
+        negated = long.replace("--", "--no-", 1)
+
+        assert getattr(parser.parse_args([short]), dest) is True
+        assert getattr(parser.parse_args([long]), dest) is True
+        assert getattr(parser.parse_args([negated]), dest) is False
+        assert getattr(parser.parse_args([negated, short]), dest) is True
+        assert getattr(parser.parse_args([long, negated]), dest) is False
+
     def test_create_parser_parses_all_args(self) -> None:
         """Test parser handles all argument combinations."""
         parser = create_parser()

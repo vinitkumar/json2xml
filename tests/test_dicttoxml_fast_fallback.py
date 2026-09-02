@@ -175,6 +175,35 @@ def test_fast_helper_functions_use_python_fallback(
     assert fast_module.wrap_cdata("Ada <XML>") == "<![CDATA[Ada <XML>]]>"
 
 
+def _str_only(transform: Any) -> Any:
+    """Mimic a PyO3 ``&str`` parameter, which rejects every non-str argument."""
+
+    def guarded(value: Any) -> str:
+        if not isinstance(value, str):
+            raise TypeError(f"'{type(value).__name__}' object is not a 'str'")
+        return transform(value)
+
+    return guarded
+
+
+# @lat: [[tests#Conversion behavior#Fast helper functions accept every scalar]]
+def test_fast_helpers_coerce_scalars_before_calling_rust(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The public helpers accept the same scalars on both backends."""
+    monkeypatch.setattr(fast_module, "_use_rust", True)
+    monkeypatch.setattr(
+        fast_module, "rust_escape_xml", _str_only(py_dicttoxml.escape_xml)
+    )
+    monkeypatch.setattr(
+        fast_module, "rust_wrap_cdata", _str_only(py_dicttoxml.wrap_cdata)
+    )
+
+    assert fast_module.escape_xml(5) == py_dicttoxml.escape_xml(5) == "5"
+    assert fast_module.wrap_cdata(1.5) == py_dicttoxml.wrap_cdata(1.5)
+    assert fast_module.escape_xml("a<b") == "a&lt;b"
+
+
 def test_backend_without_the_payload_gate_is_refused(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

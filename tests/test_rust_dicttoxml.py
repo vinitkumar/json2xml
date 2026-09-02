@@ -653,6 +653,17 @@ class TestFastDicttoxmlHelpers:
         assert b"John" in result
 
 
+class TestFastHelpersWithRealExtension:
+    """The installed extension must not narrow the helpers' accepted inputs."""
+
+    def test_escape_xml_accepts_numbers(self) -> None:
+        assert fast_module.escape_xml(5) == "5"
+        assert fast_module.escape_xml(1.5) == "1.5"
+
+    def test_wrap_cdata_accepts_numbers(self) -> None:
+        assert fast_module.wrap_cdata(5) == "<![CDATA[5]]>"
+
+
 class TestFastDicttoxmlPythonFallback:
     """Test Python fallback paths in dicttoxml_fast module."""
 

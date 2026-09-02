@@ -15,6 +15,7 @@ Usage:
 from __future__ import annotations
 
 import logging
+import numbers
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -223,18 +224,25 @@ def dicttoxml(
     return _BACKEND_SELECTOR.render(request)
 
 
-# Re-export commonly used functions
-def escape_xml(s: str) -> str:
-    """Escape special XML characters in a string."""
-    if _use_rust and rust_escape_xml is not None:  # pragma: no cover
-        return rust_escape_xml(s)
+# Re-export commonly used functions. The Rust helpers take str only, so scalars
+# are rendered the way the Python helpers render them before crossing over.
+def escape_xml(s: str | int | float | numbers.Number | None) -> str:
+    """Escape special XML characters in a string or scalar value.
+
+    Scalar values (int, float, numbers.Number, or None) are converted with str().
+    """
+    if _use_rust and rust_escape_xml is not None:
+        return rust_escape_xml(s if isinstance(s, str) else str(s))
     return _py_dicttoxml.escape_xml(s)
 
 
-def wrap_cdata(s: str) -> str:
-    """Wrap a string in a CDATA section."""
-    if _use_rust and rust_wrap_cdata is not None:  # pragma: no cover
-        return rust_wrap_cdata(s)
+def wrap_cdata(s: str | int | float | numbers.Number) -> str:
+    """Wrap a string or scalar value in a CDATA section.
+
+    Scalar values (int, float, or numbers.Number) are converted with str().
+    """
+    if _use_rust and rust_wrap_cdata is not None:
+        return rust_wrap_cdata(s if isinstance(s, str) else str(s))
     return _py_dicttoxml.wrap_cdata(s)
 
 

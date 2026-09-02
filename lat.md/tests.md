@@ -206,6 +206,10 @@ Backend metadata helpers should report whether Rust is active and name the selec
 
 Helper exports for XML escaping and CDATA wrapping should preserve Python behavior when Rust helper callables are unavailable.
 
+### Fast helper functions accept every scalar
+
+The Rust escape and CDATA helpers take only `str`, so the public helpers must coerce numbers the same way the Python helpers do; installing the extension must not narrow the API.
+
 ### Backend selector detects Python-only payload markers
 
 The backend selector should recognize nested `@attrs`, `@val`, and `@flat` markers so Rust is skipped before semantics drift.

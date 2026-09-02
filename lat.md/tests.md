@@ -62,6 +62,14 @@ Malformed IDNA hostnames should raise `URLReadError` so hostname encoding failur
 
 Public URL reads should connect to a validated resolved address while preserving the original Host header and TLS hostname so DNS rebinding cannot redirect the connection.
 
+## CLI output
+
+The CLI writes the same text whether it targets stdout or a file, so redirecting stdout and passing `-o` produce byte-identical results.
+
+### Stdout and file output are identical
+
+Both destinations receive the document followed by exactly one newline; pretty output already ends with one and compact output gains one.
+
 ## CLI failure messages
 
 These tests verify common command-line failures return short messages that name the broken input source and point users at the next valid action.

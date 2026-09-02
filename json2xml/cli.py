@@ -186,19 +186,33 @@ class CLIApplication:
         return xml_output
 
     def write_output(self, output: str | bytes, output_file: str | None) -> None:
-        if isinstance(output, bytes):
-            output = output.decode("utf-8")
+        text = output.decode("utf-8") if isinstance(output, bytes) else output
+        # Both destinations get the same text: the document plus exactly one final
+        # newline, whether the serializer emitted none, one, or several.
+        text = text.rstrip("\n") + "\n"
 
-        if output_file:
-            try:
-                with open(output_file, "w", encoding="utf-8") as file_obj:
-                    file_obj.write(output)
-            except OSError as error:
-                print(f"Error writing to file: {error}", file=sys.stderr)
-                sys.exit(1)
+        if not output_file:
+            self._write_stdout(text)
             return
 
-        print(output)
+        try:
+            Path(output_file).write_text(text, encoding="utf-8")
+        except OSError as error:
+            print(f"Error writing to file: {error}", file=sys.stderr)
+            sys.exit(1)
+
+    @staticmethod
+    def _write_stdout(text: str) -> None:
+        """Write UTF-8 bytes so stdout matches the file output byte for byte."""
+        buffer = getattr(sys.stdout, "buffer", None)
+        if buffer is None:
+            # A text-only replacement such as io.StringIO has no byte layer.
+            sys.stdout.write(text)
+            return
+
+        sys.stdout.flush()
+        buffer.write(text.encode("utf-8"))
+        buffer.flush()
 
 
 _APP = CLIApplication()

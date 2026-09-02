@@ -1,3 +1,29 @@
+# json2xml_rs 0.6.0
+
+Released 2026-09-03.
+
+## Highlights
+
+- Enforces conversion limits inside the native payload walk: `payload_is_supported()` accepts `max_depth` and `max_items`, visits values in the same order as the Python budget walk, and raises the same messages. With json2xml 7.1.0 this removes the Python-level traversal from the accelerated path, taking a 2,000-record conversion from 7.1 ms to 1.4 ms.
+- Keeps tuples on the Python serializer. Python applies its list-shape rules to tuples while the native writer only recognizes lists, so under `item_wrap=False` or `list_headers=True` the two rendered them differently; the gate now rejects them.
+- Raises `TypeError` for values outside the supported subset when called directly, instead of guessing an output shape through iteration or `str()`.
+- Shares one escaping routine between attribute values and character data, as the Python serializer does, and drops the duplicate helpers.
+
+## Migration guidance
+
+Direct callers that pass tuples, sets, iterators, or arbitrary objects to `json2xml_rs.dicttoxml()` now receive `TypeError`. Convert such values to lists or JSON scalars first, or call `json2xml.dicttoxml_fast.dicttoxml()`, which routes them to the Python serializer.
+
+Python wrappers may pass `max_depth` and `max_items` to `payload_is_supported()`. json2xml 7.1.0 probes for that support and keeps its own walk on older builds, so 0.5.0 remains compatible with the wrapper.
+
+## Package Version
+
+- Rust accelerator: `json2xml-rs==0.6.0`
+
+## Verification
+
+The release passed Rust formatting, Clippy with warnings denied, 47 Rust unit tests, the fuzz crate build, and 650 Python tests with 100% statement coverage. Publication is additionally gated on built-wheel tests across Linux, macOS, Windows, and CPython 3.10-3.15.
+
+
 # json2xml 7.0.1
 
 Released 2026-08-28.

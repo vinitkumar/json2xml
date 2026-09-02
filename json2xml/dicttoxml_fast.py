@@ -23,7 +23,7 @@ from typing import Any
 import json2xml.dicttoxml as _py_dicttoxml
 
 from .backend_selector import BackendSelector, rust_renders_root_identically
-from .dicttoxml import SerializerConfig
+from .dicttoxml import IdsOption, SerializerConfig
 
 RustStringTransform = Callable[[str], str]
 
@@ -193,7 +193,7 @@ def dicttoxml(
     obj: Any,
     root: bool = True,
     custom_root: str = "root",
-    ids: list[int] | None = None,
+    ids: IdsOption = None,
     attr_type: bool = True,
     item_wrap: bool = True,
     item_func: Callable[[str], str] | None = None,
@@ -214,7 +214,7 @@ def dicttoxml(
         obj: The Python object to convert (dict or list)
         root: Include XML declaration and root element (default: True)
         custom_root: Name of the root element (default: "root")
-        ids: Generate unique IDs for elements (not supported in Rust)
+        ids: Any truthy value generates unique element IDs (not supported in Rust)
         attr_type: Include type attributes on elements (default: True)
         item_wrap: Wrap list items in <item> tags (default: True)
         item_func: Custom function for item names (not supported in Rust)

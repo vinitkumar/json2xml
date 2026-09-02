@@ -9,7 +9,7 @@ from fractions import Fraction
 from functools import lru_cache
 from io import BytesIO
 from random import SystemRandom
-from typing import Any, Union, cast
+from typing import Any, TypeAlias, Union, cast
 
 __lazy_modules__ = ["defusedxml.minidom"]
 
@@ -141,6 +141,10 @@ def get_unique_id(element: str) -> str:
     return make_id(element)
 
 
+# Only the truthiness of ``ids`` is ever consulted, so any value is a valid argument:
+# the historical list form, a bool, or an int all enable generated id attributes.
+IdsOption: TypeAlias = object
+
 ELEMENT = Union[
     str,
     int,
@@ -214,6 +218,19 @@ def _classify(value: Any) -> int:
     return _KIND_UNSUPPORTED
 
 
+# Type attribute values for native JSON types, keyed by exact type like _EXACT_KINDS.
+_EXACT_TYPE_NAMES: dict[type, str] = {
+    type(None): "null",
+    str: "str",
+    int: "int",
+    float: "float",
+    bool: "bool",
+    dict: "dict",
+    list: "list",
+    tuple: "list",
+}
+
+
 def get_xml_type(val: Any) -> str:
     """
     Get the XML type of a given value.
@@ -224,21 +241,10 @@ def get_xml_type(val: Any) -> str:
     Returns:
         str: The XML type.
     """
-    if val is None:
-        return "null"
-    val_type = type(val)
-    if val_type is str:
-        return "str"
-    if val_type is int:
-        return "int"
-    if val_type is float:
-        return "float"
-    if val_type is bool:
-        return "bool"
-    if val_type is dict:
-        return "dict"
-    if val_type is list or val_type is tuple:
-        return "list"
+    name = _EXACT_TYPE_NAMES.get(type(val))
+    if name is not None:
+        return name
+    # Subclasses and other Number implementations take the historical fallback names.
     if isinstance(val, str):
         return "str"
     if _is_number(val):
@@ -514,7 +520,7 @@ def _append_xpath31(
 
 def convert(
     obj: Any,
-    ids: Any,
+    ids: IdsOption,
     attr_type: bool,
     item_func: Callable[[str], str],
     cdata: bool,
@@ -616,7 +622,7 @@ def list2xml_str(
 
 def convert_dict(
     obj: dict[str, Any],
-    ids: list[str],
+    ids: IdsOption,
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -647,7 +653,7 @@ def convert_dict(
 
 def convert_list(
     items: Sequence[Any],
-    ids: list[str] | None,
+    ids: IdsOption,
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -679,7 +685,7 @@ def convert_list(
 def _append_convert(
     output: _XMLWriter,
     obj: Any,
-    ids: Any,
+    ids: IdsOption,
     attr_type: bool,
     item_func: Callable[[str], str],
     cdata: bool,
@@ -755,7 +761,7 @@ def _append_dict2xml_str(
     list_headers: bool = False,
 ) -> None:
     """Append a dict element using the same shape as dict2xml_str."""
-    ids: list[str] = []
+    ids: IdsOption = None
     attr = dict(attr)
 
     if attr_type:
@@ -821,7 +827,7 @@ def _append_dict2xml_str(
 def _append_rawitem(
     output: _XMLWriter,
     rawitem: Any,
-    ids: list[str],
+    ids: IdsOption,
     attr_type: bool,
     item_func: Callable[[str], str],
     cdata: bool,
@@ -863,7 +869,7 @@ def _append_list2xml_str(
     item_wrap: bool,
     list_headers: bool = False,
 ) -> None:
-    ids: list[str] = []
+    ids: IdsOption = None
     attr = dict(attr)
     if attr_type:
         attr["type"] = get_xml_type(item)
@@ -908,7 +914,7 @@ def _append_list2xml_str(
 def _append_convert_dict(
     output: _XMLWriter,
     obj: dict[str, Any],
-    ids: list[str],
+    ids: IdsOption,
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -977,7 +983,7 @@ def _append_convert_dict(
 def _append_convert_list(
     output: _XMLWriter,
     items: Sequence[Any],
-    ids: list[str] | None,
+    ids: IdsOption,
     parent: str,
     attr_type: bool,
     item_func: Callable[[str], str],
@@ -1067,9 +1073,18 @@ def _append_convert_list(
             raise TypeError(f"Unsupported data type: {item} ({type(item).__name__})")
 
 
+_DATE_LIKE_TYPES = (datetime.datetime, datetime.date, datetime.time)
+
+
 def convert_kv(
     key: str,
-    val: str | int | float | numbers.Number | datetime.datetime | datetime.date,
+    val: str
+    | int
+    | float
+    | numbers.Number
+    | datetime.datetime
+    | datetime.date
+    | datetime.time,
     attr_type: bool,
     attr: dict[str, Any] | None = None,
     cdata: bool = False,
@@ -1078,10 +1093,8 @@ def convert_kv(
     attr = dict(attr) if attr else {}
     key, attr = make_valid_xml_name(key, attr)
 
-    # Convert datetime to isoformat string
-    if hasattr(val, "isoformat") and isinstance(
-        val, (datetime.datetime, datetime.date)
-    ):
+    # Date-like values serialize as ISO text, matching the main serializer path.
+    if isinstance(val, _DATE_LIKE_TYPES):
         val = val.isoformat()
 
     if attr_type:
@@ -1094,15 +1107,19 @@ def convert_kv(
 
 def convert_kv_valid_name(
     key: str,
-    val: str | int | float | numbers.Number | datetime.datetime | datetime.date,
+    val: str
+    | int
+    | float
+    | numbers.Number
+    | datetime.datetime
+    | datetime.date
+    | datetime.time,
     attr_type: bool,
     attr: dict[str, Any],
     cdata: bool = False,
 ) -> str:
     """Converts a scalar into an XML element when the caller already validated the key."""
-    if hasattr(val, "isoformat") and isinstance(
-        val, (datetime.datetime, datetime.date)
-    ):
+    if isinstance(val, _DATE_LIKE_TYPES):
         val = val.isoformat()
 
     attr_string = (
@@ -1173,7 +1190,7 @@ class SerializerConfig:
     obj: Any
     root: bool
     custom_root: str
-    ids: list[int] | None
+    ids: IdsOption
     attr_type: bool
     item_wrap: bool
     item_func: Callable[[str], str]
@@ -1312,7 +1329,7 @@ def dicttoxml(
     obj: ELEMENT,
     root: bool = True,
     custom_root: str = "root",
-    ids: list[int] | None = None,
+    ids: IdsOption = None,
     attr_type: bool = True,
     item_wrap: bool = True,
     item_func: Callable[[str], str] = default_item_func,
@@ -1337,9 +1354,9 @@ def dicttoxml(
         Default is 'root'
         allows you to specify a custom root element.
 
-    :param bool ids:
-        Default is False
-        specifies whether elements get unique ids.
+    :param ids:
+        Default is None
+        any truthy value gives elements unique ids.
 
     :param bool attr_type:
         Default is True

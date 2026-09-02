@@ -96,6 +96,44 @@ def test_get_xml_type_preserves_container_subclasses(value: Any, expected: str) 
     assert dicttoxml.get_xml_type(value) == expected
 
 
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [(None, "null"), ((1, 2), "list"), ([], "list"), (1.5, "float"), (False, "bool")],
+)
+def test_get_xml_type_names_native_types_by_exact_type(
+    value: Any, expected: str
+) -> None:
+    assert dicttoxml.get_xml_type(value) == expected
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        datetime.datetime(2026, 1, 1, 10, 30, 15, 123456),
+        datetime.date(2026, 1, 1),
+        datetime.time(10, 30, 15, 123456),
+    ],
+)
+def test_direct_scalar_helpers_match_serializer_for_date_like_values(
+    value: Any,
+) -> None:
+    """convert_kv and its valid-name variant classify date-like values as the engine does."""
+    expected = dicttoxml.dicttoxml({"k": value}, root=False).decode()
+
+    assert dicttoxml.convert_kv("k", value, attr_type=True) == expected
+    assert dicttoxml.convert_kv_valid_name("k", value, attr_type=True, attr={}) == (
+        expected
+    )
+
+
+@pytest.mark.parametrize("ids", [True, ["seed"], 1])
+def test_ids_accepts_any_truthy_value(ids: Any) -> None:
+    """Only the truthiness of ``ids`` matters; the historical list form still works."""
+    result = dicttoxml.dicttoxml({"a": 1, "b": 2}, root=False, ids=ids)
+
+    assert result.count(b' id="') == 2
+
+
 # @lat: [[tests#XML helper behavior#Exact-type dispatch preserves subclass fallbacks]]
 def test_exact_type_dispatch_preserves_subclass_fallbacks() -> None:
     data = DictSubclass({"values": ListSubclass([IntSubclass(7)])})

@@ -222,6 +222,10 @@ If every backend rejects a conversion request, the selector should raise a clear
 
 The public `Json2xml` wrapper should delegate through the fast backend selector so regular library and CLI conversions can use the Rust accelerator when installed.
 
+### Serializer rejections become InvalidDataError
+
+`Json2xml.to_xml` documents `InvalidDataError` as its only conversion failure, so a value the budget walk accepts but the serializer rejects, such as a non-dict Mapping, must surface as that error rather than a bare `TypeError`.
+
 ### Json2xml return types match pretty mode
 
 The public wrapper should return Unicode text for pretty output and UTF-8 bytes for compact output so callers can rely on the documented `to_xml()` type contract.

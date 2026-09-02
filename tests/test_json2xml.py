@@ -3,6 +3,7 @@
 """Tests for `json2xml` package."""
 
 from pyexpat import ExpatError
+from types import MappingProxyType
 from typing import Any, TypedDict
 from unittest.mock import Mock
 
@@ -235,6 +236,14 @@ class TestJson2xml:
 
         old_dict = xmltodict.parse(xmldata)
         assert "response" in old_dict.keys()
+
+    # @lat: [[tests#Conversion behavior#Serializer rejections become InvalidDataError]]
+    def test_unsupported_mapping_raises_invalid_data_error(self) -> None:
+        """A Mapping that is not a dict passes the budget walk but not the serializer."""
+        data: Any = {"a": MappingProxyType({"b": 1})}
+
+        with pytest.raises(InvalidDataError, match="Unsupported data type"):
+            json2xml.Json2xml(data).to_xml()
 
     def test_bad_data(self) -> None:
         data = b"!\0a8f"

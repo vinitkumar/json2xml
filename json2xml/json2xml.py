@@ -111,7 +111,9 @@ class Json2xml:
                     max_output_bytes=self.max_output_bytes,
                     indent=PRETTY_INDENT if self.pretty else None,
                 )
-            except ValueError as error:
+            except (ValueError, TypeError) as error:
+                # ValueError covers limits and forbidden characters; TypeError covers
+                # values the serializer cannot map, such as a Mapping that is not a dict.
                 raise InvalidDataError(str(error)) from error
             if len(xml_data) > self.max_output_bytes:
                 raise InvalidDataError("XML output size limit exceeded")

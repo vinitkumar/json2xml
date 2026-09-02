@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+import sys
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import Mock
 
@@ -9,7 +12,20 @@ import pytest
 
 import json2xml.dicttoxml_fast as fast_module
 from json2xml import dicttoxml as py_dicttoxml
-from json2xml.backend_selector import ConversionRequest, rust_renders_identically
+from json2xml.backend_selector import rust_renders_identically
+from json2xml.dicttoxml_fast import _RustBindings
+
+
+def _fake_bindings(**overrides: Any) -> _RustBindings:
+    """Build Rust bindings backed by the Python reference implementations."""
+    fields: dict[str, Any] = {
+        "dicttoxml": Mock(return_value=b"<rust/>"),
+        "payload_is_supported": rust_renders_identically,
+        "escape_xml": py_dicttoxml.escape_xml,
+        "wrap_cdata": py_dicttoxml.wrap_cdata,
+    }
+    fields.update(overrides)
+    return _RustBindings(**fields)
 
 
 def _force_rust_backend(monkeypatch: pytest.MonkeyPatch) -> Mock:
@@ -20,12 +36,66 @@ def _force_rust_backend(monkeypatch: pytest.MonkeyPatch) -> Mock:
     would exercise nothing.
     """
     rust_backend = Mock(return_value=b"<rust/>")
-    monkeypatch.setattr(fast_module, "_use_rust", True)
-    monkeypatch.setattr(fast_module, "_rust_dicttoxml", rust_backend)
-    monkeypatch.setattr(
-        fast_module, "_rust_payload_is_supported", rust_renders_identically
-    )
+    monkeypatch.setattr(fast_module, "_RUST", _fake_bindings(dicttoxml=rust_backend))
     return rust_backend
+
+
+def _fake_extension(monkeypatch: pytest.MonkeyPatch, **exports: Any) -> None:
+    """Register a stand-in ``json2xml_rs`` module exposing only ``exports``."""
+    monkeypatch.setitem(sys.modules, "json2xml_rs", SimpleNamespace(**exports))
+
+
+_COMPLETE_EXPORTS: dict[str, Any] = {
+    "dicttoxml": Mock(return_value=b"<rust/>"),
+    "payload_is_supported": rust_renders_identically,
+    "escape_xml_py": py_dicttoxml.escape_xml,
+    "wrap_cdata_py": py_dicttoxml.wrap_cdata,
+}
+
+
+# @lat: [[tests#Conversion behavior#Rust backend loader refuses unusable builds]]
+def test_loader_returns_none_when_extension_is_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(sys.modules, "json2xml_rs", None)
+
+    assert fast_module._load_rust_bindings() is None
+
+
+def test_loader_refuses_builds_without_the_payload_gate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An extension predating the payload gate also predates the output parity fixes."""
+    exports = {
+        k: v for k, v in _COMPLETE_EXPORTS.items() if k != "payload_is_supported"
+    }
+    _fake_extension(monkeypatch, **exports)
+
+    assert fast_module._load_rust_bindings() is None
+
+
+def test_loader_refuses_builds_that_permit_invalid_xml(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    _fake_extension(monkeypatch, **{**_COMPLETE_EXPORTS, "escape_xml_py": str})
+
+    with caplog.at_level(logging.WARNING, logger="json2xml.dicttoxml_fast"):
+        assert fast_module._load_rust_bindings() is None
+
+    assert "permits invalid XML characters" in caplog.text
+
+
+def test_loader_binds_a_complete_extension(monkeypatch: pytest.MonkeyPatch) -> None:
+    _fake_extension(monkeypatch, **_COMPLETE_EXPORTS)
+
+    bindings = fast_module._load_rust_bindings()
+
+    assert bindings == _RustBindings(
+        dicttoxml=_COMPLETE_EXPORTS["dicttoxml"],
+        payload_is_supported=rust_renders_identically,
+        escape_xml=py_dicttoxml.escape_xml,
+        wrap_cdata=py_dicttoxml.wrap_cdata,
+    )
 
 
 # @lat: [[tests#Conversion behavior#Outdated Rust backends stay disabled]]
@@ -47,7 +117,7 @@ def test_fast_wrapper_reports_python_backend_when_rust_is_unavailable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Backend metadata should reflect the active fallback backend."""
-    monkeypatch.setattr(fast_module, "_use_rust", False)
+    monkeypatch.setattr(fast_module, "_RUST", None)
 
     assert fast_module.is_rust_available() is False
     assert fast_module.get_backend() == "python"
@@ -151,15 +221,12 @@ def test_fast_wrapper_falls_back_to_python_when_rust_is_unavailable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Contributors without json2xml_rs should still exercise the pure Python fallback."""
-    rust_backend = Mock(return_value=b"<rust/>")
-    monkeypatch.setattr(fast_module, "_use_rust", False)
-    monkeypatch.setattr(fast_module, "_rust_dicttoxml", rust_backend)
+    monkeypatch.setattr(fast_module, "_RUST", None)
 
     result = fast_module.dicttoxml({"name": "Ada"})
 
     assert b"<name" in result
     assert b">Ada</name>" in result
-    rust_backend.assert_not_called()
 
 
 # @lat: [[tests#Conversion behavior#Fast helper functions use Python fallback]]
@@ -167,9 +234,7 @@ def test_fast_helper_functions_use_python_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Helper exports should preserve behavior when Rust helpers are unavailable."""
-    monkeypatch.setattr(fast_module, "_use_rust", False)
-    monkeypatch.setattr(fast_module, "rust_escape_xml", None)
-    monkeypatch.setattr(fast_module, "rust_wrap_cdata", None)
+    monkeypatch.setattr(fast_module, "_RUST", None)
 
     assert fast_module.escape_xml("Ada & <XML>") == "Ada &amp; &lt;XML&gt;"
     assert fast_module.wrap_cdata("Ada <XML>") == "<![CDATA[Ada <XML>]]>"
@@ -191,46 +256,12 @@ def test_fast_helpers_coerce_scalars_before_calling_rust(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The public helpers accept the same scalars on both backends."""
-    monkeypatch.setattr(fast_module, "_use_rust", True)
-    monkeypatch.setattr(
-        fast_module, "rust_escape_xml", _str_only(py_dicttoxml.escape_xml)
+    bindings = _fake_bindings(
+        escape_xml=_str_only(py_dicttoxml.escape_xml),
+        wrap_cdata=_str_only(py_dicttoxml.wrap_cdata),
     )
-    monkeypatch.setattr(
-        fast_module, "rust_wrap_cdata", _str_only(py_dicttoxml.wrap_cdata)
-    )
+    monkeypatch.setattr(fast_module, "_RUST", bindings)
 
     assert fast_module.escape_xml(5) == py_dicttoxml.escape_xml(5) == "5"
     assert fast_module.wrap_cdata(1.5) == py_dicttoxml.wrap_cdata(1.5)
     assert fast_module.escape_xml("a<b") == "a&lt;b"
-
-
-def test_backend_without_the_payload_gate_is_refused(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """An extension predating the payload gate also predates the output parity fixes.
-
-    Such a build would render admitted payloads differently from the Python serializer, so
-    the adapter must decline every request rather than trust it.
-    """
-    _force_rust_backend(monkeypatch)
-    monkeypatch.setattr(fast_module, "_rust_payload_is_supported", None)
-
-    adapter = fast_module._RustBackendAdapter()
-    request = ConversionRequest(
-        obj={"a": 1},
-        root=True,
-        custom_root="root",
-        ids=None,
-        attr_type=True,
-        item_wrap=True,
-        item_func=None,
-        cdata=False,
-        xml_namespaces=None,
-        list_headers=False,
-        xpath_format=False,
-        max_output_bytes=None,
-        indent=None,
-    )
-
-    assert adapter.can_handle(request) is False
-    assert fast_module.dicttoxml({"a": 1}) == py_dicttoxml.dicttoxml({"a": 1})

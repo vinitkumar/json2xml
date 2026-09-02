@@ -247,9 +247,10 @@ def test_native_and_python_gates_agree() -> None:
     payload the writer cannot reproduce, and admitting too little silently drops the fast
     path.
     """
-    from json2xml.dicttoxml_fast import _rust_payload_is_supported
+    from json2xml.dicttoxml_fast import _RUST
 
-    assert _rust_payload_is_supported is not None
+    assert _RUST is not None
+    _rust_payload_is_supported = _RUST.payload_is_supported
 
     fixtures: list[Any] = [
         {},

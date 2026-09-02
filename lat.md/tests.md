@@ -126,6 +126,10 @@ Every harness subprocess should use an inline argv list with shell parsing expli
 
 These tests pin the XML shapes that matter most for interoperability, especially the modes that intentionally diverge from the default serializer.
 
+### Rust backend loader refuses unusable builds
+
+The loader binds `json2xml_rs` only when it is importable, exports the payload gate, and rejects XML 1.0 forbidden characters; every other outcome leaves the Python serializer in charge.
+
 ### Outdated Rust backends stay disabled
 
 An optional Rust accelerator is eligible only when its escape helper rejects XML 1.0 forbidden characters, preventing an older wheel from bypassing the Python serializer's validation.

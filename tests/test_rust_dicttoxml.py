@@ -671,8 +671,7 @@ class TestFastDicttoxmlPythonFallback:
         """Test escape_xml falls back to Python when Rust unavailable."""
         from unittest.mock import patch
 
-        # Temporarily mock Rust availability to False.
-        with patch.object(fast_module, "_use_rust", False):
+        with patch.object(fast_module, "_RUST", None):
             result = fast_module.escape_xml("Hello <World>")
             assert "&lt;" in result
             assert "&gt;" in result
@@ -681,23 +680,6 @@ class TestFastDicttoxmlPythonFallback:
         """Test wrap_cdata falls back to Python when Rust unavailable."""
         from unittest.mock import patch
 
-        # Temporarily mock Rust availability to False.
-        with patch.object(fast_module, "_use_rust", False):
+        with patch.object(fast_module, "_RUST", None):
             result = fast_module.wrap_cdata("Hello World")
             assert result == "<![CDATA[Hello World]]>"
-
-    def test_escape_xml_fallback_when_rust_func_none(self):
-        """Test escape_xml falls back when rust_escape_xml is None."""
-        from unittest.mock import patch
-
-        with patch.object(fast_module, "rust_escape_xml", None):
-            result = fast_module.escape_xml("Test & Value")
-            assert "&amp;" in result
-
-    def test_wrap_cdata_fallback_when_rust_func_none(self):
-        """Test wrap_cdata falls back when rust_wrap_cdata is None."""
-        from unittest.mock import patch
-
-        with patch.object(fast_module, "rust_wrap_cdata", None):
-            result = fast_module.wrap_cdata("Test Content")
-            assert result == "<![CDATA[Test Content]]>"

@@ -20,6 +20,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+import json2xml.dicttoxml as _py_dicttoxml
+
 from .backend_selector import (
     BackendSelector,
     ConversionRequest,
@@ -28,15 +30,18 @@ from .backend_selector import (
 
 RustStringTransform = Callable[[str], str]
 
-LOG = logging.getLogger("dicttoxml_fast")
+LOG = logging.getLogger(__name__)
 
-# Try to import the Rust implementation
-_use_rust = False
-_rust_dicttoxml: Callable[..., bytes] | None = None
-# The payload gate walks the whole input, so run it natively when the extension provides it.
-_rust_payload_is_supported: Callable[[Any], bool] | None = None
-rust_escape_xml: RustStringTransform | None = None
-rust_wrap_cdata: RustStringTransform | None = None
+
+@dataclass(frozen=True, slots=True)
+class _RustBindings:
+    """Callables exported by a ``json2xml_rs`` build the selector may use."""
+
+    dicttoxml: Callable[..., bytes]
+    # The payload gate walks the whole input, so it runs natively when available.
+    payload_is_supported: Callable[[Any], bool]
+    escape_xml: RustStringTransform
+    wrap_cdata: RustStringTransform
 
 
 def _rejects_invalid_xml(escape: RustStringTransform) -> bool:
@@ -50,38 +55,48 @@ def _rejects_invalid_xml(escape: RustStringTransform) -> bool:
     return False
 
 
-try:
-    from json2xml_rs import dicttoxml as _rust_dicttoxml  # pragma: no cover
-    from json2xml_rs import escape_xml_py as rust_escape_xml  # pragma: no cover
-    from json2xml_rs import (  # pragma: no cover
-        payload_is_supported as _rust_payload_is_supported,
-    )
-    from json2xml_rs import wrap_cdata_py as rust_wrap_cdata  # pragma: no cover
+def _load_rust_bindings() -> _RustBindings | None:
+    """Import ``json2xml_rs`` and refuse builds that would change output or safety."""
+    try:
+        import json2xml_rs
+    except ImportError:
+        LOG.debug("Rust backend not available, using pure Python")
+        return None
 
-    if _rejects_invalid_xml(rust_escape_xml):  # pragma: no cover
-        _use_rust = True  # pragma: no cover
-        LOG.debug("Using Rust backend for dicttoxml")  # pragma: no cover
-    else:  # pragma: no cover
-        LOG.warning(  # pragma: no cover
+    try:
+        bindings = _RustBindings(
+            dicttoxml=json2xml_rs.dicttoxml,
+            payload_is_supported=json2xml_rs.payload_is_supported,
+            escape_xml=json2xml_rs.escape_xml_py,
+            wrap_cdata=json2xml_rs.wrap_cdata_py,
+        )
+    except AttributeError:
+        # Builds before payload_is_supported existed also predate the output parity
+        # fixes, so they must leave the Python serializer in charge.
+        LOG.debug("Ignoring an outdated Rust backend that predates the payload gate")
+        return None
+
+    if not _rejects_invalid_xml(bindings.escape_xml):
+        LOG.warning(
             "Ignoring an outdated Rust backend that permits invalid XML characters"
         )
-except ImportError:  # pragma: no cover
-    # Builds before payload_is_supported existed also predate the output parity fixes, so a
-    # failed import of any name here correctly leaves the Python serializer in charge.
-    LOG.debug("Rust backend not available or too old, using pure Python")
+        return None
 
-# Import the pure Python implementation as fallback.
-import json2xml.dicttoxml as _py_dicttoxml  # noqa: E402
+    LOG.debug("Using Rust backend for dicttoxml")
+    return bindings
+
+
+_RUST = _load_rust_bindings()
 
 
 def is_rust_available() -> bool:
     """Check if the Rust backend is available."""
-    return _use_rust
+    return _RUST is not None
 
 
 def get_backend() -> str:
     """Return the name of the current backend ('rust' or 'python')."""
-    return "rust" if _use_rust else "python"
+    return "rust" if _RUST is not None else "python"
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,11 +106,8 @@ class _RustBackendAdapter:
     name: str = "rust"
 
     def can_handle(self, request: ConversionRequest) -> bool:
-        if (
-            not _use_rust
-            or _rust_dicttoxml is None
-            or _rust_payload_is_supported is None
-        ):
+        rust = _RUST
+        if rust is None:
             return False
 
         return not (
@@ -108,12 +120,12 @@ class _RustBackendAdapter:
             or not rust_renders_root_identically(request.root, request.custom_root)
             # The native walk keeps this gate from costing more than the conversion it
             # guards; rust_renders_identically is its pure-Python reference.
-            or not _rust_payload_is_supported(request.obj)
+            or not rust.payload_is_supported(request.obj)
         )
 
     def render(self, request: ConversionRequest) -> bytes:
-        assert _rust_dicttoxml is not None
-        output = _rust_dicttoxml(
+        assert _RUST is not None
+        output = _RUST.dicttoxml(
             request.obj,
             root=request.root,
             custom_root=request.custom_root,
@@ -231,9 +243,9 @@ def escape_xml(s: str | int | float | numbers.Number | None) -> str:
 
     Scalar values (int, float, numbers.Number, or None) are converted with str().
     """
-    if _use_rust and rust_escape_xml is not None:
-        return rust_escape_xml(s if isinstance(s, str) else str(s))
-    return _py_dicttoxml.escape_xml(s)
+    if _RUST is None:
+        return _py_dicttoxml.escape_xml(s)
+    return _RUST.escape_xml(s if isinstance(s, str) else str(s))
 
 
 def wrap_cdata(s: str | int | float | numbers.Number) -> str:
@@ -241,9 +253,9 @@ def wrap_cdata(s: str | int | float | numbers.Number) -> str:
 
     Scalar values (int, float, or numbers.Number) are converted with str().
     """
-    if _use_rust and rust_wrap_cdata is not None:
-        return rust_wrap_cdata(s if isinstance(s, str) else str(s))
-    return _py_dicttoxml.wrap_cdata(s)
+    if _RUST is None:
+        return _py_dicttoxml.wrap_cdata(s)
+    return _RUST.wrap_cdata(s if isinstance(s, str) else str(s))
 
 
 # Export the same API as the original dicttoxml module

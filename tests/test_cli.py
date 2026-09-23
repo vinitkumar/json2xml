@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import re
 import subprocess
 import sys
 import tempfile
@@ -417,7 +418,8 @@ class TestCLI:
 
         assert result.returncode == 1
         assert "Could not parse JSON file" in result.stderr
-        assert "line 372 column 3" in result.stderr
+        # CPython and PyPy report different positions for the same file.
+        assert re.search(r"line \d+ column \d+", result.stderr)
 
     def test_json_file_with_utf8_bom(self) -> None:
         """A BOM-prefixed file converts instead of being reported as invalid."""

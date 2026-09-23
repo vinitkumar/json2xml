@@ -419,6 +419,21 @@ class TestCLI:
         assert "Could not parse JSON file" in result.stderr
         assert "line 372 column 3" in result.stderr
 
+    def test_json_file_with_utf8_bom(self) -> None:
+        """A BOM-prefixed file converts instead of being reported as invalid."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            json_file = Path(tmpdir) / "bom.json"
+            json_file.write_bytes(b'\xef\xbb\xbf{"bom": true}')
+
+            result = subprocess.run(
+                [sys.executable, "-m", "json2xml.cli", str(json_file)],
+                capture_output=True,
+                text=True,
+            )
+
+        assert result.returncode == 0, result.stderr
+        assert '<bom type="bool">true</bom>' in result.stdout
+
     def test_output_file_permission_error(self) -> None:
         """Test error handling when output file cannot be written."""
         with tempfile.TemporaryDirectory() as tmpdir:

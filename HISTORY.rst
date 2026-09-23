@@ -1,4 +1,11 @@
 
+7.1.1 / 2026-09-23
+==================
+
+  * fix: include the JSON decoder's line and column in ``JSONReadError``, ``StringReadError``, and ``URLReadError`` messages, so the CLI reports where the input breaks instead of only that it is invalid
+  * fix: accept a UTF-8 byte order mark in file, URL, string, and stdin JSON input
+  * chore: fix the diagnostics ty 0.0.83 reports in tests and make the list-omission test compare its result
+
 7.1.0 / 2026-09-03
 ==================
 

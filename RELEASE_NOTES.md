@@ -1,3 +1,29 @@
+# json2xml 7.1.1
+
+Released 2026-09-23.
+
+## Highlights
+
+- Reader errors now carry the JSON decoder's line and column, so `json2xml-py` says where a document breaks: `Invalid JSON File: Expecting ',' delimiter: line 372 column 3 (char 8920)`.
+- A UTF-8 byte order mark, as written by PowerShell and Notepad, no longer makes file, URL, string, or stdin input fail as invalid JSON.
+- The test suite type-checks cleanly under ty 0.0.83.
+
+## Behaviour changes and migration guidance
+
+- `JSONReadError`, `StringReadError`, and `URLReadError` messages keep their existing prefixes and append the decoder message after a colon. Callers matching on the prefix are unaffected; callers comparing whole messages should match on the prefix.
+- A leading U+FEFF in string input is dropped before parsing. No other input handling changed.
+
+## Package Versions
+
+- Python package: `json2xml==7.1.1`
+- Rust accelerator: `json2xml-rs==0.6.0` (unchanged)
+- Fast install: `pip install "json2xml[fast]==7.1.1"`
+
+## Verification
+
+The release passed Ruff, ty 0.0.83, and 658 Python tests with 100% statement coverage on CPython and PyPy 3.10. No Rust sources changed.
+
+
 # json2xml 7.1.0
 
 Released 2026-09-03.

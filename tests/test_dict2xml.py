@@ -190,10 +190,8 @@ class TestDict2xml:
     def test_dict2xml_omit_list(self) -> None:
         """Test dicttoxml with list omission."""
         obj = {"list": [{"bike": "blue"}, {"wheel": "black"}]}
-        result = dicttoxml.dicttoxml(
-            obj, root=False, attr_type=False, item_wrap=False
-        )
-        assert result == b"<list><bike>blue</bike><wheel>black</wheel></list>"
+        result = dicttoxml.dicttoxml(obj, root=False, attr_type=False, item_wrap=False)
+        assert b"<list><bike>blue</bike><wheel>black</wheel></list>" == result
 
     def test_dict2xml_with_val_and_custom_attr(self) -> None:
         """Test dicttoxml with @val and custom attributes."""

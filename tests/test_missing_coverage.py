@@ -203,6 +203,9 @@ class TestXmlTypeEdgeCases:
             def __str__(self) -> str:
                 return str(self.value)
 
+            def __hash__(self) -> int:
+                return hash(self.value)
+
         result = get_xml_type(CustomNumber(42))
         assert result == "number"
 

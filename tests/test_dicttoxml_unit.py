@@ -13,6 +13,9 @@ from json2xml import dicttoxml
 
 
 class CustomNumber(numbers.Number):
+    def __hash__(self) -> int:
+        return 7
+
     def __complex__(self) -> complex:
         return complex(7)
 

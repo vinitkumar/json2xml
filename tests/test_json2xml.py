@@ -12,6 +12,7 @@ import xmltodict
 
 from json2xml import json2xml
 from json2xml.json2xml import _positive_limit
+from json2xml.types import JSONValue
 from json2xml.utils import (
     InvalidDataError,
     JSONReadError,
@@ -215,7 +216,7 @@ class TestJson2xml:
         assert "dict" == old_dict["all"]["empty_dict"]["@type"]
 
     def test_dicttoxml_bug(self) -> None:
-        input_dict = {
+        input_dict: JSONValue = {
             "response": {
                 "results": {
                     "user": [
@@ -342,7 +343,7 @@ class TestJson2xml:
 
     def test_pretty_output_limit_counts_indentation(self) -> None:
         """Pretty-only whitespace is included in the exact output byte budget."""
-        data = {"outer": {"inner": {"leaf": "value"}}}
+        data: JSONValue = {"outer": {"inner": {"leaf": "value"}}}
         compact_size = len(json2xml.Json2xml(data).to_xml() or b"")
 
         with pytest.raises(InvalidDataError, match="XML output size limit exceeded"):
@@ -430,7 +431,7 @@ class TestJson2xml:
         assert dict_from_xml["all"]["string_array"]["item"][2]["#text"] == "c"
 
     def test_dict_attr_crash(self) -> None:
-        data = {
+        data: JSONValue = {
             "product": {
                 "@attrs": {"attr_name": "attr_value", "a": "b"},
                 "@val": [],
@@ -461,7 +462,7 @@ class TestJson2xml:
     # @lat: [[tests#Conversion behavior#XPath format adds functions namespace]]
     def test_xpath_format_basic(self) -> None:
         """Test XPath 3.1 json-to-xml format with basic types."""
-        data = {"name": "John", "age": 30, "active": True}
+        data: JSONValue = {"name": "John", "age": 30, "active": True}
         xmldata = json2xml.Json2xml(data, xpath_format=True, pretty=False).to_xml()
         assert isinstance(xmldata, bytes)
         assert b'xmlns="http://www.w3.org/2005/xpath-functions"' in xmldata
@@ -471,7 +472,7 @@ class TestJson2xml:
 
     def test_xpath_format_nested_dict(self) -> None:
         """Test XPath 3.1 format with nested dictionaries."""
-        data = {"person": {"name": "Alice", "age": 25}}
+        data: JSONValue = {"person": {"name": "Alice", "age": 25}}
         xmldata = json2xml.Json2xml(data, xpath_format=True, pretty=False).to_xml()
         assert isinstance(xmldata, bytes)
         assert b'<map key="person">' in xmldata
@@ -480,7 +481,7 @@ class TestJson2xml:
 
     def test_xpath_format_array(self) -> None:
         """Test XPath 3.1 format with arrays."""
-        data = {"numbers": [1, 2, 3]}
+        data: JSONValue = {"numbers": [1, 2, 3]}
         xmldata = json2xml.Json2xml(data, xpath_format=True, pretty=False).to_xml()
         assert isinstance(xmldata, bytes)
         assert b'<array key="numbers">' in xmldata
@@ -490,14 +491,14 @@ class TestJson2xml:
 
     def test_xpath_format_null(self) -> None:
         """Test XPath 3.1 format with null values."""
-        data = {"value": None}
+        data: JSONValue = {"value": None}
         xmldata = json2xml.Json2xml(data, xpath_format=True, pretty=False).to_xml()
         assert isinstance(xmldata, bytes)
         assert b'<null key="value"/>' in xmldata
 
     def test_xpath_format_mixed_array(self) -> None:
         """Test XPath 3.1 format with mixed type arrays."""
-        data = {"items": ["text", 42, True, None]}
+        data: JSONValue = {"items": ["text", 42, True, None]}
         xmldata = json2xml.Json2xml(data, xpath_format=True, pretty=False).to_xml()
         assert isinstance(xmldata, bytes)
         assert b'<array key="items">' in xmldata
@@ -508,7 +509,7 @@ class TestJson2xml:
 
     def test_xpath_format_complex_nested(self) -> None:
         """Test XPath 3.1 format with complex nested structures."""
-        data = {
+        data: JSONValue = {
             "content": [
                 {"id": 70805774, "value": "1001", "position": [1004.0, 288.0]},
             ]
@@ -523,7 +524,7 @@ class TestJson2xml:
 
     def test_xpath_format_escaping(self) -> None:
         """Test XPath 3.1 format properly escapes special characters."""
-        data = {"text": "<script>alert('xss')</script>"}
+        data: JSONValue = {"text": "<script>alert('xss')</script>"}
         xmldata = json2xml.Json2xml(data, xpath_format=True, pretty=False).to_xml()
         assert isinstance(xmldata, bytes)
         assert b"&lt;script&gt;" in xmldata
@@ -531,7 +532,7 @@ class TestJson2xml:
 
     def test_xpath_format_with_pretty_print(self) -> None:
         """Test XPath 3.1 format works with pretty printing."""
-        data = {"name": "Test"}
+        data: JSONValue = {"name": "Test"}
         xmldata = json2xml.Json2xml(data, xpath_format=True, pretty=True).to_xml()
         assert isinstance(xmldata, str)
         assert 'xmlns="http://www.w3.org/2005/xpath-functions"' in xmldata
@@ -539,7 +540,7 @@ class TestJson2xml:
 
     def test_xpath_format_root_array(self) -> None:
         """Test XPath 3.1 format with root-level array."""
-        data = [1, 2, 3]
+        data: JSONValue = [1, 2, 3]
         xmldata = json2xml.Json2xml(data, xpath_format=True, pretty=False).to_xml()
         assert isinstance(xmldata, bytes)
         assert b'<array xmlns="http://www.w3.org/2005/xpath-functions">' in xmldata

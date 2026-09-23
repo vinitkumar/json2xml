@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import re
 import subprocess
 import sys
 import tempfile
@@ -403,6 +404,37 @@ class TestCLI:
         assert result.returncode == 1
         assert "Could not parse JSON file" in result.stderr
         assert str(json_file) in result.stderr
+
+    # @lat: [[tests#Input readers#Invalid JSON errors include the decoder position]]
+    def test_invalid_json_file_reports_position(self) -> None:
+        """The CLI shows where the decoder stopped, not only that it failed."""
+        json_file = Path(__file__).parent.parent / "examples" / "wrongjson.json"
+
+        result = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", str(json_file)],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 1
+        assert "Could not parse JSON file" in result.stderr
+        # CPython and PyPy report different positions for the same file.
+        assert re.search(r"line \d+ column \d+", result.stderr)
+
+    def test_json_file_with_utf8_bom(self) -> None:
+        """A BOM-prefixed file converts instead of being reported as invalid."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            json_file = Path(tmpdir) / "bom.json"
+            json_file.write_bytes(b'\xef\xbb\xbf{"bom": true}')
+
+            result = subprocess.run(
+                [sys.executable, "-m", "json2xml.cli", str(json_file)],
+                capture_output=True,
+                text=True,
+            )
+
+        assert result.returncode == 0, result.stderr
+        assert '<bom type="bool">true</bom>' in result.stdout
 
     def test_output_file_permission_error(self) -> None:
         """Test error handling when output file cannot be written."""

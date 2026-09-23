@@ -7,6 +7,7 @@ import tempfile
 import threading
 import zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 from unittest.mock import Mock, patch
 
@@ -34,6 +35,7 @@ class JsonTestHandler(BaseHTTPRequestHandler):
         "/data.json": (200, b'{"key": "value", "number": 42}'),
         "/api": (200, b'{"result": "success"}'),
         "/invalid.json": (200, b"invalid json content"),
+        "/bom.json": (200, b'\xef\xbb\xbf{"bom": true}'),
         "/error.json": (500, b'{"error": true}'),
         "/api.json": (200, b'{"api": "response", "status": "ok"}'),
     }
@@ -128,6 +130,28 @@ class TestReadFromJson:
 
             os.unlink(temp_filename)
 
+    def test_readfromjson_reports_decoder_position(self) -> None:
+        """The wrapped error carries the decoder's line and column."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write('{"a": 1 "b": 2}')
+            temp_filename = f.name
+
+        try:
+            with pytest.raises(JSONReadError, match="line 1 column 9"):
+                readfromjson(temp_filename)
+        finally:
+            import os
+
+            os.unlink(temp_filename)
+
+    # @lat: [[tests#Input readers#Readers accept a UTF-8 byte order mark]]
+    def test_readfromjson_accepts_utf8_bom(self, tmp_path: Path) -> None:
+        """A leading UTF-8 BOM, as written by Windows tools, is not an error."""
+        bom_file = tmp_path / "bom.json"
+        bom_file.write_bytes(b'\xef\xbb\xbf{"bom": true}')
+
+        assert readfromjson(str(bom_file)) == {"bom": True}
+
     # @lat: [[tests#Input readers#File reader distinguishes unreadable files from invalid JSON]]
     def test_readfromjson_file_not_found(self) -> None:
         """Test reading a non-existent file."""
@@ -185,6 +209,17 @@ class TestReadFromUrl:
         """Test URL reading with invalid JSON response."""
         with pytest.raises(URLReadError, match="URL did not return valid JSON"):
             readfromurl(f"{json_server}/invalid.json", allow_private_networks=True)
+
+    def test_readfromurl_reports_decoder_position(self, json_server: str) -> None:
+        """The wrapped error carries the decoder's message."""
+        with pytest.raises(URLReadError, match=r"URL did not return valid JSON: .+line 1"):
+            readfromurl(f"{json_server}/invalid.json", allow_private_networks=True)
+
+    def test_readfromurl_accepts_utf8_bom(self, json_server: str) -> None:
+        """A BOM-prefixed response body decodes like any other UTF-8 body."""
+        result = readfromurl(f"{json_server}/bom.json", allow_private_networks=True)
+
+        assert result == {"bom": True}
 
     def test_readfromurl_network_error(self) -> None:
         """Test network failures are wrapped as URLReadError."""
@@ -714,6 +749,15 @@ class TestReadFromString:
             "total": 2,
         }
         assert result == expected
+
+    def test_readfromstring_reports_decoder_position(self) -> None:
+        """The wrapped error carries the decoder's line and column."""
+        with pytest.raises(StringReadError, match="line 1 column 9"):
+            readfromstring('{"a": 1 "b": 2}')
+
+    def test_readfromstring_accepts_utf8_bom(self) -> None:
+        """A leading U+FEFF, as stdin delivers a BOM, is dropped before parsing."""
+        assert readfromstring('\ufeff{"bom": true}') == {"bom": True}
 
     def test_readfromstring_invalid_type_int(self) -> None:
         """Test reading with integer input."""

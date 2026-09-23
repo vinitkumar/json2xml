@@ -42,6 +42,14 @@ These tests verify the concrete reader helpers against realistic source behavior
 
 A file that cannot be opened reports a read failure, while a file whose content does not parse reports invalid JSON, so callers can tell the two apart from the message.
 
+### Invalid JSON errors include the decoder position
+
+Malformed file, string, and URL input carry the decoder's line and column in the wrapped error, so the CLI can say where the document breaks instead of only that it is invalid.
+
+### Readers accept a UTF-8 byte order mark
+
+File, URL, and string input that starts with a UTF-8 byte order mark parses normally, because Windows tools write that prefix by default and it carries no data.
+
 ### URL reader uses real HTTP and wraps failures
 
 URL input should read valid JSON over HTTP and wrap status, network, and decoding failures in `URLReadError`.

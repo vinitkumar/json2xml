@@ -65,12 +65,14 @@ def _effective_port(parsed: SplitResult) -> int:
 def readfromjson(filename: str) -> JSONValue:
     """Read JSON data from a file."""
     try:
-        with open(filename, encoding="utf-8") as jsondata:
+        # utf-8-sig drops the BOM that Windows tools write by default.
+        with open(filename, encoding="utf-8-sig") as jsondata:
             return json.load(jsondata)
     except OSError as error:
         raise JSONReadError("Could not read JSON file") from error
     except ValueError as error:
-        raise JSONReadError("Invalid JSON File") from error
+        # Keep the decoder message so callers can show where parsing stopped.
+        raise JSONReadError(f"Invalid JSON File: {error}") from error
 
 
 # @lat: [[behavior#URL security boundaries]]
@@ -349,9 +351,9 @@ def readfromurl(
             response.close()
 
     try:
-        return json.loads(response_data.decode("utf-8"))
+        return json.loads(response_data.decode("utf-8-sig"))
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise URLReadError("URL did not return valid JSON") from error
+        raise URLReadError(f"URL did not return valid JSON: {error}") from error
 
 
 def readfromstring(jsondata: object) -> JSONValue:
@@ -359,6 +361,7 @@ def readfromstring(jsondata: object) -> JSONValue:
     if not isinstance(jsondata, str):
         raise StringReadError("Input is not a proper JSON string")
     try:
-        return json.loads(jsondata)
+        # Text sources such as stdin deliver a BOM as a leading U+FEFF.
+        return json.loads(jsondata.removeprefix("\ufeff"))
     except ValueError as error:
-        raise StringReadError("Input is not a proper JSON string") from error
+        raise StringReadError(f"Input is not a proper JSON string: {error}") from error

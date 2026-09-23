@@ -404,6 +404,21 @@ class TestCLI:
         assert "Could not parse JSON file" in result.stderr
         assert str(json_file) in result.stderr
 
+    # @lat: [[tests#Input readers#Invalid JSON errors include the decoder position]]
+    def test_invalid_json_file_reports_position(self) -> None:
+        """The CLI shows where the decoder stopped, not only that it failed."""
+        json_file = Path(__file__).parent.parent / "examples" / "wrongjson.json"
+
+        result = subprocess.run(
+            [sys.executable, "-m", "json2xml.cli", str(json_file)],
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 1
+        assert "Could not parse JSON file" in result.stderr
+        assert "line 372 column 3" in result.stderr
+
     def test_output_file_permission_error(self) -> None:
         """Test error handling when output file cannot be written."""
         with tempfile.TemporaryDirectory() as tmpdir:

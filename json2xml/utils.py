@@ -70,7 +70,8 @@ def readfromjson(filename: str) -> JSONValue:
     except OSError as error:
         raise JSONReadError("Could not read JSON file") from error
     except ValueError as error:
-        raise JSONReadError("Invalid JSON File") from error
+        # Keep the decoder message so callers can show where parsing stopped.
+        raise JSONReadError(f"Invalid JSON File: {error}") from error
 
 
 # @lat: [[behavior#URL security boundaries]]
@@ -351,7 +352,7 @@ def readfromurl(
     try:
         return json.loads(response_data.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        raise URLReadError("URL did not return valid JSON") from error
+        raise URLReadError(f"URL did not return valid JSON: {error}") from error
 
 
 def readfromstring(jsondata: object) -> JSONValue:
@@ -361,4 +362,4 @@ def readfromstring(jsondata: object) -> JSONValue:
     try:
         return json.loads(jsondata)
     except ValueError as error:
-        raise StringReadError("Input is not a proper JSON string") from error
+        raise StringReadError(f"Input is not a proper JSON string: {error}") from error

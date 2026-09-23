@@ -128,6 +128,20 @@ class TestReadFromJson:
 
             os.unlink(temp_filename)
 
+    def test_readfromjson_reports_decoder_position(self) -> None:
+        """The wrapped error carries the decoder's line and column."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write('{"a": 1 "b": 2}')
+            temp_filename = f.name
+
+        try:
+            with pytest.raises(JSONReadError, match="line 1 column 9"):
+                readfromjson(temp_filename)
+        finally:
+            import os
+
+            os.unlink(temp_filename)
+
     # @lat: [[tests#Input readers#File reader distinguishes unreadable files from invalid JSON]]
     def test_readfromjson_file_not_found(self) -> None:
         """Test reading a non-existent file."""
@@ -184,6 +198,11 @@ class TestReadFromUrl:
     def test_readfromurl_invalid_json_response(self, json_server: str) -> None:
         """Test URL reading with invalid JSON response."""
         with pytest.raises(URLReadError, match="URL did not return valid JSON"):
+            readfromurl(f"{json_server}/invalid.json", allow_private_networks=True)
+
+    def test_readfromurl_reports_decoder_position(self, json_server: str) -> None:
+        """The wrapped error carries the decoder's message."""
+        with pytest.raises(URLReadError, match=r"URL did not return valid JSON: .+line 1"):
             readfromurl(f"{json_server}/invalid.json", allow_private_networks=True)
 
     def test_readfromurl_network_error(self) -> None:
@@ -714,6 +733,11 @@ class TestReadFromString:
             "total": 2,
         }
         assert result == expected
+
+    def test_readfromstring_reports_decoder_position(self) -> None:
+        """The wrapped error carries the decoder's line and column."""
+        with pytest.raises(StringReadError, match="line 1 column 9"):
+            readfromstring('{"a": 1 "b": 2}')
 
     def test_readfromstring_invalid_type_int(self) -> None:
         """Test reading with integer input."""

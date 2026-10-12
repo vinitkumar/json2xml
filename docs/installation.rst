@@ -83,7 +83,7 @@ For contributing to json2xml, set up a development environment:
 Requirements
 ------------
 
-json2xml requires Python 3.10 or later and depends on:
+json2xml requires Python 3.11 or later and depends on:
 
 * ``defusedxml`` - For secure XML parsing
 * ``urllib3`` - For fetching JSON from URLs

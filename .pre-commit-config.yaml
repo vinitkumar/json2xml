@@ -45,4 +45,4 @@ repos:
   rev: v3.19.1
   hooks:
   - id: pyupgrade
-    args: [--py310-plus]
+    args: [--py311-plus]

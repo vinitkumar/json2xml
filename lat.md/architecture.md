@@ -36,17 +36,21 @@ The Rust extension crate targets the Rust 2024 edition and pins `rust-version` t
 
 The Cargo feature layout separates normal Rust/PyO3 tests from extension-module builds. `cargo test` uses the default `python` feature without extension-module linking, while maturin enables the `extension-module` feature for wheel builds.
 
-Release and CI workflows install the pinned Rust toolchain before building wheels or running Rust checks, so hosted runners do not silently use an older default compiler. The macOS release build also provisions Python 3.10 explicitly so maturin emits wheels for the oldest supported interpreter even when runner images omit it.
+Release and CI workflows install the pinned Rust toolchain before building wheels or running Rust checks, so hosted runners do not silently use an older default compiler. The macOS release build also provisions Python 3.11 explicitly so maturin emits wheels for the oldest supported interpreter even when runner images omit it.
 
 ## Development checks
 
 Make-based lint, type-check, and Python test targets run through uv's locked development environment so results do not depend on globally installed tools or optional extensions.
+
+The pre-commit pyupgrade hook uses `--py311-plus` to keep Python source syntax aligned with the minimum supported interpreter.
 
 The shared `UV_RUN` command installs the complete `dev` extra from `uv.lock`. `pyproject.toml` and `uv.lock` are the only dependency declaration, so no pinned requirements files can drift from them. The type-check target overlays `ty`, while pytest configuration has one source in `pyproject.toml` and enforces 100% coverage for bare local runs. Rust extension integration stays in its dedicated workflow.
 
 ## Release packaging
 
 Package releases keep the Python wrapper and Rust accelerator requirements aligned and use `uv build`/`uv publish` so optional fast installs receive compatible wheels.
+
+Both the Python package and Rust accelerator require Python 3.11 or later. CI covers CPython and PyPy 3.11+; older interpreter jobs are excluded.
 
 The Python package version lives in `pyproject.toml` and `json2xml/__init__.py`. The Rust accelerator version lives in both `rust/Cargo.toml` and `rust/pyproject.toml`, and the Python `fast` extra should require the Rust package version that contains any expected accelerator behavior. Publish and verify the Rust package before updating that Python requirement and lockfile. Release notes live in `HISTORY.rst`, with the current release also summarized in `RELEASE_NOTES.md` for tag and PyPI copy.
 

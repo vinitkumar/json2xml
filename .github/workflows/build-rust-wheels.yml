@@ -43,6 +43,7 @@ jobs:
       - name: Build wheels
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
         with:
+          rust-toolchain: ${{ env.RUST_VERSION }}
           target: ${{ matrix.target }}
           args: --release --out dist --find-interpreter
           sccache: 'true'
@@ -77,6 +78,7 @@ jobs:
       - name: Build wheels
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
         with:
+          rust-toolchain: ${{ env.RUST_VERSION }}
           target: ${{ matrix.target == 'x64' && 'x86_64-pc-windows-msvc' || 'i686-pc-windows-msvc' }}
           args: --release --out dist --find-interpreter
           sccache: 'true'
@@ -115,6 +117,7 @@ jobs:
       - name: Build wheels
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
         with:
+          rust-toolchain: ${{ env.RUST_VERSION }}
           target: ${{ matrix.target == 'x86_64' && 'x86_64-apple-darwin' || 'aarch64-apple-darwin' }}
           args: --release --out dist --find-interpreter
           sccache: 'true'
@@ -140,6 +143,7 @@ jobs:
       - name: Build sdist
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1
         with:
+          rust-toolchain: ${{ env.RUST_VERSION }}
           command: sdist
           args: --out dist
           working-directory: rust

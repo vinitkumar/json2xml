@@ -7,7 +7,7 @@ A high-performance Rust implementation of the dicttoxml module using PyO3.
 ### Prerequisites
 
 - Rust (1.96+)
-- Python (3.9+)
+- Python (3.11+)
 - maturin (`pip install maturin`)
 
 ### Development Build

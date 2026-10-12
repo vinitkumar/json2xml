@@ -304,7 +304,7 @@ below use `uv` because it keeps Python setup reproducible.
 
 | Tool | Required for | Notes |
 |------|--------------|-------|
-| Python 3.10+ | Pure Python benchmarks | The published run used Python 3.14.4. |
+| Python 3.11+ | Pure Python benchmarks | The published run used Python 3.14.4. |
 | Rust toolchain | Rust extension benchmarks | Needed only when building `json2xml_rs` locally. |
 | maturin | Rust extension benchmarks | Builds and installs the PyO3 extension. |
 | json2xml-go | Go CLI benchmarks | Must be on `PATH` as `json2xml-go`. |

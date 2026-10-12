@@ -1,3 +1,23 @@
+# json2xml_rs 1.0.0
+
+Released 2026-10-12.
+
+## Highlights
+
+- First stable major release of the Rust accelerator.
+- Requires Python 3.11 or later; Python 3.9 and 3.10 are no longer supported.
+- Preserves the serializer behavior from 0.6.0.
+- Tests release wheels against stable CPython 3.15.0 and pins Rust 1.96.0 inside Linux build containers.
+
+## Migration guidance
+
+Upgrade to Python 3.11+ before installing this release. Python 8.0.0 uses this accelerator through its optional fast extra.
+
+## Package version
+
+- Rust accelerator: `json2xml-rs==1.0.0`
+
+
 # json2xml_rs 0.7.0
 
 Released 2026-10-12.
@@ -15,7 +35,7 @@ Upgrade to Python 3.11+ before installing this release. Existing Python 3.9 and 
 ## Package version
 
 - Rust accelerator: `json2xml-rs==0.7.0`
-- Released before Python 8.0.0 so its fast extra can resolve published wheels.
+- Intermediate release; use Rust 1.0.0 with Python 8.0.0.
 
 
 # json2xml 7.1.1

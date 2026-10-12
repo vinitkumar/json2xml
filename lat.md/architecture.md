@@ -50,7 +50,7 @@ The shared `UV_RUN` command installs the complete `dev` extra from `uv.lock`. `p
 
 Package releases keep the Python wrapper and Rust accelerator requirements aligned and use `uv build`/`uv publish` so optional fast installs receive compatible wheels.
 
-Both the Python package and Rust accelerator require Python 3.11 or later. CI covers CPython and PyPy 3.11+; older interpreter jobs are excluded.
+Python 8.0.0 and Rust accelerator 1.0.0 require Python 3.11 or later. CI covers CPython and PyPy 3.11+; older interpreter jobs are excluded.
 
 The Python package version lives in `pyproject.toml` and `json2xml/__init__.py`. The Rust accelerator version lives in both `rust/Cargo.toml` and `rust/pyproject.toml`, with `rust/uv.lock` synchronized, and the Python `fast` extra should require the Rust package version that contains any expected accelerator behavior. Publish and verify the Rust package before updating that Python requirement and lockfile. Release notes live in `HISTORY.rst`, with the current release also summarized in `RELEASE_NOTES.md` for tag and PyPI copy.
 

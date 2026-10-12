@@ -1,3 +1,11 @@
+8.0.0 / 2026-10-12
+==================
+
+  * breaking: require Python 3.11 or later; Python 3.10 users must remain on json2xml 7.x
+  * chore: release json2xml-rs 1.0.0 first and require it from the optional fast extra
+  * chore: test stable Python 3.15.0 across Python, Rust extension, and wheel workflows
+  * chore: target Python 3.11+ with pyupgrade and pin Rust inside wheel build containers
+
 
 7.1.1 / 2026-09-23
 ==================

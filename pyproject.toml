@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "json2xml"
-version = "7.1.1"
+version = "8.0.0"
 description = "Simple Python Library to convert JSON to XML"
 readme = "README.rst"
 requires-python = ">=3.11"
@@ -51,7 +51,7 @@ dev = [
     "pygments>=2.20.0",
     "xmltodict>=0.14.2",
 ]
-fast = ["json2xml-rs>=0.6.0"]
+fast = ["json2xml-rs>=1.0.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

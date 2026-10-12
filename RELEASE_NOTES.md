@@ -1,3 +1,25 @@
+# json2xml 8.0.0
+
+Released 2026-10-12.
+
+## Highlights
+
+- Requires Python 3.11 or later; Python 3.10 support is removed.
+- Requires json2xml-rs 1.0.0 or later for the optional fast install.
+- Tests stable CPython 3.15.0 in Python, native extension, and release wheel workflows.
+- Uses pyupgrade's Python 3.11+ target. Existing Python sources needed no rewrites.
+
+## Migration guidance
+
+Upgrade to Python 3.11+ before installing json2xml 8.0.0. Python 3.10 users must remain on json2xml 7.x. Conversion APIs and output behavior are unchanged from 7.1.1.
+
+## Package versions
+
+- Python package: `json2xml==8.0.0`
+- Rust accelerator: `json2xml-rs==1.0.0`
+- Fast install: `pip install "json2xml[fast]==8.0.0"`
+
+
 # json2xml_rs 1.0.0
 
 Released 2026-10-12.

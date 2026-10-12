@@ -1,3 +1,23 @@
+# json2xml_rs 0.7.0
+
+Released 2026-10-12.
+
+## Highlights
+
+- Requires Python 3.11 or later. Python 3.9 and 3.10 are no longer supported.
+- Tests the native extension and release wheels against stable CPython 3.15.0.
+- Preserves the serializer behavior from 0.6.0.
+
+## Migration guidance
+
+Upgrade to Python 3.11+ before installing this release. Existing Python 3.9 and 3.10 environments must stay on an older accelerator release.
+
+## Package version
+
+- Rust accelerator: `json2xml-rs==0.7.0`
+- Released before Python 8.0.0 so its fast extra can resolve published wheels.
+
+
 # json2xml 7.1.1
 
 Released 2026-09-23.

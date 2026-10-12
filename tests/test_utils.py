@@ -212,7 +212,9 @@ class TestReadFromUrl:
 
     def test_readfromurl_reports_decoder_position(self, json_server: str) -> None:
         """The wrapped error carries the decoder's message."""
-        with pytest.raises(URLReadError, match=r"URL did not return valid JSON: .+line 1"):
+        with pytest.raises(
+            URLReadError, match=r"URL did not return valid JSON: .+line 1"
+        ):
             readfromurl(f"{json_server}/invalid.json", allow_private_networks=True)
 
     def test_readfromurl_accepts_utf8_bom(self, json_server: str) -> None:

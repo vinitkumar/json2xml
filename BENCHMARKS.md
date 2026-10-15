@@ -140,7 +140,7 @@ uv python list 3.15 --all-versions
 uv run --isolated --managed-python \
   --python cpython-3.15.0rc1-macos-aarch64-none \
   --with defusedxml \
-  --with 'urllib3>=2.7.0' \
+  --with 'urllib3>=2.8.0' \
   python benchmarks/benchmark_security_hardening.py \
   --before 826439f \
   --after 48dfd38 \

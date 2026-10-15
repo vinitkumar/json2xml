@@ -1,3 +1,11 @@
+8.0.1 / Unreleased
+==================
+
+  * security: require ``urllib3>=2.8.0`` to exclude versions affected by CVE-2026-97687, CVE-2026-97688, and CVE-2026-97689 (PR #456)
+  * build: lock urllib3 to 2.8.0 with updated distribution hashes and align standalone benchmark dependency requirements
+  * compatibility: retain Python >=3.11 and the optional ``json2xml-rs>=1.0.0`` accelerator; conversion APIs and XML output are unchanged
+
+
 8.0.0 / 2026-10-12
 ==================
 

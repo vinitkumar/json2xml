@@ -1,3 +1,49 @@
+# json2xml 8.0.1
+
+Unreleased — publication date will be recorded when the release is scheduled.
+
+## Security fixes
+
+Require `urllib3>=2.8.0` so new installations cannot select releases affected by the following upstream advisories:
+
+| Advisory | Severity | Upstream issue | Fixed in |
+| --- | --- | --- | --- |
+| [CVE-2026-97687 / GHSA-8988-9cw3-xx77](https://github.com/urllib3/urllib3/security/advisories/GHSA-8988-9cw3-xx77) | High | HTTPS proxy TLS settings | urllib3 2.8.0 |
+| [CVE-2026-97688 / GHSA-gh4c-6fx4-qh6g](https://github.com/urllib3/urllib3/security/advisories/GHSA-gh4c-6fx4-qh6g) | Moderate | Deflate streaming loop | urllib3 2.8.0 |
+| [CVE-2026-97689 / GHSA-vxq7-64xx-v4gw](https://github.com/urllib3/urllib3/security/advisories/GHSA-vxq7-64xx-v4gw) | High | Unbounded chunk-size buffering | urllib3 2.8.0 |
+
+The root lockfile selects urllib3 2.8.0 with updated distribution hashes. Standalone benchmark commands use the same secure minimum. No other dependency versions were upgraded in the security fix.
+
+## Compatibility and upgrade
+
+Python 3.11 or later remains required. Conversion APIs and XML output are unchanged. The optional accelerator remains `json2xml-rs>=1.0.0`; this release does not include a new Rust package.
+
+After 8.0.1 is published, upgrade with:
+
+```sh
+python -m pip install --upgrade 'json2xml==8.0.1'
+# With the optional accelerator:
+python -m pip install --upgrade 'json2xml[fast]==8.0.1'
+```
+
+Downstream projects that maintain their own lockfiles should regenerate them and confirm that urllib3 resolves to 2.8.0 or later.
+
+## Validation
+
+The security fix in [PR #456](https://github.com/vinitkumar/json2xml/pull/456) passed all 37 reported GitHub checks and the Snyk and Read the Docs commit statuses. Hosted tests covered CPython 3.11–3.15, free-threaded 3.14, and PyPy 3.11 across Linux, macOS, Windows, and Linux ARM64 where configured.
+
+Local validation of that fix passed Ruff, ty, 509 Python tests with 149 optional Rust tests skipped, and 100% statement coverage. The locked dependency audit and wheel/source builds passed. Native Rust tests were not run locally because Cargo was unavailable; no Rust sources changed.
+
+The 8.0.1 release preparation also passed local Ruff, ty, 509 tests with 149 optional Rust tests skipped, 100% statement coverage, lockfile validation, the dependency audit, and architecture documentation checks. Both built distributions passed Twine metadata checks and declare version 8.0.1, Python >=3.11, and urllib3>=2.8.0. The release commit's hosted CI must pass before publication; record those results and the publication date before publishing.
+
+## Changelog
+
+- [#456](https://github.com/vinitkumar/json2xml/pull/456): require urllib3 2.8.0 for security fixes.
+- [Full changelog from v8.0.0 to v8.0.1](https://github.com/vinitkumar/json2xml/compare/v8.0.0...v8.0.1) (available after the release tag is created).
+
+Generate the GitHub release changelog from the previous **Python** tag, `v8.0.0`, and combine it with this release's curated security notes. Do not use a `rust-v*` tag as the comparison baseline.
+
+
 # json2xml 8.0.0
 
 Released 2026-10-12.

@@ -183,7 +183,25 @@ Deploying
 
 A reminder for maintainers on how to deploy:
 
-#. Update the version in ``pyproject.toml`` and ``json2xml/__init__.py``.
-#. Add the release notes to ``HISTORY.rst``.
-#. Run ``make test-all`` and ``make dist``.
-#. Publish the verified artifacts with ``uv publish dist/*``.
+#. Update the version in ``pyproject.toml`` and ``json2xml/__init__.py``, then
+   regenerate ``uv.lock`` without unrelated dependency upgrades.
+#. Add matching, versioned entries to ``HISTORY.rst`` and ``RELEASE_NOTES.md``.
+   Include security advisories, compatibility changes, upgrade instructions,
+   merged pull requests, and a comparison link from the previous Python tag.
+   Keep the date marked unreleased until publication is scheduled.
+#. Run ``make check-all``, ``make test-rust``, ``uv lock --check``, and
+   ``uv audit --locked``. Record any unavailable checks accurately. Build the
+   wheel and source distribution, verify their version and requirements, and
+   run Twine metadata checks. Wait for the release commit's hosted CI to pass.
+#. Confirm the release date and target commit. Generate the GitHub changelog
+   from the previous Python ``v*`` tag, not an intervening ``rust-v*`` tag.
+   Combine the generated pull-request list with the matching curated release
+   section from ``RELEASE_NOTES.md``; do not paste notes for older releases.
+#. Replace the unreleased markers with the release date and publish the
+   GitHub release against the verified commit using the matching ``v*`` tag.
+   The published-release workflow builds and uploads the Python package to
+   PyPI. Do not also run a duplicate manual upload. Use
+   ``uv publish dist/*`` only as an intentional alternative publication path.
+#. Verify the GitHub release notes and PyPI version, then smoke-test a fresh
+   installation and check the resolved dependencies. A successful GitHub
+   release creation alone does not establish that the PyPI upload succeeded.

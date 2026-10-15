@@ -94,6 +94,8 @@ Dependency floors and lockfiles keep known vulnerable packages out of runtime an
 
 Runtime dependencies are declared in `pyproject.toml` and mirrored by `uv.lock`; legacy requirements inputs remain pinned for tooling that still consumes requirements files. Security fixes should update both resolver paths so `uv audit` and requirements-based installs agree.
 
+The urllib3 runtime floor is 2.8.0, excluding CVE-2026-97687 (HTTPS proxy TLS configuration), CVE-2026-97688 (Deflate streaming loop), and CVE-2026-97689 (unbounded chunk-size buffering). The lockfile and standalone benchmark commands use the same safe floor; `docs/requirements.txt` already pins 2.8.0. urllib3 supports Python 3.10+, so this preserves json2xml's Python 3.11+ requirement.
+
 The Rust accelerator requires PyO3 0.29.1 or newer in the 0.29 series, excluding releases affected by GHSA-36hh-v3qg-5jq4's out-of-bounds list and tuple iterator reads.
 
 Documentation builds declare Requests 2.34.2 as their minimum and regenerate `docs/requirements.txt` with pip-tools so transitive Sphinx resolution cannot select an older release.

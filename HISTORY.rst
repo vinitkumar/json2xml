@@ -1,4 +1,4 @@
-8.0.1 / Unreleased
+8.0.1 / 2026-10-16
 ==================
 
   * security: require ``urllib3>=2.8.0`` to exclude versions affected by CVE-2026-97687, CVE-2026-97688, and CVE-2026-97689 (PR #456)

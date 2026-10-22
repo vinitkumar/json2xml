@@ -79,7 +79,7 @@ sphinx==9.1.0
     #   sphinx-basic-ng
 sphinx-autobuild==2025.8.25
     # via -r requirements.in
-sphinx-autodoc-typehints==3.13.9
+sphinx-autodoc-typehints==3.17.2
     # via -r requirements.in
 sphinx-basic-ng==1.0.0b2
     # via furo
@@ -101,8 +101,10 @@ starlette==1.7.0
     #   sphinx-autobuild
 tornado==6.5.10
     # via -r requirements.in
-typing-extensions==4.12.2
-    # via beautifulsoup4
+typing-extensions==4.16.0
+    # via
+    #   beautifulsoup4
+    #   sphinx-autodoc-typehints
 urllib3==2.8.0
     # via requests
 uvicorn==0.34.0

@@ -346,12 +346,10 @@ class TestDict2xml:
 
     def test_dict2xml_str_list_header(self) -> None:
         """Test dict2xml_str with list headers."""
-        from json2xml.dicttoxml import dict2xml_str
-
         item_func = dicttoxml.default_item_func
         item = {"frame_color": "red"}
         parent = "Bike"
-        xml_str = dict2xml_str(
+        xml_str = dicttoxml.dict2xml_str(
             attr_type=False,
             attr={},
             item=item,
@@ -1144,37 +1142,21 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, cdata=True, attr_type=False, root=False)
         assert b"<key><![CDATA[value]]></key>" == result
 
-    def test_get_unique_id_with_duplicates(self, monkeypatch: MonkeyPatch) -> None:
-        """Test get_unique_id when duplicates are generated."""
-        import json2xml.dicttoxml as module
-
-        call_count = 0
+    # @lat: [[tests#Tests#XML helper behavior#Unique ID generation delegates to make_id]]
+    def test_get_unique_id_uses_make_id(self, monkeypatch: MonkeyPatch) -> None:
+        """Test get_unique_id delegates to the production make_id helper."""
+        calls: list[str] = []
 
         def mock_make_id(element: str, start: int = 100000, end: int = 999999) -> str:
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                return "test_123456"
-            return "test_789012"
+            calls.append(element)
+            return "test_123456"
 
-        def patched_get_unique_id(element: str) -> str:
-            ids = ["test_123456"]
-            this_id = module.make_id(element)
-            dup = True
-            while dup:
-                if this_id not in ids:
-                    dup = False
-                    ids.append(this_id)
-                else:
-                    this_id = module.make_id(element)
-            return ids[-1]
-
-        monkeypatch.setattr(module, "make_id", mock_make_id)
-        monkeypatch.setattr(module, "get_unique_id", patched_get_unique_id)
+        monkeypatch.setattr(dicttoxml, "make_id", mock_make_id)
 
         result = dicttoxml.get_unique_id("test")
-        assert result == "test_789012"
-        assert call_count == 2
+
+        assert result == "test_123456"
+        assert calls == ["test"]
 
     def test_convert_with_bool_direct(self) -> None:
         """Test convert function with boolean input directly."""
@@ -1416,16 +1398,14 @@ class TestDict2xml:
         self, monkeypatch: MonkeyPatch
     ) -> None:
         """Test dict2xml_str with primitive dict as rawitem to trigger line 274."""
-        import json2xml.dicttoxml as module
-
-        original_is_primitive = module.is_primitive_type
+        original_is_primitive = dicttoxml.is_primitive_type
 
         def mock_is_primitive(val: Any) -> bool:
             if isinstance(val, dict) and val == {"test": "data"}:
                 return True
             return original_is_primitive(val)
 
-        monkeypatch.setattr(module, "is_primitive_type", mock_is_primitive)
+        monkeypatch.setattr(dicttoxml, "is_primitive_type", mock_is_primitive)
         item = {"@val": {"test": "data"}}
         result = dicttoxml.dict2xml_str(
             attr_type=False,
@@ -1522,15 +1502,13 @@ class TestDict2xml:
 
     def test_make_attrstring_function_directly(self) -> None:
         """Test the make_attrstring function directly."""
-        from json2xml.dicttoxml import make_attrstring
-
         # Test basic escaping
         attrs = {
             "test": "value <here>",
             "ampersand": "Tom & Jerry",
             "quotes": 'Say "hello"',
         }
-        result = make_attrstring(attrs)
+        result = dicttoxml.make_attrstring(attrs)
 
         assert 'test="value &lt;here&gt;"' in result
         assert 'ampersand="Tom &amp; Jerry"' in result
@@ -1538,5 +1516,5 @@ class TestDict2xml:
 
         # Test empty attributes
         empty_attrs: dict[str, Any] = {}
-        result = make_attrstring(empty_attrs)
+        result = dicttoxml.make_attrstring(empty_attrs)
         assert result == ""

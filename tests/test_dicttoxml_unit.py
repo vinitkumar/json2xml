@@ -13,6 +13,9 @@ from json2xml import dicttoxml
 
 
 class CustomNumber(numbers.Number):
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, CustomNumber)
+
     def __hash__(self) -> int:
         return 7
 

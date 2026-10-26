@@ -30,20 +30,13 @@ import json2xml.dicttoxml_fast as fast_module
 from json2xml import dicttoxml as py_dicttoxml
 from json2xml.backend_selector import rust_renders_identically
 from json2xml.dicttoxml import SerializerConfig, default_item_func
-from json2xml.dicttoxml_fast import (
-    _RustBackendAdapter,
-    get_backend,
-    is_rust_available,
-)
-from json2xml.dicttoxml_fast import (
-    dicttoxml as fast_dicttoxml,
-)
-from json2xml.dicttoxml_fast import (
-    escape_xml as fast_escape_xml,
-)
-from json2xml.dicttoxml_fast import (
-    wrap_cdata as fast_wrap_cdata,
-)
+
+_RustBackendAdapter = fast_module._RustBackendAdapter
+get_backend = fast_module.get_backend
+is_rust_available = fast_module.is_rust_available
+fast_dicttoxml = fast_module.dicttoxml
+fast_escape_xml = fast_module.escape_xml
+fast_wrap_cdata = fast_module.wrap_cdata
 
 # Skip all tests if Rust is not available
 pytestmark = pytest.mark.skipif(

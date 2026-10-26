@@ -346,12 +346,10 @@ class TestDict2xml:
 
     def test_dict2xml_str_list_header(self) -> None:
         """Test dict2xml_str with list headers."""
-        from json2xml.dicttoxml import dict2xml_str
-
         item_func = dicttoxml.default_item_func
         item = {"frame_color": "red"}
         parent = "Bike"
-        xml_str = dict2xml_str(
+        xml_str = dicttoxml.dict2xml_str(
             attr_type=False,
             attr={},
             item=item,
@@ -1504,15 +1502,13 @@ class TestDict2xml:
 
     def test_make_attrstring_function_directly(self) -> None:
         """Test the make_attrstring function directly."""
-        from json2xml.dicttoxml import make_attrstring
-
         # Test basic escaping
         attrs = {
             "test": "value <here>",
             "ampersand": "Tom & Jerry",
             "quotes": 'Say "hello"',
         }
-        result = make_attrstring(attrs)
+        result = dicttoxml.make_attrstring(attrs)
 
         assert 'test="value &lt;here&gt;"' in result
         assert 'ampersand="Tom &amp; Jerry"' in result
@@ -1520,5 +1516,5 @@ class TestDict2xml:
 
         # Test empty attributes
         empty_attrs: dict[str, Any] = {}
-        result = make_attrstring(empty_attrs)
+        result = dicttoxml.make_attrstring(empty_attrs)
         assert result == ""

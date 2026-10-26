@@ -1414,16 +1414,14 @@ class TestDict2xml:
         self, monkeypatch: MonkeyPatch
     ) -> None:
         """Test dict2xml_str with primitive dict as rawitem to trigger line 274."""
-        import json2xml.dicttoxml as module
-
-        original_is_primitive = module.is_primitive_type
+        original_is_primitive = dicttoxml.is_primitive_type
 
         def mock_is_primitive(val: Any) -> bool:
             if isinstance(val, dict) and val == {"test": "data"}:
                 return True
             return original_is_primitive(val)
 
-        monkeypatch.setattr(module, "is_primitive_type", mock_is_primitive)
+        monkeypatch.setattr(dicttoxml, "is_primitive_type", mock_is_primitive)
         item = {"@val": {"test": "data"}}
         result = dicttoxml.dict2xml_str(
             attr_type=False,

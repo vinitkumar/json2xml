@@ -13,7 +13,6 @@ import pytest
 import json2xml.dicttoxml_fast as fast_module
 from json2xml import dicttoxml as py_dicttoxml
 from json2xml.backend_selector import rust_renders_identically
-from json2xml.dicttoxml_fast import _RustBindings
 
 
 def _gate_with_limits(
@@ -23,7 +22,7 @@ def _gate_with_limits(
     return rust_renders_identically(obj)
 
 
-def _fake_bindings(**overrides: Any) -> _RustBindings:
+def _fake_bindings(**overrides: Any) -> fast_module._RustBindings:
     """Build Rust bindings backed by the Python reference implementations."""
     fields: dict[str, Any] = {
         "dicttoxml": Mock(return_value=b"<rust/>"),
@@ -33,7 +32,7 @@ def _fake_bindings(**overrides: Any) -> _RustBindings:
         "enforces_limits": True,
     }
     fields.update(overrides)
-    return _RustBindings(**fields)
+    return fast_module._RustBindings(**fields)
 
 
 def _force_rust_backend(monkeypatch: pytest.MonkeyPatch) -> Mock:
@@ -98,7 +97,7 @@ def test_loader_binds_a_complete_extension(monkeypatch: pytest.MonkeyPatch) -> N
 
     bindings = fast_module._load_rust_bindings()
 
-    assert bindings == _RustBindings(
+    assert bindings == fast_module._RustBindings(
         dicttoxml=_COMPLETE_EXPORTS["dicttoxml"],
         payload_is_supported=rust_renders_identically,
         escape_xml=py_dicttoxml.escape_xml,

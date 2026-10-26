@@ -342,6 +342,10 @@ These tests pin low-level XML helper contracts so performance refactors keep the
 
 Common built-in numbers should avoid abstract-class dispatch while `Decimal`, `Fraction`, complex, and custom `Number` implementations remain supported.
 
+### Unique ID generation delegates to make_id
+
+The public unique-ID helper should return the production `make_id` result so its test exercises the real delegation instead of replacing the function under test.
+
 ### Date-like values serialize the same in every position
 
 Objects exposing `isoformat` should serialize identically as a root value, a dict value, and a list item, because one classifier decides the kind for all three writers.

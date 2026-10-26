@@ -1144,35 +1144,21 @@ class TestDict2xml:
         result = dicttoxml.dicttoxml(data, cdata=True, attr_type=False, root=False)
         assert b"<key><![CDATA[value]]></key>" == result
 
-    def test_get_unique_id_with_duplicates(self, monkeypatch: MonkeyPatch) -> None:
-        """Test get_unique_id when duplicates are generated."""
-        call_count = 0
+    # @lat: [[tests#Tests#XML helper behavior#Unique ID generation delegates to make_id]]
+    def test_get_unique_id_uses_make_id(self, monkeypatch: MonkeyPatch) -> None:
+        """Test get_unique_id delegates to the production make_id helper."""
+        calls: list[str] = []
 
         def mock_make_id(element: str, start: int = 100000, end: int = 999999) -> str:
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                return "test_123456"
-            return "test_789012"
-
-        def patched_get_unique_id(element: str) -> str:
-            ids = ["test_123456"]
-            this_id = dicttoxml.make_id(element)
-            dup = True
-            while dup:
-                if this_id not in ids:
-                    dup = False
-                    ids.append(this_id)
-                else:
-                    this_id = dicttoxml.make_id(element)
-            return ids[-1]
+            calls.append(element)
+            return "test_123456"
 
         monkeypatch.setattr(dicttoxml, "make_id", mock_make_id)
-        monkeypatch.setattr(dicttoxml, "get_unique_id", patched_get_unique_id)
 
         result = dicttoxml.get_unique_id("test")
-        assert result == "test_789012"
-        assert call_count == 2
+
+        assert result == "test_123456"
+        assert calls == ["test"]
 
     def test_convert_with_bool_direct(self) -> None:
         """Test convert function with boolean input directly."""

@@ -1146,8 +1146,6 @@ class TestDict2xml:
 
     def test_get_unique_id_with_duplicates(self, monkeypatch: MonkeyPatch) -> None:
         """Test get_unique_id when duplicates are generated."""
-        import json2xml.dicttoxml as module
-
         call_count = 0
 
         def mock_make_id(element: str, start: int = 100000, end: int = 999999) -> str:
@@ -1159,18 +1157,18 @@ class TestDict2xml:
 
         def patched_get_unique_id(element: str) -> str:
             ids = ["test_123456"]
-            this_id = module.make_id(element)
+            this_id = dicttoxml.make_id(element)
             dup = True
             while dup:
                 if this_id not in ids:
                     dup = False
                     ids.append(this_id)
                 else:
-                    this_id = module.make_id(element)
+                    this_id = dicttoxml.make_id(element)
             return ids[-1]
 
-        monkeypatch.setattr(module, "make_id", mock_make_id)
-        monkeypatch.setattr(module, "get_unique_id", patched_get_unique_id)
+        monkeypatch.setattr(dicttoxml, "make_id", mock_make_id)
+        monkeypatch.setattr(dicttoxml, "get_unique_id", patched_get_unique_id)
 
         result = dicttoxml.get_unique_id("test")
         assert result == "test_789012"

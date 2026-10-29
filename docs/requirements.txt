@@ -99,7 +99,7 @@ starlette==1.9.0
     # via
     #   -r requirements.in
     #   sphinx-autobuild
-tornado==6.5.10
+tornado==6.6
     # via -r requirements.in
 typing-extensions==4.16.0
     # via

@@ -31,7 +31,9 @@ colorama==0.4.6
 decorator==5.1.1
     # via autodoc
 docutils==0.21.2
-    # via sphinx
+    # via
+    #   sphinx
+    #   sphinx-autodoc-typehints
 furo==2025.12.19
     # via -r requirements.in
 h11==0.16.0
@@ -60,6 +62,7 @@ pygments==2.20.0
     #   accessible-pygments
     #   furo
     #   sphinx
+    #   sphinx-autodoc-typehints
 requests==2.34.2
     # via
     #   -r requirements.in
@@ -79,7 +82,7 @@ sphinx==9.2.0
     #   sphinx-basic-ng
 sphinx-autobuild==2025.8.25
     # via -r requirements.in
-sphinx-autodoc-typehints==3.17.5
+sphinx-autodoc-typehints==3.17.6
     # via -r requirements.in
 sphinx-basic-ng==1.0.0b2
     # via furo
